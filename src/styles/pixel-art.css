@@ -1,0 +1,447 @@
+/* SNES JRPG Pixel Art Theme */
+
+/* Import pixel fonts */
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+/* Base pixel art styles */
+:root {
+  /* SNES-inspired color palette */
+  --pixel-black: #0c0a0f;
+  --pixel-dark-purple: #2e1f3e;
+  --pixel-purple: #573b67;
+  --pixel-magenta: #94216a;
+  --pixel-pink: #e43b7a;
+  --pixel-red: #f25a5a;
+  --pixel-orange: #ff8142;
+  --pixel-yellow: #ffee83;
+  --pixel-green: #50d96e;
+  --pixel-cyan: #4ddfd4;
+  --pixel-blue: #4a9fff;
+  --pixel-dark-blue: #2e53a1;
+  --pixel-white: #f4f4f4;
+  --pixel-gray: #8b8b8b;
+  --pixel-dark-gray: #4a4a4a;
+
+  /* UI depths */
+  --pixel-shadow: 2px;
+  --pixel-border: 4px;
+}
+
+/* Pixel-perfect rendering */
+* {
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+/* Disable antialiasing */
+body {
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: grayscale;
+  font-smooth: never;
+}
+
+/* Pixel art text */
+.pixel-text {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  line-height: 1.8;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.pixel-text-xs {
+  font-size: 8px;
+}
+
+.pixel-text-sm {
+  font-size: 10px;
+}
+
+.pixel-text-lg {
+  font-size: 14px;
+}
+
+.pixel-text-xl {
+  font-size: 18px;
+}
+
+.pixel-text-2xl {
+  font-size: 24px;
+}
+
+.pixel-text-4xl {
+  font-size: 32px;
+}
+
+/* Text shadows for depth */
+.pixel-text-shadow {
+  text-shadow: 
+    1px 1px 0 var(--pixel-black),
+    2px 2px 0 var(--pixel-dark-gray);
+}
+
+.pixel-text-shadow-lg {
+  text-shadow: 
+    2px 2px 0 var(--pixel-black),
+    3px 3px 0 var(--pixel-dark-gray),
+    4px 4px 0 var(--pixel-dark-purple);
+}
+
+/* Pixel art panels */
+.pixel-panel {
+  background: var(--pixel-dark-purple);
+  border: var(--pixel-border) solid var(--pixel-black);
+  box-shadow: 
+    inset -2px -2px 0 var(--pixel-dark-gray),
+    inset 2px 2px 0 var(--pixel-purple);
+  position: relative;
+}
+
+.pixel-panel-raised {
+  background: var(--pixel-purple);
+  border: var(--pixel-border) solid var(--pixel-black);
+  box-shadow: 
+    inset -2px -2px 0 var(--pixel-dark-purple),
+    inset 2px 2px 0 var(--pixel-magenta),
+    4px 4px 0 var(--pixel-black);
+}
+
+.pixel-panel-inset {
+  background: var(--pixel-black);
+  border: var(--pixel-border) solid var(--pixel-dark-purple);
+  box-shadow: 
+    inset 2px 2px 0 var(--pixel-dark-gray),
+    inset -2px -2px 0 var(--pixel-purple);
+}
+
+/* Pixel art buttons */
+.pixel-button {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  padding: 12px 20px;
+  background: var(--pixel-magenta);
+  color: var(--pixel-white);
+  border: 3px solid var(--pixel-black);
+  box-shadow: 
+    inset -2px -2px 0 var(--pixel-dark-purple),
+    inset 2px 2px 0 var(--pixel-pink),
+    2px 2px 0 var(--pixel-black);
+  text-transform: uppercase;
+  letter-spacing: 0;
+  cursor: pointer;
+  transition: none;
+  position: relative;
+  min-width: 120px;
+}
+
+.pixel-button:hover {
+  background: var(--pixel-pink);
+  transform: translate(-1px, -1px);
+  box-shadow: 
+    inset -2px -2px 0 var(--pixel-magenta),
+    inset 2px 2px 0 var(--pixel-orange),
+    3px 3px 0 var(--pixel-black);
+}
+
+.pixel-button:active {
+  background: var(--pixel-magenta);
+  transform: translate(1px, 1px);
+  box-shadow: 
+    inset -1px -1px 0 var(--pixel-dark-purple),
+    inset 1px 1px 0 var(--pixel-pink),
+    1px 1px 0 var(--pixel-black);
+}
+
+.pixel-button-green {
+  background: var(--pixel-green);
+  box-shadow: 
+    inset -2px -2px 0 #2a8a3e,
+    inset 2px 2px 0 #7ae89c,
+    2px 2px 0 var(--pixel-black);
+}
+
+.pixel-button-blue {
+  background: var(--pixel-blue);
+  box-shadow: 
+    inset -2px -2px 0 var(--pixel-dark-blue),
+    inset 2px 2px 0 var(--pixel-cyan),
+    2px 2px 0 var(--pixel-black);
+}
+
+/* Pixel art cards */
+.pixel-card {
+  background: var(--pixel-dark-purple);
+  border: 3px solid var(--pixel-black);
+  box-shadow: 
+    inset -2px -2px 0 var(--pixel-dark-gray),
+    inset 2px 2px 0 var(--pixel-purple),
+    4px 4px 0 var(--pixel-black);
+  padding: 12px;
+  position: relative;
+}
+
+.pixel-card::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  right: 4px;
+  height: 2px;
+  background: var(--pixel-magenta);
+  box-shadow: 0 2px 0 var(--pixel-dark-purple);
+}
+
+.pixel-card-band {
+  background: linear-gradient(
+    180deg,
+    var(--pixel-dark-purple) 0%,
+    var(--pixel-purple) 50%,
+    var(--pixel-dark-purple) 100%
+  );
+}
+
+.pixel-card-venue {
+  background: linear-gradient(
+    180deg,
+    var(--pixel-dark-blue) 0%,
+    var(--pixel-blue) 50%,
+    var(--pixel-dark-blue) 100%
+  );
+}
+
+/* Pixel art badges */
+.pixel-badge {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 6px;
+  padding: 4px 8px;
+  background: var(--pixel-yellow);
+  color: var(--pixel-black);
+  border: 2px solid var(--pixel-black);
+  box-shadow: 2px 2px 0 var(--pixel-black);
+  text-transform: uppercase;
+  display: inline-block;
+}
+
+.pixel-badge-red {
+  background: var(--pixel-red);
+  color: var(--pixel-white);
+}
+
+.pixel-badge-green {
+  background: var(--pixel-green);
+  color: var(--pixel-black);
+}
+
+.pixel-badge-blue {
+  background: var(--pixel-blue);
+  color: var(--pixel-white);
+}
+
+/* Pixel art progress bars */
+.pixel-progress {
+  height: 16px;
+  background: var(--pixel-black);
+  border: 2px solid var(--pixel-dark-purple);
+  box-shadow: inset 2px 2px 0 var(--pixel-dark-gray);
+  position: relative;
+  overflow: hidden;
+}
+
+.pixel-progress-fill {
+  height: 100%;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--pixel-green) 0px,
+    var(--pixel-green) 4px,
+    #7ae89c 4px,
+    #7ae89c 8px
+  );
+  box-shadow: inset -2px -2px 0 #2a8a3e;
+  transition: width 0.3s steps(10);
+}
+
+/* Pixel art inputs */
+.pixel-input {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  padding: 8px;
+  background: var(--pixel-black);
+  color: var(--pixel-white);
+  border: 3px solid var(--pixel-dark-purple);
+  box-shadow: 
+    inset 2px 2px 0 var(--pixel-dark-gray),
+    inset -2px -2px 0 var(--pixel-purple);
+}
+
+.pixel-input:focus {
+  outline: none;
+  border-color: var(--pixel-magenta);
+  box-shadow: 
+    inset 2px 2px 0 var(--pixel-dark-gray),
+    inset -2px -2px 0 var(--pixel-pink),
+    0 0 0 2px var(--pixel-magenta);
+}
+
+/* Scanline effect */
+.scanlines::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.1) 2px,
+    rgba(0, 0, 0, 0.1) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* CRT curve effect */
+.crt-curve {
+  position: relative;
+  overflow: hidden;
+}
+
+.crt-curve::before {
+  content: '';
+  position: absolute;
+  top: -5%;
+  left: -5%;
+  width: 110%;
+  height: 110%;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 0%,
+    transparent 70%,
+    rgba(0, 0, 0, 0.2) 100%
+  );
+  pointer-events: none;
+}
+
+/* Pixel art animations */
+@keyframes pixel-blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+@keyframes pixel-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+@keyframes pixel-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  75% { transform: translateX(2px); }
+}
+
+.pixel-blink {
+  animation: pixel-blink 1s steps(1) infinite;
+}
+
+.pixel-pulse {
+  animation: pixel-pulse 0.5s steps(2) infinite;
+}
+
+.pixel-shake {
+  animation: pixel-shake 0.2s steps(2) infinite;
+}
+
+/* Pixel art scrollbar */
+::-webkit-scrollbar {
+  width: 16px;
+  height: 16px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--pixel-black);
+  border: 2px solid var(--pixel-dark-purple);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--pixel-purple);
+  border: 2px solid var(--pixel-black);
+  box-shadow: 
+    inset -1px -1px 0 var(--pixel-dark-purple),
+    inset 1px 1px 0 var(--pixel-magenta);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--pixel-magenta);
+}
+
+/* Pixel art tooltips */
+.pixel-tooltip {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 6px;
+  padding: 4px 8px;
+  background: var(--pixel-black);
+  color: var(--pixel-white);
+  border: 2px solid var(--pixel-yellow);
+  box-shadow: 2px 2px 0 var(--pixel-dark-gray);
+  position: absolute;
+  z-index: 1000;
+}
+
+.pixel-tooltip::before {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid var(--pixel-yellow);
+}
+
+/* Pixel art dialog boxes */
+.pixel-dialog {
+  background: var(--pixel-dark-purple);
+  border: 4px solid var(--pixel-black);
+  box-shadow: 
+    inset -3px -3px 0 var(--pixel-dark-gray),
+    inset 3px 3px 0 var(--pixel-purple),
+    6px 6px 0 var(--pixel-black);
+  padding: 16px;
+  position: relative;
+}
+
+.pixel-dialog-header {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  color: var(--pixel-yellow);
+  text-shadow: 2px 2px 0 var(--pixel-black);
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--pixel-purple);
+}
+
+/* Retro game corners */
+.pixel-corners {
+  position: relative;
+}
+
+.pixel-corners::before,
+.pixel-corners::after,
+.pixel-corners > span::before,
+.pixel-corners > span::after {
+  content: '';
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border: 2px solid var(--pixel-yellow);
+}
+
+.pixel-corners::before { top: -2px; left: -2px; border-right: 0; border-bottom: 0; }
+.pixel-corners::after { top: -2px; right: -2px; border-left: 0; border-bottom: 0; }
+.pixel-corners > span::before { bottom: -2px; left: -2px; border-right: 0; border-top: 0; }
+.pixel-corners > span::after { bottom: -2px; right: -2px; border-left: 0; border-top: 0; }

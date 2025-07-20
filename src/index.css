@@ -1,0 +1,155 @@
+@import "tailwindcss";
+@import './styles/pixel-art.css';
+@import './styles/glassmorphism.css';
+
+/* Base styles */
+html {
+  height: 100%;
+  overscroll-behavior: none;
+}
+
+body {
+  background: linear-gradient(135deg, #0c0a0f 0%, #1a0f1f 50%, #0f0a1a 100%);
+  color: var(--pixel-white);
+  height: 100%;
+  overscroll-behavior: none;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  margin: 0;
+  font-family: 'Press Start 2P', monospace;
+  image-rendering: pixelated;
+  -webkit-font-smoothing: none;
+}
+
+#root {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Fix for drag and drop */
+[data-rfd-draggable-context-id] {
+  touch-action: manipulation !important;
+}
+
+[data-rfd-drag-handle-context-id] {
+  touch-action: manipulation !important;
+  cursor: grab !important;
+}
+
+[data-rfd-drag-handle-context-id]:active {
+  cursor: grabbing !important;
+}
+
+input, textarea, select {
+  font-size: 16px; /* Prevents zoom on iOS */
+}
+
+/* Component styles using Tailwind theme values */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.punk-button {
+  @apply pixel-button;
+  background: var(--pixel-magenta);
+  min-height: 44px;
+}
+
+.punk-button:active {
+  transform: scale(0.95);
+  background-color: theme('colors.punk.700');
+}
+
+@media (min-width: 768px) {
+  .punk-button:hover {
+    background-color: theme('colors.punk.700');
+    transform: scale(1.05);
+  }
+}
+
+.metal-button {
+  @apply pixel-button;
+  background: var(--pixel-purple);
+  min-height: 44px;
+}
+
+.metal-button:active {
+  transform: scale(0.95);
+  background-color: theme('colors.metal.900');
+}
+
+.card {
+  @apply pixel-card;
+}
+
+.card:active {
+  border-color: theme('colors.punk.500');
+}
+
+@media (min-width: 768px) {
+  .card:hover {
+    border-color: theme('colors.punk.500');
+  }
+}
+
+.safe-area-container {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+.mobile-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding-bottom: env(safe-area-inset-bottom);
+  background-color: theme('colors.metal.950');
+  border-top: 1px solid theme('colors.metal.800');
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  height: 64px;
+}
+
+/* Animations */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+/* Tutorial highlighting */
+.tutorial-highlight {
+  position: relative;
+  z-index: 60;
+  outline: 3px solid theme('colors.punk.600');
+  outline-offset: 4px;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    outline-color: theme('colors.punk.600');
+  }
+  50% {
+    outline-color: theme('colors.punk.400');
+  }
+}
