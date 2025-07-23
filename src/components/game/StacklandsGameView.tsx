@@ -3,6 +3,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Band, Venue, Show, GamePhase, VenueType } from '@game/types';
 import { useGameStore } from '@stores/gameStore';
 import { StacklandsGameBoard } from './StacklandsGameBoard';
+import { SpatialBookingInterface } from './SpatialBookingInterface';
+import { SimpleSpatialBooking } from './SimpleSpatialBooking';
+import { CompactSpatialBooking } from './CompactSpatialBooking';
+import { MapBasedBooking } from './MapBasedBooking';
+import { CleanBookingInterface } from './CleanBookingInterface';
 import { AnimatedShowResults } from './AnimatedShowResults';
 import { GameOverScreen } from './GameOverScreen';
 import { FactionDisplay } from './FactionDisplay';
@@ -14,6 +19,8 @@ import { StressReliefModal } from './StressReliefModal';
 import { StacklandsTutorial } from '@components/tutorial/StacklandsTutorial';
 import { SynergyDiscoveryModal } from './SynergyDiscoveryModal';
 import { SynergyCollectionModal } from './SynergyCollectionModal';
+import { ChainReactionVisualizer } from './ChainReactionVisualizer';
+import { SynergyMasteryPanel } from './SynergyMasteryPanel';
 import { bandGenerator } from '@game/mechanics/BandGenerator';
 import { showExecutor } from '@game/mechanics/ShowExecutor';
 import { bookingSystem } from '@game/mechanics/BookingSystem';
@@ -46,6 +53,8 @@ export const StacklandsGameView: React.FC = () => {
   const [currentRandomEvent, setCurrentRandomEvent] = useState<RandomEvent | null>(null);
   const [synergyNotifications, setSynergyNotifications] = useState<any[]>([]);
   const [showSynergyCollection, setShowSynergyCollection] = useState(false);
+  const [activeChainReaction, setActiveChainReaction] = useState<any>(null);
+  const [showMasteryPanel, setShowMasteryPanel] = useState(false);
   
   // Store
   const { 
@@ -359,7 +368,22 @@ export const StacklandsGameView: React.FC = () => {
         
         // Apply synergy effects to results
         const activeSynergies = discoveries.map(d => d.combo);
-        const modifiedResult = synergyDiscoverySystem.applySynergyEffects(result, activeSynergies);
+        const modifiedResult = synergyDiscoverySystem.applySynergyEffects(
+          result, 
+          activeSynergies,
+          bandsInShow,
+          venue,
+          equipment
+        );
+        
+        // Check for chain reactions
+        if (modifiedResult.chainReactions && modifiedResult.chainReactions.length > 0) {
+          // Show the most impressive chain
+          const bestChain = modifiedResult.chainReactions.reduce((best, chain) => 
+            chain.totalMultiplier > (best?.totalMultiplier || 0) ? chain : best
+          );
+          setActiveChainReaction(bestChain);
+        }
         
         // Get show outcome details
         const incidents = modifiedResult.incidentOccurred ? [{
@@ -602,9 +626,11 @@ export const StacklandsGameView: React.FC = () => {
   }, [money, reputation, currentTurn, totalStats, fans]);
 
   return (
-    <div className="relative min-h-screen">
-      {/* HUD Overlay */}
-      <div className="fixed top-0 left-0 right-0 z-40 p-4">
+    <>
+      <div className="relative min-h-screen">
+        {/* HUD Overlay - Hide during spatial booking */}
+        {phase !== GamePhase.PLANNING && (
+        <div className="fixed top-0 left-0 right-0 z-40 p-4">
         <div className="glass-panel p-3">
           <div className="flex justify-between items-center">
             <div>
@@ -697,13 +723,25 @@ export const StacklandsGameView: React.FC = () => {
             >
               <span className="pixel-text pixel-text-xs">⚡ SYNERGIES</span>
             </button>
+            <button
+              onClick={() => {
+                setShowMasteryPanel(true);
+                haptics.light();
+                audio.play('click');
+              }}
+              className="flex-1 pixel-button p-2"
+              style={{ backgroundColor: 'var(--pixel-gold)' }}
+            >
+              <span className="pixel-text pixel-text-xs">⭐ MASTERY</span>
+            </button>
           </div>
           
         </div>
       </div>
+      )}
 
-      {/* Execute Shows Button */}
-      {bookedShows.size > 0 && phase === GamePhase.PLANNING && (
+      {/* Execute Shows Button - Hidden, handled by CompactSpatialBooking */}
+      {false && bookedShows.size > 0 && phase === GamePhase.PLANNING && (
         <motion.div
           initial={{ y: 50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -724,21 +762,32 @@ export const StacklandsGameView: React.FC = () => {
         </motion.div>
       )}
 
-      {/* Faction Display */}
+      {/* Faction Display - Hide during spatial booking */}
+      {phase !== GamePhase.PLANNING && (
       <div className="fixed bottom-4 left-4 z-40">
         <FactionDisplay />
       </div>
+      )}
 
       {/* Game Board */}
-      <StacklandsGameBoard
-        bands={availableBands}
-        venues={venues}
-        onBookShow={handleBookShow}
-        onBookMultiBandShow={handleBookMultiBandShow}
-        phase={phase}
-        turn={currentTurn}
-        reputation={reputation}
-        onEventChoice={(eventCard, choiceId) => {
+      {phase === GamePhase.PLANNING ? (
+        <CleanBookingInterface
+          bands={availableBands}
+          venues={venues}
+          onBookShow={handleBookMultiBandShow}
+          phase={phase}
+          turn={currentTurn}
+        />
+      ) : (
+        <StacklandsGameBoard
+          bands={availableBands}
+          venues={venues}
+          onBookShow={handleBookShow}
+          onBookMultiBandShow={handleBookMultiBandShow}
+          phase={phase}
+          turn={currentTurn}
+          reputation={reputation}
+          onEventChoice={(eventCard, choiceId) => {
           const gameState = {
             turn: currentTurn,
             money,
@@ -772,7 +821,12 @@ export const StacklandsGameView: React.FC = () => {
           audio.play('success');
         }}
       />
-
+      )}
+      
+      </div>
+      
+      {/* All Modals Outside Relative Container */}
+      
       {/* Show Results Modal */}
       <AnimatePresence>
         {showResults && (
@@ -905,6 +959,20 @@ export const StacklandsGameView: React.FC = () => {
         isOpen={showSynergyCollection}
         onClose={() => setShowSynergyCollection(false)}
       />
-    </div>
+      
+      {/* Chain Reaction Visualizer */}
+      {activeChainReaction && (
+        <ChainReactionVisualizer
+          chain={activeChainReaction}
+          onComplete={() => setActiveChainReaction(null)}
+        />
+      )}
+      
+      {/* Synergy Mastery Panel */}
+      <SynergyMasteryPanel
+        isOpen={showMasteryPanel}
+        onClose={() => setShowMasteryPanel(false)}
+      />
+    </>
   );
 };

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { synergyDiscoverySystem } from '@game/mechanics/SynergyDiscoverySystem';
+import { synergyMasterySystem } from '@game/mechanics/SynergyMasterySystem';
 import { haptics } from '@utils/mobile';
 import { audio } from '@utils/audio';
 
@@ -14,6 +15,7 @@ export const SynergyCollectionModal: React.FC<SynergyCollectionModalProps> = ({
   onClose
 }) => {
   const [selectedRarity, setSelectedRarity] = useState<string>('all');
+  const [showMasteryPanel, setShowMasteryPanel] = useState(false);
   
   const discovered = synergyDiscoverySystem.getDiscoveredCombos();
   const progress = synergyDiscoverySystem.getComboProgress();

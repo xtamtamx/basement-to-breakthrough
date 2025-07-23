@@ -1,30 +1,14 @@
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { MobileLayout, MobileHeader, NavItem } from '@components/ui';
-import { BandCard, VenueList } from '@components/game';
-import { UnifiedGameView } from '@components/game/UnifiedGameView';
-import { StacklandsGameView } from '@components/game/StacklandsGameView';
-import { StacklandsGameViewClean } from '@components/game/StacklandsGameViewClean';
-import { SpatialBookingDemo } from '@components/game/SpatialBookingDemo';
-import { MainGameView } from '@components/game/MainGameView';
-import { MainMenu } from '@components/menu/MainMenu';
-import { CleanMainMenu } from '@components/menu/CleanMainMenu';
-import { SimpleMainMenu } from '@components/menu/SimpleMainMenu';
-import { SimpleHybridLayout } from '@components/layouts';
-import { Band, Venue, Genre, VenueType, TraitType } from '@game/types';
+import React from 'react';
+import { SpatialBookingInterface } from './SpatialBookingInterface';
+import { Band, Venue, Genre, VenueType, TraitType, GamePhase } from '@game/types';
 import { useGameStore } from '@stores/gameStore';
-import { PerformanceDisplay } from '@components/debug/PerformanceDisplay';
-import { SettingsModal } from '@components/ui/SettingsModal';
-import { SimpleTutorial } from '@components/tutorial/SimpleTutorial';
-import { RunConfig, runManager } from '@game/mechanics/RunManager';
-import { metaProgressionManager } from '@game/mechanics/MetaProgressionManager';
 import { haptics } from '@utils/mobile';
 import { audio } from '@utils/audio';
 
-// Demo data
+// Demo data for testing the spatial interface
 const demoBands: Band[] = [
   {
-    id: '1',
+    id: 'demo-1',
     name: 'Basement Dwellers',
     isRealArtist: false,
     genre: Genre.PUNK,
@@ -42,7 +26,7 @@ const demoBands: Band[] = [
     formedYear: 2021,
   },
   {
-    id: '2',
+    id: 'demo-2',
     name: 'Death Magnetic',
     isRealArtist: true,
     artistId: 'real-1',
@@ -65,7 +49,7 @@ const demoBands: Band[] = [
     },
   },
   {
-    id: '3',
+    id: 'demo-3',
     name: 'Riot Grrrl Revival',
     isRealArtist: false,
     genre: Genre.PUNK,
@@ -83,7 +67,7 @@ const demoBands: Band[] = [
     formedYear: 2022,
   },
   {
-    id: '4',
+    id: 'demo-4',
     name: 'Blackened Skies',
     isRealArtist: false,
     genre: Genre.METAL,
@@ -99,24 +83,6 @@ const demoBands: Band[] = [
     technicalRequirements: [],
     hometown: 'Oslo, Norway',
     formedYear: 2019,
-  },
-  {
-    id: '5',
-    name: 'The Mosh Pit Kids',
-    isRealArtist: false,
-    genre: Genre.PUNK,
-    subgenres: ['hardcore', 'youth crew'],
-    popularity: 55,
-    authenticity: 70,
-    energy: 100,
-    technicalSkill: 65,
-    traits: [
-      { id: 't9', name: 'Circle Pit Masters', description: 'Gets the crowd moving', type: TraitType.PERFORMANCE, modifier: { energy: 15 } },
-      { id: 't10', name: 'Straight Edge', description: 'No drugs or alcohol', type: TraitType.PERSONALITY, modifier: {} },
-    ],
-    technicalRequirements: [],
-    hometown: 'Boston, MA',
-    formedYear: 2020,
   },
 ];
 
@@ -193,69 +159,94 @@ const demoVenues: Venue[] = [
     isPermanent: true,
     bookingDifficulty: 8,
   },
+  {
+    id: 'v5',
+    name: 'DIY Haven',
+    type: VenueType.DIY_SPACE,
+    capacity: 60,
+    acoustics: 55,
+    authenticity: 95,
+    atmosphere: 88,
+    modifiers: [],
+    location: { id: 'dist1', name: 'Eastside', sceneStrength: 80, gentrificationLevel: 30, policePresence: 20, rentMultiplier: 1 },
+    rent: 50,
+    equipment: [],
+    allowsAllAges: true,
+    hasBar: false,
+    hasSecurity: false,
+    isPermanent: true,
+    bookingDifficulty: 3,
+  },
+  {
+    id: 'v6',
+    name: 'The Pit',
+    type: VenueType.PUNK_CLUB,
+    capacity: 120,
+    acoustics: 65,
+    authenticity: 80,
+    atmosphere: 85,
+    modifiers: [],
+    location: { id: 'dist3', name: 'Industrial', sceneStrength: 70, gentrificationLevel: 20, policePresence: 60, rentMultiplier: 0.8 },
+    rent: 250,
+    equipment: [],
+    allowsAllAges: false,
+    hasBar: true,
+    hasSecurity: true,
+    isPermanent: true,
+    bookingDifficulty: 5,
+  },
 ];
 
-function App() {
-  const [showSettings, setShowSettings] = useState(false);
-  const [showTutorial, setShowTutorial] = useState(!localStorage.getItem('tutorialCompleted'));
-  const [gameStarted, setGameStarted] = useState(false);
-  const [currentRun, setCurrentRun] = useState<RunConfig | null>(null);
-  const [showMainMenu, setShowMainMenu] = useState(true);
-  const [showSpatialDemo, setShowSpatialDemo] = useState(false);
+export const SpatialBookingDemo: React.FC = () => {
+  const { addMoney, money } = useGameStore();
   
-  const { money, reputation, fans, resetGame } = useGameStore();
-  
-  const handleStartGame = (runConfig?: RunConfig) => {
-    if (runConfig) {
-      // Start a new run with selected config
-      const run = runManager.startRun(runConfig.id);
-      setCurrentRun(runConfig);
+  const handleBookShow = (bands: Band[], venue: Venue) => {
+    console.log('Booking show:', { bands, venue });
+    
+    // Check if can afford
+    if (money >= venue.rent) {
+      addMoney(-venue.rent);
+      haptics.success();
+      audio.play('success');
       
-      // Apply meta progression bonuses
-      const bonuses = metaProgressionManager.getRunStartBonuses();
-      const store = useGameStore.getState();
-      
-      // Set starting resources with bonuses
-      store.addMoney(-store.money + runConfig.startingMoney + bonuses.startingMoney);
-      store.addReputation(-store.reputation + runConfig.startingReputation + bonuses.startingReputation);
-      store.addConnections(-store.connections + runConfig.startingConnections);
+      // Log the booking for demo purposes
+      console.log(`Booked ${bands.map(b => b.name).join(', ')} at ${venue.name}`);
+      console.log(`Paid $${venue.rent} rent`);
     } else {
-      // Quick play - use classic run
-      const classicConfig = runManager.getRunConfigs().find(r => r.id === 'classic');
-      if (classicConfig) {
-        handleStartGame(classicConfig);
-        return;
-      }
+      haptics.error();
+      audio.play('error');
+      console.log('Not enough money!');
     }
-    
-    setShowMainMenu(false);
-    setGameStarted(true);
-    haptics.success();
-    audio.play('success');
   };
-
-  if (showMainMenu) {
-    return <SimpleMainMenu onStartGame={handleStartGame} />;
-  }
-
+  
   return (
-    <>
-      <MainGameView />
-    
-    {/* Settings Modal */}
-    <SettingsModal
-      isOpen={showSettings}
-      onClose={() => setShowSettings(false)}
-    />
-    
-    {/* Tutorial */}
-    {showTutorial && gameStarted && (
-      <SimpleTutorial
-        onComplete={() => setShowTutorial(false)}
+    <div className="fixed inset-0 bg-black">
+      <SpatialBookingInterface
+        bands={demoBands}
+        venues={demoVenues}
+        onBookShow={handleBookShow}
+        phase={GamePhase.PLANNING}
+        turn={1}
       />
-    )}
-    </>
+      
+      {/* Demo Controls */}
+      <div className="absolute bottom-4 right-4 glass-panel p-3 z-50">
+        <h3 className="pixel-text pixel-text-sm mb-2" style={{ color: 'var(--pixel-yellow)' }}>
+          DEMO CONTROLS
+        </h3>
+        <button
+          className="pixel-button w-full mb-2"
+          onClick={() => {
+            addMoney(500);
+            haptics.light();
+          }}
+        >
+          Add $500
+        </button>
+        <p className="pixel-text pixel-text-xs" style={{ color: 'var(--pixel-gray)' }}>
+          Current: ${money}
+        </p>
+      </div>
+    </div>
   );
-}
-
-export default App;
+};

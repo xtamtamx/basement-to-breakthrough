@@ -1,6 +1,9 @@
 import { Band, Venue, Equipment, Show, Genre, VenueType, TraitType } from '@game/types';
 import { haptics } from '@utils/mobile';
 import { audio } from '@utils/audio';
+import { achievementSynergySystem } from './AchievementSynergySystem';
+import { synergyChainSystem, ChainReaction } from './SynergyChainSystem';
+import { synergyMasterySystem } from './SynergyMasterySystem';
 
 // Types for the discovery system
 export interface SynergyCombo {
@@ -270,7 +273,29 @@ class SynergyDiscoverySystem {
       }
     }
     
-    return notifications;
+    // Check achievement synergies
+    const achievementSynergies = achievementSynergySystem.checkAchievementSynergies(bands, venue);
+    achievementSynergies.forEach(combo => {
+      notifications.push({
+        combo,
+        firstTime: false, // Achievement synergies are pre-unlocked
+        bonusReward: undefined
+      });
+    });
+    
+    // Apply mastery enhancements to discovered synergies
+    const enhancedNotifications = notifications.map(notification => {
+      const masteredVersion = synergyMasterySystem.getMasteredSynergy(notification.combo);
+      if (masteredVersion) {
+        return {
+          ...notification,
+          combo: masteredVersion
+        };
+      }
+      return notification;
+    });
+    
+    return enhancedNotifications;
   }
   
   private buildContext(show: Show, bands: Band[], venue: Venue, equipment: Equipment[]) {
@@ -366,9 +391,31 @@ class SynergyDiscoverySystem {
   }
   
   // Apply synergy effects to show results
-  applySynergyEffects(baseResults: any, synergies: SynergyCombo[]): any {
+  applySynergyEffects(baseResults: any, synergies: SynergyCombo[], bands?: Band[], venue?: Venue, equipment?: Equipment[]): any {
     let modifiedResults = { ...baseResults };
     
+    // Build current effects map for chain checking
+    const currentEffects = new Map<string, number>();
+    for (const synergy of synergies) {
+      for (const effect of synergy.effects) {
+        const current = currentEffects.get(effect.type) || 0;
+        currentEffects.set(effect.type, current + effect.value);
+      }
+    }
+    
+    // Check for chain reactions
+    let chains: ChainReaction[] = [];
+    if (bands && venue) {
+      chains = synergyChainSystem.checkForChainReactions(
+        synergies,
+        { bands, venue, equipment: equipment || [], currentEffects }
+      );
+      
+      // Store chains in results for visualization
+      modifiedResults.chainReactions = chains;
+    }
+    
+    // Apply base synergy effects
     for (const synergy of synergies) {
       for (const effect of synergy.effects) {
         switch (effect.type) {
@@ -406,12 +453,51 @@ class SynergyDiscoverySystem {
       }
     }
     
+    // Apply chain multipliers if any chains were triggered
+    if (chains.length > 0) {
+      const chainMultipliedEffects = synergyChainSystem.applyChainMultipliers(currentEffects, chains);
+      
+      // Apply the multiplied effects to results
+      for (const [effectType, value] of chainMultipliedEffects) {
+        switch (effectType) {
+          case 'attendance':
+            modifiedResults.attendance = Math.floor(modifiedResults.attendance * (1 + value / 100));
+            break;
+          case 'reputation':
+            modifiedResults.reputationChange = Math.floor(modifiedResults.reputationChange * (1 + value / 100));
+            break;
+          case 'money':
+          case 'revenue':
+            modifiedResults.revenue = Math.floor(modifiedResults.revenue * (1 + value / 100));
+            break;
+          case 'stress_reduction':
+            modifiedResults.stressChange = (modifiedResults.stressChange || 0) - value;
+            break;
+        }
+      }
+      
+      // Add chain bonus to score
+      const maxChainMultiplier = Math.max(...chains.map(c => c.totalMultiplier));
+      modifiedResults.chainBonus = Math.floor(1000 * (maxChainMultiplier - 1));
+    }
+    
+    // Record synergy usage for mastery
+    const scoreGenerated = modifiedResults.revenue + (modifiedResults.reputationChange * 10) + (modifiedResults.attendance * 5);
+    for (const synergy of synergies) {
+      synergyMasterySystem.recordSynergyUse(synergy.id, scoreGenerated);
+    }
+    
     return modifiedResults;
   }
   
   // Get discovered combos for UI
   getDiscoveredCombos(): SynergyCombo[] {
     return Array.from(this.combos.values()).filter(combo => combo.discovered);
+  }
+  
+  // Get synergy by ID
+  getSynergyById(id: string): SynergyCombo | null {
+    return this.combos.get(id) || null;
   }
   
   // Get combo progress

@@ -90,15 +90,19 @@ export interface Venue {
   authenticity: number; // 0-100, Basement = high, corporate = low
   atmosphere: number; // 0-100
   modifiers: VenueModifier[];
+  traits: VenueTrait[];
   location: District;
   rent: number;
   equipment: Equipment[];
   allowsAllAges: boolean;
   hasBar: boolean; // Affects revenue model
   hasSecurity: boolean;
+  hasStage?: boolean; // Affects performance quality
   isPermanent: boolean; // vs popup/temporary
   bookingDifficulty: number; // 1-10
   imageUrl?: string;
+  gridPosition?: { x: number; y: number }; // Position on city grid
+  upgrades?: VenueUpgrade[]; // List of upgrades applied
 }
 
 export enum VenueType {
@@ -137,6 +141,60 @@ export interface ModifierEffect {
   condition?: string;
 }
 
+// ============= Venue Traits & Upgrades =============
+export interface VenueTrait {
+  id: string;
+  name: string;
+  description: string;
+  type: VenueTraitType;
+  modifier?: {
+    capacity?: number;
+    acoustics?: number;
+    authenticity?: number;
+    atmosphere?: number;
+    revenue?: number;
+    reputation?: number;
+  };
+  synergyTags?: string[]; // Tags that interact with band traits
+}
+
+export enum VenueTraitType {
+  ATMOSPHERE = 'ATMOSPHERE',
+  TECHNICAL = 'TECHNICAL',
+  SOCIAL = 'SOCIAL',
+  LEGENDARY = 'LEGENDARY',
+}
+
+export interface VenueUpgrade {
+  id: string;
+  name: string;
+  description: string;
+  cost: number;
+  type: VenueUpgradeType;
+  requirements?: {
+    minCapacity?: number;
+    minReputation?: number;
+    venueTypes?: VenueType[];
+  };
+  effects: {
+    capacity?: number;
+    acoustics?: number;
+    authenticity?: number;
+    atmosphere?: number;
+    rent?: number;
+    unlockTrait?: string; // Trait ID to unlock
+  };
+  tier: number; // 1-3
+}
+
+export enum VenueUpgradeType {
+  SOUND_SYSTEM = 'SOUND_SYSTEM',
+  CAPACITY = 'CAPACITY',
+  AMENITIES = 'AMENITIES',
+  SECURITY = 'SECURITY',
+  SPECIAL = 'SPECIAL',
+}
+
 export interface District {
   id: string;
   name: string;
@@ -144,6 +202,8 @@ export interface District {
   gentrificationLevel: number; // 0-100
   policePresence: number; // 0-100
   rentMultiplier: number;
+  bounds: { x: number; y: number; width: number; height: number }; // Grid bounds
+  color: string; // Visual identifier
 }
 
 export interface Equipment {
@@ -341,6 +401,10 @@ export interface ShowResult {
   };
   incidents: Incident[];
   isSuccess: boolean;
+  venueSynergies?: {
+    name: string;
+    description: string;
+  }[];
 }
 
 export interface Incident {
@@ -539,4 +603,36 @@ export enum ContentUsageLevel {
   STANDARD = 'STANDARD', // + Photos, bio, music samples
   PREMIUM = 'PREMIUM', // + Custom events, narrative content
   COLLABORATION = 'COLLABORATION', // + Input on mechanics, scene representation
+}
+
+// ============= Walker System Types =============
+export interface Walker {
+  id: string;
+  type: WalkerType;
+  name: string;
+  x: number; // Current grid position
+  y: number;
+  targetX?: number; // Destination
+  targetY?: number;
+  path: { x: number; y: number }[]; // Path to follow
+  speed: number; // Grid cells per second
+  state: WalkerState;
+  data?: any; // Type-specific data (band info, equipment, etc)
+}
+
+export enum WalkerType {
+  MUSICIAN = 'MUSICIAN',
+  FAN = 'FAN',
+  PROMOTER = 'PROMOTER',
+  EQUIPMENT_TECH = 'EQUIPMENT_TECH',
+  POLICE = 'POLICE',
+  GENTRIFIER = 'GENTRIFIER'
+}
+
+export enum WalkerState {
+  IDLE = 'IDLE',
+  WALKING = 'WALKING',
+  AT_VENUE = 'AT_VENUE',
+  PERFORMING = 'PERFORMING',
+  LEAVING = 'LEAVING'
 }

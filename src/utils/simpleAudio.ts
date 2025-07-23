@@ -77,6 +77,22 @@ class SimpleAudioManager {
     this.playTone(400, 0.1, 'triangle');
   }
 
+  pickup() {
+    this.playTone(800, 0.05, 'sine');
+  }
+
+  drop() {
+    this.playTone(400, 0.08, 'sine');
+  }
+
+  achievement() {
+    // Achievement sound - triumphant arpeggio
+    this.playTone(523.25, 0.15); // C5
+    setTimeout(() => this.playTone(659.25, 0.15), 50); // E5
+    setTimeout(() => this.playTone(783.99, 0.15), 100); // G5
+    setTimeout(() => this.playTone(1046.50, 0.3), 150); // C6
+  }
+
   play(soundName: string, options?: any) {
     // Map old API to new methods
     switch(soundName) {
@@ -86,6 +102,9 @@ class SimpleAudioManager {
       case 'coin': this.coin(); break;
       case 'cardPickup': this.cardPickup(); break;
       case 'cardDrop': this.cardDrop(); break;
+      case 'pickup': this.pickup(); break;
+      case 'drop': this.drop(); break;
+      case 'achievement': this.achievement(); break;
       default: this.tap(); // Default sound
     }
   }

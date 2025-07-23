@@ -2,25 +2,32 @@
 
 /* Import pixel fonts */
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@400;700&display=swap');
 
 /* Base pixel art styles */
 :root {
-  /* SNES-inspired color palette */
-  --pixel-black: #0c0a0f;
-  --pixel-dark-purple: #2e1f3e;
-  --pixel-purple: #573b67;
-  --pixel-magenta: #94216a;
-  --pixel-pink: #e43b7a;
-  --pixel-red: #f25a5a;
-  --pixel-orange: #ff8142;
-  --pixel-yellow: #ffee83;
-  --pixel-green: #50d96e;
-  --pixel-cyan: #4ddfd4;
-  --pixel-blue: #4a9fff;
-  --pixel-dark-blue: #2e53a1;
-  --pixel-white: #f4f4f4;
-  --pixel-gray: #8b8b8b;
-  --pixel-dark-gray: #4a4a4a;
+  /* Hardcore punk color palette */
+  --pixel-black: #0F0F0F;
+  --pixel-dark-purple: #5A189A;
+  --pixel-purple: #9D4EDD;
+  --pixel-magenta: #F72585;
+  --pixel-pink: #FF006E;
+  --pixel-red: #FF006E;
+  --pixel-orange: #FB5607;
+  --pixel-yellow: #FFBE0B;
+  --pixel-green: #3A86FF;
+  --pixel-cyan: #00F5FF;
+  --pixel-blue: #4361EE;
+  --pixel-dark-blue: #3F37C9;
+  --pixel-white: #E8E8E8;
+  --pixel-gray: #606060;
+  --pixel-dark-gray: #2A2A2A;
+  
+  /* Punk-specific colors */
+  --punk-neon-purple: #C77DFF;
+  --punk-neon-cyan: #00F5FF;
+  --punk-void: #050505;
+  --punk-concrete: #1A1A1A;
 
   /* UI depths */
   --pixel-shadow: 2px;
@@ -445,3 +452,138 @@ body {
 .pixel-corners::after { top: -2px; right: -2px; border-left: 0; border-bottom: 0; }
 .pixel-corners > span::before { bottom: -2px; left: -2px; border-right: 0; border-top: 0; }
 .pixel-corners > span::after { bottom: -2px; right: -2px; border-left: 0; border-top: 0; }
+
+/* Hardcore Punk Aesthetic Additions */
+
+/* Polaroid-style band cards */
+.punk-polaroid {
+  background: #F5F5F5;
+  padding: 8px 8px 40px 8px;
+  box-shadow: 
+    0 0 0 1px rgba(0,0,0,0.1),
+    0 4px 8px rgba(0,0,0,0.3),
+    0 8px 16px rgba(0,0,0,0.2);
+  transform: rotate(-2deg);
+  transition: transform 0.2s ease;
+}
+
+.punk-polaroid:hover {
+  transform: rotate(0deg) scale(1.05);
+}
+
+.punk-polaroid-image {
+  background: linear-gradient(135deg, var(--punk-void) 0%, var(--pixel-dark-gray) 100%);
+  width: 100%;
+  height: 120px;
+  position: relative;
+  overflow: hidden;
+}
+
+.punk-polaroid-image::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: 
+    repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(157, 78, 221, 0.1) 2px, rgba(157, 78, 221, 0.1) 4px),
+    repeating-linear-gradient(-45deg, transparent, transparent 2px, rgba(0, 245, 255, 0.1) 2px, rgba(0, 245, 255, 0.1) 4px);
+  mix-blend-mode: overlay;
+}
+
+/* Neon glow effects */
+.punk-neon-glow {
+  text-shadow: 
+    0 0 5px var(--punk-neon-purple),
+    0 0 10px var(--punk-neon-purple),
+    0 0 15px var(--punk-neon-purple),
+    0 0 20px var(--punk-neon-purple);
+}
+
+.punk-neon-cyan {
+  text-shadow: 
+    0 0 5px var(--punk-neon-cyan),
+    0 0 10px var(--punk-neon-cyan),
+    0 0 15px var(--punk-neon-cyan),
+    0 0 20px var(--punk-neon-cyan);
+}
+
+/* Grunge texture overlay */
+.punk-grunge {
+  position: relative;
+}
+
+.punk-grunge::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: 
+    repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px),
+    repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+  pointer-events: none;
+}
+
+/* Underground venue card style */
+.punk-venue-card {
+  background: var(--punk-concrete);
+  border: 2px solid var(--punk-void);
+  position: relative;
+  overflow: hidden;
+}
+
+.punk-venue-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 30%, rgba(157, 78, 221, 0.1) 100%);
+  pointer-events: none;
+}
+
+/* Stencil text effect */
+.punk-stencil {
+  font-family: 'Press Start 2P', monospace;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  background: linear-gradient(180deg, var(--punk-white) 0%, var(--pixel-gray) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Photocopied flyer effect */
+.punk-flyer {
+  background: #E8E8E8;
+  background-image: 
+    repeating-linear-gradient(0deg, #E8E8E8, #E8E8E8 1px, #D8D8D8 1px, #D8D8D8 2px),
+    radial-gradient(circle at 20% 50%, rgba(0,0,0,0.05) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(0,0,0,0.05) 0%, transparent 50%);
+  border: 1px solid #333;
+  transform: rotate(1deg);
+}
+
+/* Xerox distortion */
+.punk-xerox {
+  filter: contrast(1.5) brightness(1.1);
+  position: relative;
+}
+
+.punk-xerox::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.1) 2px, rgba(0,0,0,0.1) 3px);
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+
+/* Punk typography */
+.punk-headline {
+  font-family: 'Bebas Neue', 'Impact', sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+}
+
+.punk-body {
+  font-family: 'Oswald', sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+}
