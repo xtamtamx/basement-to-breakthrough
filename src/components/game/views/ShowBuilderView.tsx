@@ -5,8 +5,9 @@ import { Band, Venue, Show } from '@game/types';
 import { haptics } from '@utils/mobile';
 import { Card } from '@components/ui/Card';
 import { Button } from '@components/ui/Button';
+import { showPromotionSystem } from '@game/mechanics/ShowPromotionSystem';
 
-type BookingStep = 'bands' | 'venue' | 'confirm';
+type BookingStep = 'bands' | 'venue' | 'timing' | 'confirm';
 
 export const ShowBuilderView: React.FC = () => {
   const { 
@@ -22,6 +23,7 @@ export const ShowBuilderView: React.FC = () => {
   const [selectedBandIds, setSelectedBandIds] = useState<string[]>([]);
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
   const [ticketPrice, setTicketPrice] = useState(10);
+  const [turnsInAdvance, setTurnsInAdvance] = useState(3);
 
   const handleBandToggle = (bandId: string) => {
     setSelectedBandIds(prev => {
@@ -69,16 +71,23 @@ export const ShowBuilderView: React.FC = () => {
       } : undefined
     };
 
-    scheduleShow(newShow);
-    useGameStore.getState().addMoney(-showCost);
-    
-    // Reset
-    setSelectedBandIds([]);
-    setSelectedVenue(null);
-    setCurrentStep('bands');
-    setTicketPrice(10);
-    
-    haptics.success();
+    // Schedule the show with promotion system
+    const scheduledShow = showPromotionSystem.scheduleShow(newShow, turnsInAdvance);
+    if (scheduledShow) {
+      // Don't add to game store's scheduledShows - let the promotion system handle it
+      useGameStore.getState().addMoney(-showCost);
+      
+      // Reset
+      setSelectedBandIds([]);
+      setSelectedVenue(null);
+      setCurrentStep('bands');
+      setTicketPrice(10);
+      setTurnsInAdvance(3);
+      
+      haptics.success();
+    } else {
+      haptics.error();
+    }
   };
 
   const showCost = selectedVenue ? selectedVenue.rent + (selectedBandIds.length * 50) : 0;
@@ -91,6 +100,8 @@ export const ShowBuilderView: React.FC = () => {
         <div className={`progress-dot ${currentStep === 'bands' ? 'active' : selectedBandIds.length > 0 ? 'done' : ''}`} />
         <div className="progress-line" />
         <div className={`progress-dot ${currentStep === 'venue' ? 'active' : selectedVenue ? 'done' : ''}`} />
+        <div className="progress-line" />
+        <div className={`progress-dot ${currentStep === 'timing' ? 'active' : turnsInAdvance ? 'done' : ''}`} />
         <div className="progress-line" />
         <div className={`progress-dot ${currentStep === 'confirm' ? 'active' : ''}`} />
       </div>
@@ -208,8 +219,77 @@ export const ShowBuilderView: React.FC = () => {
               <Button
                 variant="primary"
                 size="md"
-                onClick={() => setCurrentStep('confirm')}
+                onClick={() => setCurrentStep('timing')}
                 disabled={!selectedVenue}
+                fullWidth
+              >
+                Set Timing →
+              </Button>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Step 3: Timing */}
+        {currentStep === 'timing' && (
+          <motion.div
+            key="timing"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="step-container"
+          >
+            <div className="compact-header">
+              <span className="header-text">Schedule Show</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setCurrentStep('venue')}
+              >
+                ← Back
+              </Button>
+            </div>
+
+            <Card variant="punk" className="timing-card">
+              <h3>When should the show happen?</h3>
+              <p className="timing-description">
+                Schedule in advance to have time for promotion. Shows booked further out can build more hype!
+              </p>
+              
+              <div className="timing-options">
+                {[1, 2, 3, 4, 5].map(turns => (
+                  <motion.div
+                    key={turns}
+                    className={`timing-option ${turnsInAdvance === turns ? 'selected' : ''}`}
+                    onClick={() => setTurnsInAdvance(turns)}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <div className="timing-value">{turns}</div>
+                    <div className="timing-label">
+                      {turns === 1 ? 'Next Turn' : `In ${turns} Turns`}
+                    </div>
+                    <div className="timing-detail">
+                      {turns === 1 && 'Rush job - no time to promote'}
+                      {turns === 2 && 'Minimal promotion time'}
+                      {turns === 3 && 'Standard booking'}
+                      {turns === 4 && 'Good promotion window'}
+                      {turns === 5 && 'Maximum hype potential'}
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+              
+              <div className="promotion-preview">
+                <h4>Promotion Opportunities</h4>
+                <p>You'll have <strong>{turnsInAdvance - 1}</strong> turn{turnsInAdvance > 2 ? 's' : ''} to promote this show</p>
+              </div>
+            </Card>
+
+            <div className="step-actions">
+              <Button
+                variant="primary"
+                size="md"
+                onClick={() => setCurrentStep('confirm')}
                 fullWidth
               >
                 Review Booking →
@@ -218,7 +298,7 @@ export const ShowBuilderView: React.FC = () => {
           </motion.div>
         )}
 
-        {/* Step 3: Confirmation */}
+        {/* Step 4: Confirmation */}
         {currentStep === 'confirm' && (
           <motion.div
             key="confirm"
@@ -232,7 +312,7 @@ export const ShowBuilderView: React.FC = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setCurrentStep('venue')}
+                onClick={() => setCurrentStep('timing')}
               >
                 ← Back
               </Button>
@@ -259,6 +339,15 @@ export const ShowBuilderView: React.FC = () => {
                 <div className="venue-summary">
                   <span>{selectedVenue?.name}</span>
                   <span className="capacity">Cap: {selectedVenue?.capacity}</span>
+                </div>
+              </div>
+
+              {/* Timing */}
+              <div className="summary-section">
+                <h3>Timing</h3>
+                <div className="timing-summary">
+                  <span>Show in {turnsInAdvance} turn{turnsInAdvance > 1 ? 's' : ''}</span>
+                  <span className="promotion-time">{turnsInAdvance - 1} turn{turnsInAdvance > 2 ? 's' : ''} to promote</span>
                 </div>
               </div>
 
@@ -697,6 +786,126 @@ export const ShowBuilderView: React.FC = () => {
           color: var(--metal-red);
         }
 
+        .timing-card {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+          overflow: hidden;
+          min-height: 0;
+          padding: 20px;
+        }
+
+        .timing-card h3 {
+          margin: 0;
+          font-size: 18px;
+          color: var(--punk-magenta);
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
+
+        .timing-description {
+          color: var(--text-secondary);
+          margin: 0;
+          font-size: 13px;
+        }
+
+        .timing-options {
+          display: grid;
+          grid-template-columns: repeat(5, 1fr);
+          gap: 10px;
+          padding: 0;
+        }
+
+        .timing-option {
+          background: var(--bg-secondary);
+          border: 2px solid var(--border-default);
+          border-radius: 10px;
+          padding: 16px 12px;
+          text-align: center;
+          cursor: pointer;
+          transition: all var(--transition-fast);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          min-height: 100px;
+        }
+
+        .timing-option:hover {
+          border-color: var(--punk-magenta);
+          transform: translateY(-2px);
+          background: var(--bg-hover);
+        }
+
+        .timing-option.selected {
+          border-color: var(--punk-magenta);
+          background: linear-gradient(135deg, rgba(236, 72, 153, 0.1) 0%, transparent 100%);
+          box-shadow: 0 0 20px rgba(236, 72, 153, 0.3);
+        }
+
+        .timing-value {
+          font-size: 28px;
+          font-weight: 900;
+          color: var(--punk-magenta);
+          line-height: 1;
+          text-shadow: 0 0 10px rgba(236, 72, 153, 0.5);
+        }
+
+        .timing-label {
+          font-size: 12px;
+          font-weight: 700;
+          color: var(--text-primary);
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
+
+        .timing-detail {
+          font-size: 11px;
+          color: var(--text-secondary);
+          font-style: italic;
+          line-height: 1.3;
+        }
+
+        .promotion-preview {
+          background: var(--bg-tertiary);
+          padding: 12px;
+          border-radius: 8px;
+          text-align: center;
+          margin-top: auto;
+        }
+
+        .promotion-preview h4 {
+          margin: 0 0 4px;
+          font-size: 12px;
+          color: var(--text-primary);
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
+
+        .promotion-preview p {
+          margin: 0;
+          color: var(--text-secondary);
+          font-size: 12px;
+        }
+
+        .promotion-preview strong {
+          color: var(--punk-magenta);
+        }
+
+        .timing-summary {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        .promotion-time {
+          font-size: 13px;
+          color: var(--text-secondary);
+          font-style: italic;
+        }
+
         @media (max-width: 768px) {
           .show-builder-view {
             padding: 8px;
@@ -719,8 +928,72 @@ export const ShowBuilderView: React.FC = () => {
             grid-template-columns: 1fr;
           }
 
+          .timing-options {
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+          }
+
+          .timing-option {
+            min-height: 80px;
+            padding: 12px 8px;
+          }
+
+          .timing-value {
+            font-size: 24px;
+          }
+
+          .timing-label {
+            font-size: 11px;
+          }
+
           .progress-bar {
             margin-bottom: 8px;
+          }
+          
+          .timing-options {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+          }
+          
+          .timing-option {
+            padding: 16px 12px;
+            min-height: 120px;
+          }
+          
+          .timing-value {
+            font-size: 28px;
+          }
+          
+          .timing-label {
+            font-size: 12px;
+          }
+          
+          .timing-detail {
+            font-size: 10px;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .timing-card {
+            padding: 16px;
+          }
+
+          .timing-options {
+            grid-template-columns: repeat(5, 1fr);
+            gap: 6px;
+          }
+
+          .timing-option {
+            min-height: 70px;
+            padding: 10px 6px;
+          }
+
+          .timing-value {
+            font-size: 20px;
+          }
+
+          .timing-label {
+            font-size: 10px;
           }
         }
       `}</style>

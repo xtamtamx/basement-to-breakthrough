@@ -69,8 +69,8 @@ class RandomEventManager {
     // Common Events
     this.eventPool.push({
       id: 'noise_complaint',
-      name: 'Noise Complaint',
-      description: 'Neighbors are complaining about the noise from last night\'s show.',
+      name: 'Man Who "Used to Be in a Band" Files 37th Noise Complaint This Year',
+      description: 'Local resident Brad Thompson, 42, who played bass "professionally" for three weeks in 2003, has filed another noise complaint. Sources confirm he was seen measuring decibel levels with an app he downloaded specifically for this purpose.',
       type: EventType.CRISIS,
       rarity: EventRarity.COMMON,
       triggerConditions: [
@@ -80,13 +80,13 @@ class RandomEventManager {
       choices: [
         {
           id: 'pay_fine',
-          text: 'Pay the fine ($50)',
+          text: 'Pay the fine ($50) while Brad watches from his window',
           requirements: [{ resource: 'money', amount: 50 }],
           effects: [{ type: 'money', value: -50 }]
         },
         {
           id: 'apologize',
-          text: 'Apologize and promise to keep it down',
+          text: 'Listen to his "glory days" stories for 45 minutes',
           effects: [
             { type: 'stress', value: 10 },
             { type: 'reputation', value: -5 }
@@ -94,7 +94,7 @@ class RandomEventManager {
         },
         {
           id: 'ignore',
-          text: 'Ignore the complaints',
+          text: 'Blast his least favorite subgenre out of spite',
           effects: [{ type: 'reputation', value: -10 }],
           successChance: 0.5
         }
@@ -104,8 +104,8 @@ class RandomEventManager {
     
     this.eventPool.push({
       id: 'equipment_failure',
-      name: 'Equipment Failure',
-      description: 'The PA system is acting up. You need to decide how to handle it.',
+      name: 'PA System Achieves Sentience, Immediately Quits',
+      description: 'The venue\'s 1987 Peavey mixing board has gained consciousness just long enough to realize what it\'s been playing for 35 years. It\'s now refusing to work, citing "irreconcilable creative differences" and demanding hazard pay for exposure to that many Wonderwall covers.',
       type: EventType.CRISIS,
       rarity: EventRarity.COMMON,
       triggerConditions: [
@@ -115,19 +115,19 @@ class RandomEventManager {
       choices: [
         {
           id: 'repair',
-          text: 'Emergency repair ($100)',
+          text: 'Call your "sound guy" (someone\'s roommate) for $100',
           requirements: [{ resource: 'money', amount: 100 }],
           effects: [{ type: 'money', value: -100 }]
         },
         {
           id: 'diy_fix',
-          text: 'Try to fix it yourself',
+          text: 'Hit it repeatedly while yelling "CHECK, CHECK"',
           effects: [{ type: 'stress', value: 15 }],
           successChance: 0.7
         },
         {
           id: 'play_acoustic',
-          text: 'Play an acoustic set instead',
+          text: 'Pretend this was always meant to be an "intimate acoustic experience"',
           effects: [
             { type: 'reputation', value: 5 },
             { type: 'money', value: -30 }
@@ -140,8 +140,8 @@ class RandomEventManager {
     // Uncommon Events
     this.eventPool.push({
       id: 'touring_band',
-      name: 'Touring Band Wants In',
-      description: 'A well-known touring band wants to play a secret show at one of your venues!',
+      name: 'Band With 3,000 Spotify Listeners Demands "Secret Show" at Your Venue',
+      description: 'Moderately Successful Indie Band "Flannel Daddy Issues" wants to play an "intimate secret show" at your venue after their van broke down nearby. Their manager (the guitarist\'s girlfriend) assures you they\'re "basically the next big thing" and mentions their song was featured in a Canadian web series for 4 seconds.',
       type: EventType.OPPORTUNITY,
       rarity: EventRarity.UNCOMMON,
       triggerConditions: [
@@ -152,7 +152,7 @@ class RandomEventManager {
       choices: [
         {
           id: 'book_them',
-          text: 'Book the show!',
+          text: 'Book them and pretend it\'s Coachella-level exclusive',
           effects: [
             { type: 'reputation', value: 15 },
             { type: 'money', value: 200 },
@@ -161,7 +161,7 @@ class RandomEventManager {
         },
         {
           id: 'exclusive_deal',
-          text: 'Negotiate an exclusive deal',
+          text: 'Negotiate for 15% of their kombucha rider',
           requirements: [{ resource: 'connections', amount: 10 }],
           effects: [
             { type: 'reputation', value: 25 },
@@ -171,7 +171,7 @@ class RandomEventManager {
         },
         {
           id: 'pass',
-          text: 'Pass on the opportunity',
+          text: 'Claim you\'re already booked (with literally nothing)',
           effects: [{ type: 'stress', value: -10 }]
         }
       ],
@@ -180,8 +180,8 @@ class RandomEventManager {
     
     this.eventPool.push({
       id: 'venue_raid',
-      name: 'Police Raid!',
-      description: 'The cops are raiding one of your venues during a show!',
+      name: 'Police Confuse Hardcore Show for "Gang Activity," Awkwardness Ensues',
+      description: 'Local PD\'s gang unit has arrived after receiving reports of "coordinated violent movements" and "ritualistic chanting." Officer Johnson is now trying to decode what "ACAB" means while his partner asks if "straight edge" is a new street drug. The K-9 unit is just vibing to the blast beats.',
       type: EventType.CRISIS,
       rarity: EventRarity.UNCOMMON,
       triggerConditions: [
@@ -191,7 +191,7 @@ class RandomEventManager {
       choices: [
         {
           id: 'shut_down',
-          text: 'Shut down the show immediately',
+          text: 'Announce it\'s actually a prayer meeting',
           effects: [
             { type: 'reputation', value: -10 },
             { type: 'money', value: -50 }
@@ -199,14 +199,14 @@ class RandomEventManager {
         },
         {
           id: 'talk_way_out',
-          text: 'Try to talk your way out',
+          text: 'Explain that the mosh pit is "interpretive dance"',
           requirements: [{ resource: 'connections', amount: 15 }],
           effects: [{ type: 'connections', value: -5 }],
           successChance: 0.8
         },
         {
           id: 'run',
-          text: 'Everyone scatter!',
+          text: 'Yell "COPS!" and watch 200 people try to fit through one door',
           effects: [
             { type: 'reputation', value: -20 },
             { type: 'stress', value: 30 }
@@ -219,8 +219,8 @@ class RandomEventManager {
     // Rare Events
     this.eventPool.push({
       id: 'viral_moment',
-      name: 'Viral Video!',
-      description: 'A video from one of your shows just went viral on social media!',
+      name: 'TikTok Teen Films Pit, Becomes Scene\'s Worst Nightmare',
+      description: 'A 16-year-old named Madison has posted a video titled "Giving Scary Punk Boys Makeovers at Underground Show!!!" It now has 2.3 million views. Comments include "why are they so angry lol" and "the one in the Discharge shirt is kinda cute tho." Your venue is tagged as "that place with the scary bathroom."',
       type: EventType.OPPORTUNITY,
       rarity: EventRarity.RARE,
       triggerConditions: [
@@ -231,7 +231,7 @@ class RandomEventManager {
       choices: [
         {
           id: 'embrace_fame',
-          text: 'Embrace the attention',
+          text: 'Lean into it and start selling "Scary Bathroom" merch',
           effects: [
             { type: 'reputation', value: 30 },
             { type: 'money', value: 300 },
@@ -240,7 +240,7 @@ class RandomEventManager {
         },
         {
           id: 'stay_underground',
-          text: 'Try to stay underground',
+          text: 'Change venue name and pretend it never happened',
           effects: [
             { type: 'reputation', value: 10 },
             { type: 'connections', value: 20 }
@@ -252,8 +252,8 @@ class RandomEventManager {
     
     this.eventPool.push({
       id: 'legendary_performance',
-      name: 'Legendary Performance!',
-      description: 'Last night\'s show was absolutely legendary. Word is spreading fast!',
+      name: 'Show So Good, Even the Bartender Put Down Their Phone',
+      description: 'Witnesses report seeing the venue\'s notoriously jaded bartender actually watching the performance instead of scrolling Instagram. One patron claims they saw a single tear roll down the bartender\'s face during the breakdown, though this remains unconfirmed. The bathroom line reportedly stopped moving as people refused to miss any part of the set.',
       type: EventType.OPPORTUNITY,
       rarity: EventRarity.RARE,
       triggerConditions: [
@@ -269,8 +269,8 @@ class RandomEventManager {
     // Legendary Events
     this.eventPool.push({
       id: 'scene_explosion',
-      name: 'Scene Explosion!',
-      description: 'The underground scene is exploding! Major labels and media are taking notice.',
+      name: 'Pitchfork Gives Local Scene 7.3, Everything Immediately Goes to Hell',
+      description: 'A Pitchfork writer who got lost on the way to a craft brewery has stumbled into your venue and written a think piece titled "The Last Real Scene in America (That We Just Discovered)." Property values have increased 400% overnight. Someone is already planning a documentary. Your regular crowd is having an existential crisis in the group chat.',
       type: EventType.OPPORTUNITY,
       rarity: EventRarity.LEGENDARY,
       triggerConditions: [
@@ -282,7 +282,7 @@ class RandomEventManager {
       choices: [
         {
           id: 'sell_out',
-          text: 'Cash in on the hype',
+          text: 'Open a second location in a strip mall',
           effects: [
             { type: 'money', value: 1000 },
             { type: 'reputation', value: -30 }
@@ -290,7 +290,7 @@ class RandomEventManager {
         },
         {
           id: 'protect_scene',
-          text: 'Protect the underground',
+          text: 'Institute a "No Music Journalists" door policy',
           effects: [
             { type: 'reputation', value: 50 },
             { type: 'connections', value: 30 },

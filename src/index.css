@@ -343,6 +343,37 @@ code, pre {
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+/* Resource display states */
+.resource.warning {
+  background: rgba(251, 146, 60, 0.1);
+  border: 1px solid var(--warning-amber);
+}
+
+.resource.warning .resource-icon,
+.resource.warning .resource-value {
+  color: var(--warning-amber);
+}
+
+.resource.danger {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid var(--danger-red);
+  animation: pulse-danger 2s ease-in-out infinite;
+}
+
+.resource.danger .resource-icon,
+.resource.danger .resource-value {
+  color: var(--danger-red);
+}
+
+@keyframes pulse-danger {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
 .noise {
   position: relative;
 }

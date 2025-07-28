@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAudio } from '@utils/audio';
 import { haptics } from '@utils/mobile';
+import { useGameStore } from '@stores/gameStore';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -9,6 +10,7 @@ interface SettingsModalProps {
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   const { enabled, volume, setEnabled, setVolume } = useAudio();
+  const { resetGame, currentRound } = useGameStore();
 
   if (!isOpen) return null;
 
@@ -21,6 +23,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   const toggleSound = () => {
     setEnabled(!enabled);
     haptics.light();
+  };
+
+  const handleAbandonRun = () => {
+    if (confirm(`Are you sure you want to abandon this run? You're on round ${currentRound}.`)) {
+      resetGame();
+      window.location.reload(); // Reload to go back to main menu
+      haptics.success();
+    }
   };
 
   return (
@@ -97,6 +107,20 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
             <p>• Tap stacks to expand them</p>
             <p>• Swipe cards for quick actions</p>
           </div>
+        </div>
+
+        {/* Danger Zone */}
+        <div className="mt-8 pt-8 border-t border-metal-800">
+          <h3 className="font-bold text-sm text-red-400 mb-4">Danger Zone</h3>
+          <button
+            onClick={handleAbandonRun}
+            className="w-full px-4 py-3 bg-red-900/20 border border-red-600 rounded text-red-400 hover:bg-red-900/40 transition-colors font-bold"
+          >
+            Abandon Current Run
+          </button>
+          <p className="text-xs text-metal-500 mt-2 text-center">
+            This will end your current run and return to the main menu
+          </p>
         </div>
 
         <button

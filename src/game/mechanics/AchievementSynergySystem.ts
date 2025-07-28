@@ -1,6 +1,7 @@
 import { Band, Venue, Achievement } from '@game/types';
 import { SynergyCombo, SynergyEffect } from './SynergyDiscoverySystem';
 import { metaProgressionManager } from './MetaProgressionManager';
+import { SATIRICAL_ACHIEVEMENTS, SATIRICAL_SYNERGIES } from '@game/data/satiricalText';
 
 export interface AchievementSynergy extends SynergyCombo {
   requiredAchievement: string;
@@ -18,8 +19,8 @@ class AchievementSynergySystem {
     // Scene Veteran synergies (unlocked by playing many shows)
     this.achievementSynergies.set('scene_veteran_bonus', {
       id: 'scene_veteran_bonus',
-      name: 'Scene Veteran',
-      description: 'Your experience running shows provides consistent bonuses',
+      name: SATIRICAL_SYNERGIES.SCENE_UNITY.name,
+      description: SATIRICAL_SYNERGIES.SCENE_UNITY.description,
       icon: '🎖️',
       rarity: 'uncommon',
       requiredAchievement: 'shows_100',

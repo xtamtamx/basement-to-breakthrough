@@ -22,7 +22,7 @@ export const SynergyView: React.FC = () => {
   };
 
   return (
-    <div style={{
+    <div className="synergy-view-container" style={{
       display: 'flex',
       flexDirection: 'column',
       height: '100%',
@@ -110,7 +110,7 @@ export const SynergyView: React.FC = () => {
 
         {/* Synergy List */}
         <h3 style={{ margin: '0 0 16px', color: '#fff' }}>Discovered Synergies</h3>
-        <div style={{
+        <div className="synergy-grid" style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
           gap: '16px'
@@ -212,6 +212,18 @@ export const SynergyView: React.FC = () => {
           </div>
         )}
       </div>
+      
+      <style jsx>{`
+        @media (max-width: 768px) {
+          .synergy-view {
+            padding: 16px;
+          }
+          
+          .synergy-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+      `}</style>
     </div>
   );
 };

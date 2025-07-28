@@ -57,8 +57,8 @@ class EventCardSystem {
     // Opportunity Events
     this.addEventCard({
       id: 'music_festival_announced',
-      name: 'Festival Season',
-      description: 'A major festival is looking for underground acts!',
+      name: 'Coachella Accidentally Books Local Doom Band After Intern Mishears "Dune"',
+      description: 'Festival organizers reportedly spent three hours debating whether "Sludgelord" was a typo before deciding to "lean into the underground vibe." The $150,000 performance fee remains unchanged despite the band\'s usual draw of 12 people.',
       icon: '🎪',
       type: 'opportunity',
       rarity: 'uncommon',
@@ -72,7 +72,7 @@ class EventCardSystem {
       choices: [
         {
           id: 'apply_all',
-          text: 'Submit all bands for consideration',
+          text: 'Submit every band with a pulse and a Bandcamp page',
           effects: [{
             type: 'resource_change',
             target: 'player',
@@ -82,7 +82,7 @@ class EventCardSystem {
         },
         {
           id: 'select_best',
-          text: 'Only submit your best band',
+          text: 'Only submit the band that showers most frequently',
           effects: [{
             type: 'modify_stat',
             target: 'random_band',
@@ -91,14 +91,14 @@ class EventCardSystem {
           }]
         }
       ],
-      flavorText: "The underground is about to go mainstream...",
+      flavorText: "Sources close to the festival confirm they still don\'t know what shoegaze is.",
       artStyle: 'tour_flyer'
     });
     
     this.addEventCard({
       id: 'record_label_scout',
-      name: 'A&R Scout in Town',
-      description: 'Major label scouts are checking out the scene',
+      name: 'Atlantic Records A&R Rep Googles "What Is Hardcore" During Show',
+      description: 'Witnesses report seeing a confused man in a $3,000 suit frantically texting "These guys are just yelling?" while standing directly in the pit. His assistant was later hospitalized after attempting to crowdsurf in loafers.',
       icon: '👔',
       type: 'opportunity',
       rarity: 'rare',
@@ -107,7 +107,7 @@ class EventCardSystem {
       choices: [
         {
           id: 'sell_out',
-          text: 'Let them sign your bands',
+          text: 'Sign that 360 deal and start practicing your radio voice',
           effects: [
             {
               type: 'modify_stat',
@@ -125,7 +125,7 @@ class EventCardSystem {
         },
         {
           id: 'stay_true',
-          text: 'Reject the corporate machine',
+          text: 'Tell him the bathroom is actually the merch table',
           effects: [
             {
               type: 'modify_stat',
@@ -148,8 +148,8 @@ class EventCardSystem {
     // Crisis Events
     this.addEventCard({
       id: 'police_crackdown',
-      name: 'Police Crackdown',
-      description: 'Cops are shutting down DIY venues!',
+      name: 'Police Mistake House Show for "Satanic Ritual" Due to Corpse Paint',
+      description: 'Local PD\'s "Gang Unit" spent six hours analyzing black metal logos before concluding they were "definitely summoning something." The lead officer\'s report noted suspicious "upside-down crosses" that were later identified as the letter T.',
       icon: '🚔',
       type: 'crisis',
       rarity: 'common',
@@ -165,14 +165,14 @@ class EventCardSystem {
         value: 'underground',
         operator: 'equals'
       }],
-      flavorText: "The man is trying to keep us down!",
+      flavorText: "Department training video now includes a slide titled \'Mosh Pit vs. Demonic Possession: Know the Difference.\'",
       artStyle: 'press_release'
     });
     
     this.addEventCard({
       id: 'venue_fire',
-      name: 'Venue Fire',
-      description: 'Electrical fire damages a venue!',
+      name: 'DIY Venue\'s "Vintage" Wiring Finally Achieves Dream of Becoming Fire',
+      description: 'After 40 years of code violations, the electrical system at The Rat\'s Nest has fulfilled its lifelong ambition. Fire marshal quoted as saying "I\'m honestly surprised it took this long" while standing in a puddle of what neighbors describe as "definitely not up to code."',
       icon: '🔥',
       type: 'crisis',
       rarity: 'uncommon',
@@ -186,7 +186,7 @@ class EventCardSystem {
       choices: [
         {
           id: 'fundraiser',
-          text: 'Organize benefit shows',
+          text: 'Organize benefit show called "Burn This Mother Down" (too soon?)',
           effects: [{
             type: 'resource_change',
             target: 'player',
@@ -197,7 +197,7 @@ class EventCardSystem {
         },
         {
           id: 'ignore',
-          text: 'Focus on other venues',
+          text: 'Post "thoughts and prayers" on Instagram and move on',
           effects: [{
             type: 'resource_change',
             target: 'player',
@@ -211,8 +211,8 @@ class EventCardSystem {
     // Wildcard Events
     this.addEventCard({
       id: 'battle_of_bands',
-      name: 'Battle of the Bands',
-      description: 'Competition brings out the best (and worst) in everyone',
+      name: 'Guitar Center Hosts Battle of the Bands, Winner Gets $50 Gift Card',
+      description: 'Local musicians reportedly spending upwards of $2,000 on new gear to compete for store credit that "technically expires in 90 days." Judge panel consists of three employees who "mostly work in the keyboard section."',
       icon: '⚔️',
       type: 'wildcard',
       rarity: 'uncommon',
@@ -221,7 +221,7 @@ class EventCardSystem {
       choices: [
         {
           id: 'compete',
-          text: 'Enter the competition',
+          text: 'Dust off that Wonderwall cover for the finals',
           effects: [
             {
               type: 'modify_stat',
@@ -239,7 +239,7 @@ class EventCardSystem {
         },
         {
           id: 'boycott',
-          text: 'Boycott competitive culture',
+          text: 'Start rival event at the abandoned Arby\'s',
           effects: [{
             type: 'modify_stat',
             target: 'all_bands',
@@ -253,8 +253,8 @@ class EventCardSystem {
     
     this.addEventCard({
       id: 'documentary_crew',
-      name: 'Documentary Filming',
-      description: 'Film crew wants to document the scene',
+      name: 'Vice Documentarian Can\'t Stop Asking "But Why Are You So Angry?"',
+      description: 'Film student with wealthy parents spending $80,000 on thesis about "The Dark Underbelly of DIY." Has been spotted asking the sound guy if he "ever smiles" and whether the mosh pit represents "societal collapse or just bad parenting."',
       icon: '📹',
       type: 'wildcard',
       rarity: 'rare',
@@ -269,7 +269,7 @@ class EventCardSystem {
       choices: [
         {
           id: 'full_access',
-          text: 'Give them full access',
+          text: 'Let them film everything, including the bathroom graffiti',
           effects: [{
             type: 'scene_change',
             target: 'player',
@@ -279,7 +279,7 @@ class EventCardSystem {
         },
         {
           id: 'controlled',
-          text: 'Control the narrative',
+          text: 'Assign someone to explain that it\'s actually about community',
           effects: [{
             type: 'resource_change',
             target: 'player',
@@ -293,8 +293,8 @@ class EventCardSystem {
     // Legendary Events
     this.addEventCard({
       id: 'reunion_show',
-      name: 'Legendary Reunion',
-      description: 'A scene-defining band reunites for one show!',
+      name: 'Band That "Broke Up Forever" in 2019 Announces Reunion Tour',
+      description: 'Members of Throat Punch, who famously burned their instruments on stage and declared "rock is dead," seen at Guitar Center pricing flame-retardant guitars. Lead singer\'s statement that he "never said forever-forever" has already spawned 47 memes.',
       icon: '👑',
       type: 'legendary',
       rarity: 'legendary',
@@ -324,14 +324,14 @@ class EventCardSystem {
           description: 'Scene comes together'
         }
       ],
-      flavorText: "One night only... history in the making!",
+      flavorText: "Ticket prices start at $180 for \'authentic DIY experience.\'",
       artStyle: 'concert_poster'
     });
     
     this.addEventCard({
       id: 'perfect_storm',
-      name: 'The Perfect Storm',
-      description: 'Everything aligns for an epic night',
+      name: 'Every Band\'s Van Breaks Down at Same Gas Station, Accidentally Creates Festival',
+      description: 'What started as 17 separate radiator failures has transformed a Shell station into "GasStock 2024." Attendant quoted as saying he "just wanted to close at 10" while reluctantly becoming the event\'s de facto stage manager. Local news already calling it "Woodstock for people with AAA memberships."',
       icon: '⚡',
       type: 'legendary',
       rarity: 'legendary',
@@ -371,7 +371,7 @@ class EventCardSystem {
           description: 'Massive rewards'
         }
       ],
-      flavorText: "Decades from now, they'll still talk about this night..."
+      flavorText: "The bathroom key is now being treated as a holy relic."
     });
   }
   

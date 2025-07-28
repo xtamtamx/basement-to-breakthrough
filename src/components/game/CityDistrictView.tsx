@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from '@stores/gameStore';
 import { District, Venue, Band, Walker } from '@game/types';
 import { haptics } from '@utils/mobile';
+import { WalkerSprite } from './WalkerSprite';
 
 interface CityDistrictViewProps {
   onVenueClick: (venue: Venue) => void;
@@ -19,69 +20,12 @@ const CELL_SIZE = 45;
 export const CityDistrictView: React.FC<CityDistrictViewProps> = ({ onVenueClick, onDistrictClick, onEmptyCellClick, placingMode = false, zoomedDistrict }) => {
   const { districts, venues, walkers, scheduledShows } = useGameStore();
   const [hoveredCell, setHoveredCell] = useState<{ x: number; y: number } | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  
   // Calculate grid bounds based on zoom
   const gridBounds = zoomedDistrict 
     ? zoomedDistrict.bounds 
     : { x: 0, y: 0, width: GRID_SIZE, height: GRID_SIZE };
     
   const effectiveCellSize = zoomedDistrict ? 80 : CELL_SIZE;
-  
-  // Walker animation frame
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    
-    let animationId: number;
-    
-    const animate = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
-      // Draw walkers (only those within the current grid bounds)
-      walkers.forEach(walker => {
-        // Check if walker is within current bounds
-        if (walker.x >= gridBounds.x && walker.x < gridBounds.x + gridBounds.width &&
-            walker.y >= gridBounds.y && walker.y < gridBounds.y + gridBounds.height) {
-          
-          // Calculate relative position
-          const relativeX = walker.x - gridBounds.x;
-          const relativeY = walker.y - gridBounds.y;
-          
-          ctx.fillStyle = walker.type === 'musician' ? '#ec4899' : '#10b981';
-          ctx.beginPath();
-          ctx.arc(relativeX * effectiveCellSize + effectiveCellSize / 2, 
-                  relativeY * effectiveCellSize + effectiveCellSize / 2, 
-                  zoomedDistrict ? 6 : 4, 0, Math.PI * 2);
-          ctx.fill();
-          
-          // Draw path line
-          if (walker.path.length > 0) {
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-            ctx.beginPath();
-            ctx.moveTo(relativeX * effectiveCellSize + effectiveCellSize / 2, 
-                      relativeY * effectiveCellSize + effectiveCellSize / 2);
-            walker.path.forEach(point => {
-              const pathRelativeX = point.x - gridBounds.x;
-              const pathRelativeY = point.y - gridBounds.y;
-              ctx.lineTo(pathRelativeX * effectiveCellSize + effectiveCellSize / 2, 
-                        pathRelativeY * effectiveCellSize + effectiveCellSize / 2);
-            });
-            ctx.stroke();
-          }
-        }
-      });
-      
-      animationId = requestAnimationFrame(animate);
-    };
-    
-    animate();
-    
-    return () => cancelAnimationFrame(animationId);
-  }, [walkers, gridBounds, effectiveCellSize, zoomedDistrict]);
   
   const handleCellClick = (x: number, y: number) => {
     const venue = venues.find(v => v.gridPosition?.x === x && v.gridPosition?.y === y);
@@ -224,13 +168,17 @@ export const CityDistrictView: React.FC<CityDistrictViewProps> = ({ onVenueClick
           );
         })}
       
-      {/* Walker overlay canvas */}
-      <canvas
-        ref={canvasRef}
-        className="walker-canvas"
-        width={gridBounds.width * effectiveCellSize}
-        height={gridBounds.height * effectiveCellSize}
-      />
+      {/* Walker sprites */}
+      <div className="walker-layer">
+        {walkers.map(walker => (
+          <WalkerSprite
+            key={walker.id}
+            walker={walker}
+            cellSize={effectiveCellSize}
+            gridBounds={gridBounds}
+          />
+        ))}
+      </div>
       
       {/* Hover indicator */}
       <AnimatePresence>
@@ -418,10 +366,11 @@ export const CityDistrictView: React.FC<CityDistrictViewProps> = ({ onVenueClick
           border: 2px solid var(--bg-primary);
         }
 
-        .walker-canvas {
+        .walker-layer {
           position: absolute;
           inset: 0;
           pointer-events: none;
+          z-index: 50;
         }
 
         .hover-indicator {

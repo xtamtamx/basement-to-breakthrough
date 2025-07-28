@@ -1,7 +1,9 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import { GamePhase, Difficulty, FactionEvent, District, Venue, Walker, VenueType, Band, Genre, TraitType, Show, ShowResult } from '@game/types';
 import { factionSystem } from '@game/mechanics/FactionSystem';
-import { VENUE_TRAITS, DEFAULT_VENUE_TRAITS } from '@game/data/venueTraits';
+import { VENUE_TRAITS } from '@game/data/venueTraits';
+import { SATIRICAL_VENUE_DESCRIPTIONS } from '@game/data/satiricalText';
 
 interface GameStore {
   // Game state
@@ -109,7 +111,7 @@ const initialDistricts: District[] = [
 const initialVenues: Venue[] = [
   {
     id: 'v1',
-    name: "Jake's Basement",
+    name: SATIRICAL_VENUE_DESCRIPTIONS.BASEMENT.name,
     type: VenueType.BASEMENT,
     capacity: 30,
     acoustics: 45,
@@ -130,7 +132,8 @@ const initialVenues: Venue[] = [
     isPermanent: true,
     bookingDifficulty: 2,
     gridPosition: { x: 1, y: 1 },
-    upgrades: []
+    upgrades: [],
+    description: SATIRICAL_VENUE_DESCRIPTIONS.BASEMENT.description
   },
   {
     id: 'v2',
@@ -447,7 +450,7 @@ const initialBands: Band[] = [
 const initialState = {
   currentRound: 1,
   reputation: 0,
-  money: 500, // Starting money - enough for 3-4 shows and some buffer
+  money: 200, // Starting money - barely enough for 1-2 small shows
   fans: 0,
   stress: 0,
   connections: 0,
@@ -464,33 +467,35 @@ const initialState = {
   lastTurnResults: [],
 };
 
-export const useGameStore = create<GameStore>((set, get) => ({
-  ...initialState,
-  
-  setPhase: (phase) => set({ phase }),
-  
-  addMoney: (amount) => 
-    set((state) => ({ money: Math.max(0, state.money + amount) })),
-  
-  addFans: (amount) => 
-    set((state) => ({ fans: Math.max(0, state.fans + amount) })),
-  
-  addReputation: (amount) => 
-    set((state) => ({ reputation: Math.max(0, state.reputation + amount) })),
-    
-  addStress: (amount) =>
-    set((state) => ({ stress: Math.max(0, Math.min(100, state.stress + amount)) })),
-    
-  addConnections: (amount) =>
-    set((state) => ({ connections: Math.max(0, state.connections + amount) })),
-  
-  nextRound: () => 
-    set((state) => ({ 
-      currentRound: state.currentRound + 1,
-      phase: GamePhase.PLANNING 
-    })),
-  
-  resetGame: () => set(initialState),
+export const useGameStore = create<GameStore>()(
+  persist(
+    (set, get) => ({
+      ...initialState,
+      
+      setPhase: (phase) => set({ phase }),
+      
+      addMoney: (amount) => 
+        set((state) => ({ money: Math.max(0, state.money + amount) })),
+      
+      addFans: (amount) => 
+        set((state) => ({ fans: Math.max(0, state.fans + amount) })),
+      
+      addReputation: (amount) => 
+        set((state) => ({ reputation: Math.max(0, state.reputation + amount) })),
+        
+      addStress: (amount) =>
+        set((state) => ({ stress: Math.max(0, Math.min(100, state.stress + amount)) })),
+        
+      addConnections: (amount) =>
+        set((state) => ({ connections: Math.max(0, state.connections + amount) })),
+      
+      nextRound: () => 
+        set((state) => ({ 
+          currentRound: state.currentRound + 1,
+          phase: GamePhase.PLANNING 
+        })),
+      
+      resetGame: () => set(initialState),
   
   // City actions
   updateDistricts: (districts) => set({ districts }),
@@ -556,4 +561,28 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
     set({ currentFactionEvent: null });
   }
-}));
+}),
+    {
+      name: 'diy-indie-empire-storage', // unique name for localStorage key
+      storage: createJSONStorage(() => localStorage), // use localStorage
+      partialize: (state) => ({
+        // Only persist essential game state, not UI state
+        money: state.money,
+        reputation: state.reputation,
+        fans: state.fans,
+        stress: state.stress,
+        connections: state.connections,
+        currentRound: state.currentRound,
+        phase: state.phase,
+        difficulty: state.difficulty,
+        districts: state.districts,
+        venues: state.venues,
+        allBands: state.allBands,
+        rosterBandIds: state.rosterBandIds,
+        scheduledShows: state.scheduledShows,
+        showHistory: state.showHistory,
+        // Don't persist: walkers, lastTurnResults, currentFactionEvent (transient state)
+      }),
+    }
+  )
+);

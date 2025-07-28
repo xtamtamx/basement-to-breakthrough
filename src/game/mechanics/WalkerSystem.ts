@@ -121,7 +121,12 @@ export class WalkerSystem {
     
     walkersArray.forEach(walker => {
       if (walker.state === WalkerState.WALKING && walker.path.length > 0) {
-        const speed = walker.speed * deltaTime;
+        // Smooth speed with easing
+        const baseSpeed = walker.speed * deltaTime;
+        const distanceToEnd = walker.path.length;
+        const speedMultiplier = distanceToEnd > 2 ? 1 : 0.5 + (distanceToEnd / 4); // Slow down near destination
+        const speed = baseSpeed * speedMultiplier;
+        
         const nextPoint = walker.path[0];
         
         const dx = nextPoint.x - walker.x;
@@ -137,13 +142,22 @@ export class WalkerSystem {
           if (walker.path.length === 0) {
             // Reached destination
             walker.state = WalkerState.AT_VENUE;
+            walker.x = walker.targetX!;
+            walker.y = walker.targetY!;
             this.handleArrival(walker);
           }
         } else {
-          // Move towards waypoint
+          // Smooth movement with slight curve
           const ratio = speed / distance;
-          walker.x += dx * ratio;
-          walker.y += dy * ratio;
+          
+          // Add slight curve to movement for more natural feel
+          const curveAmount = 0.05 * Math.sin(Date.now() / 500 + walker.id.charCodeAt(0));
+          walker.x += dx * ratio + curveAmount * -dy * 0.02;
+          walker.y += dy * ratio + curveAmount * dx * 0.02;
+          
+          // Ensure walker doesn't overshoot
+          walker.x = Math.max(0, Math.min(7, walker.x));
+          walker.y = Math.max(0, Math.min(7, walker.y));
         }
       }
     });

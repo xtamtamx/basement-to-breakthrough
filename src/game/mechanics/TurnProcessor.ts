@@ -2,23 +2,47 @@ import { useGameStore } from '@stores/gameStore';
 import { Show, ShowResult, Incident, IncidentType } from '@game/types';
 import { synergySystemV2 } from './SynergySystemV2';
 import { walkerSystem } from './WalkerSystem';
+import { dayJobSystem } from './DayJobSystem';
+import { difficultySystem } from './DifficultySystem';
+import { showPromotionSystem } from './ShowPromotionSystem';
 
 export class TurnProcessor {
-  processNextTurn(): { showResults: ShowResult[], totalVenueRent: number } {
+  processNextTurn(): { 
+    showResults: ShowResult[], 
+    totalVenueRent: number,
+    dayJobResult?: {
+      money: number;
+      reputationLoss: number;
+      fanLoss: number;
+      stressGain: number;
+      message: string;
+      randomEvent?: {
+        message: string;
+        effects: any;
+      };
+    },
+    difficultyEvent?: {
+      message: string;
+      reputationLost: number;
+    }
+  } {
     const store = useGameStore.getState();
     const { scheduledShows, venues, allBands } = store;
     
     const showResults: ShowResult[] = [];
     
-    // Process each scheduled show
-    scheduledShows.forEach(show => {
-      const result = this.executeShow(show);
+    // Process scheduled shows from promotion system
+    const { showsToExecute, promotionUpdates } = showPromotionSystem.processScheduledShows();
+    
+    // Execute shows that are happening this turn
+    showsToExecute.forEach(scheduledShow => {
+      const result = this.executeShow(scheduledShow, scheduledShow.totalPromotionEffectiveness, scheduledShow.hype);
       showResults.push(result);
-      store.completeShow(show.id, result);
+      store.completeShow(scheduledShow.id, result);
       
       // Create walkers for the show
-      const venue = venues.find(v => v.id === show.venueId);
-      const band = allBands.find(b => b.id === show.bandId);
+      const venue = venues.find(v => v.id === scheduledShow.venueId);
+      const band = allBands.find(b => b.id === scheduledShow.bandId);
       if (venue && band) {
         // Create musician walker
         if (venues[0] && venue) {
@@ -35,13 +59,35 @@ export class TurnProcessor {
       }
     });
     
-    // Calculate total venue rent
-    const totalVenueRent = venues.reduce((sum, venue) => sum + venue.rent, 0);
+    
+    // Calculate total venue rent with difficulty scaling
+    const totalVenueRent = venues.reduce((sum, venue) => {
+      return sum + difficultySystem.getScaledVenueCost(venue.rent);
+    }, 0);
     
     // Apply venue rent costs
     venues.forEach(venue => {
-      store.addMoney(-venue.rent);
+      const scaledRent = difficultySystem.getScaledVenueCost(venue.rent);
+      store.addMoney(-scaledRent);
     });
+    
+    // Process day job income
+    const jobResult = dayJobSystem.processJobIncome();
+    if (jobResult) {
+      // The job system already applies the effects, but we can show a notification
+      console.log(`Day job: +$${jobResult.money}, -${jobResult.reputationLoss} rep, "${jobResult.message}"`);
+    }
+    
+    // Apply passive difficulty effects
+    const difficultyEvent = difficultySystem.applyPassiveDifficulty();
+    
+    // Check for difficulty milestones
+    const milestone = difficultySystem.getDifficultyMilestone(store.currentRound);
+    if (milestone && difficultyEvent.message) {
+      difficultyEvent.message = `${milestone} ${difficultyEvent.message}`;
+    } else if (milestone) {
+      difficultyEvent.message = milestone;
+    }
     
     // Store the results
     useGameStore.setState({ lastTurnResults: showResults });
@@ -49,10 +95,19 @@ export class TurnProcessor {
     // Update round counter
     store.nextRound();
     
-    return { showResults, totalVenueRent };
+    return { 
+      showResults, 
+      totalVenueRent, 
+      dayJobResult: jobResult || undefined,
+      difficultyEvent: difficultyEvent.message ? difficultyEvent : undefined
+    };
   }
   
-  private executeShow(show: Show): ShowResult {
+  private executeShow(
+    show: Show, 
+    promotionEffectiveness: number = 1.0,
+    hype: number = 0
+  ): ShowResult {
     const store = useGameStore.getState();
     const venue = store.venues.find(v => v.id === show.venueId);
     const mainBand = store.allBands.find(b => b.id === show.bandId);
@@ -82,7 +137,20 @@ export class TurnProcessor {
     
     // Apply synergy multipliers
     const synergyMultiplier = synergySystemV2.calculateTotalMultiplier(synergies);
-    const finalAttendance = Math.min(Math.floor(baseAttendance * synergyMultiplier), venue.capacity);
+    
+    // Apply difficulty modifiers
+    const difficultyModifiers = difficultySystem.getShowDifficultyModifiers(baseAttendance, show.ticketPrice);
+    
+    // Apply promotion effectiveness
+    const promotedAttendance = baseAttendance * promotionEffectiveness;
+    
+    // Apply hype bonus
+    const hypeMultiplier = 1 + (hype / 200); // Up to 50% bonus at max hype
+    
+    const finalAttendance = Math.min(
+      Math.floor(promotedAttendance * synergyMultiplier * difficultyModifiers.attendanceMultiplier * hypeMultiplier), 
+      venue.capacity
+    );
     
     // Calculate revenue
     const ticketRevenue = finalAttendance * show.ticketPrice;
@@ -97,9 +165,9 @@ export class TurnProcessor {
     
     const finalRevenue = Math.floor(totalRevenue * revenueMultiplier);
     
-    // Calculate costs
-    const bandCosts = allShowBands.length * 50;
-    const venueCost = venue.rent;
+    // Calculate costs with difficulty scaling
+    const bandCosts = allShowBands.length * difficultySystem.getScaledBandCost();
+    const venueCost = difficultySystem.getScaledVenueCost(venue.rent);
     const totalCosts = bandCosts + venueCost;
     
     // Calculate reputation and fan gains

@@ -1,4 +1,5 @@
 import { Faction, Band, Venue, Show, FactionEvent, FactionEventType, FactionValues, FactionModifiers, FactionChoice, FactionChoiceEffects, Resources, TraitType } from '@game/types';
+import { SATIRICAL_FACTION_DESCRIPTIONS } from '@game/data/satiricalText';
 
 class FactionSystem {
   private factions: Map<string, Faction> = new Map();
@@ -14,8 +15,8 @@ class FactionSystem {
     const factionData: Faction[] = [
       {
         id: 'diy-purists',
-        name: 'DIY Purists',
-        description: 'True believers in the DIY ethic. No sellouts, no compromises.',
+        name: SATIRICAL_FACTION_DESCRIPTIONS.DIY_PURISTS.name,
+        description: SATIRICAL_FACTION_DESCRIPTIONS.DIY_PURISTS.description,
         values: {
           authenticity: 100,
           technicalSkill: 30,

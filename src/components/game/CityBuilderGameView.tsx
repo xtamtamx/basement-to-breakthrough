@@ -87,6 +87,8 @@ export const CityBuilderGameView: React.FC = () => {
       walkerSystem.update(0.016); // 60fps
     }, 16);
     
+    // Debug walker creation removed - walkers created through normal gameplay
+    
     return () => clearInterval(interval);
   }, []);
   

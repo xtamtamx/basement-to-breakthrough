@@ -1,4 +1,5 @@
 import { Band, Venue, Genre, VenueType, TraitType } from '@game/types';
+import { SATIRICAL_SYNERGY_DATA } from '@game/data/satiricalText';
 
 export interface Synergy {
   id: string;
@@ -71,8 +72,8 @@ class SynergySystemV2 {
     // Common Synergies
     this.addSynergy({
       id: 'punk_basement',
-      name: 'DIY or Die',
-      description: 'Punk bands in basement venues embody true DIY spirit',
+      name: SATIRICAL_SYNERGY_DATA.punk_basement.name,
+      description: SATIRICAL_SYNERGY_DATA.punk_basement.description,
       icon: '🏚️',
       tier: 'common',
       multiplier: 1.5,
@@ -83,15 +84,15 @@ class SynergySystemV2 {
       discovered: false,
       timesTriggered: 0,
       effects: [
-        { type: 'multiply_authenticity', value: 2, description: 'Double authenticity gains' },
-        { type: 'multiply_fans', value: 1.2, description: '20% more fans' }
+        { type: 'multiply_authenticity', value: 2, description: 'Street cred through the roof (basement ceiling)' },
+        { type: 'multiply_fans', value: 1.2, description: '20% more people pretending they were there' }
       ]
     });
     
     this.addSynergy({
       id: 'metal_warehouse',
-      name: 'Industrial Mayhem',
-      description: 'Metal shows in warehouses create legendary chaos',
+      name: SATIRICAL_SYNERGY_DATA.metal_warehouse.name,
+      description: SATIRICAL_SYNERGY_DATA.metal_warehouse.description,
       icon: '🏭',
       tier: 'common',
       multiplier: 1.8,
@@ -102,16 +103,16 @@ class SynergySystemV2 {
       discovered: false,
       timesTriggered: 0,
       effects: [
-        { type: 'multiply_revenue', value: 1.5, description: '50% more revenue' },
-        { type: 'multiply_fans', value: 1.5, description: '50% more fans' }
+        { type: 'multiply_revenue', value: 1.5, description: 'Insurance premiums also multiplied' },
+        { type: 'multiply_fans', value: 1.5, description: 'Emergency room visits up 150%' }
       ]
     });
     
     // Rare Synergies
     this.addSynergy({
       id: 'triple_punk_chaos',
-      name: 'Punk Rock Riot',
-      description: 'Three punk bands create unstoppable energy',
+      name: SATIRICAL_SYNERGY_DATA.triple_punk_chaos.name,
+      description: SATIRICAL_SYNERGY_DATA.triple_punk_chaos.description,
       icon: '🔥',
       tier: 'rare',
       multiplier: 3,
@@ -122,16 +123,16 @@ class SynergySystemV2 {
       discovered: false,
       timesTriggered: 0,
       effects: [
-        { type: 'multiply_revenue', value: 2, description: 'Double revenue' },
-        { type: 'multiply_fans', value: 3, description: 'Triple fan gain' },
-        { type: 'chain_trigger', value: 'circle_pit_madness', description: 'May trigger Circle Pit Madness' }
+        { type: 'multiply_revenue', value: 2, description: 'Money printer go brrr (until cops arrive)' },
+        { type: 'multiply_fans', value: 3, description: 'Instagram stories through the roof' },
+        { type: 'chain_trigger', value: 'circle_pit_madness', description: 'Physics laws temporarily suspended' }
       ]
     });
     
     this.addSynergy({
       id: 'doom_dive_depression',
-      name: 'Existential Dread Hour',
-      description: 'Doom metal in a dive bar creates beautiful misery',
+      name: SATIRICAL_SYNERGY_DATA.doom_dive_depression?.name || 'Existential Dread Hour',
+      description: SATIRICAL_SYNERGY_DATA.doom_dive_depression?.description || 'Doom metal in a dive bar creates beautiful misery',
       icon: '💀',
       tier: 'rare',
       multiplier: 2.5,
@@ -142,16 +143,16 @@ class SynergySystemV2 {
       discovered: false,
       timesTriggered: 0,
       effects: [
-        { type: 'multiply_revenue', value: 2.5, description: 'Bar sales skyrocket' },
-        { type: 'multiply_authenticity', value: 3, description: 'Triple authenticity' }
+        { type: 'multiply_revenue', value: 2.5, description: 'Alcohol sales match collective despair levels' },
+        { type: 'multiply_authenticity', value: 3, description: 'Misery loves company (and pays cover)' }
       ]
     });
     
     // Legendary Synergies
     this.addSynergy({
       id: 'genre_collision',
-      name: 'Genre Annihilation',
-      description: 'Mixing opposing genres creates new movements',
+      name: SATIRICAL_SYNERGY_DATA.genre_collision?.name || 'Genre Annihilation',
+      description: SATIRICAL_SYNERGY_DATA.genre_collision?.description || 'Mixing opposing genres creates new movements',
       icon: '💥',
       tier: 'legendary',
       multiplier: 5,
@@ -162,17 +163,17 @@ class SynergySystemV2 {
       discovered: false,
       timesTriggered: 0,
       effects: [
-        { type: 'multiply_revenue', value: 3, description: 'Triple revenue' },
-        { type: 'multiply_fans', value: 5, description: '5x fan gain' },
-        { type: 'unlock_content', value: 'new_genre_fusion', description: 'Unlocks fusion genre' }
+        { type: 'multiply_revenue', value: 3, description: 'Confused fans buy everything to fit in' },
+        { type: 'multiply_fans', value: 5, description: 'Music blogs lose their minds trying to categorize this' },
+        { type: 'unlock_content', value: 'new_genre_fusion', description: 'Creates genre that Spotify can\'t classify' }
       ]
     });
     
     // Mythic Synergies
     this.addSynergy({
       id: 'perfect_storm',
-      name: 'The Perfect Storm',
-      description: 'All elements align for a legendary show',
+      name: SATIRICAL_SYNERGY_DATA.perfect_storm.name,
+      description: SATIRICAL_SYNERGY_DATA.perfect_storm.description,
       icon: '⚡',
       tier: 'mythic',
       multiplier: 10,
@@ -184,10 +185,10 @@ class SynergySystemV2 {
       discovered: false,
       timesTriggered: 0,
       effects: [
-        { type: 'multiply_revenue', value: 5, description: '5x revenue' },
-        { type: 'multiply_fans', value: 10, description: '10x fan gain' },
-        { type: 'unlock_content', value: 'legendary_venue', description: 'Unlocks legendary venue' },
-        { type: 'chain_trigger', value: 'scene_explosion', description: 'Triggers Scene Explosion' }
+        { type: 'multiply_revenue', value: 5, description: 'Money appears from parallel dimensions' },
+        { type: 'multiply_fans', value: 10, description: 'Everyone claims they were there (only 200 actually were)' },
+        { type: 'unlock_content', value: 'legendary_venue', description: 'Venue achieves historical landmark status' },
+        { type: 'chain_trigger', value: 'scene_explosion', description: 'Documentary crews materialize from thin air' }
       ]
     });
   }

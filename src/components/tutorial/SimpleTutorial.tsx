@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { haptics } from '@utils/mobile';
+import { SATIRICAL_TUTORIAL_TIPS } from '@game/data/satiricalText';
 
 interface SimpleTutorialProps {
   onComplete: () => void;
@@ -9,27 +10,32 @@ interface SimpleTutorialProps {
 const tutorialSteps = [
   {
     title: "WELCOME TO THE UNDERGROUND",
-    content: "Build your music empire from basement shows to legendary venues!",
+    content: "Where Dreams Go to Die, But Sometimes Get Resurrected at 2AM in a Sweaty Basement",
+    subtext: SATIRICAL_TUTORIAL_TIPS.SCENE,
     highlight: null,
   },
   {
     title: "BOOK SHOWS",
-    content: "Drag bands to venues to book shows. Match band styles with venue vibes for best results!",
+    content: "The Art of Convincing Bands They'll Actually Get Paid This Time",
+    subtext: SATIRICAL_TUTORIAL_TIPS.BOOKING,
     highlight: "bands",
   },
   {
     title: "MANAGE RESOURCES",
-    content: "Keep an eye on your money, reputation, and fans. Run out of money and it's game over!",
+    content: "Watch Your Money Disappear Faster Than Opening Bands After Their Set",
+    subtext: SATIRICAL_TUTORIAL_TIPS.MONEY,
     highlight: "resources",
   },
   {
-    title: "EXECUTE SHOWS",
-    content: "Once you've booked shows, hit the execute button to see how they perform!",
-    highlight: "execute",
+    title: "BUILD REPUTATION",
+    content: "Become the Person Everyone Pretends to Remember from That One Show",
+    subtext: SATIRICAL_TUTORIAL_TIPS.REPUTATION,
+    highlight: "reputation",
   },
   {
-    title: "REACH LEGENDARY STATUS",
-    content: "Get to 100 reputation to achieve legendary status and win the game!",
+    title: "SURVIVE THE SCENE",
+    content: "Navigate Band Drama, Noise Complaints, and Your Own Poor Decisions",
+    subtext: "Pro Tip: The cops will show up. They always do. Have a backup plan.",
     highlight: null,
   },
 ];
@@ -99,11 +105,23 @@ export const SimpleTutorial: React.FC<SimpleTutorialProps> = ({ onComplete }) =>
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.1 }}
-            className="pixel-text pixel-text-sm mb-6"
+            className="pixel-text pixel-text-sm mb-3"
             style={{ color: 'var(--pixel-white)', lineHeight: '1.5' }}
           >
             {step.content}
           </motion.p>
+
+          {step.subtext && (
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="pixel-text pixel-text-xs mb-6"
+              style={{ color: 'var(--pixel-gray)', lineHeight: '1.4', fontStyle: 'italic' }}
+            >
+              {step.subtext}
+            </motion.p>
+          )}
 
           {/* Buttons */}
           <div className="flex gap-3">

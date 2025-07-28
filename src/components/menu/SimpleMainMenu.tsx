@@ -1,12 +1,28 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { RunConfig } from '@game/mechanics/RunManager';
 import { haptics } from '@utils/mobile';
+import { LoadingScreen } from '@components/ui/LoadingScreen';
 
 interface SimpleMainMenuProps {
   onStartGame: (runConfig?: RunConfig) => void;
 }
 
 export const SimpleMainMenu: React.FC<SimpleMainMenuProps> = ({ onStartGame }) => {
+  const [showTutorialLoading, setShowTutorialLoading] = useState(false);
+
+  const handleLearnToFail = () => {
+    setShowTutorialLoading(true);
+    haptics.light();
+    // Simulate loading then show tutorial
+    setTimeout(() => {
+      setShowTutorialLoading(false);
+      // Here you would normally show the tutorial
+    }, 3000);
+  };
+
+  if (showTutorialLoading) {
+    return <LoadingScreen customMessage="FAIL TO LEARN" />;
+  }
   return (
     <div style={{
       position: 'fixed',
@@ -58,7 +74,7 @@ export const SimpleMainMenu: React.FC<SimpleMainMenuProps> = ({ onStartGame }) =
             textTransform: 'uppercase',
             lineHeight: 1
           }}>
-            BASEMENT TO
+            DIY INDIE
           </h1>
           <h1 style={{
             fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
@@ -69,7 +85,7 @@ export const SimpleMainMenu: React.FC<SimpleMainMenuProps> = ({ onStartGame }) =
             textTransform: 'uppercase',
             lineHeight: 1
           }}>
-            BREAKTHROUGH
+            EMPIRE
           </h1>
           <p style={{
             fontSize: 'clamp(0.9rem, 1.5vw, 1rem)',
@@ -108,10 +124,11 @@ export const SimpleMainMenu: React.FC<SimpleMainMenuProps> = ({ onStartGame }) =
             onMouseEnter={e => e.currentTarget.style.backgroundColor = '#db2777'}
             onMouseLeave={e => e.currentTarget.style.backgroundColor = '#ec4899'}
           >
-            START GAME
+            START
           </button>
 
           <button
+            onClick={handleLearnToFail}
             style={{
               padding: '0.625rem 1.5rem',
               fontSize: 'clamp(0.875rem, 1.25vw, 0.9rem)',
@@ -131,7 +148,7 @@ export const SimpleMainMenu: React.FC<SimpleMainMenuProps> = ({ onStartGame }) =
               e.currentTarget.style.color = '#9ca3af';
             }}
           >
-            HOW TO PLAY
+            LEARN TO FAIL
           </button>
 
           <button

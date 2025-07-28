@@ -1,4 +1,5 @@
 import { Equipment, EquipmentType, Band, Venue, EquipmentEffects, VenueType } from '@game/types';
+import { SATIRICAL_EQUIPMENT } from '@game/data/satiricalText';
 
 interface EquipmentInventory {
   owned: Equipment[];
@@ -16,7 +17,8 @@ class EquipmentManagerV2 {
   private equipmentCatalog: Equipment[] = [
     {
       id: 'pa-basic',
-      name: 'Basic PA System',
+      name: SATIRICAL_EQUIPMENT['pa-basic']?.name || 'Basic PA System',
+      description: SATIRICAL_EQUIPMENT['pa-basic']?.description,
       type: EquipmentType.PA_SYSTEM,
       quality: 1,
       condition: 100,
@@ -31,7 +33,8 @@ class EquipmentManagerV2 {
     },
     {
       id: 'pa-pro',
-      name: 'Professional PA System',
+      name: SATIRICAL_EQUIPMENT['pa-pro']?.name || 'Professional PA System',
+      description: SATIRICAL_EQUIPMENT['pa-pro']?.description,
       type: EquipmentType.PA_SYSTEM,
       quality: 3,
       condition: 100,
@@ -71,7 +74,8 @@ class EquipmentManagerV2 {
     },
     {
       id: 'lights-basic',
-      name: 'Basic Stage Lights',
+      name: SATIRICAL_EQUIPMENT['lights-basic']?.name || 'Basic Stage Lights',
+      description: SATIRICAL_EQUIPMENT['lights-basic']?.description,
       type: EquipmentType.LIGHTING,
       quality: 1,
       condition: 100,

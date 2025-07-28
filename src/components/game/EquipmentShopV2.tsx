@@ -182,13 +182,22 @@ export const EquipmentShopV2: React.FC<EquipmentShopProps> = ({
                   className="glass-panel p-4"
                 >
                   <div className="flex justify-between items-start mb-2">
-                    <div>
+                    <div className="flex-1">
                       <h3 className="pixel-text pixel-text-sm" style={{ color: 'var(--pixel-cyan)' }}>
                         {equipment.name}
                       </h3>
                       <p className="pixel-text pixel-text-xs" style={{ color: 'var(--pixel-gray)' }}>
                         {getQualityStars(equipment.quality)}
                       </p>
+                      {equipment.description && (
+                        <p className="pixel-text pixel-text-xs mt-1" style={{ 
+                          color: 'var(--pixel-gray)', 
+                          fontStyle: 'italic',
+                          opacity: 0.8 
+                        }}>
+                          "{equipment.description}"
+                        </p>
+                      )}
                       {view === 'owned' && (
                         <p className="pixel-text pixel-text-xs flex items-center gap-2 mt-1">
                           <span style={{ color: 'var(--pixel-gray)' }}>CONDITION:</span>

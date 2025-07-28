@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { haptics } from '@utils/mobile';
 import { audio } from '@utils/audio';
+import { SATIRICAL_ERROR_MESSAGES } from '@game/data/satiricalText';
 
 interface BookingErrorFeedbackProps {
   error: {
@@ -91,7 +92,10 @@ export const BookingErrorFeedback: React.FC<BookingErrorFeedbackProps> = ({
             <p className="pixel-text pixel-text-xs text-center" 
               style={{ color: 'var(--pixel-white)' }}
             >
-              {error.message}
+              {error.type === 'insufficient_funds' && SATIRICAL_ERROR_MESSAGES.INSUFFICIENT_FUNDS}
+              {error.type === 'venue_booked' && SATIRICAL_ERROR_MESSAGES.VENUE_BOOKED}
+              {error.type === 'invalid_lineup' && SATIRICAL_ERROR_MESSAGES.INVALID_LINEUP}
+              {error.type === 'capacity_exceeded' && SATIRICAL_ERROR_MESSAGES.CAPACITY_EXCEEDED}
             </p>
             
             {/* Visual feedback bars */}

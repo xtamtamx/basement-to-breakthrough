@@ -3,19 +3,37 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ShowResult } from '@game/types';
 import { useGameStore } from '@stores/gameStore';
 import { Button } from './Button';
+import { SATIRICAL_TURN_RESULTS } from '@game/data/satiricalText';
 
 interface TurnResultsModalProps {
   isOpen: boolean;
   onClose: () => void;
   showResults: ShowResult[];
   totalVenueRent: number;
+  dayJobResult?: {
+    money: number;
+    reputationLoss: number;
+    fanLoss: number;
+    stressGain: number;
+    message: string;
+    randomEvent?: {
+      message: string;
+      effects: any;
+    };
+  };
+  difficultyEvent?: {
+    message: string;
+    reputationLost: number;
+  };
 }
 
 export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({ 
   isOpen, 
   onClose,
   showResults,
-  totalVenueRent
+  totalVenueRent,
+  dayJobResult,
+  difficultyEvent
 }) => {
   const { money, reputation, fans } = useGameStore();
   
@@ -24,6 +42,32 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
   const totalProfit = totalRevenue - totalCosts;
   const totalFans = showResults.reduce((sum, result) => sum + result.fansGained, 0);
   const totalRep = showResults.reduce((sum, result) => sum + result.reputationChange, 0);
+
+  const getTurnResultMessage = () => {
+    if (showResults.length === 0) {
+      return SATIRICAL_TURN_RESULTS.NO_SHOWS;
+    }
+    if (totalProfit > 100) {
+      return SATIRICAL_TURN_RESULTS.GREAT_NIGHT;
+    }
+    if (totalProfit > 0) {
+      return SATIRICAL_TURN_RESULTS.DECENT_NIGHT;
+    }
+    if (totalProfit > -50) {
+      return SATIRICAL_TURN_RESULTS.BROKE_EVEN;
+    }
+    return SATIRICAL_TURN_RESULTS.BAD_NIGHT;
+  };
+
+  const getReputationMessage = () => {
+    if (totalRep > 10) {
+      return SATIRICAL_TURN_RESULTS.REPUTATION_UP;
+    }
+    if (totalRep < -10) {
+      return SATIRICAL_TURN_RESULTS.REPUTATION_DOWN;
+    }
+    return "";
+  };
 
   return (
     <AnimatePresence>
@@ -43,7 +87,7 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
             onClick={e => e.stopPropagation()}
           >
             <div className="modal-header">
-              <h2 className="modal-title">Turn Results</h2>
+              <h2 className="modal-title">Post-Show Damage Report</h2>
               <button className="close-button" onClick={onClose}>×</button>
             </div>
 
@@ -51,7 +95,7 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
               {/* Show Results */}
               {showResults.length > 0 ? (
                 <div className="shows-section">
-                  <h3 className="section-title">Shows Performed</h3>
+                  <h3 className="section-title">Tonight's Disasters</h3>
                   <div className="show-results">
                     {showResults.map((result, index) => (
                       <motion.div
@@ -66,7 +110,7 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
                             {result.isSuccess ? '🎸' : '💔'}
                           </span>
                           <span className="show-status">
-                            {result.isSuccess ? 'Successful Show' : 'Show Failed'}
+                            {result.isSuccess ? 'Somehow Didn\'t Fail' : 'Predictable Disaster'}
                           </span>
                         </div>
                         
@@ -108,22 +152,158 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
               ) : (
                 <div className="no-shows">
                   <span className="no-shows-icon">📅</span>
-                  <p className="no-shows-text">No shows were scheduled this turn</p>
+                  <p className="no-shows-text">Another Night of Sitting Alone in Your "Office" (Bedroom)</p>
                 </div>
               )}
 
               {/* Venue Costs */}
               <div className="costs-section">
-                <h3 className="section-title">Venue Costs</h3>
+                <h3 className="section-title">Landlord's Yacht Fund Contributions</h3>
                 <div className="cost-item">
-                  <span className="cost-label">Total Venue Rent</span>
+                  <span className="cost-label">Money You'll Never See Again</span>
                   <span className="cost-value negative">-${totalVenueRent}</span>
                 </div>
               </div>
 
+              {/* Day Job Results */}
+              {dayJobResult && (
+                <div className="day-job-section" style={{
+                  background: 'var(--bg-tertiary)',
+                  padding: '16px',
+                  borderRadius: '8px',
+                  marginTop: '16px',
+                  border: '1px solid var(--border-default)'
+                }}>
+                  <h3 className="section-title">Soul-Crushing Employment Update</h3>
+                  <div className="job-stats" style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(2, 1fr)',
+                    gap: '12px',
+                    marginBottom: '12px'
+                  }}>
+                    <div className="stat">
+                      <span className="stat-label">Wage Slavery Income</span>
+                      <span className="stat-value positive">+${dayJobResult.money}</span>
+                    </div>
+                    <div className="stat">
+                      <span className="stat-label">Street Cred Lost</span>
+                      <span className="stat-value negative">-{dayJobResult.reputationLoss}</span>
+                    </div>
+                    {dayJobResult.fanLoss > 0 && (
+                      <div className="stat">
+                        <span className="stat-label">Disappointed Fans</span>
+                        <span className="stat-value negative">-{dayJobResult.fanLoss}</span>
+                      </div>
+                    )}
+                    <div className="stat">
+                      <span className="stat-label">Mental Health</span>
+                      <span className="stat-value negative">+{dayJobResult.stressGain}% stress</span>
+                    </div>
+                  </div>
+                  <p style={{
+                    fontStyle: 'italic',
+                    color: 'var(--text-muted)',
+                    fontSize: '14px',
+                    margin: 0
+                  }}>
+                    "{dayJobResult.message}"
+                  </p>
+                  
+                  {dayJobResult.randomEvent && (
+                    <div style={{
+                      marginTop: '12px',
+                      padding: '12px',
+                      background: 'var(--bg-secondary)',
+                      borderRadius: '6px',
+                      border: '1px solid var(--punk-magenta)'
+                    }}>
+                      <h4 style={{ 
+                        fontSize: '14px',
+                        margin: '0 0 8px 0',
+                        color: 'var(--punk-magenta)',
+                        textTransform: 'uppercase'
+                      }}>
+                        Random Work Event!
+                      </h4>
+                      <p style={{ 
+                        margin: 0, 
+                        fontSize: '13px',
+                        color: 'var(--text-primary)'
+                      }}>
+                        {dayJobResult.randomEvent.message}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {/* Difficulty Event */}
+              {difficultyEvent && (
+                <div className="difficulty-event-section" style={{
+                  background: 'rgba(239, 68, 68, 0.05)',
+                  border: '2px solid var(--metal-red)',
+                  borderRadius: '8px',
+                  padding: '16px',
+                  marginTop: '16px'
+                }}>
+                  <h3 className="section-title" style={{ color: 'var(--metal-red)' }}>
+                    Scene Evolution
+                  </h3>
+                  <p style={{
+                    margin: '0 0 12px 0',
+                    fontSize: '14px',
+                    color: 'var(--text-primary)',
+                    lineHeight: '1.6'
+                  }}>
+                    {difficultyEvent.message}
+                  </p>
+                  {difficultyEvent.reputationLost > 0 && (
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      fontSize: '14px',
+                      color: 'var(--metal-red)'
+                    }}>
+                      <span>⭐</span>
+                      <span>-{difficultyEvent.reputationLost} reputation from scene decay</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Summary */}
               <div className="summary-section">
-                <h3 className="section-title">Turn Summary</h3>
+                <h3 className="section-title">Financial Autopsy</h3>
+                
+                {/* Turn Result Message */}
+                <div className="turn-message" style={{
+                  padding: '16px',
+                  background: totalProfit > 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                  border: `2px solid ${totalProfit > 0 ? 'var(--success-green)' : 'var(--metal-red)'}`,
+                  borderRadius: '8px',
+                  marginBottom: '16px',
+                  textAlign: 'center'
+                }}>
+                  <p style={{
+                    margin: 0,
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    color: totalProfit > 0 ? 'var(--success-green)' : 'var(--metal-red)'
+                  }}>
+                    {getTurnResultMessage()}
+                  </p>
+                  {getReputationMessage() && (
+                    <p style={{
+                      margin: '8px 0 0',
+                      fontSize: '14px',
+                      color: 'var(--text-muted)'
+                    }}>
+                      {getReputationMessage()}
+                    </p>
+                  )}
+                </div>
+                
                 <div className="summary-stats">
                   <div className="summary-item">
                     <span className="summary-label">Total Revenue</span>
@@ -170,7 +350,7 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
 
             <div className="modal-footer">
               <Button variant="primary" size="lg" onClick={onClose}>
-                Continue to Next Turn
+                {totalProfit > 0 ? 'Ride This High Into Next Turn' : 'Limp Into Another Day'}
               </Button>
             </div>
 

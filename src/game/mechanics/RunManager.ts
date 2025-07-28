@@ -1,4 +1,5 @@
 import { Band, Venue, Equipment, Achievement, UnlockableContent } from '@game/types';
+import { SATIRICAL_ACHIEVEMENTS } from '@game/data/satiricalText';
 
 export interface RunConfig {
   id: string;
@@ -327,10 +328,14 @@ class RunManager {
     
     // Perfect Run - No disasters
     if (run.stats.disasters === 0 && run.stats.totalShows >= 10) {
+      const satiricalData = SATIRICAL_ACHIEVEMENTS.PERFECT_LINEUP || {
+        name: 'Perfect Promoter',
+        description: 'Complete a run with 10+ shows and no disasters'
+      };
       achievements.push({
         id: 'perfect_run',
-        name: 'Perfect Promoter',
-        description: 'Complete a run with 10+ shows and no disasters',
+        name: satiricalData.name,
+        description: satiricalData.description,
         icon: '⭐',
         unlockedAt: new Date()
       });
@@ -340,8 +345,8 @@ class RunManager {
     if (run.config.id === 'speed' && this.checkWinConditions(gameState)) {
       achievements.push({
         id: 'speed_demon',
-        name: 'Speed Demon',
-        description: 'Win a speed run',
+        name: 'Meth-Free Speed Run Champion',
+        description: 'Booked 20 shows in 15 turns using only caffeine and desperation',
         icon: '⚡',
         unlockedAt: new Date()
       });
