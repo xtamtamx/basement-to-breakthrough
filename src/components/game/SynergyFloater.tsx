@@ -90,7 +90,7 @@ export const SynergyFloater: React.FC<SynergyFloaterProps> = ({
             {synergy.effects.slice(0, 2).map((effect, i) => (
               <div key={i} className="flex items-center justify-center gap-1">
                 <span className="pixel-text" style={{ fontSize: '8px', color: 'var(--pixel-green)' }}>
-                  +{effect.value}{effect.isPercentage ? '%' : ''} {effect.type.replace('_', ' ')}
+                  +{effect.value} {effect.type.replace('_', ' ')}
                 </span>
               </div>
             ))}

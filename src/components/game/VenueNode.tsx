@@ -6,7 +6,7 @@ import { audio } from '@utils/audio';
 
 interface VenueNodeProps {
   venue: Venue;
-  position: { x: string; y: string };
+  position: { x: string | number; y: string | number };
   isBooked: boolean;
   isHovered: boolean;
   onDrop: (lineup: Band[]) => void;
@@ -44,15 +44,6 @@ const venueIcons: Record<VenueType, string> = {
   [VenueType.ARENA]: '🏟️',
   [VenueType.FESTIVAL_GROUNDS]: '🎪'
 };
-
-interface VenueNodeProps {
-  venue: Venue;
-  position: { x: string | number; y: string | number };
-  isBooked: boolean;
-  isHovered: boolean;
-  onDrop: (lineup: Band[]) => void;
-  onHover: (isHovered: boolean) => void;
-}
 
 export const VenueNode: React.FC<VenueNodeProps> = ({
   venue,
@@ -92,7 +83,7 @@ export const VenueNode: React.FC<VenueNodeProps> = ({
           haptics.success();
           audio.play('success');
         } catch (err) {
-          console.error('Failed to parse lineup data:', err);
+          prodLog.error('Failed to parse lineup data:', err);
         }
       }
     }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { WalkerSprite } from '@components/graphics/PixelArtSprites';
 import { PixelButton } from '@components/ui/PixelButton';
 import { haptics } from '@utils/mobile';

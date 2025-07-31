@@ -1,5 +1,5 @@
 import { useGameStore } from '@stores/gameStore';
-import { Show, Band, Venue } from '@game/types';
+import { Show } from '@game/types';
 
 export enum PromotionType {
   FLYERS = 'FLYERS',
@@ -121,7 +121,7 @@ export class ShowPromotionSystem {
     turnsInAdvance: number = 3
   ): ScheduledShow | null {
     if (turnsInAdvance < 1 || turnsInAdvance > 5) {
-      console.error("Shows must be scheduled 1-5 turns in advance");
+      prodLog.error("Shows must be scheduled 1-5 turns in advance");
       return null;
     }
     

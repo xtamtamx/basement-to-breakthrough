@@ -1,25 +1,47 @@
 import { Band, Venue, Genre, VenueType } from '@game/types';
 
+/**
+ * Represents a synergy - a special bonus activated by specific band/venue combinations
+ */
 export interface Synergy {
+  /** Unique identifier for the synergy */
   id: string;
+  /** Display name of the synergy */
   name: string;
+  /** Description of what triggers and benefits from this synergy */
   description: string;
+  /** Multiplier applied to base show metrics (1.0 = no change, 2.0 = double) */
   multiplier: number;
+  /** Flat reputation bonus added when this synergy activates */
   reputationBonus: number;
 }
 
+/**
+ * Core engine for detecting and calculating synergies between bands and venues
+ * Manages the complex interactions that create emergent gameplay
+ * 
+ * @example
+ * const engine = new SynergyEngine();
+ * const synergies = engine.calculateSynergies([punkBand], diyVenue);
+ */
 export class SynergyEngine {
+  /** Registry of all synergy calculators indexed by synergy ID */
   private synergies: Map<string, (bands: Band[], venue: Venue) => Synergy | null> = new Map();
 
   constructor() {
     this.registerDefaultSynergies();
   }
 
-  // Calculate all applicable synergies for a show
+  /**
+   * Calculates all applicable synergies for a show
+   * @param bands - Array of bands performing (supports multi-band bills)
+   * @param venue - The venue hosting the show
+   * @returns Array of active synergies that apply to this combination
+   */
   calculateSynergies(bands: Band[], venue: Venue): Synergy[] {
     const activeSynergies: Synergy[] = [];
 
-    for (const [id, calculator] of this.synergies) {
+    for (const [, calculator] of this.synergies) {
       const synergy = calculator(bands, venue);
       if (synergy) {
         activeSynergies.push(synergy);
@@ -29,7 +51,11 @@ export class SynergyEngine {
     return activeSynergies;
   }
 
-  // Register a new synergy
+  /**
+   * Registers a new synergy calculator
+   * @param id - Unique identifier for the synergy
+   * @param calculator - Function that determines if synergy applies and returns it
+   */
   registerSynergy(
     id: string, 
     calculator: (bands: Band[], venue: Venue) => Synergy | null
@@ -37,6 +63,11 @@ export class SynergyEngine {
     this.synergies.set(id, calculator);
   }
 
+  /**
+   * Registers all built-in synergies
+   * Called automatically on engine initialization
+   * @private
+   */
   private registerDefaultSynergies(): void {
     // DIY Authenticity - DIY bands in DIY spaces
     this.registerSynergy('diy-authentic', (bands, venue) => {
@@ -148,7 +179,7 @@ export class SynergyEngine {
     });
 
     // Underground Network - Multiple underground bands
-    this.registerSynergy('underground-network', (bands, venue) => {
+    this.registerSynergy('underground-network', (bands) => {
       if (bands.length < 2) return null;
       
       const allUnderground = bands.every(b => b.authenticity > 70 && b.popularity < 30);
@@ -165,7 +196,7 @@ export class SynergyEngine {
     });
 
     // Real Artist Spotlight - Real artists get special bonus
-    this.registerSynergy('real-artist', (bands, venue) => {
+    this.registerSynergy('real-artist', (bands) => {
       const hasRealArtist = bands.some(b => b.isRealArtist);
       if (hasRealArtist) {
         return {
@@ -186,10 +217,14 @@ export class SynergyEngine {
     return synergies.map(s => `${s.name}: ${s.description}`);
   }
 
-  // Calculate total multiplier
-  getTotalMultiplier(bands: Band[], venue: Venue): number {
-    const synergies = this.calculateSynergies(bands, venue);
+  // Calculate total multiplier from synergies array
+  getTotalMultiplier(synergies: Synergy[]): number {
     return synergies.reduce((total, synergy) => total * synergy.multiplier, 1);
+  }
+
+  // Calculate total reputation bonus from synergies array
+  getTotalReputationBonus(synergies: Synergy[]): number {
+    return synergies.reduce((total, synergy) => total + synergy.reputationBonus, 0);
   }
 }
 

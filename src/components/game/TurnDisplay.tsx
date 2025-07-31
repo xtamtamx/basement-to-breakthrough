@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { turnManager } from '@game/mechanics/TurnManager';
 import { useGameStore } from '@stores/gameStore';
-import { GamePhase } from '@game/types';
 import { haptics } from '@utils/mobile';
 import { audio } from '@utils/audio';
 
 export const TurnDisplay: React.FC = () => {
-  const { phase, setPhase } = useGameStore();
+  const { setPhase } = useGameStore();
   const [turnSummary, setTurnSummary] = useState(turnManager.getTurnSummary());
   const [showPhaseInfo, setShowPhaseInfo] = useState(false);
   const [remainingTime, setRemainingTime] = useState<number | null>(null);

@@ -1,5 +1,13 @@
-import { Band, Venue, Equipment, Achievement, UnlockableContent } from '@game/types';
+import { Achievement, UnlockableContent } from '@game/types';
+
+interface GameStateProps {
+  money: number;
+  reputation: number;
+  stress?: number;
+  connections?: number;
+}
 import { SATIRICAL_ACHIEVEMENTS } from '@game/data/satiricalText';
+import { safeStorage } from '@utils/safeStorage';
 
 export interface RunConfig {
   id: string;
@@ -214,7 +222,7 @@ class RunManager {
   }
   
   // Check win conditions
-  checkWinConditions(gameState: any): boolean {
+  checkWinConditions(gameState: GameStateProps): boolean {
     if (!this.currentRun) return false;
     
     const { winConditions } = this.currentRun.config;
@@ -236,7 +244,7 @@ class RunManager {
   }
   
   // Check if run should end
-  shouldEndRun(gameState: any): { shouldEnd: boolean; reason?: string } {
+  shouldEndRun(gameState: GameStateProps): { shouldEnd: boolean; reason?: string } {
     if (!this.currentRun) return { shouldEnd: false };
     
     // Check turn limit
@@ -258,7 +266,7 @@ class RunManager {
   }
   
   // End the current run
-  endRun(gameState: any): RunResult {
+  endRun(gameState: GameStateProps): RunResult {
     if (!this.currentRun) {
       throw new Error('No active run to end');
     }
@@ -296,7 +304,7 @@ class RunManager {
   }
   
   // Calculate run score
-  private calculateScore(run: RunState, gameState: any): number {
+  private calculateScore(run: RunState, _gameState: GameStateProps): number {
     let score = 0;
     
     // Base score from stats
@@ -323,7 +331,7 @@ class RunManager {
   }
   
   // Check achievements earned this run
-  private checkAchievements(run: RunState, gameState: any): Achievement[] {
+  private checkAchievements(run: RunState, gameState: GameStateProps): Achievement[] {
     const achievements: Achievement[] = [];
     
     // Perfect Run - No disasters
@@ -401,7 +409,7 @@ class RunManager {
   
   // Get high scores from storage
   private getHighScores(): Record<string, number> {
-    const stored = localStorage.getItem('btb-highscores');
+    const stored = safeStorage.getItem('btb-highscores');
     return stored ? JSON.parse(stored) : {};
   }
   
@@ -419,19 +427,19 @@ class RunManager {
       history.shift();
     }
     
-    localStorage.setItem('btb-run-history', JSON.stringify(history));
+    safeStorage.setItem('btb-run-history', JSON.stringify(history));
     
     // Update high scores if needed
     if (result.newHighScore) {
       const highScores = this.getHighScores();
       highScores[run.config.id] = result.score;
-      localStorage.setItem('btb-highscores', JSON.stringify(highScores));
+      safeStorage.setItem('btb-highscores', JSON.stringify(highScores));
     }
   }
   
   // Get run history
-  private getRunHistory(): any[] {
-    const stored = localStorage.getItem('btb-run-history');
+  private getRunHistory(): RunResult[] {
+    const stored = safeStorage.getItem('btb-run-history');
     return stored ? JSON.parse(stored) : [];
   }
   

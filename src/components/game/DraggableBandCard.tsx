@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { Band } from '@game/types';
-import { useDraggable } from '@hooks/useDraggable';
-import { useDragContext } from '@contexts/DragContext';
+import React, { useState } from "react";
+import { Band } from "@game/types";
+import { useDraggable } from "@hooks/useDraggable";
+import { useDragContext } from "@contexts/DragContext";
 
 interface DraggableBandCardProps {
   band: Band;
@@ -14,12 +14,12 @@ export const DraggableBandCard: React.FC<DraggableBandCardProps> = ({
   position = { x: 0, y: 0 },
   onPositionChange,
 }) => {
-  const { setDraggedItem, clearDraggedItem, handleDragMove, handleDrop } = useDragContext();
+  const { setDraggedItem, handleDragMove, handleDrop } = useDragContext();
   const [isHovered, setIsHovered] = useState(false);
 
   const { ref, isDragging, bind } = useDraggable(band.id, {
     onDragStart: () => {
-      setDraggedItem(band, 'band');
+      setDraggedItem(band, "band");
     },
     onDragMove: (pos) => {
       handleDragMove(pos.x, pos.y);
@@ -34,7 +34,7 @@ export const DraggableBandCard: React.FC<DraggableBandCardProps> = ({
 
   const getPopularityBars = (popularity: number) => {
     const bars = Math.ceil(popularity / 20);
-    return '▮'.repeat(bars) + '▯'.repeat(5 - bars);
+    return "▮".repeat(bars) + "▯".repeat(5 - bars);
   };
 
   return (
@@ -43,15 +43,15 @@ export const DraggableBandCard: React.FC<DraggableBandCardProps> = ({
       {...bind}
       className={`
         absolute w-48 bg-metal-900 rounded-lg p-3 border-2
-        ${isDragging ? 'border-punk-500 shadow-2xl scale-105 opacity-90' : 'border-metal-700'}
-        ${isHovered ? 'border-punk-600' : ''}
+        ${isDragging ? "border-punk-500 shadow-2xl scale-105 opacity-90" : "border-metal-700"}
+        ${isHovered ? "border-punk-600" : ""}
         transition-all duration-200
         cursor-grab active:cursor-grabbing
       `}
       style={{
         left: position.x,
         top: position.y,
-        transform: isDragging ? 'rotate(3deg)' : 'rotate(0deg)',
+        transform: isDragging ? "rotate(3deg)" : "rotate(0deg)",
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -66,7 +66,7 @@ export const DraggableBandCard: React.FC<DraggableBandCardProps> = ({
       {/* Band Info */}
       <div className="space-y-2">
         <h3 className="font-bold text-sm truncate">{band.name}</h3>
-        
+
         <div className="flex items-center gap-2 text-xs text-metal-300">
           <span className="uppercase">{band.genre}</span>
           {band.hometown && (
@@ -81,7 +81,9 @@ export const DraggableBandCard: React.FC<DraggableBandCardProps> = ({
         <div className="grid grid-cols-2 gap-1 text-xs">
           <div>
             <span className="text-metal-500">POP:</span>
-            <span className="ml-1 font-mono">{getPopularityBars(band.popularity)}</span>
+            <span className="ml-1 font-mono">
+              {getPopularityBars(band.popularity)}
+            </span>
           </div>
           <div>
             <span className="text-metal-500">AUTH:</span>
@@ -101,7 +103,9 @@ export const DraggableBandCard: React.FC<DraggableBandCardProps> = ({
               </span>
             ))}
             {band.traits.length > 2 && (
-              <span className="text-xs text-metal-500">+{band.traits.length - 2}</span>
+              <span className="text-xs text-metal-500">
+                +{band.traits.length - 2}
+              </span>
             )}
           </div>
         )}

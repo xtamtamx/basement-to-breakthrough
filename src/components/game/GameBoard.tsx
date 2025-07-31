@@ -1,17 +1,26 @@
-import React, { useState } from 'react';
-import { DragProvider } from '@contexts/DragContext';
-import { DraggableBandCard } from './DraggableBandCard';
-import { VenueDropZone } from './VenueDropZone';
-import { ShowResultsModal } from './ShowResultsModal';
-import { TurnDisplay } from './TurnDisplay';
-import { FactionDisplay } from './FactionDisplay';
-import { Band, Venue } from '@game/types';
-import { bookingSystem } from '@game/mechanics/BookingSystem';
-import { showExecutor, ShowOutcome } from '@game/mechanics/ShowExecutor';
-import { useGameStore } from '@stores/gameStore';
-import { haptics } from '@utils/mobile';
-import { useCardStack } from '@hooks/useCardStack';
+import React, { useState } from "react";
+import { DragProvider } from "@contexts/DragContext";
+import { DraggableBandCard } from "./DraggableBandCard";
+import { VenueDropZone } from "./VenueDropZone";
+import { ShowResultsModal } from "./ShowResultsModal";
+import { TurnDisplay } from "./TurnDisplay";
+import { FactionDisplay } from "./FactionDisplay";
+import {
+  Band,
+  Venue,
+  GamePhase,
+  GameSettings,
+  Difficulty,
+  PerformanceMode,
+  ColorblindMode,
+} from "@game/types";
+import { bookingSystem } from "@game/mechanics/BookingSystem";
+import { showExecutor, ShowOutcome } from "@game/mechanics/ShowExecutor";
+import { useGameStore } from "@stores/gameStore";
+import { haptics } from "@utils/mobile";
+import { useCardStack } from "@hooks/useCardStack";
 
+import { prodLog } from '../../utils/devLogger';
 interface GameBoardProps {
   bands: Band[];
   venues: Venue[];
@@ -51,31 +60,49 @@ export const GameBoard: React.FC<GameBoardProps> = ({ bands, venues }) => {
   const handleBook = (band: Band, venue: Venue) => {
     // Check if can book
     const canBookResult = bookingSystem.canBook(band, venue, {
-      id: 'current',
+      id: "current",
       turn: 1,
-      phase: 'BOOKING' as any,
+      phase: GamePhase.BOOKING,
       resources: {
         money: gameStore.money,
         reputation: gameStore.reputation,
         connections: 0,
         stress: 0,
+        fans: gameStore.fans || 0,
       },
       bookedShows: [],
       availableBands: [],
-      sceneReputation: { overall: gameStore.reputation, factions: [], relationships: [] },
+      sceneReputation: {
+        overall: gameStore.reputation,
+        factions: [],
+        relationships: [],
+      },
       unlockedContent: [],
       achievements: [],
-      settings: {} as any,
+      settings: {
+        difficulty: Difficulty.NORMAL,
+        musicVolume: 100,
+        sfxVolume: 100,
+        hapticFeedback: true,
+        autoSave: true,
+        performanceMode: PerformanceMode.BALANCED,
+        accessibility: {
+          colorblindMode: ColorblindMode.OFF,
+          reduceMotion: false,
+          largerTouchTargets: false,
+          screenReaderOptimized: false,
+        },
+      } as GameSettings,
     });
 
     if (!canBookResult.valid) {
       haptics.error();
-      console.error(canBookResult.reason);
+      prodLog.error(canBookResult.reason);
       return;
     }
 
     // Create booking
-    setBookings(prev => {
+    setBookings((prev) => {
       const newBookings = new Map(prev);
       newBookings.set(venue.id, {
         band,
@@ -109,9 +136,11 @@ export const GameBoard: React.FC<GameBoardProps> = ({ bands, venues }) => {
     return bookings.get(venueId)?.band;
   };
 
-  const remainingBands = bands.filter(band => 
-    !Array.from(bookings.values()).some(booking => booking.band.id === band.id) &&
-    positions.some(p => p.id === band.id && p.x > -500) // Not removed
+  const remainingBands = bands.filter(
+    (band) =>
+      !Array.from(bookings.values()).some(
+        (booking) => booking.band.id === band.id,
+      ) && positions.some((p) => p.id === band.id && p.x > -500), // Not removed
   );
 
   const handleRunShows = () => {
@@ -122,31 +151,49 @@ export const GameBoard: React.FC<GameBoardProps> = ({ bands, venues }) => {
 
     // Create game state for show execution
     const gameState = {
-      id: 'current',
+      id: "current",
       turn: 1,
-      phase: 'SHOW' as any,
+      phase: GamePhase.SHOW_NIGHT,
       resources: {
         money: gameStore.money,
         reputation: gameStore.reputation,
         connections: 0,
         stress: 0,
+        fans: gameStore.fans || 0,
       },
       bookedShows: [],
       availableBands: bands,
-      sceneReputation: { overall: gameStore.reputation, factions: [], relationships: [] },
+      sceneReputation: {
+        overall: gameStore.reputation,
+        factions: [],
+        relationships: [],
+      },
       unlockedContent: [],
       achievements: [],
-      settings: {} as any,
+      settings: {
+        difficulty: Difficulty.NORMAL,
+        musicVolume: 100,
+        sfxVolume: 100,
+        hapticFeedback: true,
+        autoSave: true,
+        performanceMode: PerformanceMode.BALANCED,
+        accessibility: {
+          colorblindMode: ColorblindMode.OFF,
+          reduceMotion: false,
+          largerTouchTargets: false,
+          screenReaderOptimized: false,
+        },
+      } as GameSettings,
     };
 
     // Execute all shows
     const results = showExecutor.executeAllShows(
-      Array.from(bookings.values()).map(b => ({
+      Array.from(bookings.values()).map((b) => ({
         band: b.band,
         venue: b.venue,
         ticketPrice: b.ticketPrice,
       })),
-      gameState
+      gameState,
     );
 
     setShowResults(results);
@@ -157,47 +204,45 @@ export const GameBoard: React.FC<GameBoardProps> = ({ bands, venues }) => {
     setShowResults(null);
     // Clear bookings and reset board
     setBookings(new Map());
-    
+
     // Reset band positions
     const resetPositions = bands.map((band, index) => ({
       id: band.id,
       x: 20 + (index % 3) * 220,
       y: 20 + Math.floor(index / 3) * 180,
     }));
-    
+
     positions.forEach((pos, index) => {
       updatePosition(pos.id, resetPositions[index] || { x: 0, y: 0 });
     });
   };
 
-  const handleResourcesUpdate = (money: number, reputation: number, fans: number) => {
-    gameStore.addMoney(money);
-    gameStore.addReputation(reputation);
-    gameStore.addFans(fans);
-  };
 
   return (
     <DragProvider>
       <div className="relative w-full h-screen bg-black overflow-auto">
         {/* Instructions */}
         <div className="absolute top-4 left-4 right-4 bg-metal-900/80 rounded-lg p-3 z-10">
-          <h2 className="font-bold text-lg mb-1">Drag bands onto venues to book shows!</h2>
+          <h2 className="font-bold text-lg mb-1">
+            Drag bands onto venues to book shows!
+          </h2>
           <p className="text-sm text-metal-300">
-            Stack cards by dragging them close together. Tap stacks to expand them.
+            Stack cards by dragging them close together. Tap stacks to expand
+            them.
           </p>
         </div>
 
         {/* Band Cards Area */}
-        <div 
+        <div
           className="absolute top-20 left-0 right-0 h-[40%] border-b border-metal-800"
           data-tutorial="band-area"
         >
           <div className="absolute top-2 left-4 text-xs text-metal-500 uppercase tracking-wider">
             Available Bands ({remainingBands.length})
           </div>
-          
+
           {/* Render stacks */}
-          {stacks.map(stack => (
+          {stacks.map((stack) => (
             <div
               key={stack.id}
               className="absolute cursor-pointer"
@@ -206,12 +251,12 @@ export const GameBoard: React.FC<GameBoardProps> = ({ bands, venues }) => {
             >
               <div className="relative">
                 {stack.cards.map((cardId, index) => {
-                  const band = bands.find(b => b.id === cardId);
+                  const band = bands.find((b) => b.id === cardId);
                   if (!band) return null;
-                  
-                  const position = positions.find(p => p.id === cardId);
+
+                  const position = positions.find((p) => p.id === cardId);
                   if (!position || position.x < -500) return null;
-                  
+
                   return (
                     <div
                       key={cardId}
@@ -238,12 +283,12 @@ export const GameBoard: React.FC<GameBoardProps> = ({ bands, venues }) => {
               )}
             </div>
           ))}
-          
+
           {/* Render individual cards */}
-          {remainingBands.map(band => {
-            const position = positions.find(p => p.id === band.id);
+          {remainingBands.map((band) => {
+            const position = positions.find((p) => p.id === band.id);
             if (!position || position.stackId) return null;
-            
+
             return (
               <DraggableBandCard
                 key={band.id}
@@ -256,7 +301,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ bands, venues }) => {
         </div>
 
         {/* Venues Area */}
-        <div 
+        <div
           className="absolute bottom-0 left-0 right-0 h-[55%] p-4"
           data-tutorial="venue-area"
         >
@@ -264,7 +309,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ bands, venues }) => {
             Venues
           </div>
           <div className="flex flex-wrap gap-4 mt-8">
-            {venues.map(venue => (
+            {venues.map((venue) => (
               <VenueDropZone
                 key={venue.id}
                 venue={venue}
@@ -282,7 +327,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ bands, venues }) => {
         </div>
 
         {/* Stats Display */}
-        <div 
+        <div
           className="fixed bottom-4 right-4 bg-metal-900/90 rounded-lg p-3 text-sm"
           data-tutorial="resources"
         >
@@ -306,13 +351,13 @@ export const GameBoard: React.FC<GameBoardProps> = ({ bands, venues }) => {
         {bookings.size > 0 && (
           <div className="fixed top-20 right-4 bg-metal-900/90 rounded-lg p-3 text-sm w-64">
             <h3 className="font-bold mb-2">Tonight's Shows</h3>
-            {Array.from(bookings.values()).map(booking => (
+            {Array.from(bookings.values()).map((booking) => (
               <div key={booking.venue.id} className="mb-2">
                 <p className="font-bold">{booking.band.name}</p>
                 <p className="text-xs text-metal-400">@ {booking.venue.name}</p>
               </div>
             ))}
-            <button 
+            <button
               onClick={handleRunShows}
               className="punk-button w-full mt-3 text-sm"
               data-tutorial="run-shows"
@@ -325,11 +370,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ bands, venues }) => {
 
       {/* Show Results Modal */}
       {showResults && (
-        <ShowResultsModal
-          results={showResults}
-          onClose={handleResultsClose}
-          onResourcesUpdate={handleResourcesUpdate}
-        />
+        <ShowResultsModal results={showResults} onClose={handleResultsClose} />
       )}
     </DragProvider>
   );

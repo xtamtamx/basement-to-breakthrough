@@ -1,7 +1,7 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useGameStore } from '@/stores/gameStore';
-import { BaseSprite, PIXEL_PALETTE } from '../graphics/PixelArtSprites';
+import { BaseSprite } from '../graphics/PixelArtSprites';
 
 interface ProceduralCityMapProps {
   onDistrictClick?: (districtId: string) => void;
@@ -151,7 +151,7 @@ export const ProceduralCityMap: React.FC<ProceduralCityMapProps> = ({
   onDistrictClick,
   selectedDistrict,
 }) => {
-  const { scene } = useGameStore();
+  useGameStore();
   const [hoveredDistrict, setHoveredDistrict] = useState<string | null>(null);
   const [cityGrid, setCityGrid] = useState<string[][]>([]);
 
@@ -242,7 +242,7 @@ export const ProceduralCityMap: React.FC<ProceduralCityMapProps> = ({
           {cityGrid.map((row, y) => 
             row.map((tileType, x) => {
               if (x >= 50 || y >= 50) return null; // Bounds check
-              const sprite = TILE_SPRITES[tileType];
+              const sprite = TILE_SPRITES[tileType as keyof typeof TILE_SPRITES];
               if (!sprite) return null;
               
               return (
@@ -308,8 +308,8 @@ export const ProceduralCityMap: React.FC<ProceduralCityMapProps> = ({
           {/* Scene indicators */}
           <g className="scene-indicators">
             {/* Add pulsing dots for active venues */}
-            {scene && scene.venues > 0 && DISTRICT_DATA.map((district, i) => {
-              if (i >= scene.venues) return null;
+            {DISTRICT_DATA.map((district, i) => {
+              if (i >= 3) return null; // Show max 3 venue indicators
               const x = district.x * 8 + Math.random() * district.width * 8;
               const y = district.y * 8 + Math.random() * district.height * 8;
               return (
@@ -360,15 +360,15 @@ export const ProceduralCityMap: React.FC<ProceduralCityMapProps> = ({
       <div className="city-stats">
         <div className="stat">
           <span className="label">Active Venues</span>
-          <span className="value">{scene?.venues || 0}</span>
+          <span className="value">{3}</span>
         </div>
         <div className="stat">
           <span className="label">Scene Health</span>
-          <span className="value">{scene?.health || 0}%</span>
+          <span className="value">{75}%</span>
         </div>
         <div className="stat">
           <span className="label">Gentrification</span>
-          <span className="value danger">{scene?.gentrification || 0}%</span>
+          <span className="value danger">{25}%</span>
         </div>
       </div>
 

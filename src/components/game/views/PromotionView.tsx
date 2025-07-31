@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useGameStore } from '@stores/gameStore';
 import { showPromotionSystem, PromotionType, PROMOTION_ACTIVITIES } from '@game/mechanics/ShowPromotionSystem';
 import { Card } from '@components/ui/Card';
 import { Button } from '@components/ui/Button';
 import { haptics } from '@utils/mobile';
 
+type ViewType = "city" | "bands" | "shows" | "promotion" | "synergies" | "jobs" | "progression";
+
 interface PromotionViewProps {
-  onNavigate?: (view: string) => void;
+  onNavigate?: (view: ViewType) => void;
 }
 
 export const PromotionView: React.FC<PromotionViewProps> = ({ onNavigate }) => {
@@ -32,7 +34,7 @@ export const PromotionView: React.FC<PromotionViewProps> = ({ onNavigate }) => {
         <div className="empty-state">
           <h2>No Shows Scheduled</h2>
           <p>Book shows in advance to have time for promotion!</p>
-          <Button variant="primary" size="lg" onClick={() => onNavigate?.('shows')}>
+          <Button variant="primary" size="lg" onClick={() => onNavigate?.('shows' as ViewType)}>
             Go to Show Builder →
           </Button>
         </div>

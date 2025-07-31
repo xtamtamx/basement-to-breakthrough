@@ -1,7 +1,5 @@
-import { SynergyCombo, SynergyEffect } from './SynergyDiscoverySystem';
+import { SynergyCombo } from './SynergyDiscoverySystem';
 import { Band, Venue, Equipment } from '@game/types';
-import { haptics } from '@utils/mobile';
-import { audio } from '@utils/audio';
 import { synergyMasterySystem } from './SynergyMasterySystem';
 
 export interface ChainLink {
@@ -29,7 +27,7 @@ export interface ChainTrigger {
 
 export interface ChainCondition {
   type: 'effect_threshold' | 'synergy_count' | 'specific_combo' | 'no_conflict';
-  value: any;
+  value: string | number | { effect: string; threshold: number };
 }
 
 export interface ChainConflict {
@@ -245,7 +243,7 @@ class SynergyChainSystem {
   private buildChain(
     startSynergy: SynergyCombo,
     allSynergies: SynergyCombo[],
-    context: any,
+    context: { currentEffects: Map<string, number> },
     processedSynergies: Set<string>,
     depth = 0
   ): ChainReaction {
@@ -285,7 +283,7 @@ class SynergyChainSystem {
     chain: ChainReaction,
     currentSynergy: SynergyCombo,
     allSynergies: SynergyCombo[],
-    context: any,
+    context: { currentEffects: Map<string, number> },
     processedSynergies: Set<string>,
     depth: number
   ) {
@@ -342,32 +340,34 @@ class SynergyChainSystem {
   private checkChainConditions(
     conditions: ChainCondition[],
     chain: ChainReaction,
-    context: any,
-    currentSynergy?: SynergyCombo
+    context: { currentEffects: Map<string, number> }
   ): boolean {
     for (const condition of conditions) {
       switch (condition.type) {
-        case 'effect_threshold':
+        case 'effect_threshold': {
           const effectValue = context.currentEffects.get(condition.value.effect) || 0;
           if (effectValue < condition.value.threshold) return false;
           break;
+        }
           
         case 'synergy_count':
           if (chain.links.length < condition.value) return false;
           break;
           
-        case 'specific_combo':
+        case 'specific_combo': {
           const hasCombo = chain.links.some(link => 
             link.synergy.id === condition.value || 
             link.synergy.name.toLowerCase().includes(condition.value)
           );
           if (!hasCombo) return false;
           break;
+        }
           
-        case 'no_conflict':
+        case 'no_conflict': {
           const hasConflict = this.chainConflicts.has(condition.value);
           if (hasConflict) return false;
           break;
+        }
       }
     }
     

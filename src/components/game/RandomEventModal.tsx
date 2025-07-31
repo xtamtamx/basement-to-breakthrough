@@ -100,9 +100,9 @@ export const RandomEventModal: React.FC<RandomEventModalProps> = ({ event, onCho
               </p>
               {event.effects.map((effect, i) => (
                 <p key={i} className="pixel-text pixel-text-xs" style={{ 
-                  color: effect.value > 0 ? 'var(--pixel-green)' : 'var(--pixel-red)' 
+                  color: typeof effect.value === 'number' && effect.value > 0 ? 'var(--pixel-green)' : 'var(--pixel-red)' 
                 }}>
-                  {effect.value > 0 ? '+' : ''}{effect.value} {effect.type.toUpperCase()}
+                  {typeof effect.value === 'number' && effect.value > 0 ? '+' : ''}{effect.value} {effect.type.toUpperCase()}
                 </p>
               ))}
             </motion.div>
@@ -152,9 +152,9 @@ export const RandomEventModal: React.FC<RandomEventModalProps> = ({ event, onCho
                     <div className="space-y-1">
                       {choice.effects.map((effect, i) => (
                         <p key={i} className="pixel-text pixel-text-xs" style={{ 
-                          color: effect.value > 0 ? 'var(--pixel-green)' : 'var(--pixel-orange)' 
+                          color: typeof effect.value === 'number' && effect.value > 0 ? 'var(--pixel-green)' : 'var(--pixel-orange)' 
                         }}>
-                          {effect.value > 0 ? '+' : ''}{effect.value} {effect.type}
+                          {typeof effect.value === 'number' && effect.value > 0 ? '+' : ''}{effect.value} {effect.type}
                         </p>
                       ))}
                     </div>

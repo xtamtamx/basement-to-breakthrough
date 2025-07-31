@@ -651,7 +651,7 @@ export class ProgressionPathSystem {
     try {
       this.state = JSON.parse(data);
     } catch (e) {
-      console.error('Failed to deserialize progression state:', e);
+      prodLog.error('Failed to deserialize progression state:', e);
     }
   }
 }

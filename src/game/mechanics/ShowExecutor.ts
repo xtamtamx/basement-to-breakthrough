@@ -1,19 +1,14 @@
-import { Band, Venue, Show, ShowResult, GameState } from '@game/types';
+import { Band, Venue, Show, ShowResult, GameState, Incident } from '@game/types';
 import { synergyEngine } from './SynergyEngine';
 import { incidentSystem } from './IncidentSystem';
 import { factionSystem } from './FactionSystem';
 import { equipmentManager } from './EquipmentManager';
 import { equipmentManagerV2 } from './EquipmentManagerV2';
-import { bandRelationships } from './BandRelationships';
 
 export interface ShowOutcome {
   show: Show;
   result: ShowResult;
-  incidents: Array<{
-    type: string;
-    description: string;
-    effects: any;
-  }>;
+  incidents: Incident[];
   synergies: ReturnType<typeof synergyEngine.calculateSynergies>;
 }
 
@@ -41,7 +36,7 @@ class ShowExecutor {
     const baseAttendance = this.calculateBaseAttendance(band, venue);
     
     // Initialize incidents array
-    const incidents: Array<{ type: string; description: string; effects: any }> = [];
+    const incidents: Incident[] = [];
     
     // Apply synergies
     const synergies = synergyEngine.calculateSynergies([band], venue);
@@ -51,11 +46,8 @@ class ShowExecutor {
 
     synergies.forEach(synergy => {
       attendanceMultiplier *= synergy.multiplier;
-      if (synergy.effects.reputationBonus) {
-        reputationMultiplier += synergy.effects.reputationBonus / 100;
-      }
-      if (synergy.effects.moneyBonus) {
-        moneyMultiplier += synergy.effects.moneyBonus / 100;
+      if (synergy.reputationBonus) {
+        reputationMultiplier += synergy.reputationBonus / 100;
       }
     });
 
@@ -152,9 +144,16 @@ class ShowExecutor {
 
     // Final values (using old equipment system effects for compatibility)
     const revenue = equipmentResults.revenue;
-    const reputationGain = equipmentResults.reputation;
+    let reputationGain = equipmentResults.reputation;
     const fansGained = equipmentResults.fans;
     const stress = baseStress; // Already includes V2 equipment stress reduction
+    
+    // Add flat reputation bonuses from synergies
+    synergies.forEach(synergy => {
+      if (synergy.reputationBonus) {
+        reputationGain += synergy.reputationBonus;
+      }
+    });
 
     // Update faction standings based on show result
     const showSuccess = finalAttendance >= venue.capacity * 0.5;
@@ -177,8 +176,16 @@ class ShowExecutor {
       attendance: finalAttendance,
       revenue: show.revenue,
       reputationChange: show.reputationGain,
+      reputationGain: show.reputationGain,
       fansGained: show.fansGained,
       incidentOccurred: incidents.length > 0,
+      incidents: incidents,
+      isSuccess: finalAttendance >= venue.capacity * 0.5,
+      financials: {
+        revenue: show.revenue,
+        costs: venue.rent,
+        profit: show.revenue - venue.rent
+      }
     };
 
     return {
@@ -294,13 +301,13 @@ class ShowExecutor {
     show: Show,
     band: Band,
     venue: Venue,
-    gameState: { reputation: number; factionStandings: any }
+    gameState: { reputation: number; factionStandings: Map<string, number> }
   ): Promise<ShowResult> {
     // Create a proper GameState object
     const fullGameState: GameState = {
       id: 'current',
       turn: 1, // This should come from the actual game state
-      phase: 'PERFORMANCE' as any,
+      phase: 'PERFORMANCE' as const,
       resources: {
         money: 0,
         reputation: gameState.reputation,
@@ -317,7 +324,7 @@ class ShowExecutor {
       },
       unlockedContent: [],
       achievements: [],
-      settings: {} as any
+      settings: { difficulty: 'normal', musicVolume: 1, sfxVolume: 1 }
     };
 
     // Execute the show using the internal method

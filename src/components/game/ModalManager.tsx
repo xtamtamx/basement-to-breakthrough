@@ -1,5 +1,5 @@
-import React from 'react';
-import { AnimatePresence } from 'framer-motion';
+import React from "react";
+import { AnimatePresence } from "framer-motion";
 
 interface ModalManagerProps {
   children: React.ReactNode;
@@ -8,10 +8,11 @@ interface ModalManagerProps {
 export const ModalManager: React.FC<ModalManagerProps> = ({ children }) => {
   // Get all children that are modals
   const childArray = React.Children.toArray(children);
-  const activeModal = childArray.find(child => {
+  const activeModal = childArray.find((child) => {
     if (!React.isValidElement(child)) return false;
     // Check if the modal is open (has isOpen prop or is conditionally rendered)
-    return child.props?.isOpen || (child.type && child.props);
+    const props = child.props as { isOpen?: boolean };
+    return props?.isOpen || (child.type && child.props);
   });
 
   return (
@@ -19,12 +20,12 @@ export const ModalManager: React.FC<ModalManagerProps> = ({ children }) => {
       {activeModal && (
         <>
           {/* Modal Backdrop */}
-          <div 
+          <div
             className="fixed inset-0 bg-black/80 backdrop-blur-sm"
             style={{ zIndex: 40 }}
           />
           {/* Modal Content */}
-          <div 
+          <div
             className="fixed inset-0 flex items-center justify-center p-4"
             style={{ zIndex: 41 }}
           >

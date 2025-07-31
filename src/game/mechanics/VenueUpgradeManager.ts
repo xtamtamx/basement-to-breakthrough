@@ -1,4 +1,4 @@
-import { Venue, VenueUpgrade, UpgradeType, VenueType, EquipmentType } from '@game/types';
+import { Venue, VenueUpgrade, VenueUpgradeType as UpgradeType, VenueType, EquipmentType } from '@game/types';
 
 interface UpgradeState {
   venueId: string;
@@ -334,6 +334,21 @@ class VenueUpgradeManager {
   clearAll() {
     this.activeUpgrades.clear();
     this.upgradeProgress = [];
+  }
+
+  // Apply an upgrade directly (for save/load)
+  applyUpgrade(venueId: string, upgradeId: string): void {
+    const upgrade = this.upgrades.find(u => u.id === upgradeId);
+    if (!upgrade) return;
+
+    if (!this.activeUpgrades.has(venueId)) {
+      this.activeUpgrades.set(venueId, []);
+    }
+
+    const venueUpgrades = this.activeUpgrades.get(venueId)!;
+    if (!venueUpgrades.includes(upgradeId)) {
+      venueUpgrades.push(upgradeId);
+    }
   }
 }
 

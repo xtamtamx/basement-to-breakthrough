@@ -23,7 +23,7 @@ export class WalkerSystem {
       if (current.x === endX && current.y === endY) {
         // Reconstruct path
         const path: { x: number; y: number }[] = [];
-        let node: any = current;
+        let node: { x: number; y: number; parent?: { x: number; y: number; parent?: any } } = current;
         while (node.parent) {
           path.unshift({ x: node.x, y: node.y });
           node = node.parent;

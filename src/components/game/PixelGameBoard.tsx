@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Band, Venue } from '@game/types';
-import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { useGameStore } from '@stores/gameStore';
 import { haptics } from '@utils/mobile';
 import { audio } from '@utils/audio';
@@ -12,11 +12,11 @@ interface PixelGameBoardProps {
 
 export const PixelGameBoard: React.FC<PixelGameBoardProps> = ({ bands, venues }) => {
   const [bandStack, setBandStack] = useState<Band[]>(bands);
-  const [venueStack, setVenueStack] = useState<Venue[]>(venues);
+  const [venueStack] = useState<Venue[]>(venues);
   const [matchedPairs, setMatchedPairs] = useState<{ band: Band; venue: Venue }[]>([]);
   const { addMoney, addReputation, addFans } = useGameStore();
 
-  const handleDragEnd = (result: any) => {
+  const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
 
     const { source, destination } = result;

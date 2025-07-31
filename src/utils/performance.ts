@@ -1,4 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from "react";
+import { env } from "../config/env";
+import { devLog, prodLog } from "./devLogger";
 
 interface PerformanceMetrics {
   fps: number;
@@ -26,8 +28,8 @@ class PerformanceMonitor {
   private isMonitoring = false;
 
   private thresholds: PerformanceThresholds = {
-    minFPS: 30, // Minimum acceptable FPS for mobile
-    maxFrameTime: 33.33, // Max frame time for 30fps
+    minFPS: env.lowPerformanceMode ? 20 : 30, // Adjust based on performance mode
+    maxFrameTime: 1000 / (env.lowPerformanceMode ? 20 : 30), // Max frame time
     maxMemoryUsage: 0.8, // 80% memory usage threshold
   };
 
@@ -51,14 +53,14 @@ class PerformanceMonitor {
 
     const currentTime = performance.now();
     const deltaTime = currentTime - this.lastTime;
-    
+
     this.frameCount++;
-    
+
     // Calculate FPS every second
     if (deltaTime >= 1000) {
       this.fps = Math.round((this.frameCount * 1000) / deltaTime);
       this.frameTime = deltaTime / this.frameCount;
-      
+
       // Skip the first measurement if it's too high (initial load)
       if (this.frameTime > 1000) {
         this.frameCount = 0;
@@ -66,20 +68,20 @@ class PerformanceMonitor {
         this.animationId = requestAnimationFrame(this.measure);
         return;
       }
-      
+
       const metrics = this.getMetrics();
-      
+
       // Check performance thresholds
       this.checkThresholds(metrics);
-      
+
       // Notify subscribers
-      this.callbacks.forEach(cb => cb(metrics));
-      
+      this.callbacks.forEach((cb) => cb(metrics));
+
       // Reset counters
       this.frameCount = 0;
       this.lastTime = currentTime;
     }
-    
+
     this.animationId = requestAnimationFrame(this.measure);
   };
 
@@ -90,8 +92,15 @@ class PerformanceMonitor {
     };
 
     // Get memory info if available (Chrome/Edge)
-    if ('memory' in performance) {
-      const memory = (performance as any).memory;
+    if ("memory" in performance && performance.memory) {
+      const perfWithMemory = performance as Performance & {
+        memory: {
+          usedJSHeapSize: number;
+          totalJSHeapSize: number;
+          jsHeapSizeLimit: number;
+        };
+      };
+      const memory = perfWithMemory.memory;
       metrics.memory = {
         used: Math.round(memory.usedJSHeapSize / 1048576), // Convert to MB
         total: Math.round(memory.totalJSHeapSize / 1048576),
@@ -105,53 +114,64 @@ class PerformanceMonitor {
   private checkThresholds(metrics: PerformanceMetrics) {
     // Low FPS warning
     if (metrics.fps > 0 && metrics.fps < this.thresholds.minFPS) {
-      console.warn(`Low FPS detected: ${metrics.fps}fps`);
+      devLog.warn(`Low FPS detected: ${metrics.fps}fps`);
       this.handleLowPerformance();
     }
 
     // High frame time warning
     if (metrics.frameTime > this.thresholds.maxFrameTime) {
-      console.warn(`High frame time: ${metrics.frameTime.toFixed(2)}ms`);
+      devLog.warn(`High frame time: ${metrics.frameTime.toFixed(2)}ms`);
     }
 
     // Memory usage warning
     if (metrics.memory) {
       const memoryUsageRatio = metrics.memory.used / metrics.memory.limit;
       if (memoryUsageRatio > this.thresholds.maxMemoryUsage) {
-        console.warn(`High memory usage: ${(memoryUsageRatio * 100).toFixed(1)}%`);
+        devLog.warn(
+          `High memory usage: ${(memoryUsageRatio * 100).toFixed(1)}%`,
+        );
       }
     }
   }
 
   private handleLowPerformance() {
     // Dispatch custom event for components to handle
-    window.dispatchEvent(new CustomEvent('lowperformance', {
-      detail: { fps: this.fps, frameTime: this.frameTime }
-    }));
+    window.dispatchEvent(
+      new CustomEvent("lowperformance", {
+        detail: { fps: this.fps, frameTime: this.frameTime },
+      }),
+    );
   }
 
   subscribe(callback: (metrics: PerformanceMetrics) => void) {
     this.callbacks.push(callback);
     return () => {
-      this.callbacks = this.callbacks.filter(cb => cb !== callback);
+      this.callbacks = this.callbacks.filter((cb) => cb !== callback);
     };
   }
 
   // Utility to measure specific operations
-  async measureOperation<T>(name: string, operation: () => Promise<T>): Promise<T> {
+  async measureOperation<T>(
+    name: string,
+    operation: () => Promise<T>,
+  ): Promise<T> {
     const start = performance.now();
     try {
       const result = await operation();
       const duration = performance.now() - start;
-      
-      if (duration > 16.67) { // Longer than one frame at 60fps
-        console.warn(`Slow operation "${name}": ${duration.toFixed(2)}ms`);
+
+      if (duration > 16.67) {
+        // Longer than one frame at 60fps
+        devLog.warn(`Slow operation "${name}": ${duration.toFixed(2)}ms`);
       }
-      
+
       return result;
     } catch (error) {
       const duration = performance.now() - start;
-      console.error(`Operation "${name}" failed after ${duration.toFixed(2)}ms`, error);
+      prodLog.error(
+        `Operation "${name}" failed after ${duration.toFixed(2)}ms`,
+        error,
+      );
       throw error;
     }
   }
@@ -186,9 +206,11 @@ export const usePerformanceMonitor = () => {
 };
 
 // Utility to debounce expensive operations
-export const debounceForPerformance = <T extends (...args: any[]) => any>(
+export const debounceForPerformance = <
+  T extends (...args: unknown[]) => unknown,
+>(
   func: T,
-  wait: number = 100
+  wait: number = 100,
 ): T => {
   let timeout: NodeJS.Timeout | null = null;
   let lastCall = 0;
@@ -200,7 +222,8 @@ export const debounceForPerformance = <T extends (...args: any[]) => any>(
     if (timeout) clearTimeout(timeout);
 
     // If called too frequently, delay execution
-    if (timeSinceLastCall < 16) { // Less than one frame
+    if (timeSinceLastCall < 16) {
+      // Less than one frame
       timeout = setTimeout(() => {
         lastCall = Date.now();
         func(...args);
@@ -228,7 +251,7 @@ export const useLazyLoad = (threshold = 0.1) => {
           observer.disconnect();
         }
       },
-      { threshold }
+      { threshold },
     );
 
     observer.observe(element);
@@ -241,12 +264,10 @@ export const useLazyLoad = (threshold = 0.1) => {
 
 // Request idle callback wrapper
 export const whenIdle = (callback: () => void, timeout = 1000) => {
-  if ('requestIdleCallback' in window) {
+  if ("requestIdleCallback" in window) {
     requestIdleCallback(callback, { timeout });
   } else {
     // Fallback for browsers without requestIdleCallback
     setTimeout(callback, 0);
   }
 };
-
-import { useEffect, useState, useRef } from 'react';

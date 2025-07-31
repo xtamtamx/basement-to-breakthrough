@@ -1,0 +1,84 @@
+// Game constants to avoid magic numbers
+
+export const GENTRIFICATION_CONSTANTS = {
+  SUCCESS_SHOW_IMPACT: 2,
+  HIGH_ATTENDANCE_THRESHOLD: 200,
+  HIGH_ATTENDANCE_IMPACT: 3,
+  HIGH_REVENUE_THRESHOLD: 2000,
+  HIGH_REVENUE_IMPACT: 2,
+  RENT_INCREASE_RATE: 1.02,
+  MAX_RENT_MULTIPLIER: 5.0,
+  POLICE_PRESENCE_INCREASE: 1,
+  SCENE_STRENGTH_DECREASE: 2,
+  GENTRIFICATION_THRESHOLD: 50,
+  EVENT_TRIGGER_CHANCE: 0.3,
+  GENTRIFICATION_MULTIPLIER: 10
+} as const;
+
+export const DISTRICT_TYPE_MAP: Record<string, string> = {
+  'warehouse': 'warehouse',
+  'warehouse district': 'warehouse',
+  'industrial': 'warehouse',
+  'downtown': 'downtown',
+  'city center': 'downtown',
+  'college': 'college',
+  'college town': 'college',
+  'university': 'college',
+  'residential': 'residential',
+  'suburb': 'residential',
+  'arts': 'arts',
+  'arts district': 'arts',
+  'eastside': 'residential',
+  'westside': 'arts'
+} as const;
+
+export const SHOW_CONSTANTS = {
+  MIN_TICKET_PRICE: 0,
+  MAX_TICKET_PRICE: 50,
+  TICKET_PRICE_STEP: 5,
+  BASE_BAND_FEE: 100,
+  BAND_POPULARITY_FEE_MULTIPLIER: 10,
+  HEADLINER_BASE_FEE: 500,
+  HEADLINER_POPULARITY_FEE_MULTIPLIER: 20,
+  STAGE_COST: 1000,
+  SECURITY_COST_PER_CAPACITY: 2
+} as const;
+
+export const PATH_CONSTANTS = {
+  PURE_DIY_THRESHOLD: 100,
+  DIY_LEANING_THRESHOLD: 25,
+  BALANCED_THRESHOLD: -25,
+  CORPORATE_LEANING_THRESHOLD: -100,
+  REFUSAL_STRESS_PENALTY: 5,
+  REFUSAL_REPUTATION_MODIFIER: 5,
+  REFUSAL_AUTHENTICITY_MODIFIER: 10
+} as const;
+
+export const GAME_LIMITS = {
+  MAX_STRESS: 100,
+  MAX_REPUTATION: 100,
+  MAX_AUTHENTICITY: 100,
+  MAX_POPULARITY: 100,
+  MAX_CONNECTIONS: 500,
+  MAX_SCENE_STRENGTH: 100,
+  MAX_GENTRIFICATION: 100,
+  MAX_POLICE_PRESENCE: 100,
+  MIN_VALUE: 0
+} as const;
+
+export const DISTRICT_CONSTANTS = {
+  GENRE_MATCH_BONUS: 1.2,
+  GENRE_MISMATCH_PENALTY: 0.8,
+  GENRE_NEUTRAL: 1.0,
+  GENTRIFICATION_RATE_MULTIPLIER: 100
+} as const;
+
+export const UI_CONSTANTS = {
+  MOBILE_BREAKPOINT: 768,
+  TOUCH_TARGET_SIZE: 44,
+  ANIMATION_DURATION: 300,
+  MODAL_Z_INDEX: 9999,
+  BACKDROP_Z_INDEX: 9998,
+  HEADER_Z_INDEX: 100,
+  MAP_TILE_SIZE: 32
+} as const;

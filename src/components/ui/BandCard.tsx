@@ -1,7 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Band, Genre } from '@game/types';
-import { Card } from './Card';
 import { haptics } from '@utils/mobile';
 
 interface BandCardProps {

@@ -1,19 +1,18 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { motion } from 'framer-motion';
-import { Band, Venue, Show, GamePhase, Bill } from '@game/types';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { Band, Venue, GamePhase, Bill } from '@game/types';
 import { StackableCard } from './StackableCard';
 import { BillPreview } from './BillPreview';
 import { SynergyPreview } from './SynergyPreview';
 import { EventCard } from './EventCard';
 import { ParticleEffect } from '@components/effects/ParticleEffect';
 import { SynergyParticleEffect } from '@components/effects/SynergyParticleEffect';
-import { useGameStore } from '@stores/gameStore';
 import { billManager } from '@game/mechanics/BillManager';
 import { synergyDiscoverySystem } from '@game/mechanics/SynergyDiscoverySystem';
 import { equipmentManagerV2 } from '@game/mechanics/EquipmentManagerV2';
 import { eventCardSystem, EventCard as EventCardType } from '@game/mechanics/EventCardSystem';
 import { haptics } from '@utils/mobile';
 import { audio } from '@utils/audio';
+import { devLog } from '@utils/logger';
 
 interface CardPosition {
   id: string;
@@ -54,7 +53,6 @@ export const StacklandsGameBoard: React.FC<StacklandsGameBoardProps> = ({
   const [cardPositions, setCardPositions] = useState<Map<string, CardPosition>>(new Map());
   const [stacks, setStacks] = useState<Map<string, CardStack>>(new Map());
   const [draggingCardId, setDraggingCardId] = useState<string | null>(null);
-  const [selectedCards, setSelectedCards] = useState<Set<string>>(new Set());
   const [previewBill, setPreviewBill] = useState<{ bands: Band[], bill: Bill } | null>(null);
   const [particleEffects, setParticleEffects] = useState<{ id: number; x: number; y: number; color: string }[]>([]);
   const [synergyParticles, setSynergyParticles] = useState<{ id: number; x: number; y: number; type: 'common' | 'uncommon' | 'rare' | 'legendary'; icon: string }[]>([]);
@@ -64,7 +62,6 @@ export const StacklandsGameBoard: React.FC<StacklandsGameBoardProps> = ({
     targetVenue?: Venue;
     position: { x: number; y: number };
   } | null>(null);
-  const [dragPosition, setDragPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [activeEventCards, setActiveEventCards] = useState<{ card: EventCardType; id: string; position: { x: number; y: number } }[]>([]);
 
   // Initialize card positions
@@ -267,7 +264,7 @@ export const StacklandsGameBoard: React.FC<StacklandsGameBoardProps> = ({
     }, 50); // 50ms throttle
   }, [cardPositions, stacks]);
 
-  const handleDragEnd = (cardId: string, position: { x: number; y: number }) => {
+  const handleDragEnd = () => {
     setDraggingCardId(null);
     setSynergyPreview(null);
   };
@@ -281,8 +278,6 @@ export const StacklandsGameBoard: React.FC<StacklandsGameBoardProps> = ({
     // Check if this is a valid stack
     if (sourceCard.type === 'band' && targetCard.type === 'band') {
       // Band-to-band stacking (creating a bill)
-      const sourceBand = sourceCard.data as Band;
-      const targetBand = targetCard.data as Band;
       
       // Create or update stack
       setStacks(prev => {
@@ -344,7 +339,6 @@ export const StacklandsGameBoard: React.FC<StacklandsGameBoardProps> = ({
         
         // Get the stack to determine the offset
         const stack = stacks.get(stackId);
-        const stackIndex = stack ? stack.cards.indexOf(sourceId) : 0;
         
         newPositions.set(sourceId, {
           ...sourceCard,
@@ -458,7 +452,7 @@ export const StacklandsGameBoard: React.FC<StacklandsGameBoardProps> = ({
           onBookMultiBandShow(bandsToBook, venue);
         } else {
           // Fallback to single band booking
-          console.log('Multi-band booking not implemented, booking headliner only');
+          devLog.log('Multi-band booking not implemented, booking headliner only');
           onBookShow(bandsToBook[0], venue);
         }
         
@@ -480,7 +474,7 @@ export const StacklandsGameBoard: React.FC<StacklandsGameBoardProps> = ({
         if (bandStack) {
           setCardPositions(prev => {
             const newPositions = new Map(prev);
-            bandStack.cards.forEach((cardId, index) => {
+            bandStack.cards.forEach((cardId) => {
               const card = newPositions.get(cardId);
               if (card) {
                 newPositions.set(cardId, {
@@ -511,20 +505,6 @@ export const StacklandsGameBoard: React.FC<StacklandsGameBoardProps> = ({
     }
 };
 
-  const handleCardClick = (cardId: string, event: React.MouseEvent) => {
-    if (event.shiftKey || event.ctrlKey || event.metaKey) {
-      setSelectedCards(prev => {
-        const newSelected = new Set(prev);
-        if (newSelected.has(cardId)) {
-          newSelected.delete(cardId);
-        } else {
-          newSelected.add(cardId);
-        }
-        return newSelected;
-      });
-      haptics.light();
-    }
-  };
 
   const getCardZIndex = (cardId: string): number => {
     const card = cardPositions.get(cardId);

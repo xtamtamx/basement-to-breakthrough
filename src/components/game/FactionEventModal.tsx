@@ -1,20 +1,23 @@
-import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { FactionEvent } from '@game/types';
-import { haptics } from '@utils/mobile';
-import { audio } from '@utils/audio';
+import React from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { FactionEvent } from "@game/types";
+import { haptics } from "@utils/mobile";
+import { audio } from "@utils/audio";
 
 interface FactionEventModalProps {
   event: FactionEvent | null;
   onChoice: (eventId: string, choiceId: string) => void;
 }
 
-export const FactionEventModal: React.FC<FactionEventModalProps> = ({ event, onChoice }) => {
+export const FactionEventModal: React.FC<FactionEventModalProps> = ({
+  event,
+  onChoice,
+}) => {
   if (!event) return null;
 
   const handleChoice = (choiceId: string) => {
     haptics.medium();
-    audio.play('click');
+    audio.play("click");
     onChoice(event.id, choiceId);
   };
 
@@ -33,19 +36,25 @@ export const FactionEventModal: React.FC<FactionEventModalProps> = ({ event, onC
           className="glass-panel p-6 max-w-md w-full"
         >
           <div className="text-center mb-4">
-            <h2 className="pixel-text pixel-text-lg pixel-text-shadow" 
-                style={{ color: 'var(--pixel-red)' }}>
+            <h2
+              className="pixel-text pixel-text-lg pixel-text-shadow"
+              style={{ color: "var(--pixel-red)" }}
+            >
               FACTION EVENT
             </h2>
           </div>
 
-          <h3 className="pixel-text pixel-text-sm mb-3" 
-              style={{ color: 'var(--pixel-yellow)' }}>
+          <h3
+            className="pixel-text pixel-text-sm mb-3"
+            style={{ color: "var(--pixel-yellow)" }}
+          >
             {event.title}
           </h3>
 
-          <p className="pixel-text pixel-text-xs mb-6" 
-             style={{ color: 'var(--pixel-white)', lineHeight: '1.5' }}>
+          <p
+            className="pixel-text pixel-text-xs mb-6"
+            style={{ color: "var(--pixel-white)", lineHeight: "1.5" }}
+          >
             {event.description}
           </p>
 
@@ -56,9 +65,7 @@ export const FactionEventModal: React.FC<FactionEventModalProps> = ({ event, onC
                 onClick={() => handleChoice(choice.id)}
                 className="w-full glass-button p-3 text-left hover:scale-102 transition-transform"
               >
-                <span className="pixel-text pixel-text-sm">
-                  {choice.text}
-                </span>
+                <span className="pixel-text pixel-text-sm">{choice.text}</span>
               </button>
             ))}
           </div>

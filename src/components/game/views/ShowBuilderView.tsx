@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from '@stores/gameStore';
-import { Band, Venue, Show } from '@game/types';
+import { Venue, Show } from '@game/types';
 import { haptics } from '@utils/mobile';
 import { Card } from '@components/ui/Card';
 import { Button } from '@components/ui/Button';
 import { showPromotionSystem } from '@game/mechanics/ShowPromotionSystem';
+import { MultiShowBookingModal } from '@components/modals/MultiShowBookingModal';
 
 type BookingStep = 'bands' | 'venue' | 'timing' | 'confirm';
 
@@ -24,6 +25,7 @@ export const ShowBuilderView: React.FC = () => {
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
   const [ticketPrice, setTicketPrice] = useState(10);
   const [turnsInAdvance, setTurnsInAdvance] = useState(3);
+  const [showMultiBooking, setShowMultiBooking] = useState(false);
 
   const handleBandToggle = (bandId: string) => {
     setSelectedBandIds(prev => {
@@ -95,6 +97,18 @@ export const ShowBuilderView: React.FC = () => {
 
   return (
     <div className="show-builder-view">
+      {/* Multi-show booking button */}
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-lg font-bold">Book Shows</h2>
+        <button
+          onClick={() => setShowMultiBooking(true)}
+          className="px-4 py-2 bg-purple-600 text-white text-sm font-bold uppercase hover:bg-purple-700"
+          style={{ fontFamily: 'monospace' }}
+        >
+          Multi-Book
+        </button>
+      </div>
+      
       {/* Minimal Progress Bar */}
       <div className="progress-bar">
         <div className={`progress-dot ${currentStep === 'bands' ? 'active' : selectedBandIds.length > 0 ? 'done' : ''}`} />
@@ -997,6 +1011,12 @@ export const ShowBuilderView: React.FC = () => {
           }
         }
       `}</style>
+
+      {/* Multi-show booking modal */}
+      <MultiShowBookingModal 
+        isOpen={showMultiBooking} 
+        onClose={() => setShowMultiBooking(false)} 
+      />
     </div>
   );
 };
@@ -1173,5 +1193,5 @@ const VenueCard: React.FC<{
         color: var(--text-primary);
       }
     `}</style>
-  </motion.div>
-);
+      </motion.div>
+    );

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from '@stores/gameStore';
 import { dayJobSystem, DayJob, JobCategory } from '@game/mechanics/DayJobSystem';
 import { haptics } from '@utils/mobile';
+import { devLog } from '@utils/devLogger';
 
 // Job Card Component
 const JobCard: React.FC<{ job: DayJob; onTake: (job: DayJob) => void }> = ({ job, onTake }) => {
@@ -70,7 +71,7 @@ const JobCard: React.FC<{ job: DayJob; onTake: (job: DayJob) => void }> = ({ job
 };
 
 export const DayJobView: React.FC = () => {
-  const { money, reputation, fans, stress, connections, venues } = useGameStore();
+  const { reputation, fans, stress, connections, venues } = useGameStore();
   const [currentJob, setCurrentJob] = useState<DayJob | null>(dayJobSystem.getCurrentJob());
   const [showingJobs, setShowingJobs] = useState(false);
   const [availableJobs, setAvailableJobs] = useState<DayJob[]>([]);
@@ -80,7 +81,7 @@ export const DayJobView: React.FC = () => {
     dayJobSystem.refreshJobs();
     const jobs = dayJobSystem.getAvailableJobs();
     setAvailableJobs(jobs);
-    console.log('Generated jobs:', jobs.length);
+    devLog.log('Generated jobs:', jobs.length);
   }, [venues.length]);
   
   const handleTakeJob = (job: DayJob) => {
@@ -102,7 +103,7 @@ export const DayJobView: React.FC = () => {
   const handleShowJobs = () => {
     dayJobSystem.refreshJobs();
     const jobs = dayJobSystem.getAvailableJobs();
-    console.log('Available jobs on show:', jobs);
+    devLog.log('Available jobs on show:', jobs);
     setAvailableJobs(jobs);
     setShowingJobs(true);
     haptics.light();

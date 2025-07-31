@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { Band } from '@game/types';
-import { useSwipeableCard } from '@hooks';
-import { haptics } from '@utils/mobile';
+import React, { useState } from "react";
+import { Band } from "@game/types";
+import { useSwipeableCard } from "@hooks/useGesture";
+import { haptics } from "@utils/mobile";
 
 interface BandCardProps {
   band: Band;
@@ -19,57 +19,63 @@ export const BandCard: React.FC<BandCardProps> = ({
   onSelect,
   onSwipeLeft,
   onSwipeRight,
-  onLongPress,
   selected = false,
   disabled = false,
   compact = false,
 }) => {
   const [isPressed, setIsPressed] = useState(false);
-  const [showDetails, setShowDetails] = useState(false);
+  const [showDetails] = useState(false);
 
   const { bind, ref } = useSwipeableCard(
     onSwipeLeft ? () => onSwipeLeft(band) : undefined,
     onSwipeRight ? () => onSwipeRight(band) : undefined,
-    onSelect ? () => {
-      haptics.light();
-      onSelect(band);
-    } : undefined
+    onSelect
+      ? () => {
+          haptics.light();
+          onSelect(band);
+        }
+      : undefined,
   );
 
-  const handleLongPress = () => {
-    if (onLongPress) {
-      onLongPress(band);
-    } else {
-      setShowDetails(!showDetails);
-    }
-  };
-
   const getAuthenticityColor = (authenticity: number) => {
-    if (authenticity >= 80) return 'text-punk-400';
-    if (authenticity >= 60) return 'text-punk-500';
-    if (authenticity >= 40) return 'text-metal-400';
-    return 'text-metal-500';
+    if (authenticity >= 80) return "text-punk-400";
+    if (authenticity >= 60) return "text-punk-500";
+    if (authenticity >= 40) return "text-metal-400";
+    return "text-metal-500";
   };
 
   const getPopularityDisplay = (popularity: number) => {
     const bars = Math.ceil(popularity / 20);
-    return '▮'.repeat(bars) + '▯'.repeat(5 - bars);
+    return "▮".repeat(bars) + "▯".repeat(5 - bars);
   };
 
   return (
     <div
       ref={ref}
-      {...bind}
-      onTouchStart={() => setIsPressed(true)}
-      onTouchEnd={() => setIsPressed(false)}
-      onMouseDown={() => setIsPressed(true)}
-      onMouseUp={() => setIsPressed(false)}
+      onTouchStart={(e) => {
+        setIsPressed(true);
+        (bind.onTouchStart as React.TouchEventHandler<HTMLDivElement>)(e);
+      }}
+      onTouchEnd={(e) => {
+        setIsPressed(false);
+        (bind.onTouchEnd as React.TouchEventHandler<HTMLDivElement>)(e);
+      }}
+      onMouseDown={(e) => {
+        setIsPressed(true);
+        (bind.onMouseDown as React.MouseEventHandler<HTMLDivElement>)(e);
+      }}
+      onMouseUp={(e) => {
+        setIsPressed(false);
+        (bind.onMouseUp as React.MouseEventHandler<HTMLDivElement>)(e);
+      }}
+      onTouchMove={bind.onTouchMove as React.TouchEventHandler<HTMLDivElement>}
+      onMouseMove={bind.onMouseMove as React.MouseEventHandler<HTMLDivElement>}
       className={`
         relative overflow-hidden
-        ${compact ? 'p-3' : 'p-4'}
-        ${selected ? 'ring-2 ring-punk-500 bg-punk-900/20' : ''}
-        ${disabled ? 'opacity-50' : ''}
-        ${isPressed ? 'scale-[0.98]' : ''}
+        ${compact ? "p-3" : "p-4"}
+        ${selected ? "ring-2 ring-punk-500 bg-punk-900/20" : ""}
+        ${disabled ? "opacity-50" : ""}
+        ${isPressed ? "scale-[0.98]" : ""}
         card-interactive min-h-touch
         transition-all duration-50
       `}
@@ -80,7 +86,7 @@ export const BandCard: React.FC<BandCardProps> = ({
           ✓ SELECTED
         </div>
       )}
-      
+
       {/* Real Artist Badge */}
       {band.isRealArtist && (
         <div className="absolute top-2 right-2 bg-punk-600 text-white text-xs px-2 py-1 rounded-full">
@@ -101,9 +107,7 @@ export const BandCard: React.FC<BandCardProps> = ({
             />
           ) : (
             <div className="w-16 h-16 rounded-lg bg-metal-800 flex items-center justify-center">
-              <span className="text-2xl font-metal">
-                {band.name.charAt(0)}
-              </span>
+              <span className="text-2xl font-metal">{band.name.charAt(0)}</span>
             </div>
           )}
         </div>
@@ -111,7 +115,7 @@ export const BandCard: React.FC<BandCardProps> = ({
         {/* Band Info */}
         <div className="flex-1 min-w-0">
           <h3 className="font-bold text-lg truncate">{band.name}</h3>
-          
+
           <div className="flex items-center gap-2 text-sm text-metal-300">
             <span className="uppercase">{band.genre}</span>
             {band.hometown && (
@@ -126,7 +130,9 @@ export const BandCard: React.FC<BandCardProps> = ({
           <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
             <div className="flex items-center gap-1">
               <span className="text-metal-400">POP:</span>
-              <span className="font-mono">{getPopularityDisplay(band.popularity)}</span>
+              <span className="font-mono">
+                {getPopularityDisplay(band.popularity)}
+              </span>
             </div>
             <div className="flex items-center gap-1">
               <span className="text-metal-400">AUTH:</span>
@@ -163,7 +169,7 @@ export const BandCard: React.FC<BandCardProps> = ({
           {band.bio && (
             <p className="text-sm text-metal-200 line-clamp-3">{band.bio}</p>
           )}
-          
+
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div>
               <span className="text-metal-400">Energy:</span>

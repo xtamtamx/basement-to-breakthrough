@@ -1,5 +1,5 @@
-import React from 'react';
-import { Band } from '@game/types';
+import React from "react";
+import { Band } from "@game/types";
 
 interface DraggablePixelBandCardProps {
   band: Band;
@@ -14,9 +14,12 @@ export const DraggablePixelBandCard: React.FC<DraggablePixelBandCardProps> = ({
 }) => {
   const getGenreColor = (genre: string) => {
     switch (genre.toLowerCase()) {
-      case 'punk': return 'var(--pixel-magenta)';
-      case 'metal': return 'var(--pixel-red)';
-      default: return 'var(--pixel-purple)';
+      case "punk":
+        return "var(--pixel-magenta)";
+      case "metal":
+        return "var(--pixel-red)";
+      default:
+        return "var(--pixel-purple)";
     }
   };
 
@@ -24,35 +27,44 @@ export const DraggablePixelBandCard: React.FC<DraggablePixelBandCardProps> = ({
     <div
       className={`
         glass-panel p-3 cursor-grab active:cursor-grabbing
-        ${isDragging ? 'opacity-80 scale-105 rotate-2' : ''}
-        ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
+        ${isDragging ? "opacity-80 scale-105 rotate-2" : ""}
+        ${disabled ? "opacity-50 cursor-not-allowed" : ""}
         transition-transform duration-150
       `}
       style={{
-        borderColor: isDragging ? 'var(--pixel-yellow)' : 'var(--pixel-black)',
-        boxShadow: isDragging ? '0 10px 30px rgba(0,0,0,0.3)' : undefined,
+        borderColor: isDragging ? "var(--pixel-yellow)" : "var(--pixel-black)",
+        boxShadow: isDragging ? "0 10px 30px rgba(0,0,0,0.3)" : undefined,
       }}
     >
       <div className="flex items-center gap-3">
         {/* Genre indicator */}
-        <div 
+        <div
           className="w-3 h-3 rounded-full"
-          style={{ 
+          style={{
             backgroundColor: getGenreColor(band.genre),
-            boxShadow: `0 0 10px ${getGenreColor(band.genre)}`
+            boxShadow: `0 0 10px ${getGenreColor(band.genre)}`,
           }}
         />
-        
+
         {/* Band info */}
         <div className="flex-1">
-          <h3 className="pixel-text pixel-text-sm" style={{ color: 'var(--pixel-white)' }}>
+          <h3
+            className="pixel-text pixel-text-sm"
+            style={{ color: "var(--pixel-white)" }}
+          >
             {band.name.toUpperCase()}
           </h3>
           <div className="flex gap-3 mt-1">
-            <span className="pixel-text" style={{ fontSize: '6px', color: 'var(--pixel-yellow)' }}>
+            <span
+              className="pixel-text"
+              style={{ fontSize: "6px", color: "var(--pixel-yellow)" }}
+            >
               POP {band.popularity}
             </span>
-            <span className="pixel-text" style={{ fontSize: '6px', color: 'var(--pixel-green)' }}>
+            <span
+              className="pixel-text"
+              style={{ fontSize: "6px", color: "var(--pixel-green)" }}
+            >
               AUTH {band.authenticity}
             </span>
           </div>
@@ -60,7 +72,10 @@ export const DraggablePixelBandCard: React.FC<DraggablePixelBandCardProps> = ({
 
         {/* Real artist badge */}
         {band.isRealArtist && (
-          <div className="pixel-badge pixel-badge-red" style={{ fontSize: '6px', padding: '2px 4px' }}>
+          <div
+            className="pixel-badge pixel-badge-red"
+            style={{ fontSize: "6px", padding: "2px 4px" }}
+          >
             REAL
           </div>
         )}

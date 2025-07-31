@@ -483,6 +483,24 @@ class EquipmentManagerV2 {
       installedAtVenues: new Map()
     };
   }
+
+  // Methods for save/load functionality  
+  clearInventory(): void {
+    this.clearAll();
+  }
+
+  addEquipment(equipment: Equipment): void {
+    if (!this.inventory.owned.some(eq => eq.id === equipment.id)) {
+      this.inventory.owned.push({ ...equipment, owned: true });
+    }
+  }
+
+  rentEquipmentForSave(equipmentId: string, turnsRemaining: number = 1): void {
+    const equipment = this.equipmentCatalog.find(eq => eq.id === equipmentId);
+    if (equipment && !this.inventory.rented.some(eq => eq.id === equipmentId)) {
+      this.inventory.rented.push({ ...equipment, owned: false });
+    }
+  }
 }
 
 export const equipmentManagerV2 = new EquipmentManagerV2();

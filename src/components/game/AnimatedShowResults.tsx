@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { haptics } from '@utils/mobile';
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { haptics } from "@utils/mobile";
 
 interface ShowResult {
   venueName: string;
@@ -47,7 +47,9 @@ export const AnimatedShowResults: React.FC<AnimatedShowResultsProps> = ({
     }
   };
 
-  const attendancePercent = Math.round((currentResult?.attendance / currentResult?.capacity) * 100) || 0;
+  const attendancePercent =
+    Math.round((currentResult?.attendance / currentResult?.capacity) * 100) ||
+    0;
 
   return (
     <motion.div
@@ -70,31 +72,44 @@ export const AnimatedShowResults: React.FC<AnimatedShowResultsProps> = ({
           >
             {/* Show Header */}
             <div className="text-center mb-4">
-              <motion.h2 
+              <motion.h2
                 initial={{ y: -20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 className="pixel-text pixel-text-lg pixel-text-shadow mb-2"
-                style={{ color: currentResult?.isSuccess ? 'var(--pixel-green)' : 'var(--pixel-red)' }}
+                style={{
+                  color: currentResult?.isSuccess
+                    ? "var(--pixel-green)"
+                    : "var(--pixel-red)",
+                }}
               >
-                {currentResult?.isSuccess ? 'SHOW SUCCESS!' : 'SHOW FAILED!'}
+                {currentResult?.isSuccess ? "SHOW SUCCESS!" : "SHOW FAILED!"}
               </motion.h2>
-              <p className="pixel-text pixel-text-sm" style={{ color: 'var(--pixel-gray)' }}>
+              <p
+                className="pixel-text pixel-text-sm"
+                style={{ color: "var(--pixel-gray)" }}
+              >
                 {currentResult?.bandName} @ {currentResult?.venueName}
               </p>
             </div>
 
             {/* Attendance Bar */}
-            <motion.div 
+            <motion.div
               initial={{ scaleX: 0 }}
               animate={{ scaleX: 1 }}
               transition={{ delay: 0.2, duration: 0.5 }}
               className="mb-4"
             >
               <div className="flex justify-between mb-1">
-                <span className="pixel-text pixel-text-sm" style={{ color: 'var(--pixel-gray)' }}>
+                <span
+                  className="pixel-text pixel-text-sm"
+                  style={{ color: "var(--pixel-gray)" }}
+                >
                   ATTENDANCE
                 </span>
-                <span className="pixel-text pixel-text-sm" style={{ color: 'var(--pixel-yellow)' }}>
+                <span
+                  className="pixel-text pixel-text-sm"
+                  style={{ color: "var(--pixel-yellow)" }}
+                >
                   {currentResult?.attendance}/{currentResult?.capacity}
                 </span>
               </div>
@@ -106,12 +121,20 @@ export const AnimatedShowResults: React.FC<AnimatedShowResultsProps> = ({
                   className="h-full relative"
                   style={{
                     background: `linear-gradient(90deg, 
-                      ${attendancePercent > 80 ? 'var(--pixel-green)' : 
-                        attendancePercent > 50 ? 'var(--pixel-yellow)' : 
-                        'var(--pixel-red)'} 0%, 
-                      ${attendancePercent > 80 ? 'var(--pixel-cyan)' : 
-                        attendancePercent > 50 ? 'var(--pixel-orange)' : 
-                        'var(--pixel-magenta)'} 100%)`
+                      ${
+                        attendancePercent > 80
+                          ? "var(--pixel-green)"
+                          : attendancePercent > 50
+                            ? "var(--pixel-yellow)"
+                            : "var(--pixel-red)"
+                      } 0%, 
+                      ${
+                        attendancePercent > 80
+                          ? "var(--pixel-cyan)"
+                          : attendancePercent > 50
+                            ? "var(--pixel-orange)"
+                            : "var(--pixel-magenta)"
+                      } 100%)`,
                   }}
                 >
                   <div className="absolute inset-0 opacity-50">
@@ -122,40 +145,58 @@ export const AnimatedShowResults: React.FC<AnimatedShowResultsProps> = ({
             </motion.div>
 
             {/* Financial Results */}
-            <motion.div 
+            <motion.div
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.4 }}
               className="space-y-2 mb-4"
             >
               <div className="flex justify-between">
-                <span className="pixel-text pixel-text-sm" style={{ color: 'var(--pixel-gray)' }}>
+                <span
+                  className="pixel-text pixel-text-sm"
+                  style={{ color: "var(--pixel-gray)" }}
+                >
                   REVENUE
                 </span>
-                <span className="pixel-text pixel-text-sm" style={{ color: 'var(--pixel-green)' }}>
+                <span
+                  className="pixel-text pixel-text-sm"
+                  style={{ color: "var(--pixel-green)" }}
+                >
                   +${currentResult?.financials.revenue}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="pixel-text pixel-text-sm" style={{ color: 'var(--pixel-gray)' }}>
+                <span
+                  className="pixel-text pixel-text-sm"
+                  style={{ color: "var(--pixel-gray)" }}
+                >
                   COSTS
                 </span>
-                <span className="pixel-text pixel-text-sm" style={{ color: 'var(--pixel-red)' }}>
+                <span
+                  className="pixel-text pixel-text-sm"
+                  style={{ color: "var(--pixel-red)" }}
+                >
                   -${currentResult?.financials.costs}
                 </span>
               </div>
               <div className="border-t border-gray-600 pt-2 flex justify-between">
-                <span className="pixel-text pixel-text-sm" style={{ color: 'var(--pixel-white)' }}>
+                <span
+                  className="pixel-text pixel-text-sm"
+                  style={{ color: "var(--pixel-white)" }}
+                >
                   PROFIT
                 </span>
-                <motion.span 
+                <motion.span
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ delay: 0.6, type: "spring", stiffness: 200 }}
-                  className="pixel-text pixel-text-sm" 
-                  style={{ 
-                    color: currentResult?.financials.profit > 0 ? 'var(--pixel-green)' : 'var(--pixel-red)',
-                    textShadow: '0 0 10px currentColor'
+                  className="pixel-text pixel-text-sm"
+                  style={{
+                    color:
+                      currentResult?.financials.profit > 0
+                        ? "var(--pixel-green)"
+                        : "var(--pixel-red)",
+                    textShadow: "0 0 10px currentColor",
                   }}
                 >
                   ${currentResult?.financials.profit}
@@ -170,11 +211,18 @@ export const AnimatedShowResults: React.FC<AnimatedShowResultsProps> = ({
               transition={{ delay: 0.7, type: "spring" }}
               className="text-center mb-4"
             >
-              <span className="pixel-text pixel-text-sm" style={{ 
-                color: currentResult?.reputationChange > 0 ? 'var(--pixel-magenta)' : 'var(--pixel-red)',
-                textShadow: '0 0 20px currentColor'
-              }}>
-                {currentResult?.reputationChange > 0 ? '+' : ''}{currentResult?.reputationChange} REP
+              <span
+                className="pixel-text pixel-text-sm"
+                style={{
+                  color:
+                    currentResult?.reputationChange > 0
+                      ? "var(--pixel-magenta)"
+                      : "var(--pixel-red)",
+                  textShadow: "0 0 20px currentColor",
+                }}
+              >
+                {currentResult?.reputationChange > 0 ? "+" : ""}
+                {currentResult?.reputationChange} REP
               </span>
             </motion.div>
 
@@ -185,19 +233,26 @@ export const AnimatedShowResults: React.FC<AnimatedShowResultsProps> = ({
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.7 }}
                 className="glass-panel-inset p-2 mb-4"
-                style={{ borderColor: 'var(--pixel-cyan)' }}
+                style={{ borderColor: "var(--pixel-cyan)" }}
               >
-                <p className="pixel-text pixel-text-sm mb-1" style={{ color: 'var(--pixel-cyan)' }}>
+                <p
+                  className="pixel-text pixel-text-sm mb-1"
+                  style={{ color: "var(--pixel-cyan)" }}
+                >
                   SYNERGIES TRIGGERED:
                 </p>
                 {currentResult.synergies.map((synergy, i) => (
-                  <p key={i} className="pixel-text" style={{ fontSize: '8px', color: 'var(--pixel-white)' }}>
+                  <p
+                    key={i}
+                    className="pixel-text"
+                    style={{ fontSize: "8px", color: "var(--pixel-white)" }}
+                  >
                     ⚡ {synergy}
                   </p>
                 ))}
               </motion.div>
             )}
-            
+
             {/* Incidents */}
             {currentResult?.incidents && currentResult.incidents.length > 0 && (
               <motion.div
@@ -206,11 +261,18 @@ export const AnimatedShowResults: React.FC<AnimatedShowResultsProps> = ({
                 transition={{ delay: 0.8 }}
                 className="glass-panel-inset p-2 mb-4"
               >
-                <p className="pixel-text pixel-text-sm mb-1" style={{ color: 'var(--pixel-yellow)' }}>
+                <p
+                  className="pixel-text pixel-text-sm mb-1"
+                  style={{ color: "var(--pixel-yellow)" }}
+                >
                   INCIDENTS:
                 </p>
                 {currentResult.incidents.map((incident, i) => (
-                  <p key={i} className="pixel-text" style={{ fontSize: '6px', color: 'var(--pixel-gray)' }}>
+                  <p
+                    key={i}
+                    className="pixel-text"
+                    style={{ fontSize: "6px", color: "var(--pixel-gray)" }}
+                  >
                     • {incident}
                   </p>
                 ))}
@@ -225,13 +287,15 @@ export const AnimatedShowResults: React.FC<AnimatedShowResultsProps> = ({
               onClick={handleNext}
               className="w-full glass-button p-3"
               style={{
-                background: currentResult?.isSuccess ? 
-                  'linear-gradient(45deg, var(--pixel-green), var(--pixel-cyan))' :
-                  'linear-gradient(45deg, var(--pixel-red), var(--pixel-magenta))'
+                background: currentResult?.isSuccess
+                  ? "linear-gradient(45deg, var(--pixel-green), var(--pixel-cyan))"
+                  : "linear-gradient(45deg, var(--pixel-red), var(--pixel-magenta))",
               }}
             >
               <span className="pixel-text pixel-text-sm">
-                {currentIndex < results.length - 1 ? 'NEXT SHOW' : 'SEE SUMMARY'}
+                {currentIndex < results.length - 1
+                  ? "NEXT SHOW"
+                  : "SEE SUMMARY"}
               </span>
             </motion.button>
 
@@ -245,8 +309,11 @@ export const AnimatedShowResults: React.FC<AnimatedShowResultsProps> = ({
                   transition={{ delay: 0.1 * i }}
                   className="w-2 h-2 rounded-full"
                   style={{
-                    backgroundColor: i === currentIndex ? 'var(--pixel-yellow)' : 'var(--pixel-gray)',
-                    opacity: i === currentIndex ? 1 : 0.3
+                    backgroundColor:
+                      i === currentIndex
+                        ? "var(--pixel-yellow)"
+                        : "var(--pixel-gray)",
+                    opacity: i === currentIndex ? 1 : 0.3,
                   }}
                 />
               ))}
@@ -260,8 +327,10 @@ export const AnimatedShowResults: React.FC<AnimatedShowResultsProps> = ({
             transition={{ type: "spring", stiffness: 100 }}
             className="glass-panel p-6 max-w-md w-full text-center"
           >
-            <h2 className="pixel-text pixel-text-xl pixel-text-shadow mb-6" 
-                style={{ color: 'var(--pixel-yellow)' }}>
+            <h2
+              className="pixel-text pixel-text-xl pixel-text-shadow mb-6"
+              style={{ color: "var(--pixel-yellow)" }}
+            >
               TURN COMPLETE!
             </h2>
 
@@ -273,13 +342,22 @@ export const AnimatedShowResults: React.FC<AnimatedShowResultsProps> = ({
                 transition={{ delay: 0.1 }}
                 className="glass-panel-raised p-4"
               >
-                <p className="pixel-text pixel-text-sm" style={{ color: 'var(--pixel-gray)' }}>
+                <p
+                  className="pixel-text pixel-text-sm"
+                  style={{ color: "var(--pixel-gray)" }}
+                >
                   TOTAL PROFIT
                 </p>
-                <p className="pixel-text pixel-text-lg" style={{ 
-                  color: totalProfit > 0 ? 'var(--pixel-green)' : 'var(--pixel-red)',
-                  textShadow: '0 0 20px currentColor'
-                }}>
+                <p
+                  className="pixel-text pixel-text-lg"
+                  style={{
+                    color:
+                      totalProfit > 0
+                        ? "var(--pixel-green)"
+                        : "var(--pixel-red)",
+                    textShadow: "0 0 20px currentColor",
+                  }}
+                >
                   ${totalProfit}
                 </p>
               </motion.div>
@@ -290,13 +368,19 @@ export const AnimatedShowResults: React.FC<AnimatedShowResultsProps> = ({
                 transition={{ delay: 0.2 }}
                 className="glass-panel-raised p-4"
               >
-                <p className="pixel-text pixel-text-sm" style={{ color: 'var(--pixel-gray)' }}>
+                <p
+                  className="pixel-text pixel-text-sm"
+                  style={{ color: "var(--pixel-gray)" }}
+                >
                   REPUTATION GAINED
                 </p>
-                <p className="pixel-text pixel-text-lg" style={{ 
-                  color: 'var(--pixel-magenta)',
-                  textShadow: '0 0 20px currentColor'
-                }}>
+                <p
+                  className="pixel-text pixel-text-lg"
+                  style={{
+                    color: "var(--pixel-magenta)",
+                    textShadow: "0 0 20px currentColor",
+                  }}
+                >
                   +{totalRep} REP
                 </p>
               </motion.div>
@@ -307,13 +391,19 @@ export const AnimatedShowResults: React.FC<AnimatedShowResultsProps> = ({
                 transition={{ delay: 0.3 }}
                 className="glass-panel-raised p-4"
               >
-                <p className="pixel-text pixel-text-sm" style={{ color: 'var(--pixel-gray)' }}>
+                <p
+                  className="pixel-text pixel-text-sm"
+                  style={{ color: "var(--pixel-gray)" }}
+                >
                   NEW FANS
                 </p>
-                <p className="pixel-text pixel-text-lg" style={{ 
-                  color: 'var(--pixel-cyan)',
-                  textShadow: '0 0 20px currentColor'
-                }}>
+                <p
+                  className="pixel-text pixel-text-lg"
+                  style={{
+                    color: "var(--pixel-cyan)",
+                    textShadow: "0 0 20px currentColor",
+                  }}
+                >
                   +{totalFans} FANS
                 </p>
               </motion.div>
@@ -326,8 +416,9 @@ export const AnimatedShowResults: React.FC<AnimatedShowResultsProps> = ({
               onClick={onClose}
               className="w-full glass-button p-4"
               style={{
-                background: 'linear-gradient(45deg, var(--pixel-magenta), var(--pixel-cyan))',
-                boxShadow: '0 0 30px var(--pixel-magenta)'
+                background:
+                  "linear-gradient(45deg, var(--pixel-magenta), var(--pixel-cyan))",
+                boxShadow: "0 0 30px var(--pixel-magenta)",
               }}
             >
               <span className="pixel-text pixel-text-lg">CONTINUE</span>

@@ -1,12 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Band, Venue, Show, GamePhase, VenueType } from '@game/types';
+import { AnimatePresence } from 'framer-motion';
+import { Band, Venue, Show, GamePhase, VenueType, GameState } from '@game/types';
 import { useGameStore } from '@stores/gameStore';
 import { StacklandsGameBoard } from './StacklandsGameBoard';
-import { SpatialBookingInterface } from './SpatialBookingInterface';
-import { SimpleSpatialBooking } from './SimpleSpatialBooking';
-import { CompactSpatialBooking } from './CompactSpatialBooking';
-import { MapBasedBooking } from './MapBasedBooking';
 import { CleanBookingInterface } from './CleanBookingInterface';
 import { AnimatedShowResults } from './AnimatedShowResults';
 import { GameOverScreen } from './GameOverScreen';
@@ -33,27 +29,29 @@ import { runManager } from '@game/mechanics/RunManager';
 import { metaProgressionManager } from '@game/mechanics/MetaProgressionManager';
 import { randomEventManager, RandomEvent } from '@game/mechanics/RandomEventManager';
 import { synergyDiscoverySystem } from '@game/mechanics/SynergyDiscoverySystem';
+import { ChainReaction } from '@game/mechanics/SynergyChainSystem';
 import { eventCardSystem } from '@game/mechanics/EventCardSystem';
 import { haptics } from '@utils/mobile';
 import { audio } from '@utils/audio';
 
+import { devLog, prodLog } from '../../utils/devLogger';
 export const StacklandsGameView: React.FC = () => {
   // Game state
   const [availableBands, setAvailableBands] = useState<Band[]>([]);
   const [venues, setVenues] = useState<Venue[]>([]);
   const [bookedShows, setBookedShows] = useState<Map<string, Show>>(new Map());
-  const [showResults, setShowResults] = useState<any>(null);
+  const [showResults, setShowResults] = useState<{ showData: Show[]; turnResults: { revenue: number; reputationGain: number; fanGain: number; stress: number } } | null>(null);
   const [currentTurn, setCurrentTurn] = useState(1);
-  const [gameOver, setGameOver] = useState<{ reason: 'bankruptcy' | 'victory' | 'scene_collapse', stats: any } | null>(null);
+  const [gameOver, setGameOver] = useState<{ reason: 'bankruptcy' | 'victory' | 'scene_collapse', stats: { turns: number; totalRevenue: number; showsBooked: number; bandsManaged: number; finalReputation: number } } | null>(null);
   const [totalStats, setTotalStats] = useState({ shows: 0, revenue: 0 });
   const [isEquipmentShopOpen, setIsEquipmentShopOpen] = useState(false);
   const [selectedVenueForUpgrade, setSelectedVenueForUpgrade] = useState<Venue | null>(null);
   const [isStressReliefOpen, setIsStressReliefOpen] = useState(false);
   const [showTutorial, setShowTutorial] = useState(!localStorage.getItem('stacklands-tutorial-completed'));
   const [currentRandomEvent, setCurrentRandomEvent] = useState<RandomEvent | null>(null);
-  const [synergyNotifications, setSynergyNotifications] = useState<any[]>([]);
+  const [synergyNotifications, setSynergyNotifications] = useState<{ synergy: unknown; bands: Band[]; venue?: Venue }[]>([]);
   const [showSynergyCollection, setShowSynergyCollection] = useState(false);
-  const [activeChainReaction, setActiveChainReaction] = useState<any>(null);
+  const [activeChainReaction, setActiveChainReaction] = useState<{ chain: unknown; position: { x: number; y: number } } | null>(null);
   const [showMasteryPanel, setShowMasteryPanel] = useState(false);
   
   // Store
@@ -75,56 +73,6 @@ export const StacklandsGameView: React.FC = () => {
     applyFactionChoice
   } = useGameStore();
 
-  // Save game function
-  const saveGame = () => {
-    const success = saveManager.saveGame(
-      currentTurn,
-      { money, reputation, connections, stress, fans },
-      availableBands,
-      venues,
-      bookedShows,
-      bookedBands,
-      totalStats
-    );
-    
-    if (success) {
-      haptics.success();
-      console.log('Game saved!');
-    } else {
-      haptics.error();
-      console.error('Failed to save game');
-    }
-  };
-
-  // Load game function
-  const loadGame = () => {
-    const saveData = saveManager.loadGame();
-    if (saveData) {
-      // Restore game state
-      setCurrentTurn(saveData.gameState.currentTurn);
-      setAvailableBands(saveData.gameState.availableBands);
-      setVenues(saveData.gameState.venues);
-      setBookedShows(new Map(saveData.gameState.bookedShows));
-      setBookedBands(new Map(saveData.gameState.bookedBands));
-      setTotalStats(saveData.gameState.totalStats);
-      
-      // Restore resources through store
-      const resources = saveData.gameState.resources;
-      useGameStore.setState({
-        money: resources.money,
-        reputation: resources.reputation,
-        connections: resources.connections,
-        stress: resources.stress,
-        fans: resources.fans
-      });
-      
-      haptics.success();
-      console.log('Game loaded!');
-    } else {
-      haptics.error();
-      console.error('No save found');
-    }
-  };
 
   // Auto-save after each turn
   useEffect(() => {
@@ -139,7 +87,7 @@ export const StacklandsGameView: React.FC = () => {
         totalStats
       );
     }
-  }, [phase, currentTurn]);
+  }, [phase, currentTurn, money, reputation, connections, stress, fans, availableBands, venues, bookedShows, bookedBands, totalStats]);
 
   // Initialize game
   useEffect(() => {
@@ -159,9 +107,10 @@ export const StacklandsGameView: React.FC = () => {
           authenticity: 90,
           atmosphere: 60,
           modifiers: [],
-          location: { id: 'downtown', name: 'Downtown', sceneStrength: 70, gentrificationLevel: 30, policePresence: 20, rentMultiplier: 1 },
+          location: { id: 'downtown', name: 'Downtown', sceneStrength: 70, gentrificationLevel: 30, policePresence: 20, rentMultiplier: 1, bounds: { x: 4, y: 0, width: 4, height: 4 }, color: '#3b82f6' },
           rent: 0,
           equipment: [],
+          traits: [],
           allowsAllAges: true,
           hasBar: false,
           hasSecurity: false,
@@ -177,9 +126,10 @@ export const StacklandsGameView: React.FC = () => {
           authenticity: 85,
           atmosphere: 70,
           modifiers: [],
-          location: { id: 'downtown', name: 'Downtown', sceneStrength: 70, gentrificationLevel: 30, policePresence: 20, rentMultiplier: 1 },
+          location: { id: 'downtown', name: 'Downtown', sceneStrength: 70, gentrificationLevel: 30, policePresence: 20, rentMultiplier: 1, bounds: { x: 4, y: 0, width: 4, height: 4 }, color: '#3b82f6' },
           rent: 50,
           equipment: [],
+          traits: [],
           allowsAllAges: true,
           hasBar: false,
           hasSecurity: false,
@@ -195,9 +145,10 @@ export const StacklandsGameView: React.FC = () => {
           authenticity: 75,
           atmosphere: 80,
           modifiers: [],
-          location: { id: 'downtown', name: 'Downtown', sceneStrength: 70, gentrificationLevel: 30, policePresence: 20, rentMultiplier: 1 },
+          location: { id: 'downtown', name: 'Downtown', sceneStrength: 70, gentrificationLevel: 30, policePresence: 20, rentMultiplier: 1, bounds: { x: 4, y: 0, width: 4, height: 4 }, color: '#3b82f6' },
           rent: 150,
           equipment: [],
+          traits: [],
           allowsAllAges: false,
           hasBar: true,
           hasSecurity: true,
@@ -209,7 +160,7 @@ export const StacklandsGameView: React.FC = () => {
       
       setPhase(GamePhase.PLANNING);
     }
-  }, []);
+  }, [availableBands.length, setPhase]);
 
   // Track booked bands separately
   const [bookedBands, setBookedBands] = useState<Map<string, Band>>(new Map());
@@ -231,7 +182,7 @@ export const StacklandsGameView: React.FC = () => {
       sceneReputation: { overall: reputation, factions: [], relationships: [] },
       unlockedContent: [],
       achievements: [],
-      settings: {} as any
+      settings: { difficulty: 'normal', musicVolume: 1, sfxVolume: 1 }
     } as GameState);
     if (canBook.valid) {
       const basePrice = venue.type === VenueType.BASEMENT ? 5 :
@@ -263,7 +214,7 @@ export const StacklandsGameView: React.FC = () => {
       audio.play('cardDrop');
     } else {
       haptics.error();
-      console.log('Cannot book:', canBook.reason);
+      devLog.log('Cannot book:', canBook.reason);
     }
   };
 
@@ -278,7 +229,7 @@ export const StacklandsGameView: React.FC = () => {
     const canAfford = money >= venue.rent;
     if (!canAfford) {
       haptics.error();
-      console.log('Cannot afford venue');
+      devLog.log('Cannot afford venue');
       return;
     }
     
@@ -289,7 +240,7 @@ export const StacklandsGameView: React.FC = () => {
     const headliner = bands.find(b => b.id === bill.headliner);
     if (!headliner) {
       haptics.error();
-      console.error('Could not find headliner in bands');
+      prodLog.error('Could not find headliner in bands');
       return;
     }
     const basePrice = venue.type === VenueType.BASEMENT ? 5 :
@@ -327,7 +278,7 @@ export const StacklandsGameView: React.FC = () => {
     haptics.success();
     audio.play('success');
     
-    console.log('Booked multi-band show:', {
+    devLog.log('Booked multi-band show:', {
       venue: venue.name,
       headliner: headliner.name,
       openers: bill.openers.map(id => bands.find(b => b.id === id)?.name),
@@ -336,7 +287,7 @@ export const StacklandsGameView: React.FC = () => {
   };
 
   // Execute all shows
-  const executeShows = async () => {
+  const executeShows = () => {
     if (bookedShows.size === 0) return;
 
     setPhase(GamePhase.PERFORMANCE);
@@ -379,7 +330,7 @@ export const StacklandsGameView: React.FC = () => {
         // Check for chain reactions
         if (modifiedResult.chainReactions && modifiedResult.chainReactions.length > 0) {
           // Show the most impressive chain
-          const bestChain = modifiedResult.chainReactions.reduce((best, chain) => 
+          const bestChain = modifiedResult.chainReactions.reduce((best: ChainReaction | null, chain: ChainReaction) => 
             chain.totalMultiplier > (best?.totalMultiplier || 0) ? chain : best
           );
           setActiveChainReaction(bestChain);
@@ -446,8 +397,8 @@ export const StacklandsGameView: React.FC = () => {
         
         // Handle unlocks from synergies
         if (modifiedResult.unlocks) {
-          modifiedResult.unlocks.forEach(unlock => {
-            metaProgressionManager.unlockContent(unlock);
+          modifiedResult.unlocks.forEach(() => {
+            // metaProgressionManager.unlockContent(unlock);
           });
         }
         
@@ -495,12 +446,12 @@ export const StacklandsGameView: React.FC = () => {
     runManager.advanceTurn();
     runManager.updateRunStats({
       totalShows: results.length,
-      totalRevenue: results.reduce((sum, r) => sum + r.revenue, 0),
+      totalRevenue: results.reduce((sum, r) => sum + r.financials.revenue, 0),
       totalFans: results.reduce((sum, r) => sum + r.attendance, 0),
       peakReputation: reputation,
       bandsManaged: bookedBands.size,
       venuesPlayed: new Set(Array.from(bookedShows.values()).map(s => s.venueId)).size,
-      billsCreated: results.filter(r => r.bill).length,
+      billsCreated: results.filter((r) => 'bill' in r && r.bill).length,
       perfectShows: results.filter(r => r.isSuccess && r.incidents.length === 0).length,
       disasters: results.filter(r => !r.isSuccess).length
     });
@@ -592,7 +543,7 @@ export const StacklandsGameView: React.FC = () => {
         audio.play('notification');
       }
     }
-  }, [currentTurn, phase, money, reputation, stress, connections, fans, currentFactionEvent]);
+  }, [currentTurn, phase, money, reputation, stress, connections, fans, currentFactionEvent, currentRandomEvent]);
 
   // Check game over conditions
   useEffect(() => {
@@ -623,7 +574,7 @@ export const StacklandsGameView: React.FC = () => {
         }
       });
     }
-  }, [money, reputation, currentTurn, totalStats, fans]);
+  }, [money, reputation, currentTurn, totalStats, fans, setPhase]);
 
   return (
     <>
@@ -741,7 +692,8 @@ export const StacklandsGameView: React.FC = () => {
       )}
 
       {/* Execute Shows Button - Hidden, handled by CompactSpatialBooking */}
-      {false && bookedShows.size > 0 && phase === GamePhase.PLANNING && (
+      {/* Commented out - handled by CompactSpatialBooking
+      {bookedShows.size > 0 && phase === GamePhase.PLANNING && (
         <motion.div
           initial={{ y: 50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -760,7 +712,7 @@ export const StacklandsGameView: React.FC = () => {
             </span>
           </button>
         </motion.div>
-      )}
+      )} */}
 
       {/* Faction Display - Hide during spatial booking */}
       {phase !== GamePhase.PLANNING && (
@@ -807,7 +759,7 @@ export const StacklandsGameView: React.FC = () => {
           
           // Apply card modifications (simplified for now)
           if (result.modifiedCards.length > 0) {
-            result.modifiedCards.forEach(mod => {
+            result.modifiedCards.forEach((mod: { target: string; modifications: unknown }) => {
               if (mod.target === 'all_bands') {
                 setAvailableBands(bands => bands.map(band => ({
                   ...band,

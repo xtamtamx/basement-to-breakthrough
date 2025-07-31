@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, PanInfo, useAnimation } from 'framer-motion';
-import { Band, Venue, Equipment, EquipmentType } from '@game/types';
+import { Band, Venue } from '@game/types';
 import { haptics } from '@utils/mobile';
 import { equipmentManagerV2 } from '@game/mechanics/EquipmentManagerV2';
 import { venueUpgradeManager } from '@game/mechanics/VenueUpgradeManager';
@@ -37,7 +37,6 @@ export const StackableCard: React.FC<StackableCardProps> = ({
   onDragEnd,
   onDrag,
   onStack,
-  isDragging = false,
   isStacked = false,
   stackOffset = 0,
   zIndex = 1,
@@ -319,7 +318,7 @@ export const StackableCard: React.FC<StackableCardProps> = ({
     }
   };
 
-  const handleDrag = (event: any, info: PanInfo) => {
+  const handleDrag = () => {
     
     // Call onDrag callback with current position
     if (onDrag && cardRef.current) {
@@ -356,7 +355,7 @@ export const StackableCard: React.FC<StackableCardProps> = ({
     }
   };
 
-  const handleDragEnd = (event: any, info: PanInfo) => {
+  const handleDragEnd = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     setIsDraggingLocal(false);
     setCanStack(false);
     
@@ -407,7 +406,7 @@ export const StackableCard: React.FC<StackableCardProps> = ({
       });
       
       if (closestCard) {
-        onStack(id, closestCard.id);
+        onStack(id, (closestCard as { id: string; distance: number }).id);
         haptics.success();
         stacked = true;
       }

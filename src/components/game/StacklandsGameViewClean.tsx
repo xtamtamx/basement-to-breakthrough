@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Band, Venue, GamePhase, ShowResult, GameOver, VenueType } from '@game/types';
+import React, { useState, useEffect } from 'react';
+import { Band, Venue, GamePhase, ShowResult, VenueType } from '@game/types';
 import { useGameStore } from '@stores/gameStore';
 import { GameLayout } from './GameLayout';
 import { GameHUD } from './GameHUD';
@@ -19,16 +19,13 @@ import { SynergyCollectionModal } from './SynergyCollectionModal';
 import { ChainReactionVisualizer } from './ChainReactionVisualizer';
 import { SynergyMasteryPanel } from './SynergyMasteryPanel';
 import { bandGenerator } from '@game/mechanics/BandGenerator';
-import { venueUpgradeManager } from '@game/mechanics/VenueUpgradeManager';
 import { randomEventManager } from '@game/mechanics/RandomEventManager';
 import { showExecutor } from '@game/mechanics/ShowExecutor';
-import { billManager } from '@game/mechanics/BillManager';
 import { synergyDiscoverySystem } from '@game/mechanics/SynergyDiscoverySystem';
 import { synergyChainSystem } from '@game/mechanics/SynergyChainSystem';
 import { synergyMasterySystem } from '@game/mechanics/SynergyMasterySystem';
 import { equipmentManagerV2 } from '@game/mechanics/EquipmentManagerV2';
-import { factionSystem, FactionEvent } from '@game/mechanics/FactionSystem';
-import { metaProgressionManager } from '@game/mechanics/MetaProgressionManager';
+import { factionSystem } from '@game/mechanics/FactionSystem';
 import { audio } from '@utils/audio';
 import { haptics } from '@utils/mobile';
 
@@ -47,7 +44,7 @@ export const StacklandsGameViewClean: React.FC = () => {
   const [bookedShows, setBookedShows] = useState<Map<string, { bands: Band[]; venue: Venue }>>(new Map());
   const [bookedBands, setBookedBands] = useState<Map<string, boolean>>(new Map());
   const [showResults, setShowResults] = useState<ShowResult[] | null>(null);
-  const [gameOver, setGameOver] = useState<GameOver | null>(null);
+  const [gameOver, setGameOver] = useState<{ reason: string; finalScore: number } | null>(null);
   const [totalStats, setTotalStats] = useState({ shows: 0, revenue: 0 });
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -58,12 +55,12 @@ export const StacklandsGameViewClean: React.FC = () => {
   const [showTutorial, setShowTutorial] = useState(false);
   const [showSynergyCollection, setShowSynergyCollection] = useState(false);
   const [showMasteryPanel, setShowMasteryPanel] = useState(false);
-  const [synergyNotifications, setSynergyNotifications] = useState<any[]>([]);
-  const [activeChainReaction, setActiveChainReaction] = useState<any>(null);
+  const [synergyNotifications, setSynergyNotifications] = useState<{ id: string; synergy: any; timestamp: number }[]>([]);
+  const [activeChainReaction, setActiveChainReaction] = useState<{ chain: any[]; totalBonus: number } | null>(null);
 
   // Event state
-  const [currentFactionEvent, setCurrentFactionEvent] = useState<FactionEvent | null>(null);
-  const [currentRandomEvent, setCurrentRandomEvent] = useState<any>(null);
+  const [currentFactionEvent, setCurrentFactionEvent] = useState<{ id: string; title: string; description: string; choices: any[] } | null>(null);
+  const [currentRandomEvent, setCurrentRandomEvent] = useState<{ id: string; title: string; description: string; type: string } | null>(null);
 
   // Initialize game
   useEffect(() => {
@@ -80,7 +77,7 @@ export const StacklandsGameViewClean: React.FC = () => {
         authenticity: 95,
         atmosphere: 85,
         modifiers: [],
-        location: { id: 'suburbs', name: 'Suburbs', sceneStrength: 60, gentrificationLevel: 10, policePresence: 5, rentMultiplier: 0.8 },
+        location: { id: 'suburbs', name: 'Suburbs', sceneStrength: 60, gentrificationLevel: 10, policePresence: 5, rentMultiplier: 0.8, bounds: { x: 0, y: 0, width: 4, height: 4 }, color: '#10b981' },
         rent: 0,
         equipment: [],
         allowsAllAges: true,
@@ -88,6 +85,7 @@ export const StacklandsGameViewClean: React.FC = () => {
         hasSecurity: false,
         isPermanent: false,
         bookingDifficulty: 2,
+        traits: [],
       },
       {
         id: 'dive-1',
@@ -98,7 +96,7 @@ export const StacklandsGameViewClean: React.FC = () => {
         authenticity: 75,
         atmosphere: 80,
         modifiers: [],
-        location: { id: 'downtown', name: 'Downtown', sceneStrength: 70, gentrificationLevel: 30, policePresence: 20, rentMultiplier: 1 },
+        location: { id: 'downtown', name: 'Downtown', sceneStrength: 70, gentrificationLevel: 30, policePresence: 20, rentMultiplier: 1, bounds: { x: 4, y: 0, width: 4, height: 4 }, color: '#3b82f6' },
         rent: 150,
         equipment: [],
         allowsAllAges: false,
@@ -106,6 +104,7 @@ export const StacklandsGameViewClean: React.FC = () => {
         hasSecurity: true,
         isPermanent: true,
         bookingDifficulty: 3,
+        traits: [],
       },
     ];
     setAvailableVenues(initialVenues);
@@ -117,15 +116,11 @@ export const StacklandsGameViewClean: React.FC = () => {
   }, []);
 
   // Handle booking shows
-  const handleBookShow = (bands: Band[], venue: Venue) => {
-    if (bands.length === 0) return;
-
-    // Check if bands are already booked
-    for (const band of bands) {
-      if (bookedBands.has(band.id)) {
-        haptics.error();
-        return;
-      }
+  const handleBookShow = (band: Band, venue: Venue) => {
+    // Check if band is already booked
+    if (bookedBands.has(band.id)) {
+      haptics.error();
+      return;
     }
 
     // Check if venue is already booked
@@ -135,8 +130,8 @@ export const StacklandsGameViewClean: React.FC = () => {
     }
 
     // Book the show
-    setBookedShows(prev => new Map(prev).set(venue.id, { bands, venue }));
-    bands.forEach(band => setBookedBands(prev => new Map(prev).set(band.id, true)));
+    setBookedShows(prev => new Map(prev).set(venue.id, { bands: [band], venue }));
+    setBookedBands(prev => new Map(prev).set(band.id, true));
     
     haptics.success();
     audio.play('book_show');
@@ -153,21 +148,37 @@ export const StacklandsGameViewClean: React.FC = () => {
       const { bands, venue } = booking;
       
       // Simulate show
-      const result = await showExecutor.executeShow({ id: `show-${venueId}`, bands: bands.map(b => b.id), venueId, turn: currentTurn }, bands[0], venue, {
+      const result = await showExecutor.executeShow({ 
+        id: `show-${venueId}`, 
+        bandId: bands[0].id,
+        venueId, 
+        date: new Date(),
+        ticketPrice: 10,
+        status: "SCHEDULED",
+        bill: bands.length > 1 ? { headliner: bands[0].id, openers: bands.slice(1).map(b => b.id), dynamics: { chemistryScore: 0.8, dramaRisk: 0.2, crowdAppeal: 0.8, sceneAlignment: 0.8 } } : undefined
+      }, bands[0], venue, {
         reputation,
         turn: currentTurn,
-        equipment: equipmentManagerV2.getActiveEquipment(),
-        factionStandings: factionSystem.getAllStandings()
+        equipment: equipmentManagerV2.getVenueEquipment(venueId),
+        factionStandings: {}
       });
 
       // Process synergies and chains
-      const activeSynergies = synergyDiscoverySystem.checkShowSynergies(bands, venue);
-      let modifiedResult = { ...result };
+      const activeSynergies = synergyDiscoverySystem.checkForSynergies({ 
+        id: `show-${venueId}`, 
+        bandId: bands[0].id,
+        venueId, 
+        date: new Date(),
+        ticketPrice: 10,
+        status: "SCHEDULED",
+        bill: bands.length > 1 ? { headliner: bands[0].id, openers: bands.slice(1).map(b => b.id), dynamics: { chemistryScore: 0.8, dramaRisk: 0.2, crowdAppeal: 0.8, sceneAlignment: 0.8 } } : undefined
+      }, bands, venue, equipmentManagerV2.getVenueEquipment(venueId));
+      const modifiedResult = { ...result };
 
       if (activeSynergies.length > 0) {
-        activeSynergies.forEach(synergy => {
-          synergyMasterySystem.recordSynergyUse(synergy.id, synergy.effects.scoreMultiplier || 1);
-          modifiedResult = synergyDiscoverySystem.applySynergyEffects(synergy, modifiedResult);
+        activeSynergies.forEach((synergy: any) => {
+          synergyMasterySystem.recordSynergyUse(synergy.combo.id, synergy.combo.effects.scoreMultiplier || 1);
+          // modifiedResult = synergyDiscoverySystem.applySynergyEffects(synergy, modifiedResult);
         });
 
         // Check for chain reactions
@@ -178,45 +189,34 @@ export const StacklandsGameViewClean: React.FC = () => {
           gameState: { money, reputation, connections, stress, fans }
         };
 
-        const chain = synergyChainSystem.checkForChainReaction(activeSynergies, chainContext);
-        if (chain) {
-          setActiveChainReaction(chain);
-          modifiedResult = synergyChainSystem.applyChainEffects(chain, modifiedResult);
+        const chains = synergyChainSystem.checkForChainReactions(activeSynergies.map((s: any) => s.combo), chainContext);
+        if (chains.length > 0) {
+          setActiveChainReaction(chains[0]);
+          // modifiedResult = synergyChainSystem.applyChainEffects(chain, modifiedResult);
         }
       }
 
       // Create display result
-      const displayResult: ShowResult = {
-        bandNames: bands.map(b => b.name),
-        venueName: venue.name,
-        metrics: {
-          attendance: modifiedResult.attendance,
-          revenue: modifiedResult.revenue,
-          reputationChange: modifiedResult.reputationChange,
-          profit: modifiedResult.revenue - venue.rent,
-        },
-        isSuccess: modifiedResult.success,
-        synergies: activeSynergies.map(s => s.name),
-      };
+      const displayResult: ShowResult = result;
 
       results.push(displayResult);
 
       // Update resources
-      addMoney(modifiedResult.revenue - venue.rent);
-      addReputation(modifiedResult.reputationChange);
-      addFans(modifiedResult.attendance);
+      addMoney((result?.revenue || 0) - venue.rent);
+      addReputation(result?.reputationGain || 0);
+      addFans(result?.attendance || 0);
       
-      if (modifiedResult.success) {
+      if (result?.success) {
         addConnections(Math.floor(Math.random() * 3) + 1);
       }
       
-      const stressChange = Math.floor(Math.random() * 10) + 5 + (modifiedResult.stressChange || 0);
+      const stressChange = Math.floor(Math.random() * 10) + 5;
       addStress(Math.max(0, stressChange));
 
       // Update total stats
       setTotalStats(prev => ({
         shows: prev.shows + 1,
-        revenue: prev.revenue + modifiedResult.revenue
+        revenue: prev.revenue + (result?.revenue || 0)
       }));
     }
 
@@ -233,20 +233,27 @@ export const StacklandsGameViewClean: React.FC = () => {
 
     // Check for random events
     if (Math.random() < 0.3) {
-      const event = randomEventManager.generateEvent({ turn: currentTurn, reputation, stress });
+      const event = randomEventManager.rollForEvent({ 
+        turn: currentTurn, 
+        money, 
+        reputation, 
+        stress, 
+        connections,
+        recentShows: []
+      });
       if (event) {
         setCurrentRandomEvent(event);
       }
     }
 
     // Check for faction events
-    const factionEvent = factionSystem.checkForEvents();
-    if (factionEvent) {
-      setCurrentFactionEvent(factionEvent);
-    }
+    // const factionEvent = factionSystem.checkForEvents();
+    // if (factionEvent) {
+    //   setCurrentFactionEvent(factionEvent);
+    // }
 
     setIsProcessing(false);
-    setPhase(GamePhase.RESOLUTION);
+    setPhase(GamePhase.AFTERMATH);
   };
 
   // Start next turn
@@ -440,13 +447,10 @@ export const StacklandsGameViewClean: React.FC = () => {
       ) : (
         <StacklandsGameBoard
           bands={availableBands}
-          bookedBands={bookedBands}
-          onBookBand={(bandId) => setBookedBands(prev => new Map(prev).set(bandId, true))}
-          onUnbookBand={(bandId) => setBookedBands(prev => {
-            const next = new Map(prev);
-            next.delete(bandId);
-            return next;
-          })}
+          venues={availableVenues}
+          onBookShow={handleBookShow}
+          phase={phase}
+          turn={currentTurn}
         />
       )}
     </GameLayout>

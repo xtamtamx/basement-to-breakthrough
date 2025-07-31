@@ -1,10 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Band, Venue, GamePhase } from '@game/types';
-import { CompactBandCard } from './CompactBandCard';
-import { VenueNode } from './VenueNode';
-import { billManager } from '@game/mechanics/BillManager';
-import { synergyDiscoverySystem } from '@game/mechanics/SynergyDiscoverySystem';
+import { motion } from 'framer-motion';
+import { Band, Venue } from '@game/types';
 import { haptics } from '@utils/mobile';
 import { audio } from '@utils/audio';
 
@@ -19,9 +15,7 @@ interface SimpleSpatialBookingProps {
 export const SimpleSpatialBooking: React.FC<SimpleSpatialBookingProps> = ({
   bands,
   venues,
-  onBookShow,
-  phase,
-  turn
+  onBookShow
 }) => {
   const [draggedBand, setDraggedBand] = useState<Band | null>(null);
   const [selectedBands, setSelectedBands] = useState<Band[]>([]);

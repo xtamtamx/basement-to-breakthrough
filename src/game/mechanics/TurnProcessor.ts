@@ -5,6 +5,7 @@ import { walkerSystem } from './WalkerSystem';
 import { dayJobSystem } from './DayJobSystem';
 import { difficultySystem } from './DifficultySystem';
 import { showPromotionSystem } from './ShowPromotionSystem';
+import { devLog } from '@utils/devLogger';
 
 export class TurnProcessor {
   processNextTurn(): { 
@@ -18,7 +19,12 @@ export class TurnProcessor {
       message: string;
       randomEvent?: {
         message: string;
-        effects: any;
+        effects: {
+          money?: number;
+          reputation?: number;
+          fans?: number;
+          stress?: number;
+        };
       };
     },
     difficultyEvent?: {
@@ -27,12 +33,12 @@ export class TurnProcessor {
     }
   } {
     const store = useGameStore.getState();
-    const { scheduledShows, venues, allBands } = store;
+    const { venues, allBands } = store;
     
     const showResults: ShowResult[] = [];
     
     // Process scheduled shows from promotion system
-    const { showsToExecute, promotionUpdates } = showPromotionSystem.processScheduledShows();
+    const { showsToExecute } = showPromotionSystem.processScheduledShows();
     
     // Execute shows that are happening this turn
     showsToExecute.forEach(scheduledShow => {
@@ -75,7 +81,7 @@ export class TurnProcessor {
     const jobResult = dayJobSystem.processJobIncome();
     if (jobResult) {
       // The job system already applies the effects, but we can show a notification
-      console.log(`Day job: +$${jobResult.money}, -${jobResult.reputationLoss} rep, "${jobResult.message}"`);
+      devLog.log(`Day job: +$${jobResult.money}, -${jobResult.reputationLoss} rep, "${jobResult.message}"`);
     }
     
     // Apply passive difficulty effects

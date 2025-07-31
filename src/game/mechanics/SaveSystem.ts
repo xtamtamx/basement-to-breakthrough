@@ -1,6 +1,8 @@
-import { GameState } from '@game/types';
+import { GameState, GameSettings } from '@game/types';
 import { db } from '@utils/db';
+import { safeStorage } from '@utils/safeStorage';
 
+import { devLog, prodLog } from '../../utils/devLogger';
 export interface SaveGame {
   id: string;
   name: string;
@@ -37,9 +39,9 @@ class SaveSystem {
 
     try {
       await db.saveGame(saveGame);
-      console.log(`Game saved: ${name}`);
+      devLog.log(`Game saved: ${name}`);
     } catch (error) {
-      console.error('Failed to save game:', error);
+      prodLog.error('Failed to save game:', error);
       throw new Error('Failed to save game');
     }
   }
@@ -49,19 +51,19 @@ class SaveSystem {
     try {
       const save = await db.loadGame(saveId);
       if (!save) {
-        console.error('Save not found');
+        prodLog.error('Save not found');
         return null;
       }
 
       // Check version compatibility
       if (save.version !== this.SAVE_VERSION) {
-        console.warn(`Save version mismatch: ${save.version} vs ${this.SAVE_VERSION}`);
+        devLog.warn(`Save version mismatch: ${save.version} vs ${this.SAVE_VERSION}`);
         // In a real game, you'd handle migration here
       }
 
       return save;
     } catch (error) {
-      console.error('Failed to load game:', error);
+      prodLog.error('Failed to load game:', error);
       throw new Error('Failed to load game');
     }
   }
@@ -71,7 +73,7 @@ class SaveSystem {
     try {
       return await db.getAllSaves();
     } catch (error) {
-      console.error('Failed to get saves:', error);
+      prodLog.error('Failed to get saves:', error);
       return [];
     }
   }
@@ -80,9 +82,9 @@ class SaveSystem {
   async deleteSave(saveId: string): Promise<void> {
     try {
       await db.deleteSave(saveId);
-      console.log(`Save deleted: ${saveId}`);
+      devLog.log(`Save deleted: ${saveId}`);
     } catch (error) {
-      console.error('Failed to delete save:', error);
+      prodLog.error('Failed to delete save:', error);
       throw new Error('Failed to delete save');
     }
   }
@@ -90,7 +92,7 @@ class SaveSystem {
   // Auto-save functionality
   async autoSave(gameState: GameState, stats?: SaveGame['stats']): Promise<void> {
     await this.saveGame('Auto Save', gameState, stats);
-    localStorage.setItem(this.AUTO_SAVE_KEY, Date.now().toString());
+    safeStorage.setItem(this.AUTO_SAVE_KEY, Date.now().toString());
   }
 
   // Check if auto-save exists
@@ -101,7 +103,7 @@ class SaveSystem {
 
   // Get last auto-save time
   getLastAutoSaveTime(): number | null {
-    const time = localStorage.getItem(this.AUTO_SAVE_KEY);
+    const time = safeStorage.getItem(this.AUTO_SAVE_KEY);
     return time ? parseInt(time, 10) : null;
   }
 
@@ -122,7 +124,7 @@ class SaveSystem {
 
       return save;
     } catch (error) {
-      console.error('Failed to import save:', error);
+      prodLog.error('Failed to import save:', error);
       throw new Error('Failed to import save file');
     }
   }
@@ -140,12 +142,12 @@ class SaveSystem {
   }
 
   // Save game settings separately
-  saveSettings(settings: any): void {
-    localStorage.setItem('game_settings', JSON.stringify(settings));
+  saveSettings(settings: GameSettings): void {
+    safeStorage.setItem('game_settings', JSON.stringify(settings));
   }
 
-  loadSettings(): any {
-    const settings = localStorage.getItem('game_settings');
+  loadSettings(): GameSettings | null {
+    const settings = safeStorage.getItem('game_settings');
     return settings ? JSON.parse(settings) : null;
   }
 }
@@ -169,7 +171,7 @@ export const useSaveGame = () => {
     try {
       const allSaves = await saveSystem.getAllSaves();
       setSaves(allSaves.sort((a, b) => b.timestamp - a.timestamp));
-    } catch (err) {
+    } catch {
       setError('Failed to load saves');
     } finally {
       setLoading(false);
@@ -182,7 +184,7 @@ export const useSaveGame = () => {
     try {
       await saveSystem.saveGame(name, gameState, stats);
       await loadSaves(); // Refresh saves list
-    } catch (err) {
+    } catch {
       setError('Failed to save game');
     } finally {
       setLoading(false);
@@ -194,7 +196,7 @@ export const useSaveGame = () => {
     setError(null);
     try {
       return await saveSystem.loadGame(saveId);
-    } catch (err) {
+    } catch {
       setError('Failed to load game');
       return null;
     } finally {
@@ -208,7 +210,7 @@ export const useSaveGame = () => {
     try {
       await saveSystem.deleteSave(saveId);
       await loadSaves(); // Refresh saves list
-    } catch (err) {
+    } catch {
       setError('Failed to delete save');
     } finally {
       setLoading(false);

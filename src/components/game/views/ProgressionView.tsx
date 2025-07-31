@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ProgressionPath, 
-  PathTier, 
   PathChoice,
   progressionPathSystem 
 } from '../../../game/mechanics/ProgressionPathSystem';

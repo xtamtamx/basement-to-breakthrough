@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { synergySystemV2, Synergy } from '@game/mechanics/SynergySystemV2';
+import { synergySystemV2 } from '@game/mechanics/SynergySystemV2';
 import { haptics } from '@utils/mobile';
 
 export const SynergyView: React.FC = () => {

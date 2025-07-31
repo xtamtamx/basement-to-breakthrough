@@ -1,6 +1,7 @@
-import { Band, Venue, Equipment, Show, Genre, VenueType, TraitType } from '@game/types';
+import { Band, Venue, Equipment, Show, Genre, VenueType } from '@game/types';
 import { haptics } from '@utils/mobile';
 import { audio } from '@utils/audio';
+import { safeStorage } from '@utils/safeStorage';
 import { achievementSynergySystem } from './AchievementSynergySystem';
 import { synergyChainSystem, ChainReaction } from './SynergyChainSystem';
 import { synergyMasterySystem } from './SynergyMasterySystem';
@@ -21,7 +22,7 @@ export interface SynergyCombo {
 
 export interface SynergyRequirement {
   type: 'band_genre' | 'venue_type' | 'band_trait' | 'equipment' | 'bill_size' | 'time_of_day' | 'faction' | 'authenticity' | 'energy';
-  value: any;
+  value: string | number | string[];
   operator?: 'equals' | 'contains' | 'greater_than' | 'less_than';
 }
 
@@ -40,10 +41,31 @@ export interface DiscoveryNotification {
   };
 }
 
+interface SynergyContext {
+  genres: string[];
+  venue: Venue;
+  traits: string[];
+  equipmentTypes: string[];
+  billSize: number;
+  avgAuthenticity: number;
+  avgEnergy: number;
+  timeOfDay: string;
+}
+
+interface ShowResultData {
+  attendance: number;
+  revenue: number;
+  reputationChange: number;
+  stressIncrease: number;
+  fanGain: number;
+  incidentOccurred: boolean;
+  [key: string]: number | boolean | string;
+}
+
 class SynergyDiscoverySystem {
   private combos: Map<string, SynergyCombo> = new Map();
   private discoveredCombos: Set<string> = new Set();
-  private comboHistory: { comboId: string; timestamp: number; context: any }[] = [];
+  private comboHistory: { comboId: string; timestamp: number; context: SynergyContext }[] = [];
   
   constructor() {
     this.initializeCombos();
@@ -195,7 +217,7 @@ class SynergyDiscoverySystem {
     const context = this.buildContext(show, bands, venue, equipment);
     const potential: SynergyCombo[] = [];
     
-    for (const [id, combo] of this.combos) {
+    for (const [, combo] of this.combos) {
       if (this.meetsRequirements(combo, context)) {
         potential.push(combo);
       }
@@ -219,7 +241,7 @@ class SynergyDiscoverySystem {
     
     const potential: SynergyCombo[] = [];
     
-    for (const [id, combo] of this.combos) {
+    for (const [, combo] of this.combos) {
       // Only check band-related requirements
       const bandOnlyReqs = combo.requirements.filter(r => 
         ['band_genre', 'band_trait', 'bill_size', 'authenticity', 'energy'].includes(r.type)
@@ -242,7 +264,7 @@ class SynergyDiscoverySystem {
     const notifications: DiscoveryNotification[] = [];
     const context = this.buildContext(show, bands, venue, equipment);
     
-    for (const [id, combo] of this.combos) {
+    for (const [, combo] of this.combos) {
       if (this.meetsRequirements(combo, context)) {
         const firstTime = !this.discoveredCombos.has(id);
         
@@ -319,7 +341,7 @@ class SynergyDiscoverySystem {
     };
   }
   
-  private meetsRequirements(combo: SynergyCombo, context: any): boolean {
+  private meetsRequirements(combo: SynergyCombo, context: SynergyContext): boolean {
     return combo.requirements.every(req => {
       switch (req.type) {
         case 'band_genre':
@@ -391,8 +413,8 @@ class SynergyDiscoverySystem {
   }
   
   // Apply synergy effects to show results
-  applySynergyEffects(baseResults: any, synergies: SynergyCombo[], bands?: Band[], venue?: Venue, equipment?: Equipment[]): any {
-    let modifiedResults = { ...baseResults };
+  applySynergyEffects(baseResults: ShowResultData, synergies: SynergyCombo[], bands?: Band[], venue?: Venue, equipment?: Equipment[]): ShowResultData {
+    const modifiedResults = { ...baseResults };
     
     // Build current effects map for chain checking
     const currentEffects = new Map<string, number>();
@@ -525,11 +547,11 @@ class SynergyDiscoverySystem {
   
   // Persistence
   private saveDiscoveredCombos() {
-    localStorage.setItem('discovered_synergies', JSON.stringify(Array.from(this.discoveredCombos)));
+    safeStorage.setItem('discovered_synergies', JSON.stringify(Array.from(this.discoveredCombos)));
   }
   
   private loadDiscoveredCombos() {
-    const saved = localStorage.getItem('discovered_synergies');
+    const saved = safeStorage.getItem('discovered_synergies');
     if (saved) {
       const discovered = JSON.parse(saved) as string[];
       discovered.forEach(id => {

@@ -1,0 +1,67 @@
+{
+  "name": "DIY Indie Empire",
+  "short_name": "DIY Empire",
+  "description": "Underground music scene builder - From basement shows to sold-out stadiums",
+  "theme_color": "#EC4899",
+  "background_color": "#0A0A0A",
+  "display": "standalone",
+  "orientation": "portrait",
+  "scope": "/",
+  "start_url": "/",
+  "id": "com.basementtobreakthrough.diy",
+  "categories": ["games", "music", "strategy"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-1024.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/gameplay-1.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "label": "Main game view"
+    },
+    {
+      "src": "/screenshots/gameplay-2.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "label": "Band management"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Quick Play",
+      "short_name": "Play",
+      "description": "Start a new game",
+      "url": "/?quickplay=true",
+      "icons": [{ "src": "/icon-96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Continue",
+      "short_name": "Continue",
+      "description": "Continue your game",
+      "url": "/?continue=true",
+      "icons": [{ "src": "/icon-96.png", "sizes": "96x96" }]
+    }
+  ],
+  "prefer_related_applications": false,
+  "launch_handler": {
+    "client_mode": ["navigate-existing", "auto"]
+  }
+}

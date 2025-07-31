@@ -206,7 +206,7 @@ class EquipmentManager {
       this.ownedEquipment = new Map(parsed.owned);
       this.equippedItems = new Set(parsed.equipped);
     } catch (error) {
-      console.error('Failed to deserialize equipment data:', error);
+      prodLog.error('Failed to deserialize equipment data:', error);
     }
   }
 }

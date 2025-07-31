@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Venue, VenueType } from '@game/types';
-import { useGesture } from '@hooks';
+import { useGesture } from '@hooks/useGesture';
 import { haptics } from '@utils/mobile';
 
 interface VenueCardProps {
@@ -53,6 +53,7 @@ export const VenueCard: React.FC<VenueCardProps> = ({
       [VenueType.CONCERT_HALL]: '🏛️',
       [VenueType.ARENA]: '🏟️',
       [VenueType.FESTIVAL_GROUNDS]: '🎪',
+      [VenueType.UNDERGROUND]: '🚇',
     };
     return icons[type] || '📍';
   };
@@ -73,11 +74,24 @@ export const VenueCard: React.FC<VenueCardProps> = ({
   return (
     <div
       ref={ref}
-      {...bind}
-      onTouchStart={() => setIsPressed(true)}
-      onTouchEnd={() => setIsPressed(false)}
-      onMouseDown={() => setIsPressed(true)}
-      onMouseUp={() => setIsPressed(false)}
+      onTouchStart={(e) => {
+        setIsPressed(true);
+        if (bind.onTouchStart) bind.onTouchStart(e.nativeEvent);
+      }}
+      onTouchEnd={(e) => {
+        setIsPressed(false);
+        if (bind.onTouchEnd) bind.onTouchEnd(e.nativeEvent);
+      }}
+      onMouseDown={(e) => {
+        setIsPressed(true);
+        if (bind.onMouseDown) bind.onMouseDown(e.nativeEvent);
+      }}
+      onMouseUp={(e) => {
+        setIsPressed(false);
+        if (bind.onMouseUp) bind.onMouseUp(e.nativeEvent);
+      }}
+      onTouchMove={(e) => bind.onTouchMove && bind.onTouchMove(e.nativeEvent)}
+      onMouseMove={(e) => bind.onMouseMove && bind.onMouseMove(e.nativeEvent)}
       className={`
         relative overflow-hidden
         p-4

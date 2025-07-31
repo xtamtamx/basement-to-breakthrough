@@ -1,4 +1,3 @@
-import { Band, Venue, GamePhase } from '@game/types';
 
 export interface RandomEvent {
   id: string;
@@ -363,7 +362,7 @@ class RandomEventManager {
   }
   
   // Apply event choice
-  applyEventChoice(event: RandomEvent, choiceId: string, gameState: any): {
+  applyEventChoice(event: RandomEvent, choiceId: string): {
     success: boolean;
     effects: EventEffect[];
     message?: string;

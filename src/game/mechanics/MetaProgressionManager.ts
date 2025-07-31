@@ -1,4 +1,5 @@
 import { Band, Venue, Equipment, Achievement, UnlockableContent } from '@game/types';
+import { safeStorage } from '@utils/safeStorage';
 
 export interface MetaProgression {
   totalRuns: number;
@@ -60,7 +61,7 @@ class MetaProgressionManager {
   }
   
   private loadProgression(): MetaProgression {
-    const stored = localStorage.getItem('btb-meta-progression');
+    const stored = safeStorage.getItem('btb-meta-progression');
     if (stored) {
       return JSON.parse(stored);
     }
@@ -89,7 +90,7 @@ class MetaProgressionManager {
   }
   
   private saveProgression() {
-    localStorage.setItem('btb-meta-progression', JSON.stringify(this.progression));
+    safeStorage.setItem('btb-meta-progression', JSON.stringify(this.progression));
   }
   
   private initializeUnlockables() {

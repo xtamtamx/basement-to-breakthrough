@@ -1,31 +1,40 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { CityView } from './views/CityView';
-import { BandsView } from './views/BandsView';
-import { ShowBuilderView } from './views/ShowBuilderView';
-import { SynergyView } from './views/SynergyView';
-import { DayJobView } from './views/DayJobView';
-import { PromotionView } from './views/PromotionView';
-import { ProgressionView } from './views/ProgressionView';
-import { TurnResultsModal } from '@components/ui/TurnResultsModal';
-import { SettingsModal } from '@components/ui/SettingsModal';
-import { useGameStore } from '@stores/gameStore';
-import { haptics } from '@utils/mobile';
-import { turnProcessor } from '@game/mechanics/TurnProcessor';
-import { ShowResult } from '@game/types';
-import { difficultySystem } from '@game/mechanics/DifficultySystem';
-import { showPromotionSystem } from '@game/mechanics/ShowPromotionSystem';
-import { progressionPathSystem } from '@game/mechanics/ProgressionPathSystem';
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { CityView } from "./views/CityView";
+import { BandsView } from "./views/BandsView";
+import { ShowBuilderView } from "./views/ShowBuilderView";
+import { SynergyView } from "./views/SynergyView";
+import { DayJobView } from "./views/DayJobView";
+import { PromotionView } from "./views/PromotionView";
+import { ProgressionView } from "./views/ProgressionView";
+import { TurnResultsModal } from "@components/ui/TurnResultsModal";
+import { SettingsModal } from "@components/ui/SettingsModal";
+import { useGameStore } from "@stores/gameStore";
+import { haptics } from "@utils/mobile";
+import { turnProcessor } from "@game/mechanics/TurnProcessor";
+import { ShowResult } from "@game/types";
+import { showPromotionSystem } from "@game/mechanics/ShowPromotionSystem";
+import { progressionPathSystem } from "@game/mechanics/ProgressionPathSystem";
+import { gameAudio } from "@utils/gameAudio";
+import { GameErrorBoundary, withErrorBoundary } from "@components/ErrorBoundary";
+import { FPSMonitor } from "@components/FPSMonitor";
 
-type ViewType = 'city' | 'bands' | 'shows' | 'promotion' | 'synergies' | 'jobs' | 'progression';
+type ViewType =
+  | "city"
+  | "bands"
+  | "shows"
+  | "promotion"
+  | "synergies"
+  | "jobs"
+  | "progression";
 
 export const MainGameView: React.FC = () => {
-  const [currentView, setCurrentView] = useState<ViewType>('city');
+  const [currentView, setCurrentView] = useState<ViewType>("city");
   const [showTurnResults, setShowTurnResults] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [turnResults, setTurnResults] = useState<{ 
-    showResults: ShowResult[], 
-    totalVenueRent: number,
+  const [turnResults, setTurnResults] = useState<{
+    showResults: ShowResult[];
+    totalVenueRent: number;
     dayJobResult?: {
       money: number;
       reputationLoss: number;
@@ -34,21 +43,43 @@ export const MainGameView: React.FC = () => {
       message: string;
       randomEvent?: {
         message: string;
-        effects: any;
+        effects: {
+          money?: number;
+          reputation?: number;
+          fans?: number;
+          stress?: number;
+        };
       };
-    },
+    };
     difficultyEvent?: {
       message: string;
       reputationLost: number;
-    }
+    };
   }>({ showResults: [], totalVenueRent: 0 });
-  const { currentRound, scheduledShows, money, reputation, fans, stress, showHistory } = useGameStore();
-  
+  const {
+    currentRound,
+    scheduledShows,
+    money,
+    reputation,
+    fans,
+    stress,
+    showHistory,
+  } = useGameStore();
+
+  // Start background music
+  useEffect(() => {
+    gameAudio.startBackgroundMusic("chill");
+
+    return () => {
+      gameAudio.stopBackgroundMusic();
+    };
+  }, []);
+
   // Check if progression system is unlocked
   const progressionUnlocked = progressionPathSystem.isUnlocked({
     fans,
     reputation,
-    totalShows: showHistory.length
+    totalShows: showHistory.length,
   });
 
   const handleViewChange = (view: ViewType) => {
@@ -64,20 +95,26 @@ export const MainGameView: React.FC = () => {
   };
 
   const views = {
-    city: { component: CityView, icon: '🏙️', label: 'City' },
-    bands: { component: BandsView, icon: '🎸', label: 'Bands' },
-    shows: { component: ShowBuilderView, icon: '🎫', label: 'Shows' },
-    promotion: { component: PromotionView, icon: '📢', label: 'Promo' },
-    jobs: { component: DayJobView, icon: '💼', label: 'Jobs' },
-    synergies: { component: SynergyView, icon: '🔥', label: 'Synergies' },
-    progression: { component: ProgressionView, icon: '📈', label: 'Path' }
+    city: { component: CityView, icon: "🏙️", label: "City" },
+    bands: { component: BandsView, icon: "🎸", label: "Bands" },
+    shows: { component: ShowBuilderView, icon: "🎫", label: "Shows" },
+    promotion: { component: PromotionView, icon: "📢", label: "Promo" },
+    jobs: { component: DayJobView, icon: "💼", label: "Jobs" },
+    synergies: { component: SynergyView, icon: "🔥", label: "Synergies" },
+    progression: { component: ProgressionView, icon: "📈", label: "Path" },
   };
 
   const CurrentViewComponent = views[currentView].component;
-  
+
   // Calculate difficulty level for display
   const difficultyLevel = Math.min(Math.floor(currentRound / 10) + 1, 5);
-  const difficultyColors = ['#10b981', '#f59e0b', '#ec4899', '#dc2626', '#991b1b'];
+  const difficultyColors = [
+    "#10b981",
+    "#f59e0b",
+    "#ec4899",
+    "#dc2626",
+    "#991b1b",
+  ];
 
   return (
     <div className="main-game-view">
@@ -86,43 +123,54 @@ export const MainGameView: React.FC = () => {
         <div className="header-left">
           <h1 className="game-logo">DIY</h1>
           <span className="round-badge">R{currentRound}</span>
-          <div className="difficulty-indicator" title={`Difficulty Level ${difficultyLevel}`}>
+          <div
+            className="difficulty-indicator"
+            title={`Difficulty Level ${difficultyLevel}`}
+          >
             {[...Array(5)].map((_, i) => (
               <span
                 key={i}
-                className={`difficulty-bar ${i < difficultyLevel ? 'active' : ''}`}
+                className={`difficulty-bar ${i < difficultyLevel ? "active" : ""}`}
                 style={{
-                  backgroundColor: i < difficultyLevel ? difficultyColors[difficultyLevel - 1] : 'var(--bg-tertiary)'
+                  backgroundColor:
+                    i < difficultyLevel
+                      ? difficultyColors[difficultyLevel - 1]
+                      : "var(--bg-tertiary)",
                 }}
               />
             ))}
           </div>
         </div>
-        
+
         <nav className="nav-tabs">
           {Object.entries(views).map(([key, view]) => {
             // Hide progression tab if not unlocked
-            if (key === 'progression' && !progressionUnlocked) {
+            if (key === "progression" && !progressionUnlocked) {
               return null;
             }
-            
+
             return (
               <button
                 key={key}
-                className={`nav-item ${currentView === key ? 'active' : ''}`}
+                className={`nav-item ${currentView === key ? "active" : ""}`}
                 onClick={() => handleViewChange(key as ViewType)}
               >
                 <span className="nav-icon">{view.icon}</span>
                 <span className="nav-label">{view.label}</span>
-                {key === 'shows' && scheduledShows.length > 0 && (
+                {key === "shows" && scheduledShows.length > 0 && (
                   <span className="nav-badge">{scheduledShows.length}</span>
                 )}
-                {key === 'promotion' && showPromotionSystem.getScheduledShows().length > 0 && (
-                  <span className="nav-badge">{showPromotionSystem.getScheduledShows().length}</span>
-                )}
-                {key === 'progression' && progressionUnlocked && !progressionPathSystem.getProgression().currentPath && (
-                  <span className="nav-badge nav-badge-alert">!</span>
-                )}
+                {key === "promotion" &&
+                  showPromotionSystem.getScheduledShows().length > 0 && (
+                    <span className="nav-badge">
+                      {showPromotionSystem.getScheduledShows().length}
+                    </span>
+                  )}
+                {key === "progression" &&
+                  progressionUnlocked &&
+                  !progressionPathSystem.getProgression().currentPath && (
+                    <span className="nav-badge nav-badge-alert">!</span>
+                  )}
               </button>
             );
           })}
@@ -143,7 +191,9 @@ export const MainGameView: React.FC = () => {
               <span className="resource-value">{fans}</span>
             </div>
             {stress > 0 && (
-              <div className={`resource ${stress > 80 ? 'danger' : stress > 50 ? 'warning' : ''}`}>
+              <div
+                className={`resource ${stress > 80 ? "danger" : stress > 50 ? "warning" : ""}`}
+              >
                 <span className="resource-icon">😰</span>
                 <span className="resource-value">{stress}%</span>
               </div>
@@ -160,10 +210,7 @@ export const MainGameView: React.FC = () => {
             >
               ⚙️
             </button>
-            <button 
-              className="next-turn-btn"
-              onClick={handleNextTurn}
-            >
+            <button className="next-turn-btn" onClick={handleNextTurn}>
               <span>Next Turn</span>
               <span className="btn-icon">⏭️</span>
             </button>
@@ -186,7 +233,9 @@ export const MainGameView: React.FC = () => {
           <span className="stat-value">{fans}</span>
         </div>
         {stress > 0 && (
-          <div className={`stat-compact ${stress > 80 ? 'danger' : stress > 50 ? 'warning' : ''}`}>
+          <div
+            className={`stat-compact ${stress > 80 ? "danger" : stress > 50 ? "warning" : ""}`}
+          >
             <span className="stat-icon">😰</span>
             <span className="stat-value">{stress}%</span>
           </div>
@@ -204,11 +253,13 @@ export const MainGameView: React.FC = () => {
             transition={{ duration: 0.2 }}
             className="view-wrapper"
           >
-            {currentView === 'promotion' ? (
-              <PromotionView onNavigate={handleViewChange} />
-            ) : (
-              <CurrentViewComponent />
-            )}
+            <GameErrorBoundary viewName={currentView}>
+              {currentView === "promotion" ? (
+                <PromotionView onNavigate={handleViewChange} />
+              ) : (
+                <CurrentViewComponent />
+              )}
+            </GameErrorBoundary>
           </motion.div>
         </AnimatePresence>
       </main>
@@ -230,14 +281,10 @@ export const MainGameView: React.FC = () => {
       />
 
       {/* Floating End Turn Button */}
-      <button 
-        className="floating-end-turn"
-        onClick={handleNextTurn}
-      >
+      <button className="floating-end-turn" onClick={handleNextTurn}>
         <span className="turn-icon">⏭️</span>
         <span className="turn-text">End Turn</span>
       </button>
-
 
       <style>{`
         .main-game-view {
@@ -638,6 +685,15 @@ export const MainGameView: React.FC = () => {
           }
         }
       `}</style>
+      
+      {/* FPS Monitor for performance tracking */}
+      {process.env.NODE_ENV === 'development' && (
+        <FPSMonitor 
+          position="top-left" 
+          targetFPS={60} 
+          showGraph={true}
+        />
+      )}
     </div>
   );
 };

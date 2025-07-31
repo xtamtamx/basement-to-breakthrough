@@ -1,4 +1,4 @@
-import { Band, Venue, VenueTrait, ShowResult } from '@game/types';
+import { Band, Venue, ShowResult } from '@game/types';
 
 export interface VenueSynergy {
   venueTraitId: string;
@@ -200,12 +200,11 @@ class VenueSynergySystem {
     }
     
     // Apply all synergy effects
-    let modifiedResult = { ...baseResult };
+    const modifiedResult = { ...baseResult };
     let totalAttendanceMultiplier = 1;
     let totalRevenueMultiplier = 1;
     let totalReputationBonus = 0;
     let totalFanConversionRate = 1;
-    let totalAtmosphereBonus = 0;
     
     synergies.forEach(synergy => {
       if (synergy.effects.attendanceMultiplier) {

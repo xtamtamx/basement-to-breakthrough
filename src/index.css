@@ -43,6 +43,84 @@
   --transition-spring: cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
 
+/* Accessibility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  padding: 8px;
+  text-decoration: none;
+  border-radius: 4px;
+  z-index: 9999;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* Focus styles */
+:focus {
+  outline: 2px solid var(--punk-magenta);
+  outline-offset: 2px;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--punk-magenta);
+  outline-offset: 2px;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  :root {
+    --bg-primary: #000000;
+    --bg-secondary: #0A0A0A;
+    --text-primary: #FFFFFF;
+    --border-default: #FFFFFF;
+  }
+}
+
+/* Scrollbar hiding utilities */
+.scrollbar-hide-x::-webkit-scrollbar,
+.scrollbar-hide-y::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide-x,
+.scrollbar-hide-y {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* Base styles */
 html {
   height: 100%;
@@ -104,6 +182,25 @@ code, pre {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #555;
+}
+
+/* Tutorial highlight */
+.tutorial-highlight {
+  position: relative;
+  z-index: 9999;
+  animation: tutorial-pulse 2s ease-in-out infinite;
+}
+
+@keyframes tutorial-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(255, 255, 255, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+  }
 }
 
 /* Button styles */
@@ -390,3 +487,51 @@ code, pre {
   opacity: 0.02;
   pointer-events: none;
 }
+
+/* Colorblind Mode CSS Variables */
+:root {
+  /* Colors will be overridden by ColorblindProvider */
+  --color-punk-pink: #FF006E;
+  --color-punk-magenta: #EC4899;
+  --color-punk-neon: #FF10F0;
+  --color-metal-red: #DC2626;
+  --color-metal-blood: #991B1B;
+  --color-metal-rust: #92400E;
+  --color-success-green: #10B981;
+  --color-success-emerald: #059669;
+  --color-success-mint: #34D399;
+  --color-warning-yellow: #F59E0B;
+  --color-warning-amber: #D97706;
+  --color-warning-gold: #FCD34D;
+  --color-info-purple: #8B5CF6;
+  --color-info-violet: #7C3AED;
+  --color-info-indigo: #6366F1;
+}
+
+/* Colorblind-safe utility classes */
+.cb-success { color: var(--color-success-green); }
+.cb-error { color: var(--color-metal-red); }
+.cb-warning { color: var(--color-warning-yellow); }
+.cb-info { color: var(--color-info-purple); }
+
+.cb-bg-success { background-color: var(--color-success-green); }
+.cb-bg-error { background-color: var(--color-metal-red); }
+.cb-bg-warning { background-color: var(--color-warning-yellow); }
+.cb-bg-info { background-color: var(--color-info-purple); }
+
+.cb-border-success { border-color: var(--color-success-green); }
+.cb-border-error { border-color: var(--color-metal-red); }
+.cb-border-warning { border-color: var(--color-warning-yellow); }
+.cb-border-info { border-color: var(--color-info-purple); }
+
+/* Faction colors */
+.cb-faction-punk { color: var(--color-punk-pink); }
+.cb-faction-metal { color: var(--color-metal-red); }
+.cb-faction-indie { color: var(--color-info-purple); }
+.cb-faction-electronic { color: var(--color-info-indigo); }
+
+/* Resource colors */
+.cb-money { color: var(--color-success-green); }
+.cb-reputation { color: var(--color-punk-magenta); }
+.cb-stress { color: var(--color-metal-red); }
+.cb-fans { color: var(--color-info-purple); }

@@ -18,7 +18,6 @@ export const PremiumBandCard: React.FC<PremiumBandCardProps> = ({
   onDragStart,
   onDragEnd,
   onDrop,
-  isDragging = false,
   initialPosition = { x: 0, y: 0 }
 }) => {
   const [isLifted, setIsLifted] = useState(false);
@@ -47,7 +46,7 @@ export const PremiumBandCard: React.FC<PremiumBandCardProps> = ({
     });
   };
   
-  const handleDragEnd = (event: any, info: PanInfo) => {
+  const handleDragEnd = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     setIsLifted(false);
     
     const finalPosition = {

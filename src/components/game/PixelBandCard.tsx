@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Band } from '@game/types';
-import { useSwipeableCard } from '@hooks';
+import { useSwipeableCard } from '@hooks/useGesture';
 import { haptics } from '@utils/mobile';
 
 interface PixelBandCardProps {
@@ -19,13 +19,12 @@ export const PixelBandCard: React.FC<PixelBandCardProps> = ({
   onSelect,
   onSwipeLeft,
   onSwipeRight,
-  onLongPress,
   selected = false,
   disabled = false,
   compact = false,
 }) => {
   const [isPressed, setIsPressed] = useState(false);
-  const [showDetails, setShowDetails] = useState(false);
+  const [showDetails] = useState(false);
 
   const { bind, ref } = useSwipeableCard(
     onSwipeLeft ? () => onSwipeLeft(band) : undefined,
@@ -36,13 +35,6 @@ export const PixelBandCard: React.FC<PixelBandCardProps> = ({
     } : undefined
   );
 
-  const handleLongPress = () => {
-    if (onLongPress) {
-      onLongPress(band);
-    } else {
-      setShowDetails(!showDetails);
-    }
-  };
 
   const getGenreColor = (genre: string) => {
     switch (genre.toLowerCase()) {
@@ -63,11 +55,24 @@ export const PixelBandCard: React.FC<PixelBandCardProps> = ({
   return (
     <div
       ref={ref}
-      {...bind}
-      onTouchStart={() => setIsPressed(true)}
-      onTouchEnd={() => setIsPressed(false)}
-      onMouseDown={() => setIsPressed(true)}
-      onMouseUp={() => setIsPressed(false)}
+      onTouchStart={(e) => {
+        setIsPressed(true);
+        (bind.onTouchStart as React.TouchEventHandler<HTMLDivElement>)(e);
+      }}
+      onTouchEnd={(e) => {
+        setIsPressed(false);
+        (bind.onTouchEnd as React.TouchEventHandler<HTMLDivElement>)(e);
+      }}
+      onMouseDown={(e) => {
+        setIsPressed(true);
+        (bind.onMouseDown as React.MouseEventHandler<HTMLDivElement>)(e);
+      }}
+      onMouseUp={(e) => {
+        setIsPressed(false);
+        (bind.onMouseUp as React.MouseEventHandler<HTMLDivElement>)(e);
+      }}
+      onTouchMove={bind.onTouchMove as React.TouchEventHandler<HTMLDivElement>}
+      onMouseMove={bind.onMouseMove as React.MouseEventHandler<HTMLDivElement>}
       className={`
         pixel-card pixel-card-band relative
         ${compact ? 'p-2' : 'p-3'}
@@ -195,7 +200,7 @@ export const PixelBandCard: React.FC<PixelBandCardProps> = ({
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    window.open(band.socialMedia.spotify, '_blank');
+                    if (band.socialMedia?.spotify) window.open(band.socialMedia.spotify, '_blank');
                   }}
                   className="pixel-button"
                   style={{ 
@@ -211,7 +216,7 @@ export const PixelBandCard: React.FC<PixelBandCardProps> = ({
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    window.open(band.socialMedia.bandcamp, '_blank');
+                    if (band.socialMedia?.bandcamp) window.open(band.socialMedia.bandcamp, '_blank');
                   }}
                   className="pixel-button"
                   style={{ 

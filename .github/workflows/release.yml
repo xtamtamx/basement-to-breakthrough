@@ -1,0 +1,123 @@
+name: Release Pipeline
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        draft: false
+        prerelease: false
+
+  build-web:
+    name: Build Web Version
+    needs: create-release
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Use Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Build for production
+      run: npm run build
+      env:
+        VITE_API_URL: ${{ secrets.VITE_API_URL }}
+    
+    - name: Create web artifact
+      run: |
+        cd dist
+        zip -r ../basement-to-breakthrough-web.zip .
+        cd ..
+    
+    - name: Upload Web Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: ./basement-to-breakthrough-web.zip
+        asset_name: basement-to-breakthrough-web-${{ github.ref_name }}.zip
+        asset_content_type: application/zip
+
+  build-mobile:
+    name: Build Mobile Apps
+    needs: create-release
+    runs-on: macos-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Use Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Build web assets
+      run: npm run build
+    
+    - name: Sync Capacitor
+      run: npx cap sync
+    
+    # iOS Build (requires Apple Developer account setup)
+    - name: Build iOS
+      if: false # Enable when Apple certificates are configured
+      run: |
+        cd ios/App
+        xcodebuild -project App.xcodeproj \
+          -scheme App \
+          -sdk iphoneos \
+          -configuration Release \
+          -archivePath $PWD/build/App.xcarchive \
+          archive
+    
+    # Android Build
+    - name: Setup JDK
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+    
+    - name: Build Android APK
+      run: |
+        cd android
+        ./gradlew assembleRelease || echo "Android build requires signing configuration"
+    
+    - name: Upload Android APK
+      if: false # Enable when Android signing is configured
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: ./android/app/build/outputs/apk/release/app-release.apk
+        asset_name: basement-to-breakthrough-android-${{ github.ref_name }}.apk
+        asset_content_type: application/vnd.android.package-archive

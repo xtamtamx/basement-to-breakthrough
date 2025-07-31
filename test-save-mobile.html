@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Save/Load Mobile Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #1a1a1a;
+            color: white;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .button-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 15px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            background: #2a2a2a;
+            color: white;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:active {
+            background: #3a3a3a;
+        }
+        .save { background: #22c55e; }
+        .load { background: #3b82f6; }
+        .auto { background: #a855f7; }
+        .clear { background: #ef4444; }
+        .export { background: #f59e0b; }
+        .status {
+            padding: 15px;
+            background: #2a2a2a;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        .data-display {
+            padding: 15px;
+            background: #2a2a2a;
+            border-radius: 8px;
+            font-size: 12px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Save/Load Mobile Test</h1>
+        
+        <div class="status" id="status">Ready to test save/load functionality</div>
+        
+        <div class="button-grid">
+            <button class="save" onclick="testSave()">💾 Save Game</button>
+            <button class="load" onclick="testLoad()">📂 Load Game</button>
+            <button class="auto" onclick="testAutoSave()">⏱️ Auto-Save</button>
+            <button class="clear" onclick="testClear()">🗑️ Clear Saves</button>
+            <button class="export" onclick="testExport()" style="grid-column: 1 / -1;">📤 Export Save</button>
+        </div>
+        
+        <div id="savedData" class="data-display" style="display: none;"></div>
+        <div id="loadedData" class="data-display" style="display: none;"></div>
+    </div>
+
+    <script type="module">
+        window.testSave = function() {
+            const testData = {
+                turn: Math.floor(Math.random() * 20) + 1,
+                money: Math.floor(Math.random() * 1000) + 500,
+                timestamp: new Date().toISOString()
+            };
+            
+            localStorage.setItem('btb-save', JSON.stringify(testData));
+            
+            document.getElementById('status').textContent = `✅ Saved! Turn ${testData.turn}, $${testData.money}`;
+            document.getElementById('savedData').style.display = 'block';
+            document.getElementById('savedData').textContent = JSON.stringify(testData, null, 2);
+            
+            // Vibrate if available (mobile)
+            if ('vibrate' in navigator) {
+                navigator.vibrate(50);
+            }
+        };
+        
+        window.testLoad = function() {
+            const saved = localStorage.getItem('btb-save');
+            
+            if (saved) {
+                const data = JSON.parse(saved);
+                document.getElementById('status').textContent = `✅ Loaded! Turn ${data.turn}, $${data.money}`;
+                document.getElementById('loadedData').style.display = 'block';
+                document.getElementById('loadedData').textContent = JSON.stringify(data, null, 2);
+            } else {
+                document.getElementById('status').textContent = '❌ No save found!';
+            }
+            
+            if ('vibrate' in navigator) {
+                navigator.vibrate(saved ? 50 : [50, 30, 50]);
+            }
+        };
+        
+        window.testAutoSave = function() {
+            const testData = {
+                turn: Math.floor(Math.random() * 20) + 1,
+                money: Math.floor(Math.random() * 1000) + 500,
+                timestamp: new Date().toISOString(),
+                auto: true
+            };
+            
+            localStorage.setItem('btb-autosave', JSON.stringify(testData));
+            document.getElementById('status').textContent = `✅ Auto-saved! Turn ${testData.turn}`;
+            
+            if ('vibrate' in navigator) {
+                navigator.vibrate(25);
+            }
+        };
+        
+        window.testClear = function() {
+            localStorage.removeItem('btb-save');
+            localStorage.removeItem('btb-autosave');
+            document.getElementById('status').textContent = '🗑️ All saves cleared';
+            document.getElementById('savedData').style.display = 'none';
+            document.getElementById('loadedData').style.display = 'none';
+            
+            if ('vibrate' in navigator) {
+                navigator.vibrate([100, 50, 100]);
+            }
+        };
+        
+        window.testExport = function() {
+            const saved = localStorage.getItem('btb-save');
+            if (saved) {
+                const exportData = btoa(saved);
+                
+                // Try to copy to clipboard
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(exportData).then(() => {
+                        document.getElementById('status').textContent = `📋 Exported to clipboard (${exportData.length} chars)`;
+                    }).catch(() => {
+                        document.getElementById('status').textContent = '❌ Failed to copy to clipboard';
+                    });
+                } else {
+                    // Fallback for older browsers
+                    const textarea = document.createElement('textarea');
+                    textarea.value = exportData;
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textarea);
+                    document.getElementById('status').textContent = `📋 Exported to clipboard (${exportData.length} chars)`;
+                }
+                
+                if ('vibrate' in navigator) {
+                    navigator.vibrate(50);
+                }
+            } else {
+                document.getElementById('status').textContent = '❌ No save to export!';
+                if ('vibrate' in navigator) {
+                    navigator.vibrate([50, 30, 50]);
+                }
+            }
+        };
+        
+        // Test localStorage availability
+        try {
+            localStorage.setItem('test', 'test');
+            localStorage.removeItem('test');
+            console.log('✅ localStorage is available');
+        } catch (e) {
+            document.getElementById('status').textContent = '❌ localStorage is not available!';
+            console.error('localStorage error:', e);
+        }
+    </script>
+</body>
+</html>

@@ -241,7 +241,7 @@ export const SynergyRevealAnimation: React.FC<SynergyRevealAnimationProps> = ({
                       fontSize: '8px', 
                       color: colors.particles 
                     }}>
-                      +{effect.value}{effect.isPercentage ? '%' : ''} {effect.type.replace('_', ' ')}
+                      +{effect.value} {effect.type.replace('_', ' ')}
                     </span>
                   </motion.div>
                 ))}

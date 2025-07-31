@@ -1,6 +1,13 @@
-// Core type definitions - The "Game Bible" for Basement to Breakthrough
+/**
+ * Core type definitions - The "Game Bible" for Basement to Breakthrough
+ * @module core/types
+ */
 
 // ============= Artist Integration Types =============
+
+/**
+ * Social media links for real artist integration
+ */
 export interface ArtistSocialMedia {
   spotify?: string;
   bandcamp?: string;
@@ -10,47 +17,77 @@ export interface ArtistSocialMedia {
   website?: string;
 }
 
+/**
+ * Audio sample for Web Audio API integration
+ */
 export interface AudioSample {
+  /** Unique identifier for the sample */
   id: string;
+  /** URL to the audio file */
   url: string;
-  duration: number; // seconds
+  /** Duration in seconds */
+  duration: number;
+  /** Display title of the track */
   title: string;
+  /** Whether this is a preview clip or full track */
   isPreview: boolean;
 }
 
 // ============= Band Types =============
+
+/**
+ * Represents a musical act that can be booked for shows
+ */
 export interface Band {
+  /** Unique identifier */
   id: string;
+  /** Band display name */
   name: string;
-  isRealArtist: boolean; // Distinguishes real vs procedural
-  artistId?: string; // Links to real artist data
+  /** True if this is a real artist integration */
+  isRealArtist: boolean;
+  /** Links to real artist data if applicable */
+  artistId?: string;
+  /** Primary music genre */
   genre: Genre;
+  /** Additional genre tags */
   subgenres: string[];
+  /** Special characteristics affecting gameplay */
   traits: BandTrait[];
-  popularity: number; // 0-100
-  authenticity: number; // 0-100, affects scene cred
-  energy: number; // 0-100, performance energy
-  technicalSkill: number; // 0-100
+  /** Fan following (0-100) */
+  popularity: number;
+  /** Scene credibility (0-100) - high = underground respect */
+  authenticity: number;
+  /** Performance intensity (0-100) */
+  energy: number;
+  /** Musical proficiency (0-100) */
+  technicalSkill: number;
+  /** Equipment needed for performance */
   technicalRequirements: TechRequirement[];
-  socialMedia?: ArtistSocialMedia; // For real artists
-  musicSamples?: AudioSample[]; // Web Audio API integration
+  /** Social media links for real artists */
+  socialMedia?: ArtistSocialMedia;
+  /** Audio samples for preview/ambience */
+  musicSamples?: AudioSample[];
+  /** Artist biography */
   bio?: string;
+  /** Band photo/artwork URL */
   imageUrl?: string;
+  /** Origin city */
   hometown?: string;
+  /** Year the band formed */
   formedYear?: number;
 }
 
 export enum Genre {
-  PUNK = 'PUNK',
-  METAL = 'METAL',
-  HARDCORE = 'HARDCORE',
-  GRUNGE = 'GRUNGE',
-  INDIE = 'INDIE',
-  EXPERIMENTAL = 'EXPERIMENTAL',
-  NOISE = 'NOISE',
-  DOOM = 'DOOM',
-  SLUDGE = 'SLUDGE',
-  POWERVIOLENCE = 'POWERVIOLENCE',
+  PUNK = "PUNK",
+  METAL = "METAL",
+  HARDCORE = "HARDCORE",
+  GRUNGE = "GRUNGE",
+  INDIE = "INDIE",
+  EXPERIMENTAL = "EXPERIMENTAL",
+  NOISE = "NOISE",
+  DOOM = "DOOM",
+  SLUDGE = "SLUDGE",
+  POWERVIOLENCE = "POWERVIOLENCE",
 }
 
 export interface BandTrait {
@@ -62,10 +99,10 @@ export interface BandTrait {
 }
 
 export enum TraitType {
-  PERSONALITY = 'PERSONALITY',
-  PERFORMANCE = 'PERFORMANCE',
-  SOCIAL = 'SOCIAL',
-  TECHNICAL = 'TECHNICAL',
+  PERSONALITY = "PERSONALITY",
+  PERFORMANCE = "PERFORMANCE",
+  SOCIAL = "SOCIAL",
+  TECHNICAL = "TECHNICAL",
 }
 
 export interface TraitModifier {
@@ -81,23 +118,43 @@ export interface TechRequirement {
 }
 
 // ============= Venue Types =============
+
+/**
+ * Represents a location where shows can be booked
+ */
 export interface Venue {
+  /** Unique identifier */
   id: string;
+  /** Venue display name */
   name: string;
+  /** Category of venue */
   type: VenueType;
+  /** Maximum attendance */
   capacity: number;
-  acoustics: number; // 0-100
-  authenticity: number; // 0-100, Basement = high, corporate = low
-  atmosphere: number; // 0-100
+  /** Sound quality (0-100) */
+  acoustics: number;
+  /** Underground credibility (0-100) - Basement = high, corporate = low */
+  authenticity: number;
+  /** Vibe/ambience rating (0-100) */
+  atmosphere: number;
+  /** Special effects on shows */
   modifiers: VenueModifier[];
+  /** Special characteristics */
   traits: VenueTrait[];
+  /** City district location */
   location: District;
+  /** Cost per show to use venue */
   rent: number;
+  /** Available sound/light equipment */
   equipment: Equipment[];
+  /** Whether minors can attend */
   allowsAllAges: boolean;
-  hasBar: boolean; // Affects revenue model
+  /** Bar increases revenue but may limit all-ages */
+  hasBar: boolean;
+  /** Security reduces incident chance */
   hasSecurity: boolean;
-  hasStage?: boolean; // Affects performance quality
+  /** Stage improves performance quality */
+  hasStage?: boolean;
   isPermanent: boolean; // vs popup/temporary
   bookingDifficulty: number; // 1-10
   imageUrl?: string;
@@ -106,19 +163,27 @@ export interface Venue {
 }
 
 export enum VenueType {
-  BASEMENT = 'BASEMENT',
-  GARAGE = 'GARAGE',
-  HOUSE_SHOW = 'HOUSE_SHOW',
-  DIY_SPACE = 'DIY_SPACE',
-  DIVE_BAR = 'DIVE_BAR',
-  PUNK_CLUB = 'PUNK_CLUB',
-  METAL_VENUE = 'METAL_VENUE',
-  WAREHOUSE = 'WAREHOUSE',
-  UNDERGROUND = 'UNDERGROUND',
-  THEATER = 'THEATER',
-  CONCERT_HALL = 'CONCERT_HALL',
-  ARENA = 'ARENA',
-  FESTIVAL_GROUNDS = 'FESTIVAL_GROUNDS',
+  BASEMENT = "BASEMENT",
+  GARAGE = "GARAGE",
+  HOUSE_SHOW = "HOUSE_SHOW",
+  DIY_SPACE = "DIY_SPACE",
+  DIVE_BAR = "DIVE_BAR",
+  PUNK_CLUB = "PUNK_CLUB",
+  METAL_VENUE = "METAL_VENUE",
+  WAREHOUSE = "WAREHOUSE",
+  UNDERGROUND = "UNDERGROUND",
+  THEATER = "THEATER",
+  CONCERT_HALL = "CONCERT_HALL",
+  ARENA = "ARENA",
+  FESTIVAL_GROUNDS = "FESTIVAL_GROUNDS",
+}
+
+export enum DistrictType {
+  DOWNTOWN = "downtown",
+  WAREHOUSE = "warehouse",
+  COLLEGE = "college",
+  RESIDENTIAL = "residential",
+  ARTS = "arts",
 }
 
 export interface VenueModifier {
@@ -129,10 +194,10 @@ export interface VenueModifier {
 }
 
 export enum ModifierType {
-  REPUTATION = 'REPUTATION',
-  CAPACITY = 'CAPACITY',
-  REVENUE = 'REVENUE',
-  SCENE_POLITICS = 'SCENE_POLITICS',
+  REPUTATION = "REPUTATION",
+  CAPACITY = "CAPACITY",
+  REVENUE = "REVENUE",
+  SCENE_POLITICS = "SCENE_POLITICS",
 }
 
 export interface ModifierEffect {
@@ -159,10 +224,10 @@ export interface VenueTrait {
 }
 
 export enum VenueTraitType {
-  ATMOSPHERE = 'ATMOSPHERE',
-  TECHNICAL = 'TECHNICAL',
-  SOCIAL = 'SOCIAL',
-  LEGENDARY = 'LEGENDARY',
+  ATMOSPHERE = "ATMOSPHERE",
+  TECHNICAL = "TECHNICAL",
+  SOCIAL = "SOCIAL",
+  LEGENDARY = "LEGENDARY",
 }
 
 export interface VenueUpgrade {
@@ -188,11 +253,11 @@ export interface VenueUpgrade {
 }
 
 export enum VenueUpgradeType {
-  SOUND_SYSTEM = 'SOUND_SYSTEM',
-  CAPACITY = 'CAPACITY',
-  AMENITIES = 'AMENITIES',
-  SECURITY = 'SECURITY',
-  SPECIAL = 'SPECIAL',
+  SOUND_SYSTEM = "SOUND_SYSTEM",
+  CAPACITY = "CAPACITY",
+  AMENITIES = "AMENITIES",
+  SECURITY = "SECURITY",
+  SPECIAL = "SPECIAL",
 }
 
 export interface District {
@@ -209,6 +274,7 @@ export interface District {
 export interface Equipment {
   id: string;
   name: string;
+  description?: string;
   type: EquipmentType;
   quality: number; // 1-5 stars
   condition: number; // 0-100%
@@ -237,47 +303,13 @@ export interface EquipmentRequirements {
 }
 
 export enum EquipmentType {
-  PA_SYSTEM = 'PA_SYSTEM',
-  LIGHTING = 'LIGHTING',
-  STAGE = 'STAGE',
-  BACKLINE = 'BACKLINE',
-  RECORDING = 'RECORDING',
+  PA_SYSTEM = "PA_SYSTEM",
+  LIGHTING = "LIGHTING",
+  STAGE = "STAGE",
+  BACKLINE = "BACKLINE",
+  RECORDING = "RECORDING",
 }
 
-// ============= Venue Upgrade Types =============
-export interface VenueUpgrade {
-  id: string;
-  name: string;
-  description: string;
-  type: UpgradeType;
-  cost: number;
-  duration: number; // Turns to complete
-  effects: VenueUpgradeEffects;
-  requirements?: VenueRequirements;
-}
-
-export enum UpgradeType {
-  CAPACITY = 'CAPACITY',
-  ACOUSTICS = 'ACOUSTICS',
-  ATMOSPHERE = 'ATMOSPHERE',
-  AMENITIES = 'AMENITIES',
-  SECURITY = 'SECURITY',
-  INFRASTRUCTURE = 'INFRASTRUCTURE'
-}
-
-export interface VenueUpgradeEffects {
-  capacityIncrease?: number;
-  acousticsIncrease?: number;
-  atmosphereIncrease?: number;
-  maintenanceCost?: number; // Ongoing cost
-  unlockEquipment?: EquipmentType[]; // Enables certain equipment
-}
-
-export interface VenueRequirements {
-  minReputation?: number;
-  minConnections?: number;
-  factionStanding?: { factionId: string; minStanding: number };
-}
 
 // ============= Touch Interaction Types =============
 export interface TouchInteraction {
@@ -289,20 +321,20 @@ export interface TouchInteraction {
 }
 
 export enum TouchType {
-  TAP = 'TAP',
-  DOUBLE_TAP = 'DOUBLE_TAP',
-  LONG_PRESS = 'LONG_PRESS',
-  SWIPE = 'SWIPE',
-  DRAG = 'DRAG',
-  PINCH = 'PINCH',
+  TAP = "TAP",
+  DOUBLE_TAP = "DOUBLE_TAP",
+  LONG_PRESS = "LONG_PRESS",
+  SWIPE = "SWIPE",
+  DRAG = "DRAG",
+  PINCH = "PINCH",
 }
 
 export enum InteractionTarget {
-  BAND_CARD = 'BAND_CARD',
-  VENUE_CARD = 'VENUE_CARD',
-  UI_BUTTON = 'UI_BUTTON',
-  GAME_BOARD = 'GAME_BOARD',
-  MENU = 'MENU',
+  BAND_CARD = "BAND_CARD",
+  VENUE_CARD = "VENUE_CARD",
+  UI_BUTTON = "UI_BUTTON",
+  GAME_BOARD = "GAME_BOARD",
+  MENU = "MENU",
 }
 
 export interface GestureType {
@@ -313,10 +345,10 @@ export interface GestureType {
 }
 
 export enum SwipeDirection {
-  UP = 'UP',
-  DOWN = 'DOWN',
-  LEFT = 'LEFT',
-  RIGHT = 'RIGHT',
+  UP = "UP",
+  DOWN = "DOWN",
+  LEFT = "LEFT",
+  RIGHT = "RIGHT",
 }
 
 export interface Position {
@@ -325,31 +357,46 @@ export interface Position {
 }
 
 // ============= Game State Types =============
+
+/**
+ * Complete state of an active game session
+ */
 export interface GameState {
+  /** Unique game session ID */
   id: string;
+  /** Current turn/round number */
   turn: number;
+  /** Current game phase */
   phase: GamePhase;
+  /** Player's resources */
   resources: Resources;
+  /** Currently selected venue */
   currentVenue?: Venue;
+  /** All scheduled shows */
   bookedShows: Show[];
+  /** Bands available for booking */
   availableBands: Band[];
+  /** Reputation with each scene faction */
   sceneReputation: SceneReputation;
+  /** Unlocked features/content IDs */
   unlockedContent: string[];
+  /** Earned achievements */
   achievements: Achievement[];
+  /** Game settings/preferences */
   settings: GameSettings;
 }
 
 export enum GamePhase {
-  MENU = 'MENU',
-  SETUP = 'SETUP',
-  PLANNING = 'PLANNING',
-  BOOKING = 'BOOKING',
-  PROMOTION = 'PROMOTION',
-  PERFORMANCE = 'PERFORMANCE',
-  SHOW_NIGHT = 'SHOW_NIGHT',
-  AFTERMATH = 'AFTERMATH',
-  SCENE_POLITICS = 'SCENE_POLITICS',
-  GAME_OVER = 'GAME_OVER',
+  MENU = "MENU",
+  SETUP = "SETUP",
+  PLANNING = "PLANNING",
+  BOOKING = "BOOKING",
+  PROMOTION = "PROMOTION",
+  PERFORMANCE = "PERFORMANCE",
+  SHOW_NIGHT = "SHOW_NIGHT",
+  AFTERMATH = "AFTERMATH",
+  SCENE_POLITICS = "SCENE_POLITICS",
+  GAME_OVER = "GAME_OVER",
 }
 
 export interface Resources {
@@ -366,7 +413,7 @@ export interface Show {
   venueId: string;
   date: Date;
   ticketPrice: number;
-  status: 'SCHEDULED' | 'COMPLETED' | 'CANCELLED';
+  status: "SCHEDULED" | "COMPLETED" | "CANCELLED";
   actualAttendance?: number;
   revenue?: number;
   incidents?: Incident[];
@@ -391,8 +438,11 @@ export interface ShowResult {
   success: boolean;
   attendance: number;
   revenue: number;
-  reputationChange: number;
+  reputationChange?: number; // Legacy field
+  reputationGain?: number; // New field
   fansGained: number;
+  stressGain?: number;
+  connectionsGain?: number;
   incidentOccurred: boolean;
   financials: {
     revenue: number;
@@ -405,6 +455,10 @@ export interface ShowResult {
     name: string;
     description: string;
   }[];
+  districtBonus?: {
+    type: DistrictType;
+    description: string;
+  };
 }
 
 export interface Incident {
@@ -415,12 +469,12 @@ export interface Incident {
 }
 
 export enum IncidentType {
-  COPS_CALLED = 'COPS_CALLED',
-  NOISE_COMPLAINT = 'NOISE_COMPLAINT',
-  FIGHT = 'FIGHT',
-  EQUIPMENT_FAILURE = 'EQUIPMENT_FAILURE',
-  BAND_NO_SHOW = 'BAND_NO_SHOW',
-  VENUE_DAMAGE = 'VENUE_DAMAGE',
+  COPS_CALLED = "COPS_CALLED",
+  NOISE_COMPLAINT = "NOISE_COMPLAINT",
+  FIGHT = "FIGHT",
+  EQUIPMENT_FAILURE = "EQUIPMENT_FAILURE",
+  BAND_NO_SHOW = "BAND_NO_SHOW",
+  VENUE_DAMAGE = "VENUE_DAMAGE",
 }
 
 export interface Consequence {
@@ -429,10 +483,10 @@ export interface Consequence {
 }
 
 export enum ConsequenceType {
-  MONEY_LOSS = 'MONEY_LOSS',
-  REPUTATION_LOSS = 'REPUTATION_LOSS',
-  VENUE_BANNED = 'VENUE_BANNED',
-  SCENE_DRAMA = 'SCENE_DRAMA',
+  MONEY_LOSS = "MONEY_LOSS",
+  REPUTATION_LOSS = "REPUTATION_LOSS",
+  VENUE_BANNED = "VENUE_BANNED",
+  SCENE_DRAMA = "SCENE_DRAMA",
 }
 
 // ============= Scene Politics Types =============
@@ -479,12 +533,12 @@ export interface Reward {
 }
 
 export enum RewardType {
-  MONEY = 'MONEY',
-  REPUTATION = 'REPUTATION',
-  UNLOCK_BAND = 'UNLOCK_BAND',
-  UNLOCK_VENUE = 'UNLOCK_VENUE',
-  UNLOCK_EQUIPMENT = 'UNLOCK_EQUIPMENT',
-  SPECIAL_EVENT = 'SPECIAL_EVENT',
+  MONEY = "MONEY",
+  REPUTATION = "REPUTATION",
+  UNLOCK_BAND = "UNLOCK_BAND",
+  UNLOCK_VENUE = "UNLOCK_VENUE",
+  UNLOCK_EQUIPMENT = "UNLOCK_EQUIPMENT",
+  SPECIAL_EVENT = "SPECIAL_EVENT",
 }
 
 // ============= Settings Types =============
@@ -499,16 +553,16 @@ export interface GameSettings {
 }
 
 export enum Difficulty {
-  EASY = 'EASY', // Forgiving, good for learning
-  NORMAL = 'NORMAL', // Balanced challenge
-  HARD = 'HARD', // Tough but fair
-  NIGHTMARE = 'NIGHTMARE', // For masochists
+  EASY = "EASY", // Forgiving, good for learning
+  NORMAL = "NORMAL", // Balanced challenge
+  HARD = "HARD", // Tough but fair
+  NIGHTMARE = "NIGHTMARE", // For masochists
 }
 
 export enum PerformanceMode {
-  BATTERY_SAVER = 'BATTERY_SAVER',
-  BALANCED = 'BALANCED',
-  HIGH_PERFORMANCE = 'HIGH_PERFORMANCE',
+  BATTERY_SAVER = "BATTERY_SAVER",
+  BALANCED = "BALANCED",
+  HIGH_PERFORMANCE = "HIGH_PERFORMANCE",
 }
 
 export interface AccessibilitySettings {
@@ -519,10 +573,10 @@ export interface AccessibilitySettings {
 }
 
 export enum ColorblindMode {
-  OFF = 'OFF',
-  PROTANOPIA = 'PROTANOPIA',
-  DEUTERANOPIA = 'DEUTERANOPIA',
-  TRITANOPIA = 'TRITANOPIA',
+  OFF = "OFF",
+  PROTANOPIA = "PROTANOPIA",
+  DEUTERANOPIA = "DEUTERANOPIA",
+  TRITANOPIA = "TRITANOPIA",
 }
 
 // ============= Faction System Types =============
@@ -532,7 +586,7 @@ export interface Faction {
   description: string;
   values: FactionValues;
   modifiers: FactionModifiers;
-  relationships: Map<string, number>; // faction id -> relationship (-100 to 100)
+  relationships: Record<string, number>; // faction id -> relationship (-100 to 100)
   memberBands: string[]; // band ids
   controlledVenues: string[]; // venue ids
   iconColor: string;
@@ -566,11 +620,11 @@ export interface FactionEvent {
 }
 
 export enum FactionEventType {
-  CONFLICT = 'CONFLICT',
-  ALLIANCE = 'ALLIANCE',
-  TERRITORY = 'TERRITORY',
-  IDEOLOGY = 'IDEOLOGY',
-  DRAMA = 'DRAMA'
+  CONFLICT = "CONFLICT",
+  ALLIANCE = "ALLIANCE",
+  TERRITORY = "TERRITORY",
+  IDEOLOGY = "IDEOLOGY",
+  DRAMA = "DRAMA",
 }
 
 export interface FactionChoice {
@@ -580,7 +634,7 @@ export interface FactionChoice {
 }
 
 export interface FactionChoiceEffects {
-  factionChanges: Map<string, number>; // faction id -> reputation change
+  factionChanges: Record<string, number>; // faction id -> reputation change
   resourceChanges?: Partial<Resources>;
   unlocks?: string[];
   consequences?: string[]; // event ids to trigger later
@@ -599,13 +653,51 @@ export interface ArtistAgreement {
 }
 
 export enum ContentUsageLevel {
-  BASIC = 'BASIC', // Name, genre, basic traits
-  STANDARD = 'STANDARD', // + Photos, bio, music samples
-  PREMIUM = 'PREMIUM', // + Custom events, narrative content
-  COLLABORATION = 'COLLABORATION', // + Input on mechanics, scene representation
+  BASIC = "BASIC", // Name, genre, basic traits
+  STANDARD = "STANDARD", // + Photos, bio, music samples
+  PREMIUM = "PREMIUM", // + Custom events, narrative content
+  COLLABORATION = "COLLABORATION", // + Input on mechanics, scene representation
 }
 
 // ============= Walker System Types =============
+export interface MusicianWalkerData {
+  bandId: string;
+  instrumentType?: string;
+}
+
+export interface FanWalkerData {
+  favoriteGenre: Genre;
+  enthusiasm: number;
+}
+
+export interface PromoterWalkerData {
+  promotionRadius: number;
+  effectiveness: number;
+}
+
+export interface EquipmentTechData {
+  equipmentType: string;
+  repairSkill: number;
+}
+
+export interface PoliceWalkerData {
+  alertLevel: number;
+  targetVenueId?: string;
+}
+
+export interface GentrifierWalkerData {
+  wealthLevel: number;
+  gentrificationPower: number;
+}
+
+export type WalkerData =
+  | MusicianWalkerData
+  | FanWalkerData
+  | PromoterWalkerData
+  | EquipmentTechData
+  | PoliceWalkerData
+  | GentrifierWalkerData;
+
 export interface Walker {
   id: string;
   type: WalkerType;
@@ -617,22 +709,68 @@ export interface Walker {
   path: { x: number; y: number }[]; // Path to follow
   speed: number; // Grid cells per second
   state: WalkerState;
-  data?: any; // Type-specific data (band info, equipment, etc)
+  data?: WalkerData; // Type-specific data (band info, equipment, etc)
 }
 
 export enum WalkerType {
-  MUSICIAN = 'MUSICIAN',
-  FAN = 'FAN',
-  PROMOTER = 'PROMOTER',
-  EQUIPMENT_TECH = 'EQUIPMENT_TECH',
-  POLICE = 'POLICE',
-  GENTRIFIER = 'GENTRIFIER'
+  MUSICIAN = "MUSICIAN",
+  FAN = "FAN",
+  PROMOTER = "PROMOTER",
+  EQUIPMENT_TECH = "EQUIPMENT_TECH",
+  POLICE = "POLICE",
+  GENTRIFIER = "GENTRIFIER",
 }
 
 export enum WalkerState {
-  IDLE = 'IDLE',
-  WALKING = 'WALKING',
-  AT_VENUE = 'AT_VENUE',
-  PERFORMING = 'PERFORMING',
-  LEAVING = 'LEAVING'
+  IDLE = "IDLE",
+  WALKING = "WALKING",
+  AT_VENUE = "AT_VENUE",
+  PERFORMING = "PERFORMING",
+  LEAVING = "LEAVING",
+}
+
+// ============= Card System Types =============
+export interface Card {
+  id: string;
+  cardType: CardType;
+  name: string;
+  description: string;
+  value?: number;
+  data?: Band | Venue | Equipment | unknown;
+}
+
+export enum CardType {
+  BAND = "BAND",
+  VENUE = "VENUE",
+  EQUIPMENT = "EQUIPMENT",
+  EVENT = "EVENT",
+  RESOURCE = "RESOURCE",
+  ACTION = "ACTION",
+}
+
+// ============= Save Game Types =============
+export interface SaveGame {
+  id: string;
+  name: string;
+  timestamp: number;
+  gameState: {
+    money: number;
+    reputation: number;
+    fans: number;
+    stress: number;
+    connections: number;
+    currentRound: number;
+    phase: GamePhase;
+    difficulty: Difficulty;
+    districts: District[];
+    venues: Venue[];
+    bands: Band[];
+    shows: Show[];
+    discoveredSynergies: string[];
+    completedFestivals: string[];
+    diyPoints: number;
+    pathChoices: string[];
+    pathAlignment: string;
+  };
+  version: string;
 }

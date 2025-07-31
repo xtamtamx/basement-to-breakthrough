@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface Particle {
   id: number;
@@ -21,9 +21,9 @@ interface ParticleEffectProps {
 export const ParticleEffect: React.FC<ParticleEffectProps> = ({
   x,
   y,
-  color = 'var(--pixel-yellow)',
+  color = "var(--pixel-yellow)",
   particleCount = 8,
-  duration = 1000
+  duration = 1000,
 }) => {
   const [particles, setParticles] = useState<Particle[]>([]);
 
@@ -38,7 +38,7 @@ export const ParticleEffect: React.FC<ParticleEffectProps> = ({
         y: 0,
         vx: Math.cos(angle) * velocity,
         vy: Math.sin(angle) * velocity,
-        color
+        color,
       });
     }
     setParticles(newParticles);
@@ -52,24 +52,24 @@ export const ParticleEffect: React.FC<ParticleEffectProps> = ({
 
   return (
     <AnimatePresence>
-      {particles.map(particle => (
+      {particles.map((particle) => (
         <motion.div
           key={particle.id}
           className="absolute w-2 h-2 rounded-full pointer-events-none"
           style={{
             left: x,
             top: y,
-            backgroundColor: particle.color
+            backgroundColor: particle.color,
           }}
           initial={{ x: 0, y: 0, opacity: 1, scale: 1 }}
           animate={{
             x: particle.vx * 50,
             y: particle.vy * 50,
             opacity: 0,
-            scale: 0
+            scale: 0,
           }}
           exit={{ opacity: 0 }}
-          transition={{ duration: duration / 1000, ease: 'easeOut' }}
+          transition={{ duration: duration / 1000, ease: "easeOut" }}
         />
       ))}
     </AnimatePresence>

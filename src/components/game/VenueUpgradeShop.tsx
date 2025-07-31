@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Venue, VenueUpgrade, UpgradeType } from '@game/types';
+import { Venue, VenueUpgrade, VenueUpgradeType } from '@game/types';
 import { venueUpgradeManager } from '@game/mechanics/VenueUpgradeManager';
 import { useGameStore } from '@stores/gameStore';
 import { haptics } from '@utils/mobile';
@@ -18,7 +18,7 @@ export const VenueUpgradeShop: React.FC<VenueUpgradeShopProps> = ({
   venue
 }) => {
   const { money, reputation, connections, addMoney } = useGameStore();
-  const [selectedCategory, setSelectedCategory] = useState<UpgradeType | 'ALL'>('ALL');
+  const [selectedCategory, setSelectedCategory] = useState<VenueUpgradeType | 'ALL'>('ALL');
   
   if (!venue) return null;
   
@@ -28,12 +28,11 @@ export const VenueUpgradeShop: React.FC<VenueUpgradeShopProps> = ({
 
   const categories = [
     { id: 'ALL', name: 'ALL', icon: '🏗️' },
-    { id: UpgradeType.CAPACITY, name: 'CAPACITY', icon: '📏' },
-    { id: UpgradeType.ACOUSTICS, name: 'SOUND', icon: '🔊' },
-    { id: UpgradeType.ATMOSPHERE, name: 'VIBE', icon: '✨' },
-    { id: UpgradeType.AMENITIES, name: 'AMENITIES', icon: '🍺' },
-    { id: UpgradeType.SECURITY, name: 'SECURITY', icon: '🛡️' },
-    { id: UpgradeType.INFRASTRUCTURE, name: 'INFRA', icon: '⚡' }
+    { id: VenueUpgradeType.CAPACITY, name: 'CAPACITY', icon: '📏' },
+    { id: VenueUpgradeType.SOUND_SYSTEM, name: 'SOUND', icon: '🔊' },
+    { id: VenueUpgradeType.AMENITIES, name: 'AMENITIES', icon: '🍺' },
+    { id: VenueUpgradeType.SECURITY, name: 'SECURITY', icon: '🛡️' },
+    { id: VenueUpgradeType.SPECIAL, name: 'SPECIAL', icon: '⚡' }
   ];
 
   const filteredUpgrades = selectedCategory === 'ALL' 
@@ -158,7 +157,7 @@ export const VenueUpgradeShop: React.FC<VenueUpgradeShopProps> = ({
             {categories.map(cat => (
               <button
                 key={cat.id}
-                onClick={() => setSelectedCategory(cat.id as any)}
+                onClick={() => setSelectedCategory(cat.id)}
                 className={`pixel-button p-2 flex items-center gap-2 whitespace-nowrap ${
                   selectedCategory === cat.id ? 'ring-2 ring-yellow-400' : ''
                 }`}
@@ -214,29 +213,25 @@ export const VenueUpgradeShop: React.FC<VenueUpgradeShopProps> = ({
                         <p className="pixel-text pixel-text-xs" style={{ color: 'var(--pixel-green)' }}>
                           ${upgrade.cost}
                         </p>
-                        {upgrade.duration > 0 && (
-                          <p className="pixel-text pixel-text-xs" style={{ color: 'var(--pixel-orange)' }}>
-                            {upgrade.duration} TURNS
-                          </p>
-                        )}
+                        {/* Duration removed as it's not in VenueUpgrade type */}
                       </div>
                     </div>
 
                     {/* Effects */}
                     <div className="mb-3 space-y-1">
-                      {upgrade.effects.capacityIncrease && (
+                      {upgrade.effects.capacity && (
                         <p className="pixel-text pixel-text-xs" style={{ color: 'var(--pixel-green)' }}>
-                          +{upgrade.effects.capacityIncrease} CAPACITY
+                          +{upgrade.effects.capacity} CAPACITY
                         </p>
                       )}
-                      {upgrade.effects.acousticsIncrease && (
+                      {upgrade.effects.acoustics && (
                         <p className="pixel-text pixel-text-xs" style={{ color: 'var(--pixel-cyan)' }}>
-                          +{upgrade.effects.acousticsIncrease} ACOUSTICS
+                          +{upgrade.effects.acoustics} ACOUSTICS
                         </p>
                       )}
-                      {upgrade.effects.atmosphereIncrease && (
+                      {upgrade.effects.atmosphere && (
                         <p className="pixel-text pixel-text-xs" style={{ color: 'var(--pixel-magenta)' }}>
-                          +{upgrade.effects.atmosphereIncrease} ATMOSPHERE
+                          +{upgrade.effects.atmosphere} ATMOSPHERE
                         </p>
                       )}
                       {upgrade.effects.maintenanceCost && (

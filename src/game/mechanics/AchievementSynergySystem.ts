@@ -1,4 +1,4 @@
-import { Band, Venue, Achievement } from '@game/types';
+import { Band, Venue } from '@game/types';
 import { SynergyCombo, SynergyEffect } from './SynergyDiscoverySystem';
 import { metaProgressionManager } from './MetaProgressionManager';
 import { SATIRICAL_ACHIEVEMENTS, SATIRICAL_SYNERGIES } from '@game/data/satiricalText';

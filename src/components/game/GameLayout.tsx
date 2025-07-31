@@ -1,5 +1,5 @@
-import React, { ReactNode } from 'react';
-import { AnimatePresence } from 'framer-motion';
+import React, { ReactNode } from "react";
+import { AnimatePresence } from "framer-motion";
 
 interface GameLayoutProps {
   children: ReactNode;
@@ -9,7 +9,7 @@ interface GameLayoutProps {
 }
 
 // Z-index scale for consistent layering
-export const Z_INDEX = {
+const Z_INDEX = {
   BACKGROUND: 0,
   GAME_BOARD: 10,
   HUD: 20,
@@ -22,30 +22,30 @@ export const GameLayout: React.FC<GameLayoutProps> = ({
   children,
   hud,
   overlays,
-  modals
+  modals,
 }) => {
   return (
     <div className="game-root h-screen w-screen overflow-hidden bg-[#0F0F0F]">
       {/* Background Layer */}
-      <div 
-        className="absolute inset-0" 
-        style={{ zIndex: Z_INDEX.BACKGROUND }}
-      >
+      <div className="absolute inset-0" style={{ zIndex: Z_INDEX.BACKGROUND }}>
         {/* Punk texture overlay */}
         <div className="absolute inset-0 punk-grunge opacity-20" />
-        
+
         {/* Venue photography texture */}
-        <div className="absolute inset-0 opacity-[0.03]" style={{
-          backgroundImage: `
+        <div
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage: `
             radial-gradient(circle at 20% 30%, var(--punk-neon-purple) 0%, transparent 40%),
             radial-gradient(circle at 80% 70%, var(--punk-neon-cyan) 0%, transparent 40%),
             radial-gradient(circle at 50% 50%, var(--pixel-dark-purple) 0%, transparent 60%)
-          `
-        }} />
+          `,
+          }}
+        />
       </div>
 
       {/* Game Board Layer */}
-      <div 
+      <div
         className="relative h-full w-full"
         style={{ zIndex: Z_INDEX.GAME_BOARD }}
       >
@@ -53,7 +53,7 @@ export const GameLayout: React.FC<GameLayoutProps> = ({
       </div>
 
       {/* HUD Layer - Non-blocking with pointer-events-none */}
-      <div 
+      <div
         className="fixed inset-0 pointer-events-none"
         style={{ zIndex: Z_INDEX.HUD }}
       >
@@ -61,23 +61,16 @@ export const GameLayout: React.FC<GameLayoutProps> = ({
       </div>
 
       {/* Overlays Layer - For notifications, tooltips */}
-      <div 
+      <div
         className="fixed inset-0 pointer-events-none"
         style={{ zIndex: Z_INDEX.OVERLAYS }}
       >
-        <AnimatePresence>
-          {overlays}
-        </AnimatePresence>
+        <AnimatePresence>{overlays}</AnimatePresence>
       </div>
 
       {/* Modals Layer - Always on top with backdrop */}
-      <div 
-        className="modal-container"
-        style={{ zIndex: Z_INDEX.MODALS }}
-      >
-        <AnimatePresence>
-          {modals}
-        </AnimatePresence>
+      <div className="modal-container" style={{ zIndex: Z_INDEX.MODALS }}>
+        <AnimatePresence>{modals}</AnimatePresence>
       </div>
     </div>
   );

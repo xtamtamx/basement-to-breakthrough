@@ -1,4 +1,4 @@
-import { Band, Venue, Genre, VenueType, TraitType } from '@game/types';
+import { Band, Venue, Genre, VenueType } from '@game/types';
 import { SATIRICAL_SYNERGY_DATA } from '@game/data/satiricalText';
 
 export interface Synergy {
@@ -16,7 +16,7 @@ export interface Synergy {
 
 export interface SynergyCondition {
   type: 'band_genre' | 'venue_type' | 'band_trait' | 'band_count' | 'venue_modifier' | 'district' | 'time' | 'weather';
-  value: any;
+  value: string | number | string[];
   operator: 'equals' | 'includes' | 'greater_than' | 'less_than';
 }
 
@@ -276,7 +276,7 @@ class SynergySystemV2 {
     this.venueUpgrades.get(venueId)!.push(upgrade);
   }
   
-  checkSynergies(bands: Band[], venue: Venue, context: any = {}): Synergy[] {
+  checkSynergies(bands: Band[], venue: Venue, context: Record<string, unknown> = {}): Synergy[] {
     const triggeredSynergies: Synergy[] = [];
     
     for (const synergy of this.synergies.values()) {
@@ -297,7 +297,7 @@ class SynergySystemV2 {
     });
   }
   
-  private checkConditions(conditions: SynergyCondition[], bands: Band[], venue: Venue, context: any): boolean {
+  private checkConditions(conditions: SynergyCondition[], bands: Band[], venue: Venue, context: Record<string, unknown>): boolean {
     for (const condition of conditions) {
       if (!this.evaluateCondition(condition, bands, venue, context)) {
         return false;
@@ -306,7 +306,7 @@ class SynergySystemV2 {
     return true;
   }
   
-  private evaluateCondition(condition: SynergyCondition, bands: Band[], venue: Venue, context: any): boolean {
+  private evaluateCondition(condition: SynergyCondition, bands: Band[], venue: Venue, _context: Record<string, unknown>): boolean {
     switch (condition.type) {
       case 'band_genre':
         if (condition.operator === 'equals') {

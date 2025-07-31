@@ -2,6 +2,9 @@ import React from 'react';
 import { useAudio } from '@utils/audio';
 import { haptics } from '@utils/mobile';
 import { useGameStore } from '@stores/gameStore';
+import { tutorialManager } from '@game/mechanics/TutorialSystem';
+import { ColorblindMode } from '@game/types';
+import { useColorblind } from '@contexts/ColorblindContext';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -11,6 +14,7 @@ interface SettingsModalProps {
 export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   const { enabled, volume, setEnabled, setVolume } = useAudio();
   const { resetGame, currentRound } = useGameStore();
+  const { mode: colorblindMode, setMode: setColorblindMode } = useColorblind();
 
   if (!isOpen) return null;
 
@@ -85,6 +89,45 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
               }}
             />
           </div>
+        </div>
+
+        {/* Accessibility */}
+        <div className="mt-6 pt-6 border-t border-metal-800 space-y-4">
+          <h3 className="font-bold text-sm text-metal-300">Accessibility</h3>
+          
+          <div className="space-y-2">
+            <label className="block text-sm text-metal-400">Colorblind Mode</label>
+            <select
+              value={colorblindMode}
+              onChange={(e) => {
+                setColorblindMode(e.target.value as ColorblindMode);
+                haptics.light();
+              }}
+              className="w-full px-3 py-2 bg-metal-800 border border-metal-700 rounded text-sm focus:border-punk-600 focus:outline-none"
+            >
+              <option value={ColorblindMode.OFF}>Off</option>
+              <option value={ColorblindMode.PROTANOPIA}>Protanopia (Red-Blind)</option>
+              <option value={ColorblindMode.DEUTERANOPIA}>Deuteranopia (Green-Blind)</option>
+              <option value={ColorblindMode.TRITANOPIA}>Tritanopia (Blue-Blind)</option>
+              <option value={ColorblindMode.ACHROMATOPSIA}>Achromatopsia (Total)</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Tutorial */}
+        <div className="mt-6 pt-6 border-t border-metal-800 space-y-4">
+          <h3 className="font-bold text-sm text-metal-300">Tutorial</h3>
+          <button
+            onClick={() => {
+              tutorialManager.resetTutorial();
+              tutorialManager.startTutorial();
+              onClose();
+              haptics.success();
+            }}
+            className="w-full py-2 px-4 bg-metal-800 hover:bg-metal-700 rounded text-sm font-bold transition-colors"
+          >
+            Restart Tutorial
+          </button>
         </div>
 
         {/* Game Info */}

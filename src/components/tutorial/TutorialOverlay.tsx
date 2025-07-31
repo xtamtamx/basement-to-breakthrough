@@ -1,79 +1,68 @@
 import React, { useState, useEffect } from 'react';
 import { haptics } from '@utils/mobile';
 import { audio } from '@utils/audio';
+import { tutorialManager, TutorialStep } from '@game/mechanics/TutorialSystem';
+import { UI_CONSTANTS } from '@game/constants/GameConstants';
 
-export interface TutorialStep {
-  id: string;
-  title: string;
-  content: string;
-  target?: string; // CSS selector for element to highlight
-  position?: 'top' | 'bottom' | 'left' | 'right' | 'center';
-  action?: string; // Required action to proceed
-  showSkip?: boolean;
-}
-
-interface TutorialOverlayProps {
-  steps: TutorialStep[];
-  onComplete: () => void;
-  onSkip?: () => void;
-}
-
-export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({
-  steps,
-  onComplete,
-  onSkip,
-}) => {
-  const [currentStep, setCurrentStep] = useState(0);
+export const TutorialOverlay: React.FC = () => {
+  const [currentStep, setCurrentStep] = useState<TutorialStep | null>(null);
   const [highlightedElement, setHighlightedElement] = useState<HTMLElement | null>(null);
-  const step = steps[currentStep];
 
   useEffect(() => {
-    if (step.target) {
-      const element = document.querySelector(step.target) as HTMLElement;
-      if (element) {
-        setHighlightedElement(element);
-        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        
-        // Add highlight class
-        element.classList.add('tutorial-highlight');
-        
-        return () => {
-          element.classList.remove('tutorial-highlight');
-        };
+    // Subscribe to tutorial step changes
+    tutorialManager.onStepChangeHandler((step) => {
+      setCurrentStep(step);
+      
+      // Update highlighted element
+      if (step?.target) {
+        const element = document.querySelector(step.target) as HTMLElement;
+        if (element) {
+          setHighlightedElement(element);
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          element.classList.add('tutorial-highlight');
+        } else {
+          setHighlightedElement(null);
+        }
+      } else {
+        setHighlightedElement(null);
       }
-    } else {
-      setHighlightedElement(null);
+    });
+    
+    // Check if we should start tutorial
+    if (tutorialManager.shouldShowTutorial()) {
+      setTimeout(() => tutorialManager.startTutorial(), 500);
     }
-  }, [step]);
+    
+    // Cleanup
+    return () => {
+      document.querySelectorAll('.tutorial-highlight').forEach(el => {
+        el.classList.remove('tutorial-highlight');
+      });
+    };
+  }, []);
 
   const handleNext = () => {
     haptics.light();
     audio.tap();
-    
-    if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1);
-    } else {
-      onComplete();
-    }
+    tutorialManager.nextStep();
   };
 
   const handlePrevious = () => {
     haptics.light();
     audio.tap();
-    
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
-    }
+    tutorialManager.previousStep();
   };
 
   const handleSkip = () => {
     haptics.light();
     audio.tap();
-    onSkip?.();
+    if (confirm('Skip the tutorial? You can restart it from settings later.')) {
+      tutorialManager.skipTutorial();
+    }
   };
 
   const getTooltipPosition = () => {
-    if (!highlightedElement || !step.position) {
+    if (!highlightedElement || !currentStep?.position) {
       return { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' };
     }
 
@@ -106,8 +95,10 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({
       },
     };
 
-    return positions[step.position] || positions.center;
+    return positions[currentStep.position] || positions.center;
   };
+  
+  if (!currentStep) return null;
 
   return (
     <>
@@ -143,53 +134,35 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({
       >
         {/* Progress indicator */}
         <div className="flex gap-1 mb-3">
-          {steps.map((_, index) => (
-            <div
-              key={index}
-              className={`h-1 flex-1 rounded-full transition-colors ${
-                index <= currentStep ? 'bg-punk-600' : 'bg-metal-700'
-              }`}
-            />
-          ))}
+          <div className="h-1 flex-1 rounded-full bg-punk-600" />
         </div>
 
         {/* Content */}
-        <h3 className="font-bold text-lg mb-2">{step.title}</h3>
-        <p className="text-sm text-metal-300 mb-4">{step.content}</p>
+        <h3 className="font-bold text-lg mb-2">{currentStep.title}</h3>
+        <p className="text-sm text-metal-300 mb-4">{currentStep.description}</p>
 
         {/* Action hint */}
-        {step.action && (
+        {currentStep.action && (
           <div className="bg-metal-800 rounded p-2 mb-4 text-xs text-punk-400">
-            💡 {step.action}
+            💡 Complete action to continue
           </div>
         )}
 
         {/* Navigation */}
         <div className="flex gap-2">
-          {currentStep > 0 && (
-            <button
-              onClick={handlePrevious}
-              className="flex-1 py-2 px-4 bg-metal-800 rounded font-bold text-sm hover:bg-metal-700 active:scale-95"
-            >
-              Back
-            </button>
-          )}
-          
           <button
             onClick={handleNext}
             className="flex-1 py-2 px-4 bg-punk-600 rounded font-bold text-sm hover:bg-punk-700 active:scale-95"
           >
-            {currentStep === steps.length - 1 ? 'Finish' : 'Next'}
+            {currentStep.action ? 'Waiting...' : 'Next'}
           </button>
 
-          {step.showSkip && onSkip && (
-            <button
-              onClick={handleSkip}
-              className="py-2 px-4 text-metal-500 text-sm hover:text-white"
-            >
-              Skip
-            </button>
-          )}
+          <button
+            onClick={handleSkip}
+            className="py-2 px-4 text-metal-500 text-sm hover:text-white"
+          >
+            Skip
+          </button>
         </div>
       </div>
     </>

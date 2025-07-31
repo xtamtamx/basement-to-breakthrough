@@ -1,42 +1,76 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
 import { useGameStore } from '@stores/gameStore';
-import { ProceduralCityMap } from '../ProceduralCityMap';
+import { SimpleCityMap } from '@/components/map/SimpleCityMap';
 import { haptics } from '@utils/mobile';
 import { PixelButton } from '@components/ui/PixelButton';
 import { DistrictViewBasic } from '../DistrictViewBasic';
+import { DistrictInfo } from '@/game/generation/CityGenerator';
+import { BuildingInfoModal } from '@/components/modals/BuildingInfoModal';
+import { WorkplaceInfoModal } from '@/components/modals/WorkplaceInfoModal';
+import { MapInteractionProvider, useMapInteraction } from '@/contexts/MapInteractionContext';
+import { devLog } from '@utils/devLogger';
 
-export const CityView: React.FC = () => {
-  const { money } = useGameStore();
+const CityViewContent: React.FC = () => {
+  const gameStore = useGameStore();
   const [viewMode, setViewMode] = useState<'overview' | 'district'>('overview');
-  const [zoomedDistrict, setZoomedDistrict] = useState<string | null>(null);
+  const [selectedDistrictId, setSelectedDistrictId] = useState<string | null>(null);
+  const [selectedDistrictInfo, setSelectedDistrictInfo] = useState<DistrictInfo | null>(null);
+  const { selectedVenue, setSelectedVenue, selectedWorkplace, setSelectedWorkplace } = useMapInteraction();
+  
+  // Debug logging
+  React.useEffect(() => {
+    devLog.log('CityView - selectedVenue:', selectedVenue);
+    devLog.log('CityView - selectedWorkplace:', selectedWorkplace);
+  }, [selectedVenue, selectedWorkplace]);
 
-  const handleDistrictClick = (districtId: string) => {
-    console.log('District clicked:', districtId);
-    setZoomedDistrict(districtId);
+  const handleDistrictClick = (districtId: string, districtInfo: DistrictInfo) => {
+    devLog.log('District clicked:', districtId, districtInfo);
+    setSelectedDistrictId(districtId);
+    setSelectedDistrictInfo(districtInfo);
     setViewMode('district');
     haptics.light();
   };
 
   const handleZoomOut = () => {
     setViewMode('overview');
-    setZoomedDistrict(null);
+    setSelectedDistrictId(null);
+    setSelectedDistrictInfo(null);
     haptics.light();
   };
 
   return (
-    <div className="city-view" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ flex: 1, position: 'relative', padding: '20px' }}>
+    <div className="city-view" style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div style={{ flex: 1, position: 'relative', minHeight: 0 }}>
         {viewMode === 'overview' ? (
-          <ProceduralCityMap
-            onDistrictClick={handleDistrictClick}
-            selectedDistrict={zoomedDistrict}
-          />
+          <SimpleCityMap />
         ) : (
-          <DistrictViewBasic districtId={zoomedDistrict || ''} />
+          <DistrictViewBasic 
+            districtId={selectedDistrictId || ''} 
+            districtInfo={selectedDistrictInfo || undefined}
+          />
         )}
       </div>
 
+      {/* Test button */}
+      <button 
+        onClick={() => {
+          const testVenue = gameStore.venues[0];
+          devLog.log('Test button - setting venue:', testVenue);
+          setSelectedVenue(testVenue);
+        }}
+        style={{
+          position: 'absolute',
+          top: '10px',
+          right: '10px',
+          background: 'red',
+          color: 'white',
+          padding: '10px',
+          zIndex: 100
+        }}
+      >
+        TEST MODAL
+      </button>
+      
       {viewMode === 'district' && (
         <div style={{ 
           position: 'absolute', 
@@ -53,6 +87,26 @@ export const CityView: React.FC = () => {
           </PixelButton>
         </div>
       )}
+      
+      <BuildingInfoModal
+        isOpen={selectedVenue !== null}
+        onClose={() => setSelectedVenue(null)}
+        venue={selectedVenue}
+      />
+      
+      <WorkplaceInfoModal
+        isOpen={selectedWorkplace !== null}
+        onClose={() => setSelectedWorkplace(null)}
+        workplace={selectedWorkplace}
+      />
     </div>
+  );
+};
+
+export const CityView: React.FC = () => {
+  return (
+    <MapInteractionProvider>
+      <CityViewContent />
+    </MapInteractionProvider>
   );
 };

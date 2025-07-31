@@ -1,4 +1,4 @@
-import { Band, ArtistAgreement, ContentUsageLevel, ArtistSocialMedia } from '@game/types';
+import { Band, ArtistAgreement, ContentUsageLevel } from '@game/types';
 
 export interface RealArtistData {
   id: string;

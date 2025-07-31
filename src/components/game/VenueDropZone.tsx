@@ -31,9 +31,9 @@ export const VenueDropZone: React.FC<VenueDropZoneProps> = ({
   const { registerDropZone, unregisterDropZone } = useDragContext();
 
   useEffect(() => {
-    registerDropZone(venue.id, (band: Band) => {
-      if (!bookedBand) {
-        onBook?.(band, venue);
+    registerDropZone(venue.id, (item) => {
+      if (!bookedBand && 'genre' in item) { // Type guard to check if it's a Band
+        onBook?.(item as Band, venue);
       }
     });
 
@@ -61,6 +61,7 @@ export const VenueDropZone: React.FC<VenueDropZoneProps> = ({
       [VenueType.CONCERT_HALL]: '🏛️',
       [VenueType.ARENA]: '🏟️',
       [VenueType.FESTIVAL_GROUNDS]: '🎪',
+      [VenueType.UNDERGROUND]: '🚇',
     };
     return icons[type] || '📍';
   };

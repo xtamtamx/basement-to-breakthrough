@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { Venue } from '@game/types';
 import { VenueCard } from './VenueCard';
-import { useDraggable } from '@hooks';
+import { useDraggable } from '@hooks/useGesture';
 
 interface VenueGridProps {
   venues: Venue[];

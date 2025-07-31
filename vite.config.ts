@@ -79,4 +79,51 @@ export default defineConfig({
       '@assets': path.resolve(__dirname, './src/assets'),
     },
   },
+  build: {
+    target: 'esnext',
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true
+      }
+    },
+    rollupOptions: {
+      output: {
+        manualChunks: (id) => {
+          // Split vendor chunks
+          if (id.includes('node_modules')) {
+            if (id.includes('@pixi') || id.includes('pixi')) {
+              return 'pixi';
+            }
+            if (id.includes('framer-motion')) {
+              return 'framer-motion';
+            }
+            if (id.includes('react') || id.includes('react-dom')) {
+              return 'react';
+            }
+            if (id.includes('zustand') || id.includes('immer')) {
+              return 'state';
+            }
+            if (id.includes('@hello-pangea/dnd')) {
+              return 'dnd';
+            }
+            return 'vendor';
+          }
+          // Split game mechanics into separate chunk
+          if (id.includes('/game/mechanics/')) {
+            return 'game-mechanics';
+          }
+          // Split game types
+          if (id.includes('/game/types/')) {
+            return 'game-types';
+          }
+        }
+      }
+    },
+    chunkSizeWarningLimit: 300
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'zustand', '@pixi/react', 'pixi.js']
+  }
 })

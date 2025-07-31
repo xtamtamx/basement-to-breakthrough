@@ -1,9 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence, PanInfo } from 'framer-motion';
-import { Band, Venue, GamePhase, Genre, VenueType } from '@game/types';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Band, Venue, GamePhase } from '@game/types';
 import { useGameStore } from '@stores/gameStore';
-import { CompactBandCard } from './CompactBandCard';
-import { VenueNode } from './VenueNode';
 import { PremiumBandCard } from './PremiumBandCard';
 import { PremiumVenueNode } from './PremiumVenueNode';
 import { SynergyRevealAnimation } from './SynergyRevealAnimation';
@@ -16,7 +14,6 @@ import { FactionImpactDisplay } from './FactionImpactDisplay';
 import { SynergyFloater } from './SynergyFloater';
 import { billManager } from '@game/mechanics/BillManager';
 import { synergyDiscoverySystem, SynergyCombo } from '@game/mechanics/SynergyDiscoverySystem';
-import { factionSystem } from '@game/mechanics/FactionSystem';
 import { haptics } from '@utils/mobile';
 import { audio } from '@utils/audio';
 
@@ -38,7 +35,7 @@ interface LineupStack {
   id: string;
   bands: Band[];
   position: { x: number; y: number };
-  synergies: any[];
+  synergies: SynergyCombo[];
 }
 
 interface BookedShow {
@@ -53,7 +50,7 @@ export const SpatialBookingInterface: React.FC<SpatialBookingInterfaceProps> = (
   phase,
   turn
 }) => {
-  const { money, reputation, connections } = useGameStore();
+  const { money } = useGameStore();
   const workspaceRef = useRef<HTMLDivElement>(null);
   
   // State
@@ -62,8 +59,8 @@ export const SpatialBookingInterface: React.FC<SpatialBookingInterfaceProps> = (
   const [bookedShows, setBookedShows] = useState<BookedShow[]>([]);
   const [draggedBand, setDraggedBand] = useState<DraggedBand | null>(null);
   const [hoveredVenue, setHoveredVenue] = useState<string | null>(null);
-  const [activeSynergies, setActiveSynergies] = useState<any[]>([]);
-  const [factionImpact, setFactionImpact] = useState<any>(null);
+  const [activeSynergies, setActiveSynergies] = useState<SynergyCombo[]>([]);
+  const [factionImpact] = useState<{ factionId: string; impact: number } | null>(null);
   const [discoveredSynergies, setDiscoveredSynergies] = useState<SynergyCombo[]>([]);
   const [showSynergyReveal, setShowSynergyReveal] = useState<{ synergy: SynergyCombo; position: { x: number; y: number } } | null>(null);
   const [venuePositions, setVenuePositions] = useState<Map<string, { x: number; y: number }>>(new Map());
@@ -71,7 +68,7 @@ export const SpatialBookingInterface: React.FC<SpatialBookingInterfaceProps> = (
   const [previousPhase, setPreviousPhase] = useState<GamePhase | null>(null);
   const [previewLineup, setPreviewLineup] = useState<Band[]>([]);
   const [previewVenue, setPreviewVenue] = useState<Venue | null>(null);
-  const [showChainReaction, setShowChainReaction] = useState<any>(null);
+  const [showChainReaction, setShowChainReaction] = useState<{ chain: unknown; position: { x: number; y: number } } | null>(null);
   
   // Update band hand when new bands arrive
   useEffect(() => {
@@ -204,7 +201,7 @@ export const SpatialBookingInterface: React.FC<SpatialBookingInterfaceProps> = (
     }
     
     // Check capacity
-    const totalFans = lineup.reduce((sum, band) => sum + band.fanBase, 0);
+    const totalFans = lineup.reduce((sum, band) => sum + band.popularity * 10, 0);
     if (totalFans > venue.capacity * 2) {
       haptics.error();
       audio.play('error');
@@ -238,14 +235,13 @@ export const SpatialBookingInterface: React.FC<SpatialBookingInterfaceProps> = (
     
     // Check for synergies before booking
     const synergies = synergyDiscoverySystem.checkBandSynergies(lineup);
-    const venueSynergies = synergyDiscoverySystem.checkVenueSynergies(lineup, venue);
-    const allSynergies = [...synergies, ...venueSynergies];
+    const allSynergies = [...synergies];
     
     // Show synergy reveal for the highest rarity
     if (allSynergies.length > 0) {
       const highestSynergy = allSynergies.reduce((highest, synergy) => {
         const rarityOrder = { common: 0, uncommon: 1, rare: 2, legendary: 3 };
-        return rarityOrder[synergy.rarity] > rarityOrder[highest.rarity] ? synergy : highest;
+        return rarityOrder[synergy.rarity as keyof typeof rarityOrder] > rarityOrder[highest.rarity as keyof typeof rarityOrder] ? synergy : highest;
       }, allSynergies[0]);
       
       // Check if this is a new discovery
@@ -275,22 +271,8 @@ export const SpatialBookingInterface: React.FC<SpatialBookingInterfaceProps> = (
     
     haptics.heavy();
     audio.play('success');
-  }, [venues, money, onBookShow]);
+  }, [venues, money, onBookShow, discoveredSynergies, venuePositions]);
   
-  // Calculate synergies for lineup
-  const calculateLineupSynergies = useCallback((lineup: Band[]) => {
-    if (lineup.length < 2) return [];
-    
-    const bill = billManager.analyzeBill(lineup);
-    const synergies = synergyDiscoverySystem.checkBandSynergies(lineup);
-    
-    return {
-      bill,
-      synergies,
-      chemistryScore: bill.dynamics.chemistryScore,
-      crowdAppeal: bill.dynamics.crowdAppeal
-    };
-  }, []);
   
   // Update preview when hovering venues with lineups
   const handleVenueHover = useCallback((venue: Venue | null, isHovered: boolean) => {

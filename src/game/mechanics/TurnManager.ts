@@ -1,5 +1,4 @@
 import { GamePhase, GameState } from '@game/types';
-import { useGameStore } from '@stores/gameStore';
 
 export interface TurnPhase {
   phase: GamePhase;
@@ -83,7 +82,7 @@ class TurnManager {
         }
         return { canAdvance: true };
 
-      case GamePhase.SHOW:
+      case GamePhase.SHOW: {
         // All shows must be resolved
         const unresolvedShows = gameState.bookedShows.filter(s => !s.result);
         if (unresolvedShows.length > 0) {
@@ -93,6 +92,7 @@ class TurnManager {
           };
         }
         return { canAdvance: true };
+      }
 
       case GamePhase.AFTERMATH:
         // Check if all required actions are done

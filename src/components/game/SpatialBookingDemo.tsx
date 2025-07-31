@@ -77,7 +77,7 @@ const demoBands: Band[] = [
     energy: 60,
     technicalSkill: 90,
     traits: [
-      { id: 't7', name: 'Corpse Paint', description: 'Traditional black metal aesthetic', type: TraitType.PERFORMANCE, modifier: { energy: 10 } },
+      { id: 't7', name: 'Corpse Paint', description: 'Traditional black metal aesthetic', type: TraitType.PERFORMANCE, modifier: { popularity: 10 } },
       { id: 't8', name: 'Underground Legends', description: 'Never sold out', type: TraitType.SOCIAL, modifier: { authenticity: 20 } },
     ],
     technicalRequirements: [],
@@ -96,9 +96,10 @@ const demoVenues: Venue[] = [
     authenticity: 100,
     atmosphere: 85,
     modifiers: [],
-    location: { id: 'dist1', name: 'Eastside', sceneStrength: 80, gentrificationLevel: 30, policePresence: 20, rentMultiplier: 1 },
+    location: { id: 'dist1', name: 'Eastside', sceneStrength: 80, gentrificationLevel: 30, policePresence: 20, rentMultiplier: 1, bounds: { x: 0, y: 0, width: 4, height: 4 }, color: '#ec4899' },
     rent: 0,
     equipment: [],
+    traits: [],
     allowsAllAges: true,
     hasBar: false,
     hasSecurity: false,
@@ -114,9 +115,10 @@ const demoVenues: Venue[] = [
     authenticity: 75,
     atmosphere: 70,
     modifiers: [],
-    location: { id: 'dist2', name: 'Downtown', sceneStrength: 60, gentrificationLevel: 70, policePresence: 50, rentMultiplier: 1.5 },
+    location: { id: 'dist2', name: 'Downtown', sceneStrength: 60, gentrificationLevel: 70, policePresence: 50, rentMultiplier: 1.5, bounds: { x: 4, y: 0, width: 4, height: 4 }, color: '#3b82f6' },
     rent: 150,
     equipment: [],
+    traits: [],
     allowsAllAges: false,
     hasBar: true,
     hasSecurity: true,
@@ -132,9 +134,10 @@ const demoVenues: Venue[] = [
     authenticity: 90,
     atmosphere: 95,
     modifiers: [],
-    location: { id: 'dist3', name: 'Industrial', sceneStrength: 70, gentrificationLevel: 20, policePresence: 60, rentMultiplier: 0.8 },
+    location: { id: 'dist3', name: 'Industrial', sceneStrength: 70, gentrificationLevel: 20, policePresence: 60, rentMultiplier: 0.8, bounds: { x: 0, y: 4, width: 4, height: 4 }, color: '#10b981' },
     rent: 300,
     equipment: [],
+    traits: [],
     allowsAllAges: true,
     hasBar: false,
     hasSecurity: false,
@@ -150,9 +153,10 @@ const demoVenues: Venue[] = [
     authenticity: 85,
     atmosphere: 80,
     modifiers: [],
-    location: { id: 'dist2', name: 'Downtown', sceneStrength: 60, gentrificationLevel: 70, policePresence: 50, rentMultiplier: 1.5 },
+    location: { id: 'dist2', name: 'Downtown', sceneStrength: 60, gentrificationLevel: 70, policePresence: 50, rentMultiplier: 1.5, bounds: { x: 4, y: 0, width: 4, height: 4 }, color: '#3b82f6' },
     rent: 400,
     equipment: [],
+    traits: [],
     allowsAllAges: false,
     hasBar: true,
     hasSecurity: true,
@@ -168,9 +172,10 @@ const demoVenues: Venue[] = [
     authenticity: 95,
     atmosphere: 88,
     modifiers: [],
-    location: { id: 'dist1', name: 'Eastside', sceneStrength: 80, gentrificationLevel: 30, policePresence: 20, rentMultiplier: 1 },
+    location: { id: 'dist1', name: 'Eastside', sceneStrength: 80, gentrificationLevel: 30, policePresence: 20, rentMultiplier: 1, bounds: { x: 0, y: 0, width: 4, height: 4 }, color: '#ec4899' },
     rent: 50,
     equipment: [],
+    traits: [],
     allowsAllAges: true,
     hasBar: false,
     hasSecurity: false,
@@ -186,9 +191,10 @@ const demoVenues: Venue[] = [
     authenticity: 80,
     atmosphere: 85,
     modifiers: [],
-    location: { id: 'dist3', name: 'Industrial', sceneStrength: 70, gentrificationLevel: 20, policePresence: 60, rentMultiplier: 0.8 },
+    location: { id: 'dist3', name: 'Industrial', sceneStrength: 70, gentrificationLevel: 20, policePresence: 60, rentMultiplier: 0.8, bounds: { x: 0, y: 4, width: 4, height: 4 }, color: '#10b981' },
     rent: 250,
     equipment: [],
+    traits: [],
     allowsAllAges: false,
     hasBar: true,
     hasSecurity: true,
@@ -201,7 +207,7 @@ export const SpatialBookingDemo: React.FC = () => {
   const { addMoney, money } = useGameStore();
   
   const handleBookShow = (bands: Band[], venue: Venue) => {
-    console.log('Booking show:', { bands, venue });
+    devLog.log('Booking show:', { bands, venue });
     
     // Check if can afford
     if (money >= venue.rent) {
@@ -210,12 +216,12 @@ export const SpatialBookingDemo: React.FC = () => {
       audio.play('success');
       
       // Log the booking for demo purposes
-      console.log(`Booked ${bands.map(b => b.name).join(', ')} at ${venue.name}`);
-      console.log(`Paid $${venue.rent} rent`);
+      devLog.log(`Booked ${bands.map(b => b.name).join(', ')} at ${venue.name}`);
+      devLog.log(`Paid $${venue.rent} rent`);
     } else {
       haptics.error();
       audio.play('error');
-      console.log('Not enough money!');
+      devLog.log('Not enough money!');
     }
   };
   

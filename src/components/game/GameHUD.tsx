@@ -1,8 +1,8 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { useGameStore } from '@stores/gameStore';
-import { GamePhase } from '@game/types';
-import { FactionDisplay } from './FactionDisplay';
+import React from "react";
+import { motion } from "framer-motion";
+import { useGameStore } from "@stores/gameStore";
+import { GamePhase } from "@game/types";
+import { FactionDisplay } from "./FactionDisplay";
 
 interface GameHUDProps {
   currentTurn: number;
@@ -23,7 +23,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
   onSynergyCollection,
   onMasteryPanel,
   onExecuteShows,
-  canExecute
+  canExecute,
 }) => {
   const { money, reputation, connections, stress, fans } = useGameStore();
 
@@ -35,55 +35,96 @@ export const GameHUD: React.FC<GameHUDProps> = ({
           <div className="flex justify-between items-center">
             {/* Turn & Phase Info */}
             <div>
-              <p className="pixel-text pixel-text-sm" style={{ color: 'var(--pixel-cyan)' }}>
+              <p
+                className="pixel-text pixel-text-sm"
+                style={{ color: "var(--pixel-cyan)" }}
+              >
                 TURN {currentTurn}
               </p>
-              <p className="pixel-text pixel-text-sm" style={{ color: 'var(--pixel-yellow)' }}>
-                {phase.replace('_', ' ')}
+              <p
+                className="pixel-text pixel-text-sm"
+                style={{ color: "var(--pixel-yellow)" }}
+              >
+                {phase.replace("_", " ")}
               </p>
             </div>
 
             {/* Resources */}
             <div className="flex gap-6">
               <div className="text-center">
-                <p className="pixel-text pixel-text-sm" style={{ color: 'var(--pixel-green)' }}>
+                <p
+                  className="pixel-text pixel-text-sm"
+                  style={{ color: "var(--pixel-green)" }}
+                >
                   ${money}
                 </p>
-                <p className="pixel-text pixel-text-xs" style={{ color: 'var(--pixel-gray)' }}>
+                <p
+                  className="pixel-text pixel-text-xs"
+                  style={{ color: "var(--pixel-gray)" }}
+                >
                   MONEY
                 </p>
               </div>
               <div className="text-center">
-                <p className="pixel-text pixel-text-sm" style={{ color: 'var(--pixel-magenta)' }}>
+                <p
+                  className="pixel-text pixel-text-sm"
+                  style={{ color: "var(--pixel-magenta)" }}
+                >
                   {reputation}
                 </p>
-                <p className="pixel-text pixel-text-xs" style={{ color: 'var(--pixel-gray)' }}>
+                <p
+                  className="pixel-text pixel-text-xs"
+                  style={{ color: "var(--pixel-gray)" }}
+                >
                   REP
                 </p>
               </div>
               <div className="text-center">
-                <p className="pixel-text pixel-text-sm" style={{ color: 'var(--pixel-cyan)' }}>
+                <p
+                  className="pixel-text pixel-text-sm"
+                  style={{ color: "var(--pixel-cyan)" }}
+                >
                   {connections}
                 </p>
-                <p className="pixel-text pixel-text-xs" style={{ color: 'var(--pixel-gray)' }}>
+                <p
+                  className="pixel-text pixel-text-xs"
+                  style={{ color: "var(--pixel-gray)" }}
+                >
                   CONN
                 </p>
               </div>
               <div className="text-center">
-                <p className="pixel-text pixel-text-sm" style={{ 
-                  color: stress > 70 ? 'var(--pixel-red)' : stress > 40 ? 'var(--pixel-yellow)' : 'var(--pixel-green)' 
-                }}>
+                <p
+                  className="pixel-text pixel-text-sm"
+                  style={{
+                    color:
+                      stress > 70
+                        ? "var(--pixel-red)"
+                        : stress > 40
+                          ? "var(--pixel-yellow)"
+                          : "var(--pixel-green)",
+                  }}
+                >
                   {stress}%
                 </p>
-                <p className="pixel-text pixel-text-xs" style={{ color: 'var(--pixel-gray)' }}>
+                <p
+                  className="pixel-text pixel-text-xs"
+                  style={{ color: "var(--pixel-gray)" }}
+                >
                   STRESS
                 </p>
               </div>
               <div className="text-center">
-                <p className="pixel-text pixel-text-sm" style={{ color: 'var(--pixel-blue)' }}>
+                <p
+                  className="pixel-text pixel-text-sm"
+                  style={{ color: "var(--pixel-blue)" }}
+                >
                   {fans}
                 </p>
-                <p className="pixel-text pixel-text-xs" style={{ color: 'var(--pixel-gray)' }}>
+                <p
+                  className="pixel-text pixel-text-xs"
+                  style={{ color: "var(--pixel-gray)" }}
+                >
                   FANS
                 </p>
               </div>
@@ -94,28 +135,28 @@ export const GameHUD: React.FC<GameHUDProps> = ({
               <button
                 onClick={onEquipmentShop}
                 className="pixel-button pixel-button-sm"
-                style={{ minWidth: '44px', minHeight: '44px' }}
+                style={{ minWidth: "44px", minHeight: "44px" }}
               >
                 GEAR
               </button>
               <button
                 onClick={onStressRelief}
                 className="pixel-button pixel-button-sm"
-                style={{ minWidth: '44px', minHeight: '44px' }}
+                style={{ minWidth: "44px", minHeight: "44px" }}
               >
                 RELIEF
               </button>
               <button
                 onClick={onSynergyCollection}
                 className="pixel-button pixel-button-sm"
-                style={{ minWidth: '44px', minHeight: '44px' }}
+                style={{ minWidth: "44px", minHeight: "44px" }}
               >
                 SYNERGIES
               </button>
               <button
                 onClick={onMasteryPanel}
                 className="pixel-button pixel-button-sm"
-                style={{ minWidth: '44px', minHeight: '44px' }}
+                style={{ minWidth: "44px", minHeight: "44px" }}
               >
                 MASTERY
               </button>
@@ -140,12 +181,12 @@ export const GameHUD: React.FC<GameHUDProps> = ({
                 disabled={!canExecute}
                 className={`
                   pixel-button pixel-button-lg
-                  ${canExecute ? 'pixel-button-primary' : 'pixel-button-disabled'}
+                  ${canExecute ? "pixel-button-primary" : "pixel-button-disabled"}
                 `}
-                style={{ 
-                  minWidth: '200px',
-                  minHeight: '60px',
-                  fontSize: '18px'
+                style={{
+                  minWidth: "200px",
+                  minHeight: "60px",
+                  fontSize: "18px",
                 }}
                 whileHover={canExecute ? { scale: 1.05 } : {}}
                 whileTap={canExecute ? { scale: 0.95 } : {}}

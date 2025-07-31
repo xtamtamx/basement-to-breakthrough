@@ -1,7 +1,11 @@
-import React from 'react';
-import { Equipment, EquipmentType, EquipmentRarity } from '@game/types/equipment';
-import { haptics } from '@utils/mobile';
-import { audio } from '@utils/audio';
+import React from "react";
+import {
+  Equipment,
+  EquipmentType,
+  EquipmentRarity,
+} from "@game/types/equipment";
+import { haptics } from "@utils/mobile";
+import { audio } from "@utils/audio";
 
 interface EquipmentCardProps {
   equipment: Equipment;
@@ -22,32 +26,32 @@ export const EquipmentCard: React.FC<EquipmentCardProps> = ({
 }) => {
   const getRarityColor = (rarity: EquipmentRarity): string => {
     const colors = {
-      [EquipmentRarity.COMMON]: 'border-metal-600',
-      [EquipmentRarity.UNCOMMON]: 'border-green-600',
-      [EquipmentRarity.RARE]: 'border-blue-600',
-      [EquipmentRarity.LEGENDARY]: 'border-punk-600',
+      [EquipmentRarity.COMMON]: "border-metal-600",
+      [EquipmentRarity.UNCOMMON]: "border-green-600",
+      [EquipmentRarity.RARE]: "border-blue-600",
+      [EquipmentRarity.LEGENDARY]: "border-punk-600",
     };
     return colors[rarity];
   };
 
   const getRarityGlow = (rarity: EquipmentRarity): string => {
     const glows = {
-      [EquipmentRarity.COMMON]: '',
-      [EquipmentRarity.UNCOMMON]: 'shadow-green-600/20',
-      [EquipmentRarity.RARE]: 'shadow-blue-600/30',
-      [EquipmentRarity.LEGENDARY]: 'shadow-punk-600/40 animate-pulse',
+      [EquipmentRarity.COMMON]: "",
+      [EquipmentRarity.UNCOMMON]: "shadow-green-600/20",
+      [EquipmentRarity.RARE]: "shadow-blue-600/30",
+      [EquipmentRarity.LEGENDARY]: "shadow-punk-600/40 animate-pulse",
     };
     return glows[rarity];
   };
 
   const getTypeIcon = (type: EquipmentType): string => {
     const icons = {
-      [EquipmentType.SOUND]: '🔊',
-      [EquipmentType.LIGHTING]: '💡',
-      [EquipmentType.TRANSPORT]: '🚐',
-      [EquipmentType.PROMOTION]: '📢',
-      [EquipmentType.SECURITY]: '🛡️',
-      [EquipmentType.SPECIAL]: '⭐',
+      [EquipmentType.SOUND]: "🔊",
+      [EquipmentType.LIGHTING]: "💡",
+      [EquipmentType.TRANSPORT]: "🚐",
+      [EquipmentType.PROMOTION]: "📢",
+      [EquipmentType.SECURITY]: "🛡️",
+      [EquipmentType.SPECIAL]: "⭐",
     };
     return icons[type];
   };
@@ -74,8 +78,8 @@ export const EquipmentCard: React.FC<EquipmentCardProps> = ({
         className={`
           relative p-2 rounded-lg border-2 transition-all
           ${getRarityColor(equipment.rarity)}
-          ${owned ? 'bg-metal-800' : 'bg-metal-900'}
-          ${!owned && !canAfford ? 'opacity-50' : ''}
+          ${owned ? "bg-metal-800" : "bg-metal-900"}
+          ${!owned && !canAfford ? "opacity-50" : ""}
           hover:scale-105 active:scale-95
         `}
       >
@@ -84,7 +88,9 @@ export const EquipmentCard: React.FC<EquipmentCardProps> = ({
           <div className="text-left">
             <p className="font-bold text-xs">{equipment.name}</p>
             {!owned && (
-              <p className={`text-xs ${canAfford ? 'text-green-400' : 'text-red-400'}`}>
+              <p
+                className={`text-xs ${canAfford ? "text-green-400" : "text-red-400"}`}
+              >
                 ${equipment.cost}
               </p>
             )}
@@ -100,8 +106,8 @@ export const EquipmentCard: React.FC<EquipmentCardProps> = ({
         relative bg-metal-900 rounded-lg p-4 border-2 transition-all
         ${getRarityColor(equipment.rarity)}
         ${getRarityGlow(equipment.rarity)}
-        ${owned ? 'bg-metal-800' : ''}
-        ${!owned && !canAfford ? 'opacity-50' : ''}
+        ${owned ? "bg-metal-800" : ""}
+        ${!owned && !canAfford ? "opacity-50" : ""}
         shadow-lg
       `}
     >
@@ -111,12 +117,16 @@ export const EquipmentCard: React.FC<EquipmentCardProps> = ({
           <span className="text-3xl">{getTypeIcon(equipment.type)}</span>
           <div>
             <h3 className="font-bold text-sm">{equipment.name}</h3>
-            <p className="text-xs text-metal-400 uppercase">{equipment.rarity}</p>
+            <p className="text-xs text-metal-400 uppercase">
+              {equipment.rarity}
+            </p>
           </div>
         </div>
         {!owned && (
           <div className="text-right">
-            <p className={`font-bold text-lg ${canAfford ? 'text-green-400' : 'text-red-400'}`}>
+            <p
+              className={`font-bold text-lg ${canAfford ? "text-green-400" : "text-red-400"}`}
+            >
               ${equipment.cost}
             </p>
           </div>
@@ -131,13 +141,19 @@ export const EquipmentCard: React.FC<EquipmentCardProps> = ({
         {equipment.effects.map((effect, index) => (
           <div key={index} className="text-xs">
             <span className="text-metal-500">•</span>
-            <span className={`ml-1 ${effect.value > 0 ? 'text-green-400' : 'text-red-400'}`}>
-              {effect.type === 'multiply' && `${((effect.value - 1) * 100).toFixed(0)}% `}
-              {effect.type === 'add' && `+${effect.value} `}
-              {effect.type === 'reduce' && `-${(effect.value * 100).toFixed(0)}% `}
-              {effect.type === 'prevent' && 'Prevents '}
+            <span
+              className={`ml-1 ${effect.value > 0 ? "text-green-400" : "text-red-400"}`}
+            >
+              {effect.type === "multiply" &&
+                `${((effect.value - 1) * 100).toFixed(0)}% `}
+              {effect.type === "add" && `+${effect.value} `}
+              {effect.type === "reduce" &&
+                `-${(effect.value * 100).toFixed(0)}% `}
+              {effect.type === "prevent" && "Prevents "}
               {effect.target}
-              {effect.condition && <span className="text-metal-500"> ({effect.condition})</span>}
+              {effect.condition && (
+                <span className="text-metal-500"> ({effect.condition})</span>
+              )}
             </span>
           </div>
         ))}
@@ -145,7 +161,9 @@ export const EquipmentCard: React.FC<EquipmentCardProps> = ({
 
       {/* Flavor Text */}
       {equipment.flavorText && (
-        <p className="text-xs text-metal-500 italic mb-3">"{equipment.flavorText}"</p>
+        <p className="text-xs text-metal-500 italic mb-3">
+          "{equipment.flavorText}"
+        </p>
       )}
 
       {/* Action Button */}
@@ -155,13 +173,14 @@ export const EquipmentCard: React.FC<EquipmentCardProps> = ({
           disabled={!canAfford}
           className={`
             w-full py-2 px-4 rounded font-bold text-sm transition-all
-            ${canAfford 
-              ? 'bg-punk-600 hover:bg-punk-700 active:scale-95' 
-              : 'bg-metal-800 text-metal-600 cursor-not-allowed'
+            ${
+              canAfford
+                ? "bg-punk-600 hover:bg-punk-700 active:scale-95"
+                : "bg-metal-800 text-metal-600 cursor-not-allowed"
             }
           `}
         >
-          {canAfford ? 'Purchase' : 'Cannot Afford'}
+          {canAfford ? "Purchase" : "Cannot Afford"}
         </button>
       )}
 

@@ -1,9 +1,17 @@
-import React, { useState } from 'react';
-import { Band, Venue } from '@game/types';
-import { bookingSystem } from '@game/mechanics/BookingSystem';
-import { synergyEngine } from '@game/mechanics/SynergyEngine';
-import { useGameStore } from '@stores/gameStore';
-import { haptics } from '@utils/mobile';
+import React, { useState } from "react";
+import {
+  Band,
+  Venue,
+  GamePhase,
+  GameSettings,
+  Difficulty,
+  PerformanceMode,
+  ColorblindMode,
+} from "@game/types";
+import { bookingSystem } from "@game/mechanics/BookingSystem";
+import { synergyEngine } from "@game/mechanics/SynergyEngine";
+import { useGameStore } from "@stores/gameStore";
+import { haptics } from "@utils/mobile";
 
 interface BookingInterfaceProps {
   selectedBand: Band | null;
@@ -20,7 +28,7 @@ export const BookingInterface: React.FC<BookingInterfaceProps> = ({
 }) => {
   const [ticketPrice, setTicketPrice] = useState(10);
   const gameStore = useGameStore();
-  
+
   if (!selectedBand || !selectedVenue) {
     return (
       <div className="card p-6 text-center">
@@ -30,19 +38,19 @@ export const BookingInterface: React.FC<BookingInterfaceProps> = ({
         <div className="flex gap-4 justify-center">
           <div className="text-center">
             <div className="w-16 h-16 bg-metal-800 rounded-lg mb-2 flex items-center justify-center">
-              {selectedBand ? '🎸' : '?'}
+              {selectedBand ? "🎸" : "?"}
             </div>
             <p className="text-xs text-metal-400">
-              {selectedBand ? selectedBand.name : 'No Band'}
+              {selectedBand ? selectedBand.name : "No Band"}
             </p>
           </div>
           <div className="text-2xl self-center">+</div>
           <div className="text-center">
             <div className="w-16 h-16 bg-metal-800 rounded-lg mb-2 flex items-center justify-center">
-              {selectedVenue ? '🏠' : '?'}
+              {selectedVenue ? "🏠" : "?"}
             </div>
             <p className="text-xs text-metal-400">
-              {selectedVenue ? selectedVenue.name : 'No Venue'}
+              {selectedVenue ? selectedVenue.name : "No Venue"}
             </p>
           </div>
         </div>
@@ -52,29 +60,55 @@ export const BookingInterface: React.FC<BookingInterfaceProps> = ({
 
   // Check if booking is valid
   const canBookResult = bookingSystem.canBook(selectedBand, selectedVenue, {
-    id: 'current',
+    id: "current",
     turn: 1,
-    phase: 'BOOKING' as any,
+    phase: GamePhase.BOOKING,
     resources: {
       money: gameStore.money,
       reputation: gameStore.reputation,
       connections: 0,
       stress: 0,
+      fans: gameStore.fans || 0,
     },
     bookedShows: [],
     availableBands: [],
-    sceneReputation: { overall: gameStore.reputation, factions: [], relationships: [] },
+    sceneReputation: {
+      overall: gameStore.reputation,
+      factions: [],
+      relationships: [],
+    },
     unlockedContent: [],
     achievements: [],
-    settings: {} as any,
+    settings: {
+      difficulty: Difficulty.NORMAL,
+      musicVolume: 100,
+      sfxVolume: 100,
+      hapticFeedback: true,
+      autoSave: true,
+      performanceMode: PerformanceMode.BALANCED,
+      accessibility: {
+        colorblindMode: ColorblindMode.OFF,
+        reduceMotion: false,
+        largerTouchTargets: false,
+        screenReaderOptimized: false,
+      },
+    } as GameSettings,
   });
 
   // Preview synergies
-  const synergies = synergyEngine.calculateSynergies([selectedBand], selectedVenue);
-  const totalMultiplier = synergyEngine.getTotalMultiplier([selectedBand], selectedVenue);
+  const synergies = synergyEngine.calculateSynergies(
+    [selectedBand],
+    selectedVenue,
+  );
+  const totalMultiplier = synergyEngine.getTotalMultiplier(
+    [selectedBand],
+    selectedVenue,
+  );
 
   // Calculate expected metrics
-  const baseAttendance = Math.floor(selectedVenue.capacity * 0.6 * (selectedBand.popularity / 100));
+  const baseAttendance = Math.floor(
+    selectedVenue.capacity * 0.6 * (selectedBand.popularity / 100),
+  );
   const expectedAttendance = Math.floor(baseAttendance * totalMultiplier);
   const finalAttendance = Math.min(expectedAttendance, selectedVenue.capacity);
   const expectedRevenue = finalAttendance * ticketPrice;
@@ -123,7 +157,8 @@ export const BookingInterface: React.FC<BookingInterfaceProps> = ({
                 <p className="text-punk-400 font-bold">{synergy.name}</p>
                 <p className="text-metal-300 text-xs">{synergy.description}</p>
                 <p className="text-xs text-metal-500">
-                  {synergy.multiplier}x attendance • +{synergy.reputationBonus} rep
+                  {synergy.multiplier}x attendance • +{synergy.reputationBonus}{" "}
+                  rep
                 </p>
               </div>
             ))}
@@ -158,7 +193,9 @@ export const BookingInterface: React.FC<BookingInterfaceProps> = ({
         <div className="grid grid-cols-2 gap-2 text-sm">
           <div>
             <p className="text-metal-400">Attendance</p>
-            <p className="font-bold">{finalAttendance}/{selectedVenue.capacity}</p>
+            <p className="font-bold">
+              {finalAttendance}/{selectedVenue.capacity}
+            </p>
           </div>
           <div>
             <p className="text-metal-400">Revenue</p>
@@ -166,11 +203,15 @@ export const BookingInterface: React.FC<BookingInterfaceProps> = ({
           </div>
           <div>
             <p className="text-metal-400">Total Multi</p>
-            <p className="font-bold text-punk-400">{totalMultiplier.toFixed(1)}x</p>
+            <p className="font-bold text-punk-400">
+              {totalMultiplier.toFixed(1)}x
+            </p>
           </div>
           <div>
             <p className="text-metal-400">Profit</p>
-            <p className={`font-bold ${expectedRevenue - selectedVenue.rent > 0 ? 'text-green-400' : 'text-red-400'}`}>
+            <p
+              className={`font-bold ${expectedRevenue - selectedVenue.rent > 0 ? "text-green-400" : "text-red-400"}`}
+            >
               ${expectedRevenue - selectedVenue.rent}
             </p>
           </div>
@@ -179,14 +220,11 @@ export const BookingInterface: React.FC<BookingInterfaceProps> = ({
 
       {/* Action Buttons */}
       <div className="flex gap-2">
-        <button
-          className="metal-button flex-1"
-          onClick={handleCancel}
-        >
+        <button className="metal-button flex-1" onClick={handleCancel}>
           Cancel
         </button>
         <button
-          className={`flex-1 ${canBookResult.valid ? 'punk-button' : 'metal-button opacity-50'}`}
+          className={`flex-1 ${canBookResult.valid ? "punk-button" : "metal-button opacity-50"}`}
           onClick={handleConfirm}
           disabled={!canBookResult.valid}
         >

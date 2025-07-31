@@ -1,10 +1,22 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { useGameStore } from '@stores/gameStore';
-import { haptics } from '@utils/mobile';
+import React from "react";
+import { motion } from "framer-motion";
+import { haptics } from "@utils/mobile";
+
+interface Achievement {
+  id: string;
+  name: string;
+  description: string;
+  icon?: string;
+}
+
+interface Unlock {
+  id: string;
+  name: string;
+  type: string;
+}
 
 interface GameOverScreenProps {
-  reason: 'bankruptcy' | 'victory' | 'scene_collapse' | 'defeat';
+  reason: "bankruptcy" | "victory" | "scene_collapse" | "defeat";
   stats: {
     turnsPlayed: number;
     totalShows: number;
@@ -14,8 +26,8 @@ interface GameOverScreenProps {
     score?: number;
     fameEarned?: number;
     newHighScore?: boolean;
-    achievements?: any[];
-    unlocks?: any[];
+    achievements?: Achievement[];
+    unlocks?: Unlock[];
   };
   onRestart: () => void;
   onMainMenu: () => void;
@@ -27,28 +39,36 @@ export const GameOverScreen: React.FC<GameOverScreenProps> = ({
   onRestart,
   onMainMenu,
 }) => {
-  const isVictory = reason === 'victory';
-  
+  const isVictory = reason === "victory";
+
   const getTitle = () => {
     switch (reason) {
-      case 'bankruptcy': return 'BANKRUPT!';
-      case 'victory': return 'LEGENDARY STATUS!';
-      case 'scene_collapse': return 'SCENE COLLAPSED!';
-      case 'defeat': return 'RUN ENDED';
+      case "bankruptcy":
+        return "BANKRUPT!";
+      case "victory":
+        return "LEGENDARY STATUS!";
+      case "scene_collapse":
+        return "SCENE COLLAPSED!";
+      case "defeat":
+        return "RUN ENDED";
     }
   };
 
   const getSubtitle = () => {
     switch (reason) {
-      case 'bankruptcy': return 'You ran out of money...';
-      case 'victory': return 'You built an underground empire!';
-      case 'scene_collapse': return 'The scene rejected you...';
-      case 'defeat': return 'Better luck next time...';
+      case "bankruptcy":
+        return "You ran out of money...";
+      case "victory":
+        return "You built an underground empire!";
+      case "scene_collapse":
+        return "The scene rejected you...";
+      case "defeat":
+        return "Better luck next time...";
     }
   };
 
   const getColor = () => {
-    return isVictory ? 'var(--pixel-yellow)' : 'var(--pixel-red)';
+    return isVictory ? "var(--pixel-yellow)" : "var(--pixel-red)";
   };
 
   return (
@@ -73,13 +93,13 @@ export const GameOverScreen: React.FC<GameOverScreenProps> = ({
         >
           {getTitle()}
         </motion.h1>
-        
+
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
           className="pixel-text pixel-text-sm mb-6"
-          style={{ color: 'var(--pixel-gray)' }}
+          style={{ color: "var(--pixel-gray)" }}
         >
           {getSubtitle()}
         </motion.p>
@@ -93,10 +113,16 @@ export const GameOverScreen: React.FC<GameOverScreenProps> = ({
         >
           <div className="glass-panel-inset p-3">
             <div className="flex justify-between">
-              <span className="pixel-text pixel-text-sm" style={{ color: 'var(--pixel-gray)' }}>
+              <span
+                className="pixel-text pixel-text-sm"
+                style={{ color: "var(--pixel-gray)" }}
+              >
                 TURNS SURVIVED
               </span>
-              <span className="pixel-text pixel-text-sm" style={{ color: 'var(--pixel-cyan)' }}>
+              <span
+                className="pixel-text pixel-text-sm"
+                style={{ color: "var(--pixel-cyan)" }}
+              >
                 {stats.turnsPlayed}
               </span>
             </div>
@@ -104,10 +130,16 @@ export const GameOverScreen: React.FC<GameOverScreenProps> = ({
 
           <div className="glass-panel-inset p-3">
             <div className="flex justify-between">
-              <span className="pixel-text pixel-text-sm" style={{ color: 'var(--pixel-gray)' }}>
+              <span
+                className="pixel-text pixel-text-sm"
+                style={{ color: "var(--pixel-gray)" }}
+              >
                 SHOWS PLAYED
               </span>
-              <span className="pixel-text pixel-text-sm" style={{ color: 'var(--pixel-green)' }}>
+              <span
+                className="pixel-text pixel-text-sm"
+                style={{ color: "var(--pixel-green)" }}
+              >
                 {stats.totalShows}
               </span>
             </div>
@@ -115,10 +147,16 @@ export const GameOverScreen: React.FC<GameOverScreenProps> = ({
 
           <div className="glass-panel-inset p-3">
             <div className="flex justify-between">
-              <span className="pixel-text pixel-text-sm" style={{ color: 'var(--pixel-gray)' }}>
+              <span
+                className="pixel-text pixel-text-sm"
+                style={{ color: "var(--pixel-gray)" }}
+              >
                 TOTAL REVENUE
               </span>
-              <span className="pixel-text pixel-text-sm" style={{ color: 'var(--pixel-yellow)' }}>
+              <span
+                className="pixel-text pixel-text-sm"
+                style={{ color: "var(--pixel-yellow)" }}
+              >
                 ${stats.totalRevenue}
               </span>
             </div>
@@ -126,10 +164,16 @@ export const GameOverScreen: React.FC<GameOverScreenProps> = ({
 
           <div className="glass-panel-inset p-3">
             <div className="flex justify-between">
-              <span className="pixel-text pixel-text-sm" style={{ color: 'var(--pixel-gray)' }}>
+              <span
+                className="pixel-text pixel-text-sm"
+                style={{ color: "var(--pixel-gray)" }}
+              >
                 FINAL REPUTATION
               </span>
-              <span className="pixel-text pixel-text-sm" style={{ color: 'var(--pixel-magenta)' }}>
+              <span
+                className="pixel-text pixel-text-sm"
+                style={{ color: "var(--pixel-magenta)" }}
+              >
                 {stats.finalReputation}
               </span>
             </div>
@@ -137,10 +181,16 @@ export const GameOverScreen: React.FC<GameOverScreenProps> = ({
 
           <div className="glass-panel-inset p-3">
             <div className="flex justify-between">
-              <span className="pixel-text pixel-text-sm" style={{ color: 'var(--pixel-gray)' }}>
+              <span
+                className="pixel-text pixel-text-sm"
+                style={{ color: "var(--pixel-gray)" }}
+              >
                 FANS GATHERED
               </span>
-              <span className="pixel-text pixel-text-sm" style={{ color: 'var(--pixel-cyan)' }}>
+              <span
+                className="pixel-text pixel-text-sm"
+                style={{ color: "var(--pixel-cyan)" }}
+              >
                 {stats.finalFans}
               </span>
             </div>
@@ -154,15 +204,25 @@ export const GameOverScreen: React.FC<GameOverScreenProps> = ({
             animate={{ scale: 1 }}
             transition={{ delay: 0.7, type: "spring", stiffness: 200 }}
             className="glass-panel-raised p-4 mb-4"
-            style={{ borderColor: isVictory ? 'var(--pixel-yellow)' : 'var(--pixel-cyan)' }}
+            style={{
+              borderColor: isVictory
+                ? "var(--pixel-yellow)"
+                : "var(--pixel-cyan)",
+            }}
           >
-            <p className="pixel-text pixel-text-sm" style={{ color: 'var(--pixel-gray)' }}>
+            <p
+              className="pixel-text pixel-text-sm"
+              style={{ color: "var(--pixel-gray)" }}
+            >
               FINAL SCORE
             </p>
-            <p className="pixel-text pixel-text-xl" style={{ 
-              color: isVictory ? 'var(--pixel-yellow)' : 'var(--pixel-cyan)',
-              textShadow: `0 0 20px ${isVictory ? 'var(--pixel-yellow)' : 'var(--pixel-cyan)'}`
-            }}>
+            <p
+              className="pixel-text pixel-text-xl"
+              style={{
+                color: isVictory ? "var(--pixel-yellow)" : "var(--pixel-cyan)",
+                textShadow: `0 0 20px ${isVictory ? "var(--pixel-yellow)" : "var(--pixel-cyan)"}`,
+              }}
+            >
               {stats.score.toLocaleString()}
             </p>
             {stats.newHighScore && (
@@ -171,14 +231,14 @@ export const GameOverScreen: React.FC<GameOverScreenProps> = ({
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.8, type: "spring" }}
                 className="pixel-text pixel-text-xs mt-2"
-                style={{ color: 'var(--pixel-green)' }}
+                style={{ color: "var(--pixel-green)" }}
               >
                 NEW HIGH SCORE!
               </motion.p>
             )}
           </motion.div>
         )}
-        
+
         {/* Fame Earned */}
         {stats.fameEarned !== undefined && (
           <motion.div
@@ -186,14 +246,17 @@ export const GameOverScreen: React.FC<GameOverScreenProps> = ({
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8 }}
             className="glass-panel p-3 mb-4"
-            style={{ backgroundColor: 'rgba(139, 92, 246, 0.2)' }}
+            style={{ backgroundColor: "rgba(139, 92, 246, 0.2)" }}
           >
-            <p className="pixel-text pixel-text-sm" style={{ color: 'var(--pixel-purple)' }}>
+            <p
+              className="pixel-text pixel-text-sm"
+              style={{ color: "var(--pixel-purple)" }}
+            >
               +{stats.fameEarned} FAME EARNED
             </p>
           </motion.div>
         )}
-        
+
         {/* Achievements */}
         {stats.achievements && stats.achievements.length > 0 && (
           <motion.div
@@ -202,7 +265,10 @@ export const GameOverScreen: React.FC<GameOverScreenProps> = ({
             transition={{ delay: 0.9 }}
             className="mb-4"
           >
-            <p className="pixel-text pixel-text-xs mb-2" style={{ color: 'var(--pixel-gray)' }}>
+            <p
+              className="pixel-text pixel-text-xs mb-2"
+              style={{ color: "var(--pixel-gray)" }}
+            >
               ACHIEVEMENTS UNLOCKED
             </p>
             <div className="flex justify-center gap-2">
@@ -236,9 +302,9 @@ export const GameOverScreen: React.FC<GameOverScreenProps> = ({
             }}
             className="w-full glass-button p-3"
             style={{
-              background: isVictory ? 
-                'linear-gradient(45deg, var(--pixel-yellow), var(--pixel-green))' :
-                'linear-gradient(45deg, var(--pixel-magenta), var(--pixel-cyan))'
+              background: isVictory
+                ? "linear-gradient(45deg, var(--pixel-yellow), var(--pixel-green))"
+                : "linear-gradient(45deg, var(--pixel-magenta), var(--pixel-cyan))",
             }}
           >
             <span className="pixel-text pixel-text-sm">TRY AGAIN</span>
@@ -250,7 +316,7 @@ export const GameOverScreen: React.FC<GameOverScreenProps> = ({
               onMainMenu();
             }}
             className="w-full glass-button p-3"
-            style={{ background: 'rgba(255, 255, 255, 0.1)' }}
+            style={{ background: "rgba(255, 255, 255, 0.1)" }}
           >
             <span className="pixel-text pixel-text-sm">MAIN MENU</span>
           </button>

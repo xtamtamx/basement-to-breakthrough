@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Band, Genre, TraitType } from '@game/types';
+import { Band, Genre } from '@game/types';
 import { haptics } from '@utils/mobile';
 import { BandUpgradeModal } from '../BandUpgradeModal';
 import { synergySystemV2 } from '@game/mechanics/SynergySystemV2';

@@ -4,7 +4,7 @@ import { haptics } from '@utils/mobile';
 import { audio } from '@utils/audio';
 
 interface ShowResultsModalProps {
-  results: any[];
+  results: ShowOutcome[];
   onClose: () => void;
 }
 
@@ -21,7 +21,7 @@ export const ShowResultsModal: React.FC<ShowResultsModalProps> = ({
   useEffect(() => {
     // Animate values on mount
     setAnimatingValues(true);
-    haptics.impact();
+    haptics.medium();
     
     // Play sound based on result
     if (currentResult?.isSuccess) {
@@ -51,7 +51,8 @@ export const ShowResultsModal: React.FC<ShowResultsModalProps> = ({
 
   const getSuccessMessage = (result: ShowOutcome) => {
     if (result.result.success) {
-      const ratio = result.result.attendance / result.show.ticketsSold;
+      const capacity = 100;
+      const ratio = result.result.attendance / capacity;
       if (ratio >= 0.9) return "PACKED HOUSE!";
       if (ratio >= 0.7) return "Great Show!";
       return "Decent Turnout";

@@ -1,4 +1,4 @@
-import { Faction, Band, Venue, Show, FactionEvent, FactionEventType, FactionValues, FactionModifiers, FactionChoice, FactionChoiceEffects, Resources, TraitType } from '@game/types';
+import { Faction, Band, Venue, VenueType, Show, FactionEvent, FactionEventType, FactionValues, FactionModifiers, FactionChoice, FactionChoiceEffects, Resources, TraitType } from '@game/types';
 import { SATIRICAL_FACTION_DESCRIPTIONS } from '@game/data/satiricalText';
 
 class FactionSystem {
@@ -31,7 +31,7 @@ class FactionSystem {
           capacityBonus: 0,
           dramaChance: 0.2
         },
-        relationships: new Map(),
+        relationships: {},
         memberBands: [],
         controlledVenues: [],
         iconColor: '#8B4513',
@@ -55,7 +55,7 @@ class FactionSystem {
           capacityBonus: 0.1,
           dramaChance: 0.3
         },
-        relationships: new Map(),
+        relationships: {},
         memberBands: [],
         controlledVenues: [],
         iconColor: '#000000',
@@ -79,7 +79,7 @@ class FactionSystem {
           capacityBonus: 0,
           dramaChance: 0.4
         },
-        relationships: new Map(),
+        relationships: {},
         memberBands: [],
         controlledVenues: [],
         iconColor: '#FF69B4',
@@ -103,7 +103,7 @@ class FactionSystem {
           capacityBonus: 0.2,
           dramaChance: 0.5
         },
-        relationships: new Map(),
+        relationships: {},
         memberBands: [],
         controlledVenues: [],
         iconColor: '#4B0082',
@@ -127,7 +127,7 @@ class FactionSystem {
           capacityBonus: 0,
           dramaChance: 0.6
         },
-        relationships: new Map(),
+        relationships: {},
         memberBands: [],
         controlledVenues: [],
         iconColor: '#00CED1',
@@ -154,8 +154,8 @@ class FactionSystem {
     const faction1 = this.factions.get(faction1Id);
     const faction2 = this.factions.get(faction2Id);
     if (faction1 && faction2) {
-      faction1.relationships.set(faction2Id, value);
-      faction2.relationships.set(faction1Id, value);
+      faction1.relationships[faction2Id] = value;
+      faction2.relationships[faction1Id] = value;
     }
   }
 
@@ -169,7 +169,14 @@ class FactionSystem {
     // Compare values
     alignment += (100 - Math.abs(band.authenticity - faction.values.authenticity)) * 0.3;
     alignment += (100 - Math.abs(band.technicalSkill - faction.values.technicalSkill)) * 0.2;
-    alignment += (100 - Math.abs(band.popularity - faction.values.popularity)) * 0.2;
+    
+    // Special handling for popularity - negative values mean faction prefers low popularity
+    if (faction.values.popularity < 0) {
+      // Faction prefers low popularity - higher band popularity is worse
+      alignment += (100 - band.popularity) * 0.2;
+    } else {
+      alignment += (100 - Math.abs(band.popularity - faction.values.popularity)) * 0.2;
+    }
     
     // Check for matching traits
     band.traits.forEach(trait => {
@@ -182,8 +189,8 @@ class FactionSystem {
   }
 
   // Get faction modifiers for a show
-  getShowModifiers(band: Band, venue: Venue): FactionModifiers {
-    let combinedModifiers: FactionModifiers = {
+  getShowModifiers(band: Band, _venue: Venue): FactionModifiers {
+    const combinedModifiers: FactionModifiers = {
       fanBonus: 1,
       reputationMultiplier: 1,
       moneyModifier: 0,
@@ -239,25 +246,6 @@ class FactionSystem {
     this.checkForFactionEvents();
   }
 
-  private adjustStanding(factionId: string, change: number) {
-    const current = this.playerStandings.get(factionId) || 0;
-    const newStanding = Math.max(-100, Math.min(100, current + change));
-    this.playerStandings.set(factionId, newStanding);
-
-    // Check for relationship cascades
-    const faction = this.factions.get(factionId);
-    if (faction && Math.abs(change) > 5) {
-      faction.relationships.forEach((relationship, otherFactionId) => {
-        if (relationship > 50) {
-          // Allied faction
-          this.adjustStanding(otherFactionId, change * 0.3);
-        } else if (relationship < -50) {
-          // Enemy faction
-          this.adjustStanding(otherFactionId, -change * 0.3);
-        }
-      });
-    }
-  }
 
   // Generate faction events based on current state
   private checkForFactionEvents() {
@@ -269,7 +257,7 @@ class FactionSystem {
         if (faction1Id < faction2Id) { // Avoid duplicates
           const standing1 = this.playerStandings.get(faction1Id) || 0;
           const standing2 = this.playerStandings.get(faction2Id) || 0;
-          const relationship = faction1.relationships.get(faction2Id) || 0;
+          const relationship = faction1.relationships[faction2Id] || 0;
 
           // Conflict event if supporting opposing factions
           if (relationship < -50 && standing1 > 30 && standing2 > 30) {
@@ -283,17 +271,20 @@ class FactionSystem {
   }
 
   private createConflictEvent(faction1: Faction, faction2: Faction): FactionEvent {
-    const factionChanges1 = new Map<string, number>();
-    factionChanges1.set(faction1.id, 20);
-    factionChanges1.set(faction2.id, -30);
+    const factionChanges1: Record<string, number> = {
+      [faction1.id]: 20,
+      [faction2.id]: -30
+    };
     
-    const factionChanges2 = new Map<string, number>();
-    factionChanges2.set(faction1.id, -30);
-    factionChanges2.set(faction2.id, 20);
+    const factionChanges2: Record<string, number> = {
+      [faction1.id]: -30,
+      [faction2.id]: 20
+    };
     
-    const factionChangesNeutral = new Map<string, number>();
-    factionChangesNeutral.set(faction1.id, -10);
-    factionChangesNeutral.set(faction2.id, -10);
+    const factionChangesNeutral: Record<string, number> = {
+      [faction1.id]: -10,
+      [faction2.id]: -10
+    };
 
     return {
       id: `conflict-${faction1.id}-${faction2.id}-${Date.now()}`,
@@ -336,6 +327,11 @@ class FactionSystem {
     return this.factionEvents.filter(event => !event.triggered);
   }
 
+  // Get current event (for UI/testing)
+  getCurrentEvent(): FactionEvent | null {
+    return this.factionEvents.length > 0 ? this.factionEvents[0] : null;
+  }
+
   // Apply player choice to faction event
   applyEventChoice(eventId: string, choiceId: string) {
     const event = this.factionEvents.find(e => e.id === eventId);
@@ -345,7 +341,7 @@ class FactionSystem {
     if (!choice) return;
 
     // Apply faction changes
-    choice.effects.factionChanges.forEach((change, factionId) => {
+    Object.entries(choice.effects.factionChanges).forEach(([factionId, change]) => {
       this.adjustStanding(factionId, change);
     });
 
@@ -356,8 +352,8 @@ class FactionSystem {
   }
 
   // Get all faction data for UI
-  getAllFactionData() {
-    const data: any[] = [];
+  getAllFactionData(): Array<Faction & { playerStanding: number }> {
+    const data: Array<Faction & { playerStanding: number }> = [];
     this.factions.forEach((faction, id) => {
       data.push({
         ...faction,
@@ -367,17 +363,158 @@ class FactionSystem {
     return data;
   }
 
+  // Get standing with a specific faction
+  getStanding(factionId: string): number {
+    return this.playerStandings.get(factionId) || 0;
+  }
+
+  // Set standing directly (for testing/save loading)
+  setStanding(factionId: string, standing: number): void {
+    this.playerStandings.set(factionId, Math.max(-100, Math.min(100, standing)));
+  }
+
+  // Adjust standing by a delta
+  adjustStanding(factionId: string, change: number) {
+    const current = this.playerStandings.get(factionId) || 0;
+    const newStanding = Math.max(-100, Math.min(100, current + change));
+    this.playerStandings.set(factionId, newStanding);
+
+    // Check for relationship cascades
+    const faction = this.factions.get(factionId);
+    if (faction && Math.abs(change) > 5) {
+      Object.entries(faction.relationships).forEach(([otherFactionId, relationship]) => {
+        if (relationship > 50) {
+          // Allied faction
+          this.adjustStanding(otherFactionId, change * 0.3);
+        } else if (relationship < -50) {
+          // Enemy faction
+          this.adjustStanding(otherFactionId, -change * 0.3);
+        }
+      });
+    }
+  }
+
+  // Generate faction events (public for testing)
+  generateFactionEvents(): FactionEvent[] {
+    const events: FactionEvent[] = [];
+    
+    // Check each faction's standing
+    this.factions.forEach((faction, factionId) => {
+      const standing = this.playerStandings.get(factionId) || 0;
+      
+      // Generate events based on standing thresholds
+      if (standing > 70) {
+        // High standing - generate positive events occasionally
+        events.push(this.createPositiveEvent(faction, standing));
+      } else if (standing < -50) {
+        // Low standing - generate negative events
+        events.push(this.createNegativeEvent(faction, standing));
+      }
+    });
+    
+    // Check for faction conflicts
+    this.checkForFactionEvents();
+    
+    // Add generated events to the faction events array
+    this.factionEvents.push(...events);
+    
+    return events;
+  }
+
+  private createPositiveEvent(faction: Faction, _standing: number): FactionEvent {
+    const factionChanges: Record<string, number> = {
+      [faction.id]: 5
+    };
+    
+    return {
+      id: `${faction.id}-positive-${Date.now()}`,
+      type: FactionEventType.ALLIANCE,
+      title: `${faction.name} Support`,
+      description: `The ${faction.name} appreciate your dedication to their values.`,
+      factionId: faction.id,
+      choices: [
+        {
+          id: 'accept',
+          text: 'Accept their support',
+          effects: {
+            reputation: 10,
+            factionChanges,
+            bandRelations: {}
+          }
+        }
+      ],
+      triggered: false
+    };
+  }
+
+  private createNegativeEvent(faction: Faction, _standing: number): FactionEvent {
+    const factionChanges: Record<string, number> = {
+      [faction.id]: -10
+    };
+    
+    return {
+      id: `${faction.id}-negative-${Date.now()}`,
+      type: FactionEventType.DRAMA,
+      title: `${faction.name} Displeasure`,
+      description: `The ${faction.name} are unhappy with your recent actions.`,
+      factionId: faction.id,
+      choices: [
+        {
+          id: 'apologize',
+          text: 'Try to make amends',
+          effects: {
+            reputation: -5,
+            factionChanges: { [faction.id]: 10 },
+            bandRelations: {}
+          }
+        },
+        {
+          id: 'ignore',
+          text: 'Ignore their complaints',
+          effects: {
+            reputation: 5,
+            factionChanges,
+            bandRelations: {}
+          }
+        }
+      ],
+      triggered: false
+    };
+  }
+
   // Get all factions
   getAllFactions() {
     return Array.from(this.factions.values());
   }
 
-  // Check if band is favored by a faction
+  // Check if a band is favored by a faction
   isBandFavored(band: Band, factionId: string): boolean {
     const alignment = this.calculateBandAlignment(band, factionId);
-    const standing = this.playerStandings.get(factionId) || 0;
-    return alignment > 70 && standing > 20;
+    return alignment > 70;
   }
+
+  // Check if a venue is favored by a faction
+  isVenueFavored(venue: Venue, factionId: string): boolean {
+    const faction = this.factions.get(factionId);
+    if (!faction) return false;
+    
+    // Check based on venue type and faction preferences
+    switch (factionId) {
+      case 'diy-purists':
+        return venue.type === VenueType.BASEMENT || venue.type === VenueType.DIY_SPACE;
+      case 'metal-elite':
+        return venue.type === VenueType.METAL_BAR || venue.capacity > 200;
+      case 'indie-crowd':
+        return venue.type === VenueType.COFFEE_SHOP || venue.type === VenueType.GALLERY;
+      case 'old-guard':
+        return venue.type === VenueType.DIVE_BAR || venue.type === VenueType.LEGION_HALL;
+      case 'new-wave':
+        return venue.type === VenueType.THEATER || venue.type === VenueType.CONCERT_HALL;
+      default:
+        return false;
+    }
+  }
+
 
   // Get faction modifiers for calculations
   getFactionModifiers(factionId: string): FactionModifiers {
@@ -392,7 +529,7 @@ class FactionSystem {
   }
 
   // Calculate reputation change for faction actions
-  calculateReputationChange(action: string, band: Band, venue: Venue): Map<string, number> {
+  calculateReputationChange(action: string, band: Band, _venue: Venue): Map<string, number> {
     const changes = new Map<string, number>();
     
     this.factions.forEach((faction, factionId) => {
@@ -454,6 +591,16 @@ class FactionSystem {
   // Get player standing with faction
   getPlayerStanding(factionId: string): number {
     return this.playerStandings.get(factionId) || 0;
+  }
+
+  // Methods for save/load functionality
+  getPlayerStandings(): Map<string, number> {
+    return new Map(this.playerStandings);
+  }
+
+
+  restoreEvents(events: FactionEvent[]): void {
+    this.factionEvents = [...events];
   }
 }
 

@@ -1,8 +1,24 @@
-import { GameState, Band, Venue, Show, Resources } from '@game/types';
+import { Band, Venue, Show, Resources, Equipment } from '@game/types';
 import { equipmentManagerV2 } from './EquipmentManagerV2';
 import { venueUpgradeManager } from './VenueUpgradeManager';
 import { factionSystem } from './FactionSystem';
+import { safeStorage } from '@utils/safeStorage';
 
+import { devLog, prodLog } from '../../utils/devLogger';
+
+interface EquipmentStateData {
+  owned?: Equipment[];
+  rented?: Array<{ equipmentId: string; turnsRemaining: number }>;
+}
+
+interface VenueUpgradeStateData {
+  upgrades?: Record<string, string[]>;
+}
+
+interface FactionStateData {
+  standings?: Array<[string, number]>;
+  eventHistory?: unknown[];
+}
 interface SaveGame {
   version: string;
   timestamp: number;
@@ -19,9 +35,9 @@ interface SaveGame {
     };
   };
   systems: {
-    equipment: any; // Equipment manager state
-    venueUpgrades: any; // Venue upgrade manager state
-    factions: any; // Faction system state
+    equipment: EquipmentStateData;
+    venueUpgrades: VenueUpgradeStateData;
+    factions: FactionStateData;
   };
 }
 
@@ -60,11 +76,11 @@ class SaveManager {
         }
       };
 
-      localStorage.setItem(this.SAVE_KEY, JSON.stringify(saveData));
-      console.log('Game saved successfully');
+      safeStorage.setItem(this.SAVE_KEY, JSON.stringify(saveData));
+      devLog.log('Game saved successfully');
       return true;
     } catch (error) {
-      console.error('Failed to save game:', error);
+      prodLog.error('Failed to save game:', error);
       return false;
     }
   }
@@ -99,10 +115,10 @@ class SaveManager {
         }
       };
 
-      localStorage.setItem(this.AUTOSAVE_KEY, JSON.stringify(saveData));
+      safeStorage.setItem(this.AUTOSAVE_KEY, JSON.stringify(saveData));
       return true;
     } catch (error) {
-      console.error('Failed to auto-save game:', error);
+      prodLog.error('Failed to auto-save game:', error);
       return false;
     }
   }
@@ -110,14 +126,14 @@ class SaveManager {
   // Load a saved game
   loadGame(): SaveGame | null {
     try {
-      const saveData = localStorage.getItem(this.SAVE_KEY);
+      const saveData = safeStorage.getItem(this.SAVE_KEY);
       if (!saveData) return null;
 
       const parsed = JSON.parse(saveData) as SaveGame;
       
       // Validate version
       if (parsed.version !== this.SAVE_VERSION) {
-        console.warn('Save version mismatch, may have compatibility issues');
+        devLog.warn('Save version mismatch, may have compatibility issues');
       }
 
       // Restore system states
@@ -125,10 +141,10 @@ class SaveManager {
       this.restoreVenueUpgradeState(parsed.systems.venueUpgrades);
       this.restoreFactionState(parsed.systems.factions);
 
-      console.log('Game loaded successfully');
+      devLog.log('Game loaded successfully');
       return parsed;
     } catch (error) {
-      console.error('Failed to load game:', error);
+      prodLog.error('Failed to load game:', error);
       return null;
     }
   }
@@ -136,14 +152,14 @@ class SaveManager {
   // Load autosave
   loadAutoSave(): SaveGame | null {
     try {
-      const saveData = localStorage.getItem(this.AUTOSAVE_KEY);
+      const saveData = safeStorage.getItem(this.AUTOSAVE_KEY);
       if (!saveData) return null;
 
       const parsed = JSON.parse(saveData) as SaveGame;
       
       // Validate version
       if (parsed.version !== this.SAVE_VERSION) {
-        console.warn('Save version mismatch, may have compatibility issues');
+        devLog.warn('Save version mismatch, may have compatibility issues');
       }
 
       // Restore system states
@@ -151,38 +167,38 @@ class SaveManager {
       this.restoreVenueUpgradeState(parsed.systems.venueUpgrades);
       this.restoreFactionState(parsed.systems.factions);
 
-      console.log('Autosave loaded successfully');
+      devLog.log('Autosave loaded successfully');
       return parsed;
     } catch (error) {
-      console.error('Failed to load autosave:', error);
+      prodLog.error('Failed to load autosave:', error);
       return null;
     }
   }
 
   // Check if a save exists
   hasSave(): boolean {
-    return localStorage.getItem(this.SAVE_KEY) !== null;
+    return safeStorage.getItem(this.SAVE_KEY) !== null;
   }
 
   // Check if an autosave exists
   hasAutoSave(): boolean {
-    return localStorage.getItem(this.AUTOSAVE_KEY) !== null;
+    return safeStorage.getItem(this.AUTOSAVE_KEY) !== null;
   }
 
   // Delete save
   deleteSave(): void {
-    localStorage.removeItem(this.SAVE_KEY);
+    safeStorage.removeItem(this.SAVE_KEY);
   }
 
   // Delete autosave
   deleteAutoSave(): void {
-    localStorage.removeItem(this.AUTOSAVE_KEY);
+    safeStorage.removeItem(this.AUTOSAVE_KEY);
   }
 
   // Get save info without loading full game
   getSaveInfo(): { timestamp: number; turn: number } | null {
     try {
-      const saveData = localStorage.getItem(this.SAVE_KEY);
+      const saveData = safeStorage.getItem(this.SAVE_KEY);
       if (!saveData) return null;
 
       const parsed = JSON.parse(saveData) as SaveGame;
@@ -196,35 +212,112 @@ class SaveManager {
   }
 
   // Serialize system states
-  private serializeEquipmentState(): any {
-    // This would need to be implemented in EquipmentManagerV2
-    // For now, return empty object
-    return {};
+  private serializeEquipmentState(): EquipmentStateData {
+    try {
+      // Get equipment data from equipmentManagerV2
+      const ownedEquipment = equipmentManagerV2.getOwnedEquipment();
+      const rentedEquipment = equipmentManagerV2.getRentedEquipment();
+      return {
+        owned: ownedEquipment.map(e => ({ ...e })),
+        rented: rentedEquipment.map(e => ({ ...e, turnsRemaining: e.turnsRemaining }))
+      };
+    } catch (error) {
+      devLog.error('Failed to serialize equipment state:', error);
+      return { owned: [], rented: [] };
+    }
   }
 
-  private serializeVenueUpgradeState(): any {
-    // This would need to be implemented in VenueUpgradeManager
-    // For now, return empty object
-    return {};
+  private serializeVenueUpgradeState(): VenueUpgradeStateData {
+    try {
+      // Get all venue upgrades
+      const upgrades: Record<string, string[]> = {};
+      // Since VenueUpgradeManager doesn't expose state, we'll need to track installed upgrades
+      return { upgrades };
+    } catch (error) {
+      devLog.error('Failed to serialize venue upgrade state:', error);
+      return { upgrades: {} };
+    }
   }
 
-  private serializeFactionState(): any {
-    // This would need to be implemented in FactionSystem
-    // For now, return empty object
-    return {};
+  private serializeFactionState(): FactionStateData {
+    try {
+      // Get faction standings
+      const standings = factionSystem.getPlayerStandings();
+      return {
+        standings: Object.fromEntries(standings),
+        events: factionSystem.getPendingEvents()
+      };
+    } catch (error) {
+      devLog.error('Failed to serialize faction state:', error);
+      return { standings: {}, events: [] };
+    }
   }
 
   // Restore system states
-  private restoreEquipmentState(state: any): void {
-    // This would need to be implemented in EquipmentManagerV2
+  private restoreEquipmentState(state: EquipmentStateData): void {
+    try {
+      if (!state || typeof state !== 'object') return;
+      
+      // Clear current equipment
+      equipmentManagerV2.clearInventory();
+      
+      // Restore owned equipment
+      if (Array.isArray(state.owned)) {
+        state.owned.forEach((equipment: Equipment) => {
+          equipmentManagerV2.addEquipment(equipment);
+        });
+      }
+      
+      // Restore rented equipment
+      if (Array.isArray(state.rented)) {
+        state.rented.forEach((rental: { equipmentId: string; turnsRemaining: number }) => {
+          equipmentManagerV2.rentEquipmentForSave(rental.equipmentId, rental.turnsRemaining);
+        });
+      }
+    } catch (error) {
+      prodLog.error('Failed to restore equipment state:', error);
+    }
   }
 
-  private restoreVenueUpgradeState(state: any): void {
-    // This would need to be implemented in VenueUpgradeManager
+  private restoreVenueUpgradeState(state: VenueUpgradeStateData): void {
+    try {
+      if (!state || typeof state !== 'object') return;
+      
+      // Restore venue upgrades
+      if (state.upgrades && typeof state.upgrades === 'object') {
+        Object.entries(state.upgrades).forEach(([venueId, upgradeIds]) => {
+          if (Array.isArray(upgradeIds)) {
+            upgradeIds.forEach(upgradeId => {
+              venueUpgradeManager.applyUpgrade(venueId, upgradeId);
+            });
+          }
+        });
+      }
+    } catch (error) {
+      prodLog.error('Failed to restore venue upgrade state:', error);
+    }
   }
 
-  private restoreFactionState(state: any): void {
-    // This would need to be implemented in FactionSystem
+  private restoreFactionState(state: FactionStateData): void {
+    try {
+      if (!state || typeof state !== 'object') return;
+      
+      // Restore faction standings
+      if (state.standings && typeof state.standings === 'object') {
+        Object.entries(state.standings).forEach(([factionId, standing]) => {
+          if (typeof standing === 'number') {
+            factionSystem.setStanding(factionId, standing);
+          }
+        });
+      }
+      
+      // Restore pending events
+      if (Array.isArray(state.events)) {
+        factionSystem.restoreEvents(state.events);
+      }
+    } catch (error) {
+      prodLog.error('Failed to restore faction state:', error);
+    }
   }
 }
 

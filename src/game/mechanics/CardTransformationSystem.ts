@@ -16,7 +16,7 @@ export interface TransformationRule {
 
 export interface TransformationRequirement {
   type: 'shows_played' | 'reputation_reached' | 'synergies_triggered' | 'perfect_shows' | 'venue_type' | 'band_genre' | 'has_trait' | 'equipment_count';
-  value: any;
+  value: string | number | string[] | Genre | VenueType | TraitType;
   operator?: 'equals' | 'greater_than' | 'less_than' | 'contains';
 }
 
@@ -408,7 +408,7 @@ interface CardStats {
 
 interface CardStatEvent {
   type: 'show_played' | 'synergy_triggered' | 'equipment_added';
-  data: any;
+  data: Record<string, unknown>;
 }
 
 export const cardTransformationSystem = new CardTransformationSystem();

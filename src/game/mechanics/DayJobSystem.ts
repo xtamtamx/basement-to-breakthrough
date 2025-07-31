@@ -432,10 +432,10 @@ export class DayJobSystem {
     
     // Base effects
     let money = job.moneyPerTurn;
-    let reputationChange = job.reputationChange;
-    let fanChange = job.fanChange;
+    const reputationChange = job.reputationChange;
+    const fanChange = job.fanChange;
     let stressGain = job.stressGain;
-    let connectionGain = job.connectionGain || 0;
+    const connectionGain = job.connectionGain || 0;
     
     // Stress multiplier - more stress makes job harder
     if (state.stress > 80) {

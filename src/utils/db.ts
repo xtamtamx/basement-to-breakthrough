@@ -1,21 +1,21 @@
-import { openDB, DBSchema, IDBPDatabase } from 'idb';
-import { SaveGame } from '@types/game.types';
-import { Card } from '@types/card.types';
+import { openDB, DBSchema, IDBPDatabase } from "idb";
+import { SaveGame } from "@/game/types";
+import { Card } from "@/game/types";
 
 interface GameDB extends DBSchema {
   saves: {
     key: string;
     value: SaveGame;
-    indexes: { 'by-timestamp': number };
+    indexes: { "by-timestamp": number };
   };
   cards: {
     key: string;
     value: Card;
-    indexes: { 'by-type': string; 'by-rarity': string };
+    indexes: { "by-type": string; "by-rarity": string };
   };
   settings: {
     key: string;
-    value: any;
+    value: unknown;
   };
 }
 
@@ -23,62 +23,62 @@ class Database {
   private db: IDBPDatabase<GameDB> | null = null;
 
   async init() {
-    this.db = await openDB<GameDB>('basement-to-breakthrough', 1, {
+    this.db = await openDB<GameDB>("basement-to-breakthrough", 1, {
       upgrade(db) {
-        const savesStore = db.createObjectStore('saves', {
-          keyPath: 'id',
+        const savesStore = db.createObjectStore("saves", {
+          keyPath: "id",
         });
-        savesStore.createIndex('by-timestamp', 'timestamp');
+        savesStore.createIndex("by-timestamp", "timestamp");
 
-        const cardsStore = db.createObjectStore('cards', {
-          keyPath: 'id',
+        const cardsStore = db.createObjectStore("cards", {
+          keyPath: "id",
         });
-        cardsStore.createIndex('by-type', 'type');
-        cardsStore.createIndex('by-rarity', 'rarity');
+        cardsStore.createIndex("by-type", "type");
+        cardsStore.createIndex("by-rarity", "rarity");
 
-        db.createObjectStore('settings');
+        db.createObjectStore("settings");
       },
     });
   }
 
   async saveGame(save: SaveGame) {
     if (!this.db) await this.init();
-    return this.db!.put('saves', save);
+    return this.db!.put("saves", save);
   }
 
   async loadGame(id: string) {
     if (!this.db) await this.init();
-    return this.db!.get('saves', id);
+    return this.db!.get("saves", id);
   }
 
   async getAllSaves() {
     if (!this.db) await this.init();
-    return this.db!.getAllFromIndex('saves', 'by-timestamp');
+    return this.db!.getAllFromIndex("saves", "by-timestamp");
   }
 
   async deleteSave(id: string) {
     if (!this.db) await this.init();
-    return this.db!.delete('saves', id);
+    return this.db!.delete("saves", id);
   }
 
   async saveCard(card: Card) {
     if (!this.db) await this.init();
-    return this.db!.put('cards', card);
+    return this.db!.put("cards", card);
   }
 
   async getCardsByType(type: string) {
     if (!this.db) await this.init();
-    return this.db!.getAllFromIndex('cards', 'by-type', type);
+    return this.db!.getAllFromIndex("cards", "by-type", type);
   }
 
-  async saveSetting(key: string, value: any) {
+  async saveSetting(key: string, value: unknown) {
     if (!this.db) await this.init();
-    return this.db!.put('settings', value, key);
+    return this.db!.put("settings", value, key);
   }
 
   async getSetting(key: string) {
     if (!this.db) await this.init();
-    return this.db!.get('settings', key);
+    return this.db!.get("settings", key);
   }
 }
 

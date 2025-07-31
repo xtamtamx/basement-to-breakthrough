@@ -65,7 +65,7 @@ export const StressReliefModal: React.FC<StressReliefModalProps> = ({
       addStress(-option.stressReduction);
       haptics.success();
       audio.play('powerUp');
-      console.log(`Stress reduced by ${option.stressReduction}%`);
+      devLog.log(`Stress reduced by ${option.stressReduction}%`);
       onClose();
     } else {
       haptics.error();

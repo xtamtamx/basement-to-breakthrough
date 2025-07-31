@@ -1,4 +1,4 @@
-import { Band, Bill, BillDynamics, Genre } from '@game/types';
+import { Band, Bill, BillDynamics } from '@game/types';
 
 export class BillManager {
   // Analyze a bill and determine headliner based on band stats

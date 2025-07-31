@@ -3,6 +3,7 @@ import { Achievement } from '@game/types';
 import { metaProgressionManager } from './MetaProgressionManager';
 import { haptics } from '@utils/mobile';
 import { audio } from '@utils/audio';
+import { safeStorage } from '@utils/safeStorage';
 
 export interface SynergyMastery {
   synergyId: string;
@@ -19,7 +20,13 @@ export interface MasteryEnhancement {
   synergyId: string;
   requiredLevel: number;
   type: 'effect_boost' | 'new_effect' | 'chain_enable' | 'transform_enable';
-  enhancement: any;
+  enhancement: {
+    multiplier?: number;
+    bonus?: number;
+    newEffect?: SynergyEffect;
+    enableChaining?: boolean;
+    transformTo?: string;
+  };
   description: string;
 }
 
@@ -40,7 +47,7 @@ class SynergyMasterySystem {
   }
   
   private loadMasteryData() {
-    const saved = localStorage.getItem('synergy-mastery');
+    const saved = safeStorage.getItem('synergy-mastery');
     if (saved) {
       const data = JSON.parse(saved);
       this.masteryData = new Map(Object.entries(data));
@@ -49,7 +56,7 @@ class SynergyMasterySystem {
   
   private saveMasteryData() {
     const data = Object.fromEntries(this.masteryData);
-    localStorage.setItem('synergy-mastery', JSON.stringify(data));
+    safeStorage.setItem('synergy-mastery', JSON.stringify(data));
   }
   
   private initializeEnhancements() {
@@ -270,12 +277,12 @@ class SynergyMasterySystem {
   }
   
   private onEnhancementUnlocked(enhancement: MasteryEnhancement) {
-    console.log(`Unlocked enhancement: ${enhancement.description}`);
+    devLog.log(`Unlocked enhancement: ${enhancement.description}`);
     
     // Special handling for chain enables
     if (enhancement.type === 'chain_enable') {
       // This will be picked up by the chain system
-      console.log(`New chain available: ${enhancement.enhancement.enablesChain}`);
+      devLog.log(`New chain available: ${enhancement.enhancement.enablesChain}`);
     }
   }
   
@@ -293,13 +300,14 @@ class SynergyMasterySystem {
       if (!mastery.unlockedEnhancements.includes(enhancement.id)) continue;
       
       switch (enhancement.type) {
-        case 'effect_boost':
+        case 'effect_boost': {
           // Boost existing effects
           const targetEffect = enhancedEffects.find(e => e.type === enhancement.enhancement.effect);
           if (targetEffect) {
             targetEffect.value *= enhancement.enhancement.multiplier;
           }
           break;
+        }
           
         case 'new_effect':
           // Add new effect

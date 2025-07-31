@@ -8,7 +8,7 @@ import {
 } from '../graphics/PixelArtSprites';
 
 interface SimplePixelMapProps {
-  venues?: any[];
+  venues?: Array<{ id: string; name: string; x?: number; y?: number; type?: string }>;
   selectedVenue?: string | null;
   onVenueClick?: (venueId: string) => void;
   className?: string;
@@ -47,7 +47,7 @@ export const SimplePixelMap: React.FC<SimplePixelMapProps> = ({
 
   const venuesToShow = venues.length > 0 ? venues : defaultVenues;
   
-  console.log('SimplePixelMap rendering with venues:', venuesToShow);
+  devLog.log('SimplePixelMap rendering with venues:', venuesToShow);
 
   return (
     <div 

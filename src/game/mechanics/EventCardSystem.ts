@@ -2,6 +2,21 @@ import { Band, Venue, Equipment } from '@game/types';
 import { haptics } from '@utils/mobile';
 import { audio } from '@utils/audio';
 
+interface EventGameState {
+  turn?: number;
+  reputation?: number;
+  sceneState?: string;
+  activeSynergies?: number;
+  totalCards?: number;
+}
+
+interface EventApplyResult {
+  appliedEffects: EventCardEffect[];
+  modifiedCards: Array<{ target: string; modifications: unknown }>;
+  resourceChanges: Record<string, unknown>;
+  spawnedCards: unknown[];
+}
+
 export interface EventCard {
   id: string;
   name: string;
@@ -17,17 +32,39 @@ export interface EventCard {
   artStyle?: 'concert_poster' | 'backstage_pass' | 'tour_flyer' | 'press_release';
 }
 
-export interface EventEffect {
-  type: 'modify_stat' | 'spawn_card' | 'transform_card' | 'trigger_synergy' | 'scene_change' | 'resource_change';
-  target: 'all_bands' | 'all_venues' | 'random_band' | 'random_venue' | 'player' | 'specific';
-  value: any;
-  duration?: number; // turns
-  description: string;
-}
+export type EventEffect = 
+  | {
+      type: 'modify_stat';
+      target: 'all_bands' | 'all_venues' | 'random_band' | 'random_venue' | 'player' | 'specific';
+      value: { stat: string; amount: number };
+      duration?: number;
+      description: string;
+    }
+  | {
+      type: 'spawn_card' | 'transform_card';
+      target: 'all_bands' | 'all_venues' | 'random_band' | 'random_venue' | 'player' | 'specific';
+      value: { cardType: string; cardData?: unknown };
+      duration?: number;
+      description: string;
+    }
+  | {
+      type: 'trigger_synergy' | 'scene_change';
+      target: 'all_bands' | 'all_venues' | 'random_band' | 'random_venue' | 'player' | 'specific';
+      value: string;
+      duration?: number;
+      description: string;
+    }
+  | {
+      type: 'resource_change';
+      target: 'player';
+      value: { money?: number; reputation?: number; fans?: number; stress?: number };
+      duration?: number;
+      description: string;
+    };
 
 export interface EventRequirement {
   type: 'turn_number' | 'reputation' | 'scene_state' | 'active_synergies' | 'card_count';
-  value: any;
+  value: unknown;
   operator: 'greater_than' | 'less_than' | 'equals';
 }
 
@@ -380,7 +417,7 @@ class EventCardSystem {
   }
   
   // Draw a random event card based on current game state
-  drawEventCard(gameState: any): EventCard | null {
+  drawEventCard(gameState: EventGameState): EventCard | null {
     const availableCards = Array.from(this.eventCards.values()).filter(card => {
       // Check requirements
       if (card.requirements) {
@@ -436,15 +473,15 @@ class EventCardSystem {
   }
   
   // Apply event choice
-  applyEventChoice(card: EventCard, choiceId: string | null, gameState: any): any {
+  applyEventChoice(card: EventCard, choiceId: string | null, gameState: EventGameState): EventApplyResult {
     const choice = choiceId ? card.choices?.find(c => c.id === choiceId) : null;
     const effects = choice ? choice.effects : card.effects;
     
-    const results = {
+    const results: EventApplyResult = {
       appliedEffects: effects,
-      modifiedCards: [] as any[],
-      resourceChanges: {} as any,
-      spawnedCards: [] as any[]
+      modifiedCards: [],
+      resourceChanges: {},
+      spawnedCards: []
     };
     
     // Apply each effect
@@ -496,8 +533,8 @@ class EventCardSystem {
   }
   
   // Process turn-based event effects
-  processTurnEffects(): any[] {
-    const expiredEffects: any[] = [];
+  processTurnEffects(): EventCardEffect[] {
+    const expiredEffects: EventCardEffect[] = [];
     
     this.activeEvents = this.activeEvents.filter(event => {
       event.turnsRemaining--;
@@ -530,7 +567,7 @@ class EventCardSystem {
   }
   
   // Get event history
-  getEventHistory(): any[] {
+  getEventHistory(): EventCard[] {
     return this.eventHistory;
   }
 }

@@ -1,19 +1,6 @@
 import { Band, Genre, Trait, TraitType } from '@game/types';
 import { factionSystem } from './FactionSystem';
 
-interface BandTemplate {
-  namePatterns: string[];
-  genreWeights: Record<Genre, number>;
-  subgenres: Record<Genre, string[]>;
-  traits: Trait[];
-  statRanges: {
-    popularity: [number, number];
-    authenticity: [number, number];
-    energy: [number, number];
-    technicalSkill: [number, number];
-  };
-}
-
 class BandGenerator {
   private nameComponents = {
     prefixes: [
@@ -317,7 +304,7 @@ class BandGenerator {
 
   private weightedRandom<T>(weights: Record<string, number>): T {
     const entries = Object.entries(weights);
-    const totalWeight = entries.reduce((sum, [_, weight]) => sum + weight, 0);
+    const totalWeight = entries.reduce((sum, [, weight]) => sum + weight, 0);
     let random = Math.random() * totalWeight;
 
     for (const [key, weight] of entries) {

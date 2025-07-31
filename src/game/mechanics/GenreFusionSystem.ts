@@ -207,18 +207,21 @@ class GenreFusionSystem {
           case 'chemistry_score':
             return this.compareValue(chemistryScore, req.value as number, req.operator);
             
-          case 'shows_together':
+          case 'shows_together': {
             const shows = this.getShowsTogether(band1.id, band2.id);
             return this.compareValue(shows, req.value as number, req.operator);
+          }
             
-          case 'both_have_trait':
+          case 'both_have_trait': {
             const traitName = req.value as string;
             return band1.traits.some(t => t.name === traitName) && 
                    band2.traits.some(t => t.name === traitName);
+          }
                    
-          case 'combined_skill':
+          case 'combined_skill': {
             const combinedSkill = band1.technicalSkill + band2.technicalSkill;
             return this.compareValue(combinedSkill, req.value as number, req.operator);
+          }
             
           case 'scene_alignment':
             return this.compareValue(sceneAlignment, req.value as number, req.operator);

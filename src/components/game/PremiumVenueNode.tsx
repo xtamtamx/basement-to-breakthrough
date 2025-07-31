@@ -4,6 +4,7 @@ import { Venue, Band, VenueType } from '@game/types';
 import { haptics } from '@utils/mobile';
 import { audio } from '@utils/audio';
 
+import { prodLog } from '../../utils/devLogger';
 interface PremiumVenueNodeProps {
   venue: Venue;
   position: { x: string | number; y: string | number };
@@ -128,7 +129,7 @@ export const PremiumVenueNode: React.FC<PremiumVenueNodeProps> = ({
             transition: { duration: 0.5 }
           });
         } catch (err) {
-          console.error('Failed to parse lineup data:', err);
+          prodLog.error('Failed to parse lineup data:', err);
           haptics.error();
           audio.play('error');
         }

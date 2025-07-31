@@ -30,10 +30,10 @@ export const PixelVenueCard: React.FC<PixelVenueCardProps> = ({
     switch (type) {
       case VenueType.BASEMENT: return '🏠';
       case VenueType.DIVE_BAR: return '🍺';
-      case VenueType.SMALL_CLUB: return '🎵';
-      case VenueType.MEDIUM_VENUE: return '🎤';
-      case VenueType.LARGE_VENUE: return '🏟️';
-      case VenueType.OUTDOOR_FESTIVAL: return '⛺';
+      case VenueType.PUNK_CLUB: return '🎵';
+      case VenueType.METAL_VENUE: return '🎤';
+      case VenueType.CONCERT_HALL: return '🏟️';
+      case VenueType.FESTIVAL_GROUNDS: return '⛺';
       case VenueType.WAREHOUSE: return '🏭';
       case VenueType.UNDERGROUND: return '🚇';
       default: return '📍';
@@ -44,22 +44,16 @@ export const PixelVenueCard: React.FC<PixelVenueCardProps> = ({
     switch (type) {
       case VenueType.BASEMENT: return 'var(--pixel-purple)';
       case VenueType.DIVE_BAR: return 'var(--pixel-orange)';
-      case VenueType.SMALL_CLUB: return 'var(--pixel-blue)';
-      case VenueType.MEDIUM_VENUE: return 'var(--pixel-cyan)';
-      case VenueType.LARGE_VENUE: return 'var(--pixel-yellow)';
-      case VenueType.OUTDOOR_FESTIVAL: return 'var(--pixel-green)';
+      case VenueType.PUNK_CLUB: return 'var(--pixel-blue)';
+      case VenueType.METAL_VENUE: return 'var(--pixel-cyan)';
+      case VenueType.CONCERT_HALL: return 'var(--pixel-yellow)';
+      case VenueType.FESTIVAL_GROUNDS: return 'var(--pixel-green)';
       case VenueType.WAREHOUSE: return 'var(--pixel-red)';
       case VenueType.UNDERGROUND: return 'var(--pixel-magenta)';
       default: return 'var(--pixel-gray)';
     }
   };
 
-  const getCapacityBar = (current: number, max: number) => {
-    const percentage = (current / max) * 100;
-    const filled = Math.ceil(percentage / 10);
-    const empty = 10 - filled;
-    return '▮'.repeat(filled) + '▯'.repeat(empty);
-  };
 
   const occupancyPercent = Math.round((occupancy / venue.capacity) * 100);
   const isFull = occupancyPercent >= 90;

@@ -1,4 +1,5 @@
 import { useGameStore } from '@stores/gameStore';
+import { BALANCE_CONFIG, BalanceHelpers } from '@game/config/balanceConfig';
 
 // Difficulty scaling factors based on round progression
 export interface DifficultyFactors {
