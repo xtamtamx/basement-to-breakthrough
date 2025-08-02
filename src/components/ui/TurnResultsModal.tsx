@@ -2,8 +2,8 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShowResult } from '@game/types';
 import { useGameStore } from '@stores/gameStore';
-import { Button } from './Button';
 import { SATIRICAL_TURN_RESULTS } from '@game/data/satiricalText';
+import { X, TrendingUp, TrendingDown, Users, DollarSign, Star } from 'lucide-react';
 
 interface TurnResultsModalProps {
   isOpen: boolean;
@@ -30,8 +30,8 @@ interface TurnResultsModalProps {
 export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({ 
   isOpen, 
   onClose,
-  showResults,
-  totalVenueRent,
+  showResults = [],
+  totalVenueRent = 0,
   dayJobResult,
   difficultyEvent
 }) => {
@@ -69,587 +69,309 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
     return "";
   };
 
+  if (!isOpen) return null;
+
   return (
     <AnimatePresence>
-      {isOpen && (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.95)',
+          zIndex: 9999,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '16px',
+          overflowY: 'auto'
+        }}
+        onClick={onClose}
+      >
         <motion.div
-          className="modal-overlay"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={onClose}
+          initial={{ scale: 0.9, opacity: 0, y: 20 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.9, opacity: 0, y: 20 }}
+          onClick={e => e.stopPropagation()}
+          style={{
+            backgroundColor: '#111827',
+            borderRadius: '16px',
+            maxWidth: '500px',
+            width: '100%',
+            maxHeight: '90vh',
+            overflow: 'hidden',
+            border: '2px solid #ec4899',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+            display: 'flex',
+            flexDirection: 'column'
+          }}
         >
-          <motion.div
-            className="turn-results-modal"
-            initial={{ scale: 0.9, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="modal-header">
-              <h2 className="modal-title">Post-Show Damage Report</h2>
-              <button className="close-button" onClick={onClose}>×</button>
+          {/* Header */}
+          <div style={{
+            padding: '20px 24px',
+            borderBottom: '1px solid #374151',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}>
+            <h2 style={{
+              fontSize: '24px',
+              fontWeight: 'bold',
+              color: '#ec4899',
+              margin: 0
+            }}>Post-Show Damage Report</h2>
+            <button
+              onClick={onClose}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#9ca3af',
+                cursor: 'pointer',
+                padding: '4px'
+              }}
+            >
+              <X size={24} />
+            </button>
+          </div>
+
+          {/* Content */}
+          <div style={{
+            flex: 1,
+            overflowY: 'auto',
+            padding: '24px'
+          }}>
+            {/* Turn Summary Message */}
+            <div style={{
+              backgroundColor: '#1f2937',
+              borderRadius: '12px',
+              padding: '16px',
+              marginBottom: '20px',
+              borderLeft: '4px solid #ec4899'
+            }}>
+              <p style={{
+                color: '#d1d5db',
+                fontSize: '14px',
+                lineHeight: '1.6',
+                margin: 0,
+                fontStyle: 'italic'
+              }}>{getTurnResultMessage()}</p>
+              {getReputationMessage() && (
+                <p style={{
+                  color: '#d1d5db',
+                  fontSize: '14px',
+                  lineHeight: '1.6',
+                  margin: '8px 0 0 0',
+                  fontStyle: 'italic'
+                }}>{getReputationMessage()}</p>
+              )}
             </div>
 
-            <div className="results-content">
-              {/* Show Results */}
-              {showResults.length > 0 ? (
-                <div className="shows-section">
-                  <h3 className="section-title">Tonight's Disasters</h3>
-                  <div className="show-results">
-                    {showResults.map((result, index) => (
-                      <motion.div
-                        key={result.showId}
-                        className={`show-result ${result.isSuccess ? 'success' : 'failure'}`}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                      >
-                        <div className="show-header">
-                          <span className="show-icon">
-                            {result.isSuccess ? '🎸' : '💔'}
-                          </span>
-                          <span className="show-status">
-                            {result.isSuccess ? 'Somehow Didn\'t Fail' : 'Predictable Disaster'}
-                          </span>
-                        </div>
-                        
-                        <div className="show-stats">
-                          <div className="stat">
-                            <span className="stat-label">Attendance</span>
-                            <span className="stat-value">{result.attendance}</span>
-                          </div>
-                          <div className="stat">
-                            <span className="stat-label">Revenue</span>
-                            <span className="stat-value">${result.revenue}</span>
-                          </div>
-                          <div className="stat">
-                            <span className="stat-label">Profit</span>
-                            <span className={`stat-value ${result.financials.profit > 0 ? 'positive' : 'negative'}`}>
-                              ${result.financials.profit}
-                            </span>
-                          </div>
-                          <div className="stat">
-                            <span className="stat-label">Fans</span>
-                            <span className="stat-value">+{result.fansGained}</span>
-                          </div>
-                        </div>
-
-                        {result.incidents.length > 0 && (
-                          <div className="incidents">
-                            {result.incidents.map((incident, i) => (
-                              <div key={i} className="incident">
-                                <span className="incident-icon">⚠️</span>
-                                <span className="incident-text">{incident.description}</span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </motion.div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div className="no-shows">
-                  <span className="no-shows-icon">📅</span>
-                  <p className="no-shows-text">Another Night of Sitting Alone in Your "Office" (Bedroom)</p>
-                </div>
-              )}
-
-              {/* Venue Costs */}
-              <div className="costs-section">
-                <h3 className="section-title">Landlord's Yacht Fund Contributions</h3>
-                <div className="cost-item">
-                  <span className="cost-label">Money You'll Never See Again</span>
-                  <span className="cost-value negative">-${totalVenueRent}</span>
-                </div>
-              </div>
-
-              {/* Day Job Results */}
-              {dayJobResult && (
-                <div className="day-job-section" style={{
-                  background: 'var(--bg-tertiary)',
-                  padding: '16px',
-                  borderRadius: '8px',
-                  marginTop: '16px',
-                  border: '1px solid var(--border-default)'
-                }}>
-                  <h3 className="section-title">Soul-Crushing Employment Update</h3>
-                  <div className="job-stats" style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(2, 1fr)',
-                    gap: '12px',
-                    marginBottom: '12px'
-                  }}>
-                    <div className="stat">
-                      <span className="stat-label">Wage Slavery Income</span>
-                      <span className="stat-value positive">+${dayJobResult.money}</span>
-                    </div>
-                    <div className="stat">
-                      <span className="stat-label">Street Cred Lost</span>
-                      <span className="stat-value negative">-{dayJobResult.reputationLoss}</span>
-                    </div>
-                    {dayJobResult.fanLoss > 0 && (
-                      <div className="stat">
-                        <span className="stat-label">Disappointed Fans</span>
-                        <span className="stat-value negative">-{dayJobResult.fanLoss}</span>
-                      </div>
-                    )}
-                    <div className="stat">
-                      <span className="stat-label">Mental Health</span>
-                      <span className="stat-value negative">+{dayJobResult.stressGain}% stress</span>
-                    </div>
-                  </div>
-                  <p style={{
-                    fontStyle: 'italic',
-                    color: 'var(--text-muted)',
-                    fontSize: '14px',
-                    margin: 0
-                  }}>
-                    "{dayJobResult.message}"
-                  </p>
-                  
-                  {dayJobResult.randomEvent && (
-                    <div style={{
-                      marginTop: '12px',
-                      padding: '12px',
-                      background: 'var(--bg-secondary)',
-                      borderRadius: '6px',
-                      border: '1px solid var(--punk-magenta)'
-                    }}>
-                      <h4 style={{ 
-                        fontSize: '14px',
-                        margin: '0 0 8px 0',
-                        color: 'var(--punk-magenta)',
-                        textTransform: 'uppercase'
-                      }}>
-                        Random Work Event!
-                      </h4>
-                      <p style={{ 
-                        margin: 0, 
-                        fontSize: '13px',
-                        color: 'var(--text-primary)'
-                      }}>
-                        {dayJobResult.randomEvent.message}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
+            {/* Financial Summary */}
+            <div style={{
+              backgroundColor: '#1f2937',
+              borderRadius: '12px',
+              padding: '20px',
+              marginBottom: '20px'
+            }}>
+              <h3 style={{
+                fontSize: '16px',
+                fontWeight: '600',
+                color: '#ffffff',
+                marginBottom: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <DollarSign size={18} />
+                Financial Breakdown
+              </h3>
               
-              {/* Difficulty Event */}
-              {difficultyEvent && (
-                <div className="difficulty-event-section" style={{
-                  background: 'rgba(239, 68, 68, 0.05)',
-                  border: '2px solid var(--metal-red)',
-                  borderRadius: '8px',
-                  padding: '16px',
-                  marginTop: '16px'
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: '#9ca3af' }}>Revenue</span>
+                  <span style={{ color: '#10b981', fontWeight: '600' }}>+${totalRevenue}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: '#9ca3af' }}>Costs</span>
+                  <span style={{ color: '#ef4444', fontWeight: '600' }}>-${totalCosts}</span>
+                </div>
+                {totalVenueRent > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
+                    <span style={{ color: '#6b7280' }}>└ Venue Rent</span>
+                    <span style={{ color: '#ef4444' }}>-${totalVenueRent}</span>
+                  </div>
+                )}
+                <div style={{
+                  borderTop: '1px solid #374151',
+                  paddingTop: '12px',
+                  display: 'flex',
+                  justifyContent: 'space-between'
                 }}>
-                  <h3 className="section-title" style={{ color: 'var(--metal-red)' }}>
-                    Scene Evolution
-                  </h3>
-                  <p style={{
-                    margin: '0 0 12px 0',
-                    fontSize: '14px',
-                    color: 'var(--text-primary)',
-                    lineHeight: '1.6'
+                  <span style={{ color: '#ffffff', fontWeight: '600' }}>Net Profit</span>
+                  <span style={{
+                    color: totalProfit >= 0 ? '#10b981' : '#ef4444',
+                    fontWeight: 'bold',
+                    fontSize: '18px'
                   }}>
-                    {difficultyEvent.message}
-                  </p>
-                  {difficultyEvent.reputationLost > 0 && (
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      fontSize: '14px',
-                      color: 'var(--metal-red)'
-                    }}>
-                      <span>⭐</span>
-                      <span>-{difficultyEvent.reputationLost} reputation from scene decay</span>
-                    </div>
-                  )}
+                    {totalProfit >= 0 ? '+' : ''}{totalProfit}
+                  </span>
                 </div>
-              )}
+              </div>
+            </div>
 
-              {/* Summary */}
-              <div className="summary-section">
-                <h3 className="section-title">Financial Autopsy</h3>
-                
-                {/* Turn Result Message */}
-                <div className="turn-message" style={{
-                  padding: '16px',
-                  background: totalProfit > 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                  border: `2px solid ${totalProfit > 0 ? 'var(--success-green)' : 'var(--metal-red)'}`,
-                  borderRadius: '8px',
-                  marginBottom: '16px',
-                  textAlign: 'center'
-                }}>
-                  <p style={{
-                    margin: 0,
-                    fontSize: '16px',
-                    fontWeight: '600',
-                    color: totalProfit > 0 ? 'var(--success-green)' : 'var(--metal-red)'
-                  }}>
-                    {getTurnResultMessage()}
-                  </p>
-                  {getReputationMessage() && (
-                    <p style={{
-                      margin: '8px 0 0',
-                      fontSize: '14px',
-                      color: 'var(--text-muted)'
-                    }}>
-                      {getReputationMessage()}
-                    </p>
-                  )}
-                </div>
-                
-                <div className="summary-stats">
-                  <div className="summary-item">
-                    <span className="summary-label">Total Revenue</span>
-                    <span className="summary-value positive">${totalRevenue}</span>
-                  </div>
-                  <div className="summary-item">
-                    <span className="summary-label">Total Costs</span>
-                    <span className="summary-value negative">-${totalCosts}</span>
-                  </div>
-                  <div className="summary-item profit">
-                    <span className="summary-label">Net Profit</span>
-                    <span className={`summary-value ${totalProfit > 0 ? 'positive' : 'negative'}`}>
-                      ${totalProfit}
-                    </span>
-                  </div>
-                  <div className="summary-item">
-                    <span className="summary-label">Fans Gained</span>
-                    <span className="summary-value">{totalFans > 0 ? '+' : ''}{totalFans}</span>
-                  </div>
-                  <div className="summary-item">
-                    <span className="summary-label">Reputation Change</span>
-                    <span className={`summary-value ${totalRep > 0 ? 'positive' : 'negative'}`}>
-                      {totalRep > 0 ? '+' : ''}{totalRep}
-                    </span>
+            {/* Stats Changes */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '12px',
+              marginBottom: '20px'
+            }}>
+              <div style={{
+                backgroundColor: '#1f2937',
+                borderRadius: '12px',
+                padding: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px'
+              }}>
+                <Users size={20} color="#a78bfa" />
+                <div>
+                  <div style={{ color: '#9ca3af', fontSize: '12px' }}>Fans</div>
+                  <div style={{ color: '#ffffff', fontWeight: '600' }}>
+                    {totalFans > 0 ? '+' : ''}{totalFans}
                   </div>
                 </div>
+              </div>
 
-                <div className="current-stats">
-                  <div className="current-stat">
-                    <span className="icon">💰</span>
-                    <span className="value">${money}</span>
-                  </div>
-                  <div className="current-stat">
-                    <span className="icon">⭐</span>
-                    <span className="value">{reputation}</span>
-                  </div>
-                  <div className="current-stat">
-                    <span className="icon">👥</span>
-                    <span className="value">{fans}</span>
+              <div style={{
+                backgroundColor: '#1f2937',
+                borderRadius: '12px',
+                padding: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px'
+              }}>
+                <Star size={20} color="#fbbf24" />
+                <div>
+                  <div style={{ color: '#9ca3af', fontSize: '12px' }}>Reputation</div>
+                  <div style={{ color: '#ffffff', fontWeight: '600' }}>
+                    {totalRep > 0 ? '+' : ''}{totalRep}
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="modal-footer">
-              <Button variant="primary" size="lg" onClick={onClose}>
-                {totalProfit > 0 ? 'Ride This High Into Next Turn' : 'Limp Into Another Day'}
-              </Button>
-            </div>
+            {/* Show Results */}
+            {showResults.length > 0 && (
+              <div style={{ marginBottom: '20px' }}>
+                <h3 style={{
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  color: '#ffffff',
+                  marginBottom: '12px'
+                }}>Tonight's Shows</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {showResults.map((result, index) => (
+                    <div key={index} style={{
+                      backgroundColor: '#1f2937',
+                      borderRadius: '8px',
+                      padding: '12px',
+                      fontSize: '14px'
+                    }}>
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        marginBottom: '4px'
+                      }}>
+                        <span style={{ color: '#ffffff', fontWeight: '500' }}>
+                          {result.bandName} @ {result.venueName}
+                        </span>
+                        <span style={{
+                          color: result.revenue - result.financials.costs > 0 ? '#10b981' : '#ef4444'
+                        }}>
+                          ${result.revenue - result.financials.costs}
+                        </span>
+                      </div>
+                      <div style={{ color: '#9ca3af', fontSize: '12px' }}>
+                        {result.attendance}/{result.capacity} attended • +{result.fansGained} fans
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
-            <style jsx>{`
-              .modal-overlay {
-                position: fixed;
-                inset: 0;
-                background: rgba(0, 0, 0, 0.8);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                z-index: 1000;
-                backdrop-filter: blur(4px);
-              }
+            {/* Day Job Result */}
+            {dayJobResult && (
+              <div style={{
+                backgroundColor: '#1f2937',
+                borderRadius: '12px',
+                padding: '16px',
+                marginBottom: '20px',
+                borderLeft: '4px solid #f59e0b'
+              }}>
+                <h3 style={{
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  color: '#ffffff',
+                  marginBottom: '8px'
+                }}>Day Job</h3>
+                <p style={{ color: '#d1d5db', fontSize: '14px', margin: '0 0 8px 0' }}>
+                  {dayJobResult.message}
+                </p>
+                <div style={{ fontSize: '14px', color: '#9ca3af' }}>
+                  +${dayJobResult.money} • Stress +{dayJobResult.stressGain}%
+                </div>
+              </div>
+            )}
 
-              .turn-results-modal {
-                background: var(--bg-secondary);
-                border: 2px solid var(--border-default);
-                border-radius: 16px;
-                max-width: 600px;
-                width: 90%;
-                max-height: 80vh;
-                display: flex;
-                flex-direction: column;
-                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
-              }
+            {/* Difficulty Event */}
+            {difficultyEvent && (
+              <div style={{
+                backgroundColor: '#1f2937',
+                borderRadius: '12px',
+                padding: '16px',
+                borderLeft: '4px solid #ef4444'
+              }}>
+                <p style={{ color: '#ef4444', fontSize: '14px', margin: 0 }}>
+                  {difficultyEvent.message}
+                </p>
+              </div>
+            )}
+          </div>
 
-              .modal-header {
-                padding: 24px;
-                border-bottom: 2px solid var(--border-default);
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-              }
-
-              .modal-title {
-                margin: 0;
-                font-size: 28px;
-                font-weight: 900;
-                text-transform: uppercase;
-                letter-spacing: 0.05em;
-                color: var(--punk-magenta);
-              }
-
-              .close-button {
-                background: none;
-                border: none;
-                color: var(--text-muted);
-                font-size: 32px;
-                cursor: pointer;
-                padding: 0;
-                width: 40px;
-                height: 40px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                border-radius: 8px;
-                transition: all var(--transition-fast);
-              }
-
-              .close-button:hover {
-                background: var(--bg-tertiary);
-                color: var(--text-primary);
-              }
-
-              .results-content {
-                flex: 1;
-                overflow-y: auto;
-                padding: 24px;
-              }
-
-              .shows-section,
-              .costs-section,
-              .summary-section {
-                margin-bottom: 24px;
-              }
-
-              .section-title {
-                margin: 0 0 16px;
-                font-size: 18px;
-                font-weight: 700;
-                text-transform: uppercase;
-                letter-spacing: 0.05em;
-                color: var(--punk-magenta);
-              }
-
-              .show-results {
-                display: flex;
-                flex-direction: column;
-                gap: 12px;
-              }
-
-              .show-result {
-                background: var(--bg-tertiary);
-                border: 2px solid var(--border-default);
-                border-radius: 12px;
-                padding: 16px;
-              }
-
-              .show-result.success {
-                border-color: var(--success-emerald);
-              }
-
-              .show-result.failure {
-                border-color: var(--metal-red);
-              }
-
-              .show-header {
-                display: flex;
-                align-items: center;
-                gap: 12px;
-                margin-bottom: 12px;
-              }
-
-              .show-icon {
-                font-size: 24px;
-              }
-
-              .show-status {
-                font-size: 16px;
-                font-weight: 600;
-              }
-
-              .show-stats {
-                display: grid;
-                grid-template-columns: repeat(4, 1fr);
-                gap: 12px;
-              }
-
-              .stat {
-                text-align: center;
-              }
-
-              .stat-label {
-                display: block;
-                font-size: 12px;
-                color: var(--text-muted);
-                text-transform: uppercase;
-                letter-spacing: 0.05em;
-                margin-bottom: 4px;
-              }
-
-              .stat-value {
-                display: block;
-                font-size: 16px;
-                font-weight: 700;
-                color: var(--text-secondary);
-              }
-
-              .stat-value.positive {
-                color: var(--success-green);
-              }
-
-              .stat-value.negative {
-                color: var(--metal-red);
-              }
-
-              .incidents {
-                margin-top: 12px;
-                padding-top: 12px;
-                border-top: 1px solid var(--border-default);
-              }
-
-              .incident {
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                font-size: 14px;
-                color: var(--warning-amber);
-              }
-
-              .incident-icon {
-                font-size: 16px;
-              }
-
-              .no-shows {
-                text-align: center;
-                padding: 40px;
-              }
-
-              .no-shows-icon {
-                font-size: 48px;
-                display: block;
-                margin-bottom: 16px;
-                opacity: 0.5;
-              }
-
-              .no-shows-text {
-                color: var(--text-muted);
-                font-size: 16px;
-              }
-
-              .cost-item {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: 12px;
-                background: var(--bg-tertiary);
-                border-radius: 8px;
-              }
-
-              .cost-label {
-                font-size: 16px;
-                color: var(--text-secondary);
-              }
-
-              .cost-value {
-                font-size: 18px;
-                font-weight: 700;
-              }
-
-              .cost-value.negative {
-                color: var(--metal-red);
-              }
-
-              .summary-stats {
-                background: var(--bg-tertiary);
-                border-radius: 12px;
-                padding: 16px;
-                margin-bottom: 16px;
-              }
-
-              .summary-item {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: 8px 0;
-              }
-
-              .summary-item.profit {
-                border-top: 2px solid var(--border-default);
-                padding-top: 12px;
-                margin-top: 4px;
-              }
-
-              .summary-label {
-                font-size: 14px;
-                color: var(--text-muted);
-                text-transform: uppercase;
-                letter-spacing: 0.05em;
-              }
-
-              .summary-value {
-                font-size: 18px;
-                font-weight: 700;
-                color: var(--text-secondary);
-              }
-
-              .summary-value.positive {
-                color: var(--success-green);
-              }
-
-              .summary-value.negative {
-                color: var(--metal-red);
-              }
-
-              .current-stats {
-                display: flex;
-                justify-content: center;
-                gap: 32px;
-                padding: 20px;
-                background: var(--bg-primary);
-                border-radius: 12px;
-              }
-
-              .current-stat {
-                display: flex;
-                align-items: center;
-                gap: 8px;
-              }
-
-              .current-stat .icon {
-                font-size: 24px;
-              }
-
-              .current-stat .value {
-                font-size: 20px;
-                font-weight: 700;
-                color: var(--text-primary);
-              }
-
-              .modal-footer {
-                padding: 24px;
-                border-top: 2px solid var(--border-default);
-              }
-
-              @media (max-width: 768px) {
-                .show-stats {
-                  grid-template-columns: repeat(2, 1fr);
-                }
-
-                .current-stats {
-                  gap: 16px;
-                }
-              }
-            `}</style>
-          </motion.div>
+          {/* Footer */}
+          <div style={{
+            padding: '20px 24px',
+            borderTop: '1px solid #374151'
+          }}>
+            <button
+              onClick={onClose}
+              style={{
+                width: '100%',
+                backgroundColor: '#ec4899',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '12px',
+                fontSize: '16px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#db2777'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#ec4899'}
+            >
+              Continue
+            </button>
+          </div>
         </motion.div>
-      )}
+      </motion.div>
     </AnimatePresence>
   );
 };

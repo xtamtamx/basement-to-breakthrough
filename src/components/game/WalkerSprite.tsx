@@ -236,6 +236,100 @@ export const WalkerSprite: React.FC<WalkerSpriteProps> = ({ walker, cellSize, gr
       </svg>
     );
   };
+  
+  const renderPromoterSprite = () => {
+    const bounceOffset = walker.state === WalkerState.WALKING ? Math.sin(Date.now() / 150) * 2 : 0;
+    const armWave = Math.sin(Date.now() / 200) * 10;
+    
+    return (
+      <svg
+        width="100%"
+        height="100%"
+        viewBox="0 0 24 32"
+        style={{
+          filter: walker.state === WalkerState.AT_VENUE ? 'drop-shadow(0 0 4px #f59e0b)' : undefined
+        }}
+      >
+        {/* Shadow */}
+        <ellipse cx="12" cy="30" rx="8" ry="2" fill="rgba(0,0,0,0.3)" />
+        
+        {/* Body */}
+        <g transform={`translate(0, ${bounceOffset})`}>
+          {/* Flyers in hand */}
+          <rect 
+            x="16" 
+            y="12" 
+            width="6" 
+            height="8" 
+            fill="#f59e0b" 
+            transform={`rotate(${armWave} 19 16)`}
+          />
+          <rect 
+            x="17" 
+            y="13" 
+            width="4" 
+            height="6" 
+            fill="#fff" 
+            transform={`rotate(${armWave} 19 16)`}
+          />
+          
+          {/* Body */}
+          <rect x="8" y="14" width="8" height="10" rx="1" fill="#f59e0b" />
+          
+          {/* Arms */}
+          <rect x="6" y="14" width="2" height="8" rx="1" fill="#f4a261" />
+          <rect 
+            x="16" 
+            y="14" 
+            width="2" 
+            height="8" 
+            rx="1" 
+            fill="#f4a261"
+            transform={`rotate(${armWave} 17 18)`}
+          />
+          
+          {/* Legs */}
+          <rect x="9" y="22" width="3" height="8" rx="1" fill="#1e40af" />
+          <rect x="12" y="22" width="3" height="8" rx="1" fill="#1e40af" />
+          
+          {/* Head */}
+          <circle cx="12" cy="8" r="5" fill="#f4a261" />
+          
+          {/* Cap */}
+          <path d="M7 6 Q12 3 17 6 L17 8 L7 8 Z" fill="#f59e0b" />
+          <rect x="10" y="3" width="4" height="3" fill="#f59e0b" />
+          
+          {/* Face */}
+          <circle cx="10" cy="8" r="0.5" fill="#000" />
+          <circle cx="14" cy="8" r="0.5" fill="#000" />
+          {walker.state === WalkerState.AT_VENUE && (
+            <path d="M9 10 Q12 12 15 10" stroke="#000" strokeWidth="0.5" fill="none" />
+          )}
+        </g>
+        
+        {/* Floating flyers effect */}
+        {walker.state === WalkerState.AT_VENUE && (
+          <g className="flyer-particles">
+            {[...Array(3)].map((_, i) => (
+              <rect 
+                key={i}
+                x={12 + (i - 1) * 8}
+                y={20}
+                width="4"
+                height="5"
+                fill="#f59e0b"
+                opacity="0.8"
+                style={{
+                  animation: `float-away 2s ease-out infinite`,
+                  animationDelay: `${i * 0.4}s`
+                }}
+              />
+            ))}
+          </g>
+        )}
+      </svg>
+    );
+  };
 
   // Don't render if walker is outside current view
   if (walker.x < gridBounds.x || walker.x >= gridBounds.x + gridBounds.width ||
@@ -249,6 +343,7 @@ export const WalkerSprite: React.FC<WalkerSpriteProps> = ({ walker, cellSize, gr
       {walker.type === WalkerType.FAN && renderFanSprite()}
       {walker.type === WalkerType.POLICE && renderPoliceSprite()}
       {walker.type === WalkerType.SUPPLIER && renderSupplierSprite()}
+      {walker.type === WalkerType.PROMOTER && renderPromoterSprite()}
       
       {/* Particle effects */}
       {walker.state === WalkerState.PERFORMING && (
@@ -320,6 +415,17 @@ export const WalkerSprite: React.FC<WalkerSpriteProps> = ({ walker, cellSize, gr
           }
           100% {
             transform: scale(1.5);
+            opacity: 0;
+          }
+        }
+        
+        @keyframes float-away {
+          0% {
+            transform: translateY(0) translateX(0) rotate(0deg);
+            opacity: 0.8;
+          }
+          100% {
+            transform: translateY(-40px) translateX(var(--float-x, 20px)) rotate(180deg);
             opacity: 0;
           }
         }

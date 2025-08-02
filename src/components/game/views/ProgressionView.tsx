@@ -1,14 +1,5 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  ProgressionPath, 
-  PathChoice,
-  progressionPathSystem 
-} from '../../../game/mechanics/ProgressionPathSystem';
-import { useGameStore } from '@stores/gameStore';
-import { haptics } from '@utils/mobile';
-
-export const ProgressionView: React.FC = () => {
+// Re-export the fixed ProgressionView component
+export { ProgressionView } from './ProgressionViewFixed';
   const { fans, reputation, showHistory } = useGameStore();
   const [selectedChoice, setSelectedChoice] = useState<PathChoice | null>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);

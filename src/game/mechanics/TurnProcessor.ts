@@ -8,7 +8,7 @@ import { showPromotionSystem } from './ShowPromotionSystem';
 import { devLog } from '@utils/devLogger';
 
 export class TurnProcessor {
-  processNextTurn(): { 
+  async processNextTurn(): Promise<{ 
     showResults: ShowResult[], 
     totalVenueRent: number,
     dayJobResult?: {
@@ -31,7 +31,7 @@ export class TurnProcessor {
       message: string;
       reputationLost: number;
     }
-  } {
+  }> {
     const store = useGameStore.getState();
     const { venues, allBands } = store;
     
@@ -55,26 +55,28 @@ export class TurnProcessor {
           walkerSystem.createMusicianWalker(band, venues[0], venue);
         }
         
-        // Create fan walkers based on attendance
-        const fanCount = Math.min(result.attendance / 10, 10); // 1 walker per 10 attendees, max 10
-        for (let i = 0; i < fanCount; i++) {
-          const randomX = Math.floor(Math.random() * 8);
-          const randomY = Math.floor(Math.random() * 8);
-          walkerSystem.createFanWalker(randomX, randomY, venue);
-        }
+        // Spawn walkers based on show results
+        const success = result.financials.profit > 0 && result.attendance > venue.capacity * 0.5;
+        walkerSystem.spawnShowResultWalkers(venue, result.attendance, success);
       }
     });
     
     
-    // Calculate total venue rent with difficulty scaling
-    const totalVenueRent = venues.reduce((sum, venue) => {
-      return sum + difficultySystem.getScaledVenueCost(venue.rent);
-    }, 0);
+    // Import venue upgrade system
+    const { venueUpgradeSystem } = await import('./VenueUpgradeSystem');
     
-    // Apply venue rent costs
+    // Calculate total venue costs with difficulty scaling
+    let totalVenueCosts = 0;
     venues.forEach(venue => {
       const scaledRent = difficultySystem.getScaledVenueCost(venue.rent);
-      store.addMoney(-scaledRent);
+      const upkeepCost = venueUpgradeSystem.calculateUpkeepCost(venue);
+      const totalCost = scaledRent + upkeepCost;
+      
+      totalVenueCosts += totalCost;
+      store.addMoney(-totalCost);
+      
+      // Degrade equipment condition
+      venueUpgradeSystem.degradeEquipment(venue);
     });
     
     // Process day job income
@@ -136,10 +138,38 @@ export class TurnProcessor {
       district: venue.location.id
     });
     
+    // Calculate equipment effects
+    let equipmentCapacityBonus = 1;
+    let equipmentReputationMultiplier = 1;
+    let equipmentIncidentReduction = 0;
+    
+    venue.equipment.forEach(equipment => {
+      if (equipment.owned && equipment.condition > 20) { // Equipment needs 20%+ condition to work
+        const effectMultiplier = equipment.condition / 100; // Effects scale with condition
+        
+        if (equipment.effects.capacityBonus) {
+          equipmentCapacityBonus += (equipment.effects.capacityBonus / 100) * effectMultiplier;
+        }
+        if (equipment.effects.reputationMultiplier) {
+          equipmentReputationMultiplier *= (1 + (equipment.effects.reputationMultiplier - 1) * effectMultiplier);
+        }
+        if (equipment.effects.incidentReduction) {
+          equipmentIncidentReduction += equipment.effects.incidentReduction * effectMultiplier;
+        }
+      }
+    });
+    
+    // Apply venue upgrades to capacity
+    const upgradeCapacityBonus = venue.upgrades?.reduce((total, upgrade) => {
+      return total + (upgrade.effects.capacity || 0);
+    }, 0) || 0;
+    
+    const effectiveCapacity = Math.floor((venue.capacity + upgradeCapacityBonus) * equipmentCapacityBonus);
+    
     // Calculate base attendance
     const avgPopularity = allShowBands.reduce((acc, b) => acc + b.popularity, 0) / allShowBands.length;
     const venueBonus = venue.atmosphere / 100;
-    const baseAttendance = Math.floor(venue.capacity * (avgPopularity / 100) * venueBonus);
+    const baseAttendance = Math.floor(effectiveCapacity * (avgPopularity / 100) * venueBonus);
     
     // Apply synergy multipliers
     const synergyMultiplier = synergySystemV2.calculateTotalMultiplier(synergies);
@@ -155,7 +185,7 @@ export class TurnProcessor {
     
     const finalAttendance = Math.min(
       Math.floor(promotedAttendance * synergyMultiplier * difficultyModifiers.attendanceMultiplier * hypeMultiplier), 
-      venue.capacity
+      effectiveCapacity
     );
     
     // Calculate revenue
@@ -176,8 +206,8 @@ export class TurnProcessor {
     const venueCost = difficultySystem.getScaledVenueCost(venue.rent);
     const totalCosts = bandCosts + venueCost;
     
-    // Calculate reputation and fan gains
-    let reputationGain = Math.floor(finalAttendance / 10);
+    // Calculate reputation and fan gains with equipment bonus
+    let reputationGain = Math.floor(finalAttendance / 10 * equipmentReputationMultiplier);
     let fanGain = Math.floor(finalAttendance / 5);
     
     // Apply synergy effects

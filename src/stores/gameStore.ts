@@ -91,10 +91,15 @@ interface GameStore {
   nextRound: () => void;
   resetGame: () => void;
   loadInitialGameData: () => Promise<void>;
+  
+  // Save/Load
+  saveGame: (saveName?: string) => Promise<string>;
+  loadGame: (saveId: string) => Promise<boolean>;
 
   // City actions
   updateDistricts: (districts: District[]) => void;
   updateVenues: (venues: Venue[]) => void;
+  updateVenue: (venue: Venue) => void;
   updateWalkers: (walkers: Walker[]) => void;
   addVenue: (venue: Venue) => void;
 
@@ -734,13 +739,61 @@ export const useGameStore = create<GameStore>()(
           rosterBandIds: bands.slice(0, 3).map(b => b.id), // First 3 bands in roster
         });
       },
+      
+      // Save/Load
+      saveGame: async (saveName?: string) => {
+        try {
+          const { saveGameManager } = await import('@game/persistence/SaveGameManager');
+          const state = get();
+          const saveId = await saveGameManager.saveGame(state, saveName);
+          console.log('Game saved successfully:', saveId);
+          return saveId;
+        } catch (error) {
+          console.error('Failed to save game:', error);
+          throw error;
+        }
+      },
+      
+      loadGame: async (saveId: string) => {
+        try {
+          const { saveGameManager } = await import('@game/persistence/SaveGameManager');
+          const savedState = await saveGameManager.loadGame(saveId);
+          
+          if (!savedState) {
+            console.error('Failed to load save:', saveId);
+            return false;
+          }
+          
+          // Merge saved state with current state to preserve functions
+          set((state) => ({
+            ...state,
+            ...savedState,
+          }));
+          
+          console.log('Game loaded successfully:', saveId);
+          return true;
+        } catch (error) {
+          console.error('Failed to load game:', error);
+          return false;
+        }
+      },
 
       // City actions
       updateDistricts: (districts) => set({ districts }),
       updateVenues: (venues) => set({ venues }),
+      updateVenue: (venue) =>
+        set((state) => ({
+          venues: state.venues.map(v => v.id === venue.id ? venue : v)
+        })),
       updateWalkers: (walkers) => set({ walkers }),
-      addVenue: (venue) =>
-        set((state) => ({ venues: [...state.venues, venue] })),
+      addVenue: (venue) => {
+        // Import dynamically to avoid circular dependency
+        import('@/game/systems/CityGrowthManager').then(({ cityGrowthManager }) => {
+          cityGrowthManager.recordVenueBuilt();
+        });
+        
+        set((state) => ({ venues: [...state.venues, venue] }));
+      },
 
       // Band actions
       addBandToRoster: (bandId) =>
@@ -761,13 +814,19 @@ export const useGameStore = create<GameStore>()(
         })),
 
       // Show actions
-      scheduleShow: (show) =>
+      scheduleShow: (show) => {
+        // Import dynamically to avoid circular dependency
+        import('@/game/systems/CityGrowthManager').then(({ cityGrowthManager }) => {
+          cityGrowthManager.recordShowBooked();
+        });
+        
         set((state) => ({
           scheduledShows: [
             ...state.scheduledShows.slice(-199), // Keep last 200 shows
             show
           ],
-        })),
+        }));
+      },
 
       completeShow: (showId, result) =>
         set((state) => {

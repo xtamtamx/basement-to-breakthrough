@@ -10,7 +10,7 @@ import { haptics } from "@utils/mobile";
 import { audio } from "@utils/audio";
 import { dayJobSystem } from "@game/mechanics/DayJobSystem";
 import { safeStorage } from "@utils/safeStorage";
-import { AppErrorBoundary } from "@components/ErrorBoundary";
+import { AppErrorBoundary } from "@components/ErrorBoundary/AppErrorBoundary";
 import { ColorblindProvider } from "@contexts/ColorblindContext";
 import { ColorblindMode } from "@game/types";
 import { SaveLoadTest } from "@components/SaveLoadTest";
@@ -47,7 +47,7 @@ function App() {
     setShowPerfTest(true);
   }
 
-  const handleStartGame = (runConfig?: RunConfig) => {
+  const handleStartGame = async (runConfig?: RunConfig) => {
     if (runConfig) {
       // Start a new run with selected config
       runManager.startRun(runConfig.id);
@@ -77,6 +77,10 @@ function App() {
       }
     }
 
+    // Initialize game data
+    const store = useGameStore.getState();
+    await store.loadInitialGameData();
+    
     // Initialize job system
     dayJobSystem.refreshJobs();
 
@@ -121,7 +125,9 @@ function App() {
             onStartGame={() => handleStartGame()}
             onContinueGame={
               hasSavedGame
-                ? () => {
+                ? async () => {
+                    const store = useGameStore.getState();
+                    await store.loadInitialGameData();
                     setShowMainMenu(false);
                     setGameStarted(true);
                     haptics.success();

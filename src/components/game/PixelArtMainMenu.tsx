@@ -62,9 +62,9 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
         {/* Title */}
         <motion.div
           className="game-title"
-          initial={{ y: -50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.2, type: "spring", stiffness: 100 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2, duration: 0.5 }}
         >
           <h1 className={`title-text ${glitchText ? 'glitch' : ''}`}>
             DIY INDIE
@@ -152,8 +152,9 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
           display: flex;
           align-items: center;
           justify-content: center;
-          overflow: hidden;
+          overflow: visible;
           font-family: monospace;
+          padding: 40px 20px;
         }
 
         .background-walkers {
@@ -172,27 +173,29 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
           z-index: 10;
           width: 100%;
           max-width: 400px;
-          padding: 20px;
+          padding: 40px 20px 20px;
           text-align: center;
         }
 
         .game-title {
-          margin-bottom: 48px;
+          margin-bottom: 40px;
+          margin-top: 0;
         }
 
         .title-text {
-          font-size: 56px;
+          font-size: 40px;
           font-weight: 900;
           color: #FF0066;
           text-transform: uppercase;
           letter-spacing: 0.05em;
           margin: 0;
+          padding: 0;
           text-shadow: 
-            4px 4px 0px #8B0000,
-            8px 8px 0px #000,
-            8px 8px 20px rgba(255, 0, 102, 0.5);
+            2px 2px 0px #8B0000,
+            4px 4px 0px #000,
+            4px 4px 10px rgba(255, 0, 102, 0.5);
           image-rendering: pixelated;
-          transform: perspective(300px) rotateY(-5deg);
+          transform: none;
         }
 
         .title-text.glitch {
@@ -222,15 +225,15 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
         }
 
         .subtitle-text {
-          font-size: 36px;
+          font-size: 28px;
           font-weight: 700;
           color: #FFFFFF;
           text-transform: uppercase;
           letter-spacing: 0.1em;
-          margin: -10px 0 0;
+          margin: -5px 0 0;
           text-shadow: 
             2px 2px 0px #2D2D2D,
-            4px 4px 0px #000;
+            3px 3px 0px #000;
         }
 
         .tagline {
@@ -269,11 +272,15 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
 
         @media (max-width: 768px) {
           .title-text {
-            font-size: 42px;
+            font-size: 32px;
+            text-shadow: 
+              2px 2px 0px #8B0000,
+              3px 3px 0px #000,
+              3px 3px 8px rgba(255, 0, 102, 0.5);
           }
 
           .subtitle-text {
-            font-size: 28px;
+            font-size: 22px;
           }
 
           .tagline {

@@ -9,6 +9,8 @@ export interface MapTile {
   interactable?: boolean;
   data?: VenueData | WorkplaceData;
   animated?: boolean; // For active venues
+  developmentLevel?: 'empty' | 'construction' | 'basic' | 'developed' | 'thriving';
+  variation?: number; // For sprite variety
 }
 
 export interface VenueData {

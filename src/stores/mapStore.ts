@@ -6,7 +6,7 @@ import {
   MapTile,
   VenueData,
 } from "@/components/map/MapTypes";
-import { generateCityMap } from "@/utils/mapGeneration";
+import { generateAdvancedCityMap } from "@/utils/mapGenerationAdvanced";
 import { useGameStore } from "@/stores/gameStore";
 
 interface MapStore {
@@ -53,10 +53,16 @@ export const useMapStore = create<MapStore>()(
       playerPosition: null,
 
       // Initialize map
-      initializeMap: () => {
+      initializeMap: async () => {
         // Get venues from game store
         const gameStore = useGameStore.getState();
-        const map = generateCityMap(gameStore.venues);
+        
+        // Ensure initial game data is loaded
+        if (gameStore.venues.length === 0) {
+          await gameStore.loadInitialGameData();
+        }
+        
+        const map = generateAdvancedCityMap(gameStore.venues);
 
         set({
           cityMap: map,

@@ -710,6 +710,7 @@ export interface Walker {
   speed: number; // Grid cells per second
   state: WalkerState;
   data?: WalkerData; // Type-specific data (band info, equipment, etc)
+  stuckCounter?: number; // Counter for detecting stuck walkers
 }
 
 export enum WalkerType {
@@ -719,6 +720,7 @@ export enum WalkerType {
   EQUIPMENT_TECH = "EQUIPMENT_TECH",
   POLICE = "POLICE",
   GENTRIFIER = "GENTRIFIER",
+  SUPPLIER = "SUPPLIER",
 }
 
 export enum WalkerState {

@@ -35,8 +35,14 @@ export const MapInteractionProvider: React.FC<{ children: ReactNode }> = ({
 
   const handleVenueClick = useCallback(
     (venueData: VenueData) => {
+      console.log('handleVenueClick - venueData:', venueData);
+      console.log('handleVenueClick - venues:', venues);
       const venue = venues.find((v) => v.id === venueData.id);
-      if (!venue) return;
+      console.log('handleVenueClick - found venue:', venue);
+      if (!venue) {
+        console.error('Venue not found for id:', venueData.id);
+        return;
+      }
 
       haptics.medium();
       setSelectedVenue(venue);
@@ -54,14 +60,20 @@ export const MapInteractionProvider: React.FC<{ children: ReactNode }> = ({
 
   const handleTileClick = useCallback(
     (tile: MapTile) => {
-      if (!tile.interactable || !tile.data) return;
+      console.log('handleTileClick - tile:', tile);
+      if (!tile.interactable || !tile.data) {
+        console.log('Tile not interactable or no data');
+        return;
+      }
 
       setSelectedTile(tile);
 
-      if (tile.type === "venue" && "venue" in tile.data) {
-        handleVenueClick(tile.data);
-      } else if (tile.type === "workplace" && "jobId" in tile.data) {
-        handleWorkplaceClick(tile.data);
+      if (tile.type === "venue") {
+        console.log('Venue tile clicked');
+        handleVenueClick(tile.data as VenueData);
+      } else if (tile.type === "workplace" && "jobType" in tile.data) {
+        console.log('Workplace tile clicked');
+        handleWorkplaceClick(tile.data as WorkplaceData);
       }
     },
     [setSelectedTile, handleVenueClick, handleWorkplaceClick],

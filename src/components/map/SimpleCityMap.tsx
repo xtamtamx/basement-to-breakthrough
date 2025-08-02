@@ -1,16 +1,29 @@
-import React, { useRef, useEffect, useCallback, useState } from "react";
+import React, {
+  useRef,
+  useEffect,
+  useCallback,
+  useState,
+  useContext,
+} from "react";
 import { MapTile, VenueData } from "./MapTypes";
 import { useMapStore } from "@/stores/mapStore";
 import { haptics } from "@/utils/mobile";
 import { SPRITES_16BIT } from "./sprites/PixelSprites16Bit";
-import { useMapInteraction } from "@/contexts/MapInteractionContext";
+import { getDevelopmentSprite } from "./sprites/DynamicSprites";
+import { createSprite } from "./sprites/PixelSprites16Bit";
+import { MapInteractionContext } from "@/contexts/MapInteractionContext";
+import { useGameStore } from "@stores/gameStore";
+import { GrowthEffects } from "./GrowthEffects";
+import { GrowthEvent } from "@/game/systems/CityGrowthManager";
 
 interface SimpleCityMapProps {
   onTileClick?: (tile: MapTile) => void;
+  growthEvents?: GrowthEvent[];
 }
 
 export const SimpleCityMap: React.FC<SimpleCityMapProps> = ({
   onTileClick,
+  growthEvents = [],
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameRef = useRef<number>();
@@ -28,8 +41,11 @@ export const SimpleCityMap: React.FC<SimpleCityMapProps> = ({
     initializeMap,
   } = useMapStore();
 
+  const gameStore = useGameStore();
+
   // Get handleTileClick from context if not provided as prop
-  const { handleTileClick: contextHandleTileClick } = useMapInteraction();
+  const context = useContext(MapInteractionContext);
+  const contextHandleTileClick = context?.handleTileClick;
   const tileClickHandler = onTileClick || contextHandleTileClick;
 
   // Initialize map on mount
@@ -96,7 +112,35 @@ export const SimpleCityMap: React.FC<SimpleCityMapProps> = ({
       let sprite = null;
 
       if (tile.type === "building" && tile.district) {
-        sprite = SPRITES_16BIT[`building_${tile.district}`];
+        // Use dynamic sprites for buildings based on development level
+        const districtInfo = gameStore.districts.find(
+          (d) => d.type === tile.district,
+        );
+        if (districtInfo && tile.developmentLevel) {
+          const dynamicSprite = getDevelopmentSprite(
+            districtInfo.type,
+            tile.developmentLevel,
+            tile.variation || 0,
+          );
+          sprite = createSprite(dynamicSprite.pattern, dynamicSprite.colors);
+        } else {
+          // Fallback to standard sprites
+          sprite =
+            SPRITES_16BIT[`building_${districtInfo?.type || "downtown"}`];
+        }
+      } else if (tile.type === "empty" && tile.developmentLevel) {
+        // Handle empty lots with dynamic sprites
+        const districtInfo = gameStore.districts.find(
+          (d) => d.type === tile.district,
+        );
+        if (districtInfo) {
+          const dynamicSprite = getDevelopmentSprite(
+            districtInfo.type,
+            tile.developmentLevel,
+            tile.variation || 0,
+          );
+          sprite = createSprite(dynamicSprite.pattern, dynamicSprite.colors);
+        }
       } else if (tile.type === "venue") {
         sprite =
           tile.animated || (tile.data as VenueData)?.hasActiveShow
@@ -176,7 +220,7 @@ export const SimpleCityMap: React.FC<SimpleCityMapProps> = ({
         selectedTile.x === tile.x &&
         selectedTile.y === tile.y
       ) {
-        ctx.strokeStyle = "#00FFFF";
+        ctx.strokeStyle = "#ec4899";
         ctx.lineWidth = 3;
         ctx.strokeRect(
           Math.floor(screenPos.x),
@@ -204,8 +248,8 @@ export const SimpleCityMap: React.FC<SimpleCityMapProps> = ({
         return;
       }
 
-      // Clear canvas
-      ctx.fillStyle = "#000000";
+      // Clear canvas with dark background
+      ctx.fillStyle = "#0a0a0a";
       ctx.fillRect(0, 0, dimensions.width, dimensions.height);
       ctx.imageSmoothingEnabled = false;
 
@@ -238,12 +282,12 @@ export const SimpleCityMap: React.FC<SimpleCityMapProps> = ({
       // Draw district labels when zoomed out
       if (camera.zoom <= 1.0 && cityMap.districts) {
         ctx.save();
-        ctx.font = "bold 14px monospace";
+        ctx.font = "bold 14px -apple-system, system-ui, sans-serif";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillStyle = "#FFFFFF";
-        ctx.strokeStyle = "#000000";
-        ctx.lineWidth = 3;
+        ctx.fillStyle = "#ffffff";
+        ctx.strokeStyle = "#0a0a0a";
+        ctx.lineWidth = 4;
 
         cityMap.districts.forEach((district) => {
           const centerX =
@@ -325,15 +369,16 @@ export const SimpleCityMap: React.FC<SimpleCityMapProps> = ({
         ) {
           const tile = cityMap.tiles[tileY][tileX];
 
-          if (tile.interactable) {
-            haptics.light();
-            setSelectedTile(tile);
-            if (tileClickHandler) {
-              tileClickHandler(tile);
-            }
-          } else {
-            setSelectedTile(null);
+          // Pass all tile clicks to handler
+          haptics.light();
+          setSelectedTile(tile);
+          if (tileClickHandler) {
+            tileClickHandler(tile);
           }
+          // Also dispatch custom event for debugging
+          window.dispatchEvent(
+            new CustomEvent("mapTileClick", { detail: tile }),
+          );
         }
       }
 
@@ -459,7 +504,7 @@ export const SimpleCityMap: React.FC<SimpleCityMapProps> = ({
         width: "100%",
         height: "100%",
         position: "relative",
-        backgroundColor: "#000000",
+        backgroundColor: "#0a0a0a",
         overflow: "hidden",
         touchAction: "none",
       }}
@@ -482,24 +527,38 @@ export const SimpleCityMap: React.FC<SimpleCityMapProps> = ({
       <div
         style={{
           position: "absolute",
-          bottom: 80,
-          right: 20,
+          bottom: "calc(7rem + env(safe-area-inset-bottom))",
+          right: 16,
           display: "flex",
           flexDirection: "column",
-          gap: "10px",
+          gap: "8px",
         }}
       >
         <button
           onClick={handleZoomIn}
           style={{
-            width: "40px",
-            height: "40px",
-            borderRadius: "50%",
-            border: "none",
-            backgroundColor: "rgba(139, 92, 246, 0.8)",
-            color: "#FFFFFF",
-            fontSize: "20px",
+            width: "36px",
+            height: "36px",
+            borderRadius: "18px",
+            border: "1px solid #374151",
+            backgroundColor: "rgba(17, 24, 39, 0.95)",
+            backdropFilter: "blur(12px)",
+            color: "#ec4899",
+            fontSize: "18px",
             cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
+            transition: "all 0.2s",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = "rgba(236, 72, 153, 0.2)";
+            e.currentTarget.style.borderColor = "#ec4899";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = "rgba(17, 24, 39, 0.95)";
+            e.currentTarget.style.borderColor = "#374151";
           }}
         >
           +
@@ -507,36 +566,41 @@ export const SimpleCityMap: React.FC<SimpleCityMapProps> = ({
         <button
           onClick={handleZoomOut}
           style={{
-            width: "40px",
-            height: "40px",
-            borderRadius: "50%",
-            border: "none",
-            backgroundColor: "rgba(139, 92, 246, 0.8)",
-            color: "#FFFFFF",
-            fontSize: "20px",
+            width: "36px",
+            height: "36px",
+            borderRadius: "18px",
+            border: "1px solid #374151",
+            backgroundColor: "rgba(17, 24, 39, 0.95)",
+            backdropFilter: "blur(12px)",
+            color: "#ec4899",
+            fontSize: "18px",
             cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
+            transition: "all 0.2s",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = "rgba(236, 72, 153, 0.2)";
+            e.currentTarget.style.borderColor = "#ec4899";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = "rgba(17, 24, 39, 0.95)";
+            e.currentTarget.style.borderColor = "#374151";
           }}
         >
           −
         </button>
       </div>
 
-      {/* Info display */}
-      <div
-        style={{
-          position: "absolute",
-          top: 10,
-          left: 10,
-          color: "#FFFFFF",
-          fontFamily: "monospace",
-          fontSize: "12px",
-          backgroundColor: "rgba(0,0,0,0.7)",
-          padding: "5px",
-          borderRadius: "3px",
-        }}
-      >
-        Zoom: {camera.zoom.toFixed(2)}x
-      </div>
+      {/* Growth effects overlay */}
+      <GrowthEffects
+        events={growthEvents}
+        tileSize={cityMap.tileSize}
+        camera={camera}
+        dimensions={dimensions}
+      />
     </div>
   );
 };

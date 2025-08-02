@@ -5,6 +5,7 @@ import { CityDistrictView } from "./CityDistrictView";
 import { walkerSystem } from "@game/mechanics/WalkerSystem";
 import { Band, Venue, VenueType, Genre } from "@game/types";
 import { haptics } from "@utils/mobile";
+import { VenueUpgradeModal } from "@components/venue/VenueUpgradeModal";
 
 // Demo initial venues
 const initialVenues: Venue[] = [
@@ -102,6 +103,7 @@ export const CityBuilderGameView: React.FC = () => {
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
   const [bandHand, setBandHand] = useState<Band[]>([]);
   const [showBookingPanel, setShowBookingPanel] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   // Initialize venues
   useEffect(() => {
@@ -429,6 +431,35 @@ export const CityBuilderGameView: React.FC = () => {
                 Capacity: {selectedVenue.capacity} • Authenticity:{" "}
                 {selectedVenue.authenticity}
               </div>
+              
+              {/* Upgrade Button */}
+              <button
+                onClick={() => {
+                  setShowUpgradeModal(true);
+                  setShowBookingPanel(false);
+                }}
+                style={{
+                  padding: "8px 16px",
+                  backgroundColor: "#8b5cf6",
+                  color: "white",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  marginBottom: "16px",
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  width: "100%",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "#7c3aed";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "#8b5cf6";
+                }}
+              >
+                🔧 Manage Upgrades
+              </button>
+              
               <div
                 style={{
                   display: "flex",
@@ -470,6 +501,15 @@ export const CityBuilderGameView: React.FC = () => {
           </motion.div>
         )}
       </AnimatePresence>
+      
+      {/* Venue Upgrade Modal */}
+      {selectedVenue && (
+        <VenueUpgradeModal
+          venue={selectedVenue}
+          isOpen={showUpgradeModal}
+          onClose={() => setShowUpgradeModal(false)}
+        />
+      )}
     </div>
   );
 };
