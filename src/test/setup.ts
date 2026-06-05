@@ -82,14 +82,29 @@ window.AudioContext = vi.fn().mockImplementation(() => ({
   currentTime: 0,
 }));
 
-// Mock localStorage
-const localStorageMock = {
-  getItem: vi.fn(),
-  setItem: vi.fn(),
-  removeItem: vi.fn(),
-  clear: vi.fn(),
-};
-global.localStorage = localStorageMock as unknown as Storage;
+// Provide a real, spec-compliant localStorage.
+//
+// jsdom *does* implement a working Storage, but vitest's jsdom environment never
+// copies `window.localStorage` onto the test global: jsdom exposes it as a prototype
+// getter (not an own property) and it isn't in vitest's hard-coded global key list.
+// So a bare `localStorage` reference falls through to Node's experimental Web Storage,
+// which is a non-functional stub here (no backing file) — its methods are missing and
+// nothing persists. That stub is what broke the safeStorage tests.
+//
+// Bridge the JSDOM instance's real localStorage onto the global. Because it is an
+// instance of the same `Storage` constructor that vitest *does* expose globally,
+// `localStorage instanceof Storage` holds and `vi.spyOn(Storage.prototype, ...)`
+// correctly intercepts calls. It persists values and supports bracket access / for...in.
+const jsdomWindow = (globalThis as { jsdom?: { window?: Window & typeof globalThis } })
+  .jsdom?.window;
+if (jsdomWindow?.localStorage) {
+  globalThis.localStorage = jsdomWindow.localStorage;
+}
+
+// Reset storage between tests for isolation.
+afterEach(() => {
+  localStorage.clear();
+});
 
 // Mock haptics
 vi.mock("@utils/mobile", () => ({

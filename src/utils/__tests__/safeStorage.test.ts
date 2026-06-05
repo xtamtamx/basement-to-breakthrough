@@ -3,8 +3,11 @@ import { safeStorage } from '../safeStorage';
 
 describe('Safe Storage', () => {
   beforeEach(() => {
-    // Clear all mocks before each test
-    vi.clearAllMocks();
+    // Restore (not just clear) all mocks before each test. Several tests spy on
+    // Storage.prototype methods to make them throw; clearAllMocks only wipes call
+    // history and would leave those throwing implementations in place, leaking them
+    // into later tests now that localStorage is a real Storage instance.
+    vi.restoreAllMocks();
     localStorage.clear();
   });
 
@@ -64,12 +67,16 @@ describe('Safe Storage', () => {
 
       const clearOldDataSpy = vi.spyOn(safeStorage, 'clearOldData').mockImplementation(() => {});
       const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-      
+      // clearOldData is stubbed out, so the retry setItem throws again and the code
+      // logs via console.error ("localStorage is full..."). Silence it to keep output clean.
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
       expect(safeStorage.setItem('test', 'value')).toBe(false);
       expect(clearOldDataSpy).toHaveBeenCalled();
-      
+
       clearOldDataSpy.mockRestore();
       consoleSpy.mockRestore();
+      errorSpy.mockRestore();
     });
   });
 
@@ -117,14 +124,37 @@ describe('Safe Storage', () => {
     });
 
     it('should handle errors gracefully', () => {
-      const keysSpy = vi.spyOn(Object, 'keys').mockImplementation(() => {
-        throw new Error('Keys error');
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      // getSize() iterates `localStorage` with a for...in loop inside a try/catch.
+      // Swap in a Storage whose enumeration throws so the catch path (warn + return 0)
+      // is genuinely exercised. (The original test spied on Object.keys, but getSize
+      // never calls Object.keys, so that spy didn't trigger the catch — and, left
+      // unrestored, it leaked a throwing stub into Vitest's snapshot teardown.)
+      const realLocalStorage = globalThis.localStorage;
+      globalThis.localStorage = new Proxy({} as Storage, {
+        ownKeys() {
+          throw new Error('Keys error');
+        },
+        get() {
+          throw new Error('Keys error');
+        },
       });
 
-      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-      expect(safeStorage.getSize()).toBe(0);
+      let size: number | undefined;
+      try {
+        size = safeStorage.getSize();
+      } finally {
+        // Restore BEFORE asserting so neither expect() nor teardown touches the trap.
+        globalThis.localStorage = realLocalStorage;
+      }
+
+      expect(size).toBe(0);
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'Failed to calculate localStorage size',
+        expect.any(Error),
+      );
       consoleSpy.mockRestore();
-      keysSpy.mockRestore();
     });
   });
 
