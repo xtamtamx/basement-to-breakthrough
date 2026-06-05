@@ -89,7 +89,7 @@ const localStorageMock = {
   removeItem: vi.fn(),
   clear: vi.fn(),
 };
-global.localStorage = localStorageMock as unknown as Storage;
+global.localStorage = localStorageMock as Storage;
 
 // Mock haptics
 vi.mock("@utils/mobile", () => ({
