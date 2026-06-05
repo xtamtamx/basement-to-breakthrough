@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useGameStore } from '@stores/gameStore';
-import { ModernCityRenderer } from '@/components/map/ModernCityRenderer';
+import { SimplerCity } from '@/components/map/SimplerCity';
+import { DetailedDistrictView } from '@/components/map/DetailedDistrictView';
 import { haptics } from '@utils/mobile';
 import { DistrictViewBasic } from '../DistrictViewBasic';
 import { DistrictInfo } from '@/game/generation/CityGenerator';
@@ -55,7 +56,7 @@ export const CityView: React.FC = () => {
   };
 
   const handleZoomOut = () => {
-    setViewMode('overview');
+    setViewMode('worldmap');
     setSelectedDistrictId(null);
     setSelectedDistrictInfo(null);
     haptics.light();
@@ -190,7 +191,19 @@ export const CityView: React.FC = () => {
               bottom: 0,
               backgroundColor: '#0a0a0a'
             }}>
-              <ModernCityRenderer onBuildingClick={handleBuildingClick} />
+              <SimplerCity 
+                onDistrictClick={(district) => {
+                  setSelectedDistrictId(district.id);
+                  setSelectedDistrictInfo({
+                    id: district.id,
+                    name: district.name,
+                    type: district.type,
+                    cells: [], // DistrictViewBasic expects these
+                    neighbors: []
+                  });
+                  setViewMode('district');
+                }}
+              />
             </div>
             
             {/* Compact Stats Overlay */}

@@ -1,3 +1,13 @@
+/**
+ * @deprecated This file is superseded by SynergyManager.ts for Phase A.
+ * The new authoritative synergy system uses:
+ * - Player-equipped synergy slots (3 base, 5 max)
+ * - TURN_START/TURN_END/SHOW_START/SHOW_END/PASSIVE triggers
+ * - Visible, explainable effects
+ *
+ * Import from SynergyManager instead:
+ * import { synergyManager, Synergy } from './SynergyManager';
+ */
 import { Band, Venue, Genre, VenueType } from '@game/types';
 import { SATIRICAL_SYNERGY_DATA } from '@game/data/satiricalText';
 

@@ -1,11 +1,21 @@
+/**
+ * @deprecated TurnProcessor is being replaced by TurnResolutionEngine for Phase A.
+ * Use turnResolutionEngine.executeFullTurn() for the authoritative turn resolution.
+ * This file is kept for backwards compatibility during migration.
+ */
 import { useGameStore } from '@stores/gameStore';
 import { Show, ShowResult, Incident, IncidentType } from '@game/types';
-import { synergySystemV2 } from './SynergySystemV2';
+import { synergyManager } from './SynergyManager';
 import { walkerSystem } from './WalkerSystem';
 import { dayJobSystem } from './DayJobSystem';
 import { difficultySystem } from './DifficultySystem';
 import { showPromotionSystem } from './ShowPromotionSystem';
 import { devLog } from '@utils/devLogger';
+import {
+  ESCALATION_START_TURN,
+  ESCALATION_COST_MULTIPLIER,
+  ESCALATION_INCIDENT_MULTIPLIER,
+} from '../constants/runConstants';
 
 export class TurnProcessor {
   async processNextTurn(): Promise<{ 
@@ -133,11 +143,25 @@ export class TurnProcessor {
       });
     }
     
-    // Check synergies
-    const synergies = synergySystemV2.checkSynergies(allShowBands, venue, {
-      district: venue.location.id
-    });
-    
+    // Get synergy context for the new system
+    const turn = useGameStore.getState().currentRound;
+    const isEscalation = turn >= ESCALATION_START_TURN;
+
+    // Trigger SHOW_START synergies from the new authoritative system
+    const synergyContext = {
+      currentTurn: turn,
+      money: store.money,
+      reputation: store.reputation,
+      fans: store.fans,
+      stress: store.stress,
+      venueType: venue.type,
+      bandGenre: mainBand.genre,
+    };
+    const synergyResults = synergyManager.triggerSynergies('SHOW_START', synergyContext);
+
+    // Calculate synergy multiplier from new system
+    const attendanceBonus = synergyManager.calculateEffectTotal('ATTENDANCE_PERCENT', synergyResults);
+
     // Calculate equipment effects
     let equipmentCapacityBonus = 1;
     let equipmentReputationMultiplier = 1;
@@ -171,8 +195,8 @@ export class TurnProcessor {
     const venueBonus = venue.atmosphere / 100;
     const baseAttendance = Math.floor(effectiveCapacity * (avgPopularity / 100) * venueBonus);
     
-    // Apply synergy multipliers
-    const synergyMultiplier = synergySystemV2.calculateTotalMultiplier(synergies);
+    // Apply synergy multipliers from the new system
+    const synergyMultiplier = 1 + (attendanceBonus / 100);
     
     // Apply difficulty modifiers
     const difficultyModifiers = difficultySystem.getShowDifficultyModifiers(baseAttendance, show.ticketPrice);
@@ -193,12 +217,13 @@ export class TurnProcessor {
     const barRevenue = venue.hasBar ? finalAttendance * 5 : 0;
     const totalRevenue = ticketRevenue + barRevenue;
     
-    // Apply revenue multipliers from synergies
-    const revenueMultiplier = synergies.reduce((total, synergy) => {
-      const revenueEffect = synergy.effects.find(e => e.type === 'multiply_revenue');
-      return total * (revenueEffect ? revenueEffect.value as number : 1);
-    }, 1);
-    
+    // Apply revenue multipliers from the new synergy system
+    const moneyBonus = synergyManager.calculateEffectTotal('MONEY_PERCENT', synergyResults);
+    const revenueMultiplier = 1 + (moneyBonus / 100);
+
+    // Apply escalation cost increase
+    const escalationCostMult = isEscalation ? ESCALATION_COST_MULTIPLIER : 1;
+
     const finalRevenue = Math.floor(totalRevenue * revenueMultiplier);
     
     // Calculate costs with difficulty scaling
@@ -210,21 +235,25 @@ export class TurnProcessor {
     let reputationGain = Math.floor(finalAttendance / 10 * equipmentReputationMultiplier);
     let fanGain = Math.floor(finalAttendance / 5);
     
-    // Apply synergy effects
-    synergies.forEach(synergy => {
-      synergy.effects.forEach(effect => {
-        if (effect.type === 'multiply_fans') {
-          fanGain = Math.floor(fanGain * (effect.value as number));
-        }
-        if (effect.type === 'multiply_authenticity') {
-          reputationGain = Math.floor(reputationGain * (effect.value as number));
-        }
-      });
-    });
+    // Apply synergy effects from the new system
+    const fansBonus = synergyManager.calculateEffectTotal('FANS_PERCENT', synergyResults);
+    const repBonus = synergyManager.calculateEffectTotal('REPUTATION_PERCENT', synergyResults);
+    fanGain = Math.floor(fanGain * (1 + fansBonus / 100));
+    reputationGain = Math.floor(reputationGain * (1 + repBonus / 100));
     
-    // Check for incidents
+    // Check for incidents with escalation and synergy modifiers
+    const passiveEffects = synergyManager.getPassiveEffects();
+    const incidentReduction = passiveEffects
+      .filter(e => e.type === 'INCIDENT_REDUCTION_PERCENT')
+      .reduce((sum, e) => sum + e.value, 0);
+    let incidentChance = 0.1; // 10% base chance
+    if (isEscalation) {
+      incidentChance *= ESCALATION_INCIDENT_MULTIPLIER;
+    }
+    incidentChance = Math.max(0, incidentChance - incidentReduction / 100);
+
     const incidents: Incident[] = [];
-    if (Math.random() < 0.1) { // 10% chance of incident
+    if (Math.random() < incidentChance) {
       incidents.push({
         type: IncidentType.NOISE_COMPLAINT,
         severity: 3,

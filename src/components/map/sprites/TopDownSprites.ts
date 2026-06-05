@@ -264,9 +264,30 @@ export const COMMUNITY_TOPDOWN = [
   '________________'
 ];
 
-// Apply colors to sprite
-export function renderTopDownSprite(pattern: string[]): string[][] {
-  return pattern.map(row => 
-    row.split('').map(char => TOPDOWN_COLORS[char] || 'transparent')
-  );
+// Apply colors to sprite and render to canvas
+export function renderTopDownSprite(
+  ctx: CanvasRenderingContext2D,
+  pattern: string[],
+  x: number,
+  y: number,
+  scale: number,
+  colors?: Record<string, string>
+): void {
+  const colorMap = colors || TOPDOWN_COLORS;
+  const pixelSize = scale / 16; // Each sprite is 16x16
+  
+  pattern.forEach((row, rowIndex) => {
+    row.split('').forEach((char, colIndex) => {
+      const color = colorMap[char];
+      if (color && color !== 'transparent') {
+        ctx.fillStyle = color;
+        ctx.fillRect(
+          x + colIndex * pixelSize,
+          y + rowIndex * pixelSize,
+          pixelSize,
+          pixelSize
+        );
+      }
+    });
+  });
 }
