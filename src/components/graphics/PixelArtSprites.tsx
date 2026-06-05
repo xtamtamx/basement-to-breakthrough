@@ -1,7 +1,9 @@
 import React, { useMemo } from 'react';
 
-// Color palette for consistent pixel art aesthetic
-export const PIXEL_PALETTE = {
+// Color palette for consistent pixel art aesthetic.
+// Module-private (used only by the sprite components in this file) so the file
+// exports only components — required for React Fast Refresh.
+const PIXEL_PALETTE = {
   // Base colors
   black: '#000000',
   white: '#FFFFFF',
@@ -537,90 +539,3 @@ export const PixelPanel: React.FC<{ pixelSize?: number; className?: string }> = 
     className={className}
   />
 );
-
-// Sprite sheet system
-export interface SpriteDefinition {
-  name: string;
-  data: PixelData;
-  colorMap: ColorMap;
-  animated?: boolean;
-  frames?: AnimationFrame[];
-}
-
-export const SPRITE_SHEET: { [key: string]: SpriteDefinition } = {
-  punkIdle: {
-    name: 'punkIdle',
-    data: PUNK_IDLE,
-    colorMap: PUNK_COLOR_MAP,
-  },
-  metalIdle: {
-    name: 'metalIdle',
-    data: METAL_IDLE,
-    colorMap: METAL_COLOR_MAP,
-  },
-  indieIdle: {
-    name: 'indieIdle',
-    data: INDIE_IDLE,
-    colorMap: INDIE_COLOR_MAP,
-  },
-  punkWalk: {
-    name: 'punkWalk',
-    data: WALKER_FRAME_1,
-    colorMap: PUNK_COLOR_MAP,
-    animated: true,
-    frames: [
-      { data: WALKER_FRAME_1, duration: 200 },
-      { data: WALKER_FRAME_2, duration: 200 },
-    ],
-  },
-  diveBar: {
-    name: 'diveBar',
-    data: DIVE_BAR,
-    colorMap: VENUE_COLOR_MAP,
-  },
-  warehouse: {
-    name: 'warehouse',
-    data: WAREHOUSE,
-    colorMap: VENUE_COLOR_MAP,
-  },
-  button: {
-    name: 'button',
-    data: PIXEL_BUTTON,
-    colorMap: UI_COLOR_MAP,
-  },
-  panel: {
-    name: 'panel',
-    data: PIXEL_PANEL,
-    colorMap: UI_COLOR_MAP,
-  },
-};
-
-// Utility function to get sprite from sheet
-export const getSpriteFromSheet = (
-  spriteName: string,
-  pixelSize: number = 4,
-  className: string = ''
-): React.JSX.Element | null => {
-  const sprite = SPRITE_SHEET[spriteName];
-  if (!sprite) return null;
-
-  if (sprite.animated && sprite.frames) {
-    return (
-      <AnimatedSprite
-        frames={sprite.frames}
-        pixelSize={pixelSize}
-        colorMap={sprite.colorMap}
-        className={className}
-      />
-    );
-  }
-
-  return (
-    <BaseSprite
-      data={sprite.data}
-      pixelSize={pixelSize}
-      colorMap={sprite.colorMap}
-      className={className}
-    />
-  );
-};

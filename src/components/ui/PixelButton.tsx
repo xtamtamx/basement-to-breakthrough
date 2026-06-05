@@ -10,7 +10,6 @@ interface PixelButtonProps extends Omit<HTMLMotionProps<"button">, 'children'> {
   icon?: React.ReactNode;
   iconPosition?: 'left' | 'right';
   children: React.ReactNode;
-  pixelated?: boolean;
 }
 
 const styles = {
@@ -27,7 +26,7 @@ const styles = {
     cursor: 'pointer',
     transition: 'all 150ms ease',
     fontFamily: 'monospace',
-    imageRendering: 'pixelated' as any,
+    imageRendering: 'pixelated' as const,
     WebkitFontSmoothing: 'none',
     boxShadow: 'inset -2px -2px 0px 0px rgba(0,0,0,0.5), inset 2px 2px 0px 0px rgba(255,255,255,0.3)',
   },
@@ -94,7 +93,7 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     fontSize: '1.2em',
-    imageRendering: 'pixelated' as any,
+    imageRendering: 'pixelated' as const,
   },
   text: {
     position: 'relative' as const,
@@ -112,7 +111,6 @@ export const PixelButton: React.FC<PixelButtonProps> = ({
   children,
   onClick,
   disabled,
-  pixelated = true,
   style,
   ...motionProps
 }) => {

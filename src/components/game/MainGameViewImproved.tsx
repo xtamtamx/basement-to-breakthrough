@@ -14,7 +14,6 @@ import { SaveLoadModal } from "@components/ui/SaveLoadModal";
 import { useGameStore } from "@stores/gameStore";
 import { haptics } from "@utils/mobile";
 import { turnProcessor } from "@game/mechanics/TurnProcessor";
-import { ShowResult } from "@game/types";
 import { gameAudio } from "@utils/gameAudio";
 import { GameErrorBoundary } from "@components/ErrorBoundary";
 import { saveGameManager } from "@game/persistence/SaveGameManager";
@@ -30,14 +29,11 @@ export const MainGameView: React.FC = () => {
   const [showTurnResults, setShowTurnResults] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showSaveLoad, setShowSaveLoad] = useState(false);
-  const [turnResults, setTurnResults] = useState<{
-    showResults: ShowResult[];
-    totalVenueRent: number;
-    dayJobResult?: any;
-    difficultyEvent?: any;
-  }>({ showResults: [], totalVenueRent: 0 });
+  const [turnResults, setTurnResults] = useState<
+    Awaited<ReturnType<typeof turnProcessor.processNextTurn>>
+  >({ showResults: [], totalVenueRent: 0 });
   
-  const { currentRound, money, reputation, fans, stress } = useGameStore();
+  const { money, reputation, fans, stress } = useGameStore();
 
   // Start background music and tutorial
   useEffect(() => {
@@ -49,7 +45,7 @@ export const MainGameView: React.FC = () => {
     });
 
     // Check if tutorial should start
-    if (tutorialManager.shouldShowTutorial({ turn: currentRound } as any)) {
+    if (tutorialManager.shouldShowTutorial({ turn: useGameStore.getState().currentRound })) {
       setTimeout(() => {
         tutorialManager.startTutorial();
       }, 1000);

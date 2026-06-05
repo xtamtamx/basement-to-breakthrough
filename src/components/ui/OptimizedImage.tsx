@@ -10,7 +10,6 @@ interface OptimizedImageProps extends React.ImgHTMLAttributes<HTMLImageElement> 
   placeholder?: string;
   onLoad?: () => void;
   onError?: () => void;
-  quality?: number;
 }
 
 export const OptimizedImage: React.FC<OptimizedImageProps> = ({
@@ -22,7 +21,6 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
   placeholder,
   onLoad,
   onError,
-  quality = 85,
   className = '',
   ...props
 }) => {

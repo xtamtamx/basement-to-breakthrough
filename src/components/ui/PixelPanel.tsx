@@ -13,7 +13,7 @@ const styles = {
     position: 'relative' as const,
     background: '#1A1A1A',
     padding: '16px',
-    imageRendering: 'pixelated' as any,
+    imageRendering: 'pixelated' as const,
   },
   variants: {
     default: {

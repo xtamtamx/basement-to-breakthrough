@@ -545,23 +545,25 @@ export function getDevelopmentSprite(
   variation: number = 0
 ): { pattern: string[], colors: Record<string, string> } {
   switch (level) {
-    case 'empty':
+    case 'empty': {
       const emptyVariation = variation % EMPTY_LOT_PATTERNS.length;
       return {
         pattern: EMPTY_LOT_PATTERNS[emptyVariation],
         colors: DYNAMIC_COLORS.empty
       };
-    
-    case 'construction':
+    }
+
+    case 'construction': {
       const constructionVariation = variation % CONSTRUCTION_PATTERNS.length;
       return {
         pattern: CONSTRUCTION_PATTERNS[constructionVariation],
         colors: DYNAMIC_COLORS.construction
       };
-    
+    }
+
     case 'basic':
     case 'developed':
-    case 'thriving':
+    case 'thriving': {
       const districtVariations = BUILDING_VARIATIONS[district as keyof typeof BUILDING_VARIATIONS]?.[level];
       if (districtVariations) {
         const buildingVariation = variation % districtVariations.length;
@@ -575,6 +577,7 @@ export function getDevelopmentSprite(
         pattern: BUILDING_VARIATIONS.downtown.basic[0],
         colors: DYNAMIC_COLORS.downtown
       };
+    }
   }
 }
 
@@ -595,7 +598,7 @@ export function calculateDevelopmentLevel(
 
 // Building spawn chance based on player actions
 export function shouldSpawnBuilding(
-  district: any,
+  district: { type: string },
   playerActions: {
     showsBooked: number;
     venuesBuilt: number;

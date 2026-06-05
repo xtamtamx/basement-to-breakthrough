@@ -23,8 +23,11 @@ export const AudioMemoryTest: React.FC = () => {
     };
 
     // Check if we have access to memory info (Chrome/Edge)
-    if ('memory' in performance && (performance as any).memory) {
-      const memory = (performance as any).memory;
+    const perf = performance as Performance & {
+      memory?: { usedJSHeapSize: number; totalJSHeapSize: number };
+    };
+    if (perf.memory) {
+      const memory = perf.memory;
       stats.heapUsed = memory.usedJSHeapSize;
       stats.heapTotal = memory.totalJSHeapSize;
     }

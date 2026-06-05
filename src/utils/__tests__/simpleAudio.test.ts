@@ -26,7 +26,8 @@ describe('SimpleAudioManager - Memory Leak Test', () => {
       }
     };
     
-    (global as any).AudioContext = vi.fn(() => ({
+    const g = global as unknown as Record<string, unknown>;
+    g.AudioContext = vi.fn(() => ({
       state: 'running',
       currentTime: 0,
       destination: {},
@@ -37,9 +38,9 @@ describe('SimpleAudioManager - Memory Leak Test', () => {
       createGain: vi.fn(() => ({ ...mockGainNode })),
       resume: vi.fn(() => Promise.resolve())
     }));
-    
-    (global as any).window = {
-      AudioContext: (global as any).AudioContext
+
+    g.window = {
+      AudioContext: g.AudioContext
     };
   });
   
@@ -103,7 +104,7 @@ describe('SimpleAudioManager - Memory Leak Test', () => {
     // Each playTone() creates oscillators and immediately releases them
     // This is the correct pattern for Web Audio API
     
-    const audioManager = audio as any;
+    const audioManager = audio as unknown as Record<string, unknown>;
     
     // Should not have any oscillator storage properties
     expect(audioManager.oscillators).toBeUndefined();

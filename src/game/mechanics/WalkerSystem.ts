@@ -62,8 +62,9 @@ export class WalkerSystem {
       
       if (current.x === endX && current.y === endY) {
         // Reconstruct path
+        type PathNode = { x: number; y: number; parent?: PathNode };
         const path: { x: number; y: number }[] = [];
-        let node: { x: number; y: number; parent?: { x: number; y: number; parent?: any } } = current;
+        let node: PathNode = current;
         while (node.parent) {
           path.unshift({ x: node.x, y: node.y });
           node = node.parent;

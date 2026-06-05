@@ -4,7 +4,7 @@ import { haptics } from '@utils/mobile';
 import { useGameStore } from '@stores/gameStore';
 import { tutorialManager } from '@game/tutorial/TutorialManager';
 import { ColorblindMode } from '@game/types';
-import { useColorblind } from '@contexts/ColorblindContext';
+import { useColorblind } from '@hooks/useColorblind';
 import { X, Volume2, VolumeX, RefreshCw, Info, Gamepad2, AlertTriangle } from 'lucide-react';
 
 interface SettingsModalProps {

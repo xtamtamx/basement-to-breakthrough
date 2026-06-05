@@ -15,9 +15,10 @@ export const LazyLoadTest: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { allBands, venues, loadInitialGameData } = useGameStore();
   
-  // Check initial state
+  // Check initial state (read once on mount via getState, independent of render closures)
   useEffect(() => {
-    console.log('Initial render - Bands:', allBands.length, 'Venues:', venues.length);
+    const state = useGameStore.getState();
+    console.log('Initial render - Bands:', state.allBands.length, 'Venues:', state.venues.length);
   }, []);
 
   const handleLoadData = async () => {

@@ -1,5 +1,5 @@
 import React, { useMemo, useCallback } from 'react';
-import { VariableSizeGrid as Grid } from 'react-window';
+import { VariableSizeGrid as Grid, GridChildComponentProps } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { useIsMobile } from '@utils/mobile';
 
@@ -105,7 +105,7 @@ export function VirtualizedCardGrid<T>({
             overscanColumnCount={1}
             className="custom-scrollbar"
           >
-            {Cell as any}
+            {Cell as unknown as React.ComponentType<GridChildComponentProps<typeof gridData>>}
           </Grid>
         )}
       </AutoSizer>

@@ -22,7 +22,9 @@ interface DragContextType {
   handleDrop: (x: number, y: number) => boolean;
 }
 
-export const DragContext = createContext<DragContextType | null>(null);
+// Not exported: consumed only by DragProvider below. Keeping it module-private
+// lets this file export only the component (required for React Fast Refresh).
+const DragContext = createContext<DragContextType | null>(null);
 
 interface DragProviderProps {
   children: ReactNode;

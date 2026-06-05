@@ -18,7 +18,7 @@ interface TurnResultsModalProps {
     message: string;
     randomEvent?: {
       message: string;
-      effects: any;
+      effects: unknown;
     };
   };
   difficultyEvent?: {

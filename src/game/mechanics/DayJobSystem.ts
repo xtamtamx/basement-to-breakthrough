@@ -417,7 +417,13 @@ export class DayJobSystem {
     message: string;
     randomEvent?: {
       message: string;
-      effects: any;
+      effects: {
+        money?: number;
+        reputation?: number;
+        fans?: number;
+        stress?: number;
+        connections?: number;
+      };
     };
   } | null {
     const job = this.getCurrentJob();

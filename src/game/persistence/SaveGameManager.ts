@@ -1,4 +1,4 @@
-import { GameState } from '@stores/gameStore';
+import { GameState, useGameStore } from '@stores/gameStore';
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
 
 // Define the database schema
@@ -10,7 +10,7 @@ interface BasementToBThroughDB extends DBSchema {
   };
   settings: {
     key: string;
-    value: any;
+    value: unknown;
   };
 }
 
@@ -237,7 +237,7 @@ export class SaveGameManager {
   }
   
   // Settings management
-  async getSetting(key: string): Promise<any> {
+  async getSetting(key: string): Promise<unknown> {
     if (!this.db) {
       await this.initialize();
     }
@@ -250,7 +250,7 @@ export class SaveGameManager {
     }
   }
   
-  async setSetting(key: string, value: any): Promise<void> {
+  async setSetting(key: string, value: unknown): Promise<void> {
     if (!this.db) {
       await this.initialize();
     }
@@ -279,7 +279,7 @@ export class SaveGameManager {
     ];
     
     keysToRemove.forEach(key => {
-      delete (sanitized as any)[key];
+      delete (sanitized as Record<string, unknown>)[key];
     });
     
     return sanitized;
@@ -297,8 +297,7 @@ export class SaveGameManager {
   private calculatePlayTime(): number {
     // This would need to track actual play time
     // For now, estimate based on turn number
-    const { useGameStore } = require('@stores/gameStore');
-    const turn = useGameStore.getState().turn;
+    const turn = (useGameStore.getState() as unknown as GameState).turn;
     return turn * 180; // Assume 3 minutes per turn
   }
   

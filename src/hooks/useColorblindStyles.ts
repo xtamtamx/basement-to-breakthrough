@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useColorblind } from "@contexts/ColorblindContext";
+import { useColorblind } from "@hooks/useColorblind";
 
 interface ColorblindStyles {
   // Text colors

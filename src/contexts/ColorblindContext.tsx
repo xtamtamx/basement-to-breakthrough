@@ -1,14 +1,12 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ColorblindMode } from "@game/types";
 import { colorblindPalettes, getColorblindSafeColor, getSemanticColor } from "@styles/colorblind";
-import { ColorblindContextValue } from "./ColorblindContextTypes";
+import { ColorblindContext, ColorblindContextValue } from "./ColorblindContextTypes";
 
 interface ColorValueMap {
   [key: string]: ColorValue;
 }
 type ColorValue = string | ColorValueMap;
-
-export const ColorblindContext = createContext<ColorblindContextValue | null>(null);
 
 interface ColorblindProviderProps {
   children: React.ReactNode;
@@ -66,12 +64,4 @@ export const ColorblindProvider: React.FC<ColorblindProviderProps> = ({
       {children}
     </ColorblindContext.Provider>
   );
-};
-
-export const useColorblind = () => {
-  const context = useContext(ColorblindContext);
-  if (!context) {
-    throw new Error('useColorblind must be used within ColorblindProvider');
-  }
-  return context;
 };

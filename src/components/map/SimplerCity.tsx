@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useCallback, useState } from "react";
+import React, { useRef, useEffect, useCallback, useMemo, useState } from "react";
 import { haptics } from "@utils/mobile";
 import { soundManager } from "@/game/audio/SoundManager";
 
@@ -37,8 +37,8 @@ export const SimplerCity: React.FC<SimplerCityProps> = ({
     img.onload = () => setCityTileset(img);
   }, []);
   
-  // Define districts
-  const districts: District[] = [
+  // Define districts (static — memoized so callbacks can depend on it stably)
+  const districts = useMemo<District[]>(() => [
     {
       id: 'downtown',
       name: 'Downtown',
@@ -75,7 +75,7 @@ export const SimplerCity: React.FC<SimplerCityProps> = ({
       height: 100,
       type: 'industrial'
     }
-  ];
+  ], []);
   
   // Mouse handlers
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -101,7 +101,7 @@ export const SimplerCity: React.FC<SimplerCityProps> = ({
       setIsDragging(true);
       setDragStart({ x: e.clientX - camera.x, y: e.clientY - camera.y });
     }
-  }, [camera, onDistrictClick]);
+  }, [camera, onDistrictClick, districts]);
   
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (isDragging) {
@@ -126,7 +126,7 @@ export const SimplerCity: React.FC<SimplerCityProps> = ({
       
       setHoveredDistrict(district || null);
     }
-  }, [isDragging, dragStart, camera]);
+  }, [isDragging, dragStart, camera, districts]);
   
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
@@ -242,7 +242,7 @@ export const SimplerCity: React.FC<SimplerCityProps> = ({
     
     ctx.font = "16px Arial";
     ctx.fillText("Click a district to explore • Drag to pan", width - 300, 40);
-  }, [cityTileset, camera, hoveredDistrict, width, height]);
+  }, [cityTileset, camera, hoveredDistrict, width, height, districts]);
   
   // Animation loop
   useEffect(() => {

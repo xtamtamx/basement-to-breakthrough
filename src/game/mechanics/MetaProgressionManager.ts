@@ -47,7 +47,7 @@ export interface UnlockableItem {
   description: string;
   cost: { fame?: number; legacy?: number; achievement?: string };
   tier: number;
-  content: any; // The actual unlockable data
+  content: Record<string, unknown[]>; // The actual unlockable data
 }
 
 class MetaProgressionManager {
@@ -384,7 +384,13 @@ class MetaProgressionManager {
   }
   
   // Update meta stats from run
-  updateStats(runStats: any) {
+  updateStats(runStats: {
+    score?: number;
+    totalShows?: number;
+    totalRevenue?: number;
+    totalFans?: number;
+    bandsManaged?: number;
+  }) {
     this.progression.totalRuns++;
     this.progression.totalScore += runStats.score || 0;
     this.progression.stats.totalShows += runStats.totalShows || 0;
@@ -437,12 +443,12 @@ class MetaProgressionManager {
   // Get unlocked content for run
   getUnlockedContent() {
     const content = {
-      bands: [] as any[],
-      venues: [] as any[],
-      equipment: [] as any[],
-      traits: [] as any[],
-      events: [] as any[],
-      modifiers: [] as any[]
+      bands: [] as unknown[],
+      venues: [] as unknown[],
+      equipment: [] as unknown[],
+      traits: [] as unknown[],
+      events: [] as unknown[],
+      modifiers: [] as unknown[]
     };
     
     this.progression.unlocks.forEach(unlockId => {

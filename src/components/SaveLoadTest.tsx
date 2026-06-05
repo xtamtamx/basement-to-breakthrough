@@ -5,8 +5,8 @@ import { haptics } from '@utils/haptics';
 
 export const SaveLoadTest: React.FC = () => {
   const [status, setStatus] = useState<string>('Ready to test save/load');
-  const [savedData, setSavedData] = useState<any>(null);
-  const [loadedData, setLoadedData] = useState<any>(null);
+  const [savedData, setSavedData] = useState<unknown>(null);
+  const [loadedData, setLoadedData] = useState<unknown>(null);
 
   // Create test data
   const createTestData = () => {
@@ -236,14 +236,14 @@ export const SaveLoadTest: React.FC = () => {
         </button>
       </div>
 
-      {savedData && (
+      {!!savedData && (
         <div className="mb-6 p-4 bg-gray-800 rounded-lg">
           <h2 className="text-lg font-bold mb-2">Last Saved:</h2>
           <pre className="text-sm">{JSON.stringify(savedData, null, 2)}</pre>
         </div>
       )}
 
-      {loadedData && (
+      {!!loadedData && (
         <div className="p-4 bg-gray-800 rounded-lg">
           <h2 className="text-lg font-bold mb-2">Loaded Data:</h2>
           <pre className="text-sm">{JSON.stringify(loadedData, null, 2)}</pre>

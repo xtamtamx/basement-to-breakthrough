@@ -30,7 +30,7 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ isOpen, onClose })
     try {
       const saveList = await saveGameManager.getSaveList();
       setSaves(saveList);
-    } catch (err) {
+    } catch {
       setError('Failed to load saves');
     } finally {
       setLoading(false);
@@ -91,7 +91,7 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ isOpen, onClose })
       await saveGameManager.deleteSave(saveId);
       await loadSaves();
       haptics.light();
-    } catch (err) {
+    } catch {
       setError('Failed to delete save');
       haptics.error();
     }

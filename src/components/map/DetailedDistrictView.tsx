@@ -123,7 +123,7 @@ export const DetailedDistrictView: React.FC<DetailedDistrictViewProps> = ({
         }
         break;
         
-      case 'commercial':
+      case 'commercial': {
         // Mix of shops and workplaces
         const commercialBuildings = [
           { x: 8, y: 8, type: 'shop' as const, name: 'Grocery Store' },
@@ -144,6 +144,7 @@ export const DetailedDistrictView: React.FC<DetailedDistrictViewProps> = ({
           });
         });
         break;
+      }
     }
     
     setBuildings(newBuildings);
@@ -239,7 +240,7 @@ export const DetailedDistrictView: React.FC<DetailedDistrictViewProps> = ({
   }, []);
   
   // Draw tile from tileset
-  const drawTile = (
+  const drawTile = useCallback((
     ctx: CanvasRenderingContext2D,
     tileX: number,
     tileY: number,
@@ -247,14 +248,14 @@ export const DetailedDistrictView: React.FC<DetailedDistrictViewProps> = ({
     destY: number
   ) => {
     if (!cityTileset) return;
-    
+
     ctx.drawImage(
       cityTileset,
       tileX * 16, tileY * 16, 16, 16,
       destX, destY,
       TILE_SIZE * camera.zoom, TILE_SIZE * camera.zoom
     );
-  };
+  }, [cityTileset, camera]);
   
   // Main render
   const render = useCallback(() => {
@@ -452,7 +453,7 @@ export const DetailedDistrictView: React.FC<DetailedDistrictViewProps> = ({
       ctx.fillStyle = "#CCCCCC";
       ctx.fillText(hoveredBuilding.type, width - 190, 115);
     }
-  }, [cityTileset, camera, buildings, hoveredBuilding, districtName, districtType, width, height, worldToScreen, screenToWorld]);
+  }, [cityTileset, camera, buildings, hoveredBuilding, districtName, districtType, width, height, worldToScreen, drawTile]);
   
   // Handle exit button click
   const handleCanvasClick = useCallback((e: React.MouseEvent) => {

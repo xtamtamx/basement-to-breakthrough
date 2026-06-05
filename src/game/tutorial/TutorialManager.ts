@@ -1,4 +1,4 @@
-import { GameState } from '@stores/gameStore';
+import { GameState, useGameStore } from '@stores/gameStore';
 
 export interface TutorialStep {
   id: string;
@@ -263,7 +263,7 @@ export class TutorialManager {
   }
   
   // Check if tutorial should start for new players
-  shouldShowTutorial(state: GameState): boolean {
+  shouldShowTutorial(state: Pick<GameState, 'turn'>): boolean {
     // Show tutorial if it's the first turn and hasn't been completed
     return state.turn === 1 && !this.hasCompletedTutorial() && !this.skipped;
   }
@@ -436,9 +436,10 @@ export class TutorialManager {
   
   // Get current game state (for checking conditions)
   private getGameState(): GameState {
-    // This will be injected or imported
-    const { useGameStore } = require('@stores/gameStore');
-    return useGameStore.getState();
+    // The Zustand store (GameStore) and the legacy GameState model diverge;
+    // this manager has always treated the store as a GameState. Asserting the
+    // type keeps that long-standing behavior without a forbidden require()/any.
+    return useGameStore.getState() as unknown as GameState;
   }
 }
 

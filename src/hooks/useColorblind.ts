@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { ColorblindContext } from "@contexts/ColorblindContext";
+import { ColorblindContext } from "@contexts/ColorblindContextTypes";
 
 export const useColorblind = () => {
   const context = useContext(ColorblindContext);

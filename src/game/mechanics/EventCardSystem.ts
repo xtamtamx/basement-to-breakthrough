@@ -182,7 +182,7 @@ class EventCardSystem {
           }]
         }
       ],
-      flavorText: "Sources close to the festival confirm they still don\'t know what shoegaze is.",
+      flavorText: "Sources close to the festival confirm they still don't know what shoegaze is.",
       artStyle: 'tour_flyer'
     });
     
@@ -256,7 +256,7 @@ class EventCardSystem {
         value: 'underground',
         operator: 'equals'
       }],
-      flavorText: "Department training video now includes a slide titled \'Mosh Pit vs. Demonic Possession: Know the Difference.\'",
+      flavorText: "Department training video now includes a slide titled 'Mosh Pit vs. Demonic Possession: Know the Difference.'",
       artStyle: 'press_release'
     });
     
@@ -415,7 +415,7 @@ class EventCardSystem {
           description: 'Scene comes together'
         }
       ],
-      flavorText: "Ticket prices start at $180 for \'authentic DIY experience.\'",
+      flavorText: "Ticket prices start at $180 for 'authentic DIY experience.'",
       artStyle: 'concert_poster'
     });
     

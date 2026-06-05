@@ -8,6 +8,7 @@ import { VenueUpgradeModal } from '@/components/venue/VenueUpgradeModal';
 import { Plus, ZoomOut, Building2, TrendingUp, MapPin, X } from 'lucide-react';
 import { MapTile, VenueData, WorkplaceData } from '@/components/map/MapTypes';
 import { DistrictType as CoreDistrictType } from '@/game/types/core';
+import { Venue } from '@game/types';
 
 // Maps SimplerCity district types onto the core DistrictType used by DistrictInfo.
 const SIMPLER_CITY_DISTRICT_TYPE: Record<string, CoreDistrictType> = {
@@ -44,13 +45,15 @@ export const CityView: React.FC = () => {
   const [viewMode, setViewMode] = useState<'overview' | 'district'>('overview');
   const [selectedDistrictId, setSelectedDistrictId] = useState<string | null>(null);
   const [selectedDistrictInfo, setSelectedDistrictInfo] = useState<DistrictInfo | null>(null);
-  const [selectedTileData, setSelectedTileData] = useState<{ tile: MapTile; venue?: any } | null>(null);
+  const [selectedTileData, setSelectedTileData] = useState<{ tile: MapTile; venue?: Venue } | null>(null);
   const [showVenueUpgrade, setShowVenueUpgrade] = useState(false);
 
-  // Ensure initial data is loaded
+  // Ensure initial data is loaded (run once on mount via getState to avoid
+  // depending on the ever-changing store snapshot)
   useEffect(() => {
-    if (gameStore.venues.length === 0) {
-      gameStore.loadInitialGameData();
+    const store = useGameStore.getState();
+    if (store.venues.length === 0) {
+      store.loadInitialGameData();
     }
   }, []);
 

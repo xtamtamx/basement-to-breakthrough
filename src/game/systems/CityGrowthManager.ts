@@ -177,7 +177,7 @@ export class CityGrowthManager {
     // Apply each growth event
     this.growthEvents.forEach(event => {
       mapStore.updateTile(event.x, event.y, {
-        developmentLevel: event.toLevel as any,
+        developmentLevel: event.toLevel as MapTile['developmentLevel'],
         type: event.toLevel === 'empty' ? 'empty' : 'building',
         // Randomize variation for visual diversity
         variation: Math.floor(Math.random() * 3),

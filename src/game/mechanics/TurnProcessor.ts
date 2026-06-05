@@ -166,8 +166,7 @@ export class TurnProcessor {
     // Calculate equipment effects
     let equipmentCapacityBonus = 1;
     let equipmentReputationMultiplier = 1;
-    let equipmentIncidentReduction = 0;
-    
+
     venue.equipment.forEach(equipment => {
       if (equipment.owned && equipment.condition > 20) { // Equipment needs 20%+ condition to work
         const effectMultiplier = equipment.condition / 100; // Effects scale with condition
@@ -177,9 +176,6 @@ export class TurnProcessor {
         }
         if (equipment.effects.reputationMultiplier) {
           equipmentReputationMultiplier *= (1 + (equipment.effects.reputationMultiplier - 1) * effectMultiplier);
-        }
-        if (equipment.effects.incidentReduction) {
-          equipmentIncidentReduction += equipment.effects.incidentReduction * effectMultiplier;
         }
       }
     });

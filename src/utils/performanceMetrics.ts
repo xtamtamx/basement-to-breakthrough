@@ -95,14 +95,18 @@ class PerformanceMetrics {
     const stored = safeStorage.getItem('btb-performance-metrics');
     const existingMetrics = stored ? JSON.parse(stored) : [];
     
-    // Add new metric
+    // Add new metric (deviceMemory and connection are non-standard Navigator APIs)
+    const nav = navigator as Navigator & {
+      deviceMemory?: number;
+      connection?: { effectiveType?: string };
+    };
     existingMetrics.push({
       ...metric,
       timestamp: new Date().toISOString(),
       userAgent: navigator.userAgent,
-      deviceMemory: (navigator as any).deviceMemory,
+      deviceMemory: nav.deviceMemory,
       hardwareConcurrency: navigator.hardwareConcurrency,
-      connection: (navigator as any).connection?.effectiveType
+      connection: nav.connection?.effectiveType
     });
     
     // Keep only last 100 metrics
