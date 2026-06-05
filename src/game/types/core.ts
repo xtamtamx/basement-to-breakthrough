@@ -75,6 +75,10 @@ export interface Band {
   hometown?: string;
   /** Year the band formed */
   formedYear?: number;
+  /** Applied band upgrade IDs */
+  upgrades?: string[];
+  /** Relationships with other bands */
+  relationships?: BandRelationship[];
 }
 
 export enum Genre {
@@ -88,6 +92,9 @@ export enum Genre {
   DOOM = "DOOM",
   SLUDGE = "SLUDGE",
   POWERVIOLENCE = "POWERVIOLENCE",
+  ELECTRONIC = "ELECTRONIC",
+  EMO = "EMO",
+  ALTERNATIVE = "ALTERNATIVE",
 }
 
 export interface BandTrait {
@@ -108,6 +115,8 @@ export enum TraitType {
 export interface TraitModifier {
   popularity?: number;
   authenticity?: number;
+  energy?: number;
+  technicalSkill?: number;
   venueCompatibility?: VenueType[];
   synergyTags?: string[];
 }
@@ -239,15 +248,24 @@ export interface VenueUpgrade {
   requirements?: {
     minCapacity?: number;
     minReputation?: number;
+    minConnections?: number;
     venueTypes?: VenueType[];
   };
   effects: {
     capacity?: number;
+    capacityIncrease?: number;
     acoustics?: number;
+    acousticsIncrease?: number;
     authenticity?: number;
     atmosphere?: number;
+    atmosphereIncrease?: number;
     rent?: number;
+    revenue?: number;
+    reputation?: number;
+    maintenanceCost?: number;
+    incidentChance?: number;
     unlockTrait?: string; // Trait ID to unlock
+    unlockEquipment?: string;
   };
   tier: number; // 1-3
 }
@@ -258,6 +276,9 @@ export enum VenueUpgradeType {
   AMENITIES = "AMENITIES",
   SECURITY = "SECURITY",
   SPECIAL = "SPECIAL",
+  INFRASTRUCTURE = "INFRASTRUCTURE",
+  STAGE = "STAGE",
+  BAR = "BAR",
 }
 
 export interface District {
@@ -269,6 +290,7 @@ export interface District {
   rentMultiplier: number;
   bounds: { x: number; y: number; width: number; height: number }; // Grid bounds
   color: string; // Visual identifier
+  type?: DistrictType;
 }
 
 export interface Equipment {
@@ -418,6 +440,8 @@ export interface Show {
   revenue?: number;
   incidents?: Incident[];
   bill?: Bill; // Multiple bands in order
+  lineup?: string[]; // Band IDs performing, in order
+  reputationGain?: number;
 }
 
 export interface Bill {
@@ -475,6 +499,11 @@ export enum IncidentType {
   EQUIPMENT_FAILURE = "EQUIPMENT_FAILURE",
   BAND_NO_SHOW = "BAND_NO_SHOW",
   VENUE_DAMAGE = "VENUE_DAMAGE",
+  VENUE_ISSUE = "VENUE_ISSUE",
+  RIVAL_SABOTAGE = "RIVAL_SABOTAGE",
+  POLICE_SHUTDOWN = "POLICE_SHUTDOWN",
+  CROWD_INCIDENT = "CROWD_INCIDENT",
+  BAND_DRAMA = "BAND_DRAMA",
 }
 
 export interface Consequence {
@@ -636,6 +665,7 @@ export interface FactionChoice {
 export interface FactionChoiceEffects {
   factionChanges: Record<string, number>; // faction id -> reputation change
   resourceChanges?: Partial<Resources>;
+  reputation?: number;
   unlocks?: string[];
   consequences?: string[]; // event ids to trigger later
 }
