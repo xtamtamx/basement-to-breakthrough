@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Capacitor } from "@capacitor/core";
 import { StatusBar, Style } from "@capacitor/status-bar";
 import { SplashScreen } from "@capacitor/splash-screen";
@@ -8,6 +9,19 @@ import { prodLog } from "./devLogger";
 // Check if running on native platform
 export const isNative = Capacitor.isNativePlatform();
 export const getPlatform = () => Capacitor.getPlatform();
+
+/** React hook: true when the viewport is mobile-sized. */
+export const useIsMobile = (breakpoint = 768): boolean => {
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== "undefined" ? window.innerWidth < breakpoint : false,
+  );
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < breakpoint);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [breakpoint]);
+  return isMobile;
+};
 
 // Initialize mobile-specific features
 export const initializeMobile = async () => {

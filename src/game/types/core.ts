@@ -105,6 +105,9 @@ export interface BandTrait {
   modifier: TraitModifier;
 }
 
+/** Legacy alias for a band trait. */
+export type Trait = BandTrait;
+
 export enum TraitType {
   PERSONALITY = "PERSONALITY",
   PERFORMANCE = "PERFORMANCE",
@@ -267,6 +270,7 @@ export interface VenueUpgrade {
     unlockTrait?: string; // Trait ID to unlock
     unlockEquipment?: string;
   };
+  upkeepCost?: number; // Per-turn upkeep
   tier: number; // 1-3
 }
 
@@ -442,6 +446,8 @@ export interface Show {
   bill?: Bill; // Multiple bands in order
   lineup?: string[]; // Band IDs performing, in order
   reputationGain?: number;
+  round?: number;
+  fansGained?: number;
 }
 
 export interface Bill {
@@ -805,4 +811,20 @@ export interface SaveGame {
     pathAlignment: string;
   };
   version: string;
+}
+
+// ============= Synergy & Unlock Types =============
+export interface Synergy {
+  id: string;
+  name: string;
+  description: string;
+  multiplier?: number;
+  effects?: Record<string, number>;
+}
+
+export interface UnlockableContent {
+  id: string;
+  type: string;
+  name: string;
+  description?: string;
 }

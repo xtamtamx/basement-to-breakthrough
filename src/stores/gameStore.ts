@@ -1,4 +1,5 @@
 import { create } from "zustand";
+export type { GameState } from "@game/types";
 import { persist, createJSONStorage } from "zustand/middleware";
 import {
   GamePhase,
