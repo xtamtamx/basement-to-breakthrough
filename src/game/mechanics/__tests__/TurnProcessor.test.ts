@@ -181,6 +181,7 @@ describe('TurnProcessor', () => {
       addBandToRoster: vi.fn(),
       removeBandFromRoster: vi.fn(),
       updateBand: vi.fn(),
+      updateVenue: vi.fn(),
       scheduleShow: vi.fn(),
       setFactionEvent: vi.fn(),
       applyFactionChoice: vi.fn(),
