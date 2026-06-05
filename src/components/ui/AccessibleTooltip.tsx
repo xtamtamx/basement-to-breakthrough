@@ -1,9 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
+interface TriggerProps {
+  onMouseEnter?: (e: React.MouseEvent) => void;
+  onMouseLeave?: (e: React.MouseEvent) => void;
+  onFocus?: (e: React.FocusEvent) => void;
+  onBlur?: (e: React.FocusEvent) => void;
+  [key: string]: unknown;
+}
+
 interface AccessibleTooltipProps {
   content: string;
-  children: React.ReactElement;
+  children: React.ReactElement<TriggerProps>;
   delay?: number;
   position?: 'top' | 'bottom' | 'left' | 'right';
 }
@@ -17,7 +25,7 @@ export const AccessibleTooltip: React.FC<AccessibleTooltipProps> = ({
   const [isVisible, setIsVisible] = useState(false);
   const [coords, setCoords] = useState({ x: 0, y: 0 });
   const triggerRef = useRef<HTMLElement>(null);
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const tooltipId = useRef(`tooltip-${Math.random().toString(36).substr(2, 9)}`);
   
   useEffect(() => {

@@ -3,7 +3,10 @@ import { ColorblindMode } from "@game/types";
 import { colorblindPalettes, getColorblindSafeColor, getSemanticColor } from "@styles/colorblind";
 import { ColorblindContextValue } from "./ColorblindContextTypes";
 
-type ColorValue = string | Record<string, ColorValue>;
+interface ColorValueMap {
+  [key: string]: ColorValue;
+}
+type ColorValue = string | ColorValueMap;
 
 export const ColorblindContext = createContext<ColorblindContextValue | null>(null);
 

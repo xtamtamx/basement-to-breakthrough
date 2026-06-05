@@ -1,4 +1,5 @@
 import { useGameStore } from '@stores/gameStore';
+import { prodLog } from '@utils/devLogger';
 
 export enum ProgressionPath {
   NONE = 'NONE',

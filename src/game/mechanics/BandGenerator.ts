@@ -195,7 +195,7 @@ class BandGenerator {
   }
 
   private selectSubgenres(genre: Genre): string[] {
-    const subgenreMap: Record<Genre, string[]> = {
+    const subgenreMap: Partial<Record<Genre, string[]>> = {
       [Genre.PUNK]: ['hardcore', 'crust', 'street punk', 'anarcho-punk', 'post-punk', 'skate punk'],
       [Genre.METAL]: ['thrash', 'death', 'black', 'doom', 'sludge', 'grindcore', 'crossover'],
       [Genre.ELECTRONIC]: ['industrial', 'darkwave', 'synthpunk', 'noise'],
@@ -238,7 +238,7 @@ class BandGenerator {
   }
 
   private generateBio(genre: Genre): string {
-    const templates = {
+    const templates: Partial<Record<Genre, string[]>> = {
       [Genre.PUNK]: [
         'Formed in the basement shows of {hometown}, bringing raw energy to every performance.',
         'DIY or die. No compromise, no surrender, just pure punk fury.',
@@ -289,7 +289,7 @@ class BandGenerator {
       ],
     };
 
-    const bioTemplate = this.random(templates[genre] || templates[Genre.PUNK]);
+    const bioTemplate = this.random(templates[genre] ?? templates[Genre.PUNK] ?? []);
     return bioTemplate.replace('{hometown}', this.random(this.cities));
   }
 

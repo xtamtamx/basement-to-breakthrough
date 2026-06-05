@@ -167,7 +167,7 @@ export const AudioMemoryTest: React.FC = () => {
         <h2 className="text-lg font-bold mb-2">Memory Stats History</h2>
         {memoryStats.length > 0 ? (
           <div className="text-xs font-mono space-y-1 max-h-40 overflow-y-auto">
-            {memoryStats.slice(-10).reverse().map((stat, i) => (
+            {memoryStats.slice(-10).reverse().map((stat) => (
               <div key={stat.timestamp}>
                 #{stat.playCount} - {stat.heapUsed ? formatBytes(stat.heapUsed) : 'N/A'}
               </div>

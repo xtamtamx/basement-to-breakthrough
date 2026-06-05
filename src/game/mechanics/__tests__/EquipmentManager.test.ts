@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { equipmentManagerV2 } from '../EquipmentManagerV2';
-import { Band, Venue, VenueType, EquipmentType } from '@game/types';
+import { Band, Venue, VenueType, EquipmentType, Genre } from '@game/types';
 
 describe('EquipmentManagerV2', () => {
   beforeEach(() => {
@@ -41,19 +41,15 @@ describe('EquipmentManagerV2', () => {
   const createTestBand = (overrides: Partial<Band> = {}): Band => ({
     id: 'test-band',
     name: 'Test Band',
-    genre: 'PUNK',
-    professionalism: 70,
-    technicalSkill: 75,
+    isRealArtist: false,
+    genre: Genre.PUNK,
+    subgenres: [],
+    traits: [],
+    popularity: 70,
     authenticity: 90,
     energy: 85,
-    humor: 60,
-    originality: 75,
-    crowdConnection: 80,
-    modifiers: [],
-    traits: [],
-    fanbase: 100,
-    reputation: 50,
-    stress: 20,
+    technicalSkill: 75,
+    technicalRequirements: [],
     ...overrides
   });
 
@@ -258,7 +254,7 @@ describe('EquipmentManagerV2', () => {
     });
 
     it('should check genre-specific requirements', () => {
-      const metalBand = createTestBand({ genre: 'METAL', technicalSkill: 50 });
+      const metalBand = createTestBand({ genre: Genre.METAL, technicalSkill: 50 });
       const venue = createTestVenue();
       
       const result = equipmentManagerV2.checkBandRequirements(metalBand, venue);

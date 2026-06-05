@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useGameStore } from '../gameStore';
-import { GamePhase, Difficulty } from '@/game/types';
+import { GamePhase, Difficulty, Genre } from '@/game/types';
 import { CONSTRAINTS } from '@/utils/validation';
 
 describe('Game Store', () => {
@@ -19,7 +19,7 @@ describe('Game Store', () => {
         {
           id: 'b1',
           name: 'Test Band 1',
-          genre: 'PUNK',
+          genre: Genre.PUNK,
           isRealArtist: false,
           subgenres: [],
           traits: [],
@@ -32,7 +32,7 @@ describe('Game Store', () => {
         {
           id: 'b2',
           name: 'Test Band 2',
-          genre: 'METAL',
+          genre: Genre.METAL,
           isRealArtist: false,
           subgenres: [],
           traits: [],

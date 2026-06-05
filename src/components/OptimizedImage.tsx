@@ -72,6 +72,7 @@ const OptimizedImageComponent: React.FC<OptimizedImageProps> = ({
       };
     } else {
       loadImage();
+      return undefined;
     }
   }, [src, loading, loadImage]);
 

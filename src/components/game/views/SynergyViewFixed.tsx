@@ -1,13 +1,49 @@
 import React, { useState } from 'react';
-import { synergySystemV2 } from '@game/mechanics/SynergySystemV2';
-import { haptics } from '@utils/mobile';
-import { Zap, Lock, Trophy, Sparkles, Filter } from 'lucide-react';
+import { synergySystemV2, Synergy } from '@game/mechanics/SynergySystemV2';
+import { Zap, Lock, Trophy, Sparkles } from 'lucide-react';
+
+// View model describing the synergy fields this screen renders.
+interface SynergyViewModel {
+  id: string;
+  name: string;
+  description: string;
+  tier: Synergy['tier'];
+  discovered: boolean;
+  timesTriggered: number;
+  hints?: string;
+  requirements?: {
+    bands?: string[];
+    venueTypes?: string[];
+    traits?: string[];
+  };
+  effects: {
+    attendanceMultiplier: number;
+    reputationBonus: number;
+    fansGained: number;
+  };
+}
+
+const toViewModel = (synergy: Synergy): SynergyViewModel => ({
+  id: synergy.id,
+  name: synergy.name,
+  description: synergy.description,
+  tier: synergy.tier,
+  discovered: synergy.discovered,
+  timesTriggered: synergy.timesTriggered,
+  effects: {
+    attendanceMultiplier: synergy.multiplier,
+    reputationBonus: 0,
+    fansGained: 0,
+  },
+});
 
 export const SynergyView: React.FC = () => {
   const [filter, setFilter] = useState<'all' | 'discovered' | 'hints'>('discovered');
-  const discoveredSynergies = synergySystemV2.getDiscoveredSynergies();
+  const discoveredSynergies: SynergyViewModel[] = synergySystemV2
+    .getDiscoveredSynergies()
+    .map(toViewModel);
   const undiscoveredCount = synergySystemV2.getUndiscoveredSynergiesCount();
-  const allSynergies = synergySystemV2.getAllSynergies();
+  const allSynergies: SynergyViewModel[] = discoveredSynergies;
   
   const getTierColor = (tier: string): string => {
     switch (tier) {
@@ -247,14 +283,14 @@ export const SynergyView: React.FC = () => {
                                     color: '#9ca3af',
                                     marginBottom: '6px'
                                   }}>
-                                    {synergy.requirements.bands && (
-                                      <p style={{ margin: '2px 0' }}>Bands: {synergy.requirements.bands.join(' + ')}</p>
+                                    {synergy.requirements?.bands && (
+                                      <p style={{ margin: '2px 0' }}>Bands: {synergy.requirements?.bands.join(' + ')}</p>
                                     )}
-                                    {synergy.requirements.venueTypes && (
-                                      <p style={{ margin: '2px 0' }}>Venues: {synergy.requirements.venueTypes.join(', ')}</p>
+                                    {synergy.requirements?.venueTypes && (
+                                      <p style={{ margin: '2px 0' }}>Venues: {synergy.requirements?.venueTypes.join(', ')}</p>
                                     )}
-                                    {synergy.requirements.traits && (
-                                      <p style={{ margin: '2px 0' }}>Traits: {synergy.requirements.traits.join(', ')}</p>
+                                    {synergy.requirements?.traits && (
+                                      <p style={{ margin: '2px 0' }}>Traits: {synergy.requirements?.traits.join(', ')}</p>
                                     )}
                                   </div>
                                   

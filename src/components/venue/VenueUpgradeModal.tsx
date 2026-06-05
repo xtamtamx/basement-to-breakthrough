@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Venue, Equipment, EquipmentType } from '@game/types';
-import { venueUpgradeSystem, EQUIPMENT_CATALOG } from '@game/mechanics/VenueUpgradeSystem';
+import { Venue, EquipmentType } from '@game/types';
+import { venueUpgradeSystem } from '@game/mechanics/VenueUpgradeSystem';
 import { useGameStore } from '@stores/gameStore';
 import { formatMoney } from '@utils/formatters';
 import { Tab } from '@headlessui/react';

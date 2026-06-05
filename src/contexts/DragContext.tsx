@@ -1,6 +1,5 @@
 import React, {
   createContext,
-  useContext,
   useState,
   useCallback,
   ReactNode,
@@ -69,7 +68,7 @@ export const DragProvider: React.FC<DragProviderProps> = ({ children }) => {
       // Check which drop zones are under the cursor
       const newActiveZones = new Set<string>();
 
-      dropZones.forEach((handler, id) => {
+      dropZones.forEach((_handler, id) => {
         const element = document.querySelector(`[data-dropzone-id="${id}"]`);
         if (element) {
           const rect = element.getBoundingClientRect();

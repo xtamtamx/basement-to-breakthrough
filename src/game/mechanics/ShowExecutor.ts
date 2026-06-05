@@ -1,6 +1,20 @@
-import { Band, Venue, Show, ShowResult, GameState, Incident } from '@game/types';
+import {
+  Band,
+  Venue,
+  Show,
+  ShowResult,
+  GameState,
+  GamePhase,
+  IncidentType,
+  Difficulty,
+  PerformanceMode,
+  ColorblindMode,
+  Incident as CoreIncident,
+  Consequence,
+  ConsequenceType,
+} from '@game/types';
 import { synergyEngine } from './SynergyEngine';
-import { incidentSystem } from './IncidentSystem';
+import { incidentSystem, Incident } from './IncidentSystem';
 import { factionSystem } from './FactionSystem';
 import { equipmentManager } from './EquipmentManager';
 import { equipmentManagerV2 } from './EquipmentManagerV2';
@@ -23,13 +37,13 @@ class ShowExecutor {
       id: `show-${Date.now()}`,
       bandId: band.id,
       venueId: venue.id,
-      date: gameState.turn, // Using turn as date for now
+      date: new Date(), // Scheduled for the current turn
       ticketPrice,
-      ticketsSold: 0,
+      status: 'SCHEDULED',
+      actualAttendance: 0,
       revenue: 0,
       reputationGain: 0,
       fansGained: 0,
-      stress: 0,
     };
 
     // Calculate base attendance
@@ -63,9 +77,10 @@ class ShowExecutor {
     const dramaRoll = Math.random();
     if (dramaRoll < factionMods.dramaChance) {
       incidents.push({
-        type: 'FACTION_DRAMA',
+        type: IncidentType.BAND_DRAMA,
         description: 'Faction tensions cause problems at the show',
-        effects: { reputationChange: -5 }
+        effects: { reputationChange: -5 },
+        preventable: false,
       });
     }
 
@@ -89,13 +104,14 @@ class ShowExecutor {
       // Missing equipment causes problems
       attendanceMultiplier *= 0.7; // 30% attendance penalty
       incidents.push({
-        type: 'EQUIPMENT_MISSING',
+        type: IncidentType.EQUIPMENT_FAILURE,
         description: `Missing required equipment: ${equipmentRequirements.missing.join(', ')}`,
-        effects: { 
-          attendanceChange: -30, 
-          stressIncrease: 20,
+        effects: {
+          attendanceChange: -30,
+          stressChange: 20,
           reputationChange: -3
-        }
+        },
+        preventable: false,
       });
     }
     
@@ -122,8 +138,8 @@ class ShowExecutor {
     
     // Apply stress increase from incidents
     incidents.forEach(incident => {
-      if (incident.effects.stressIncrease) {
-        baseStress += incident.effects.stressIncrease;
+      if (incident.effects.stressChange) {
+        baseStress += incident.effects.stressChange;
       }
     });
     
@@ -163,11 +179,11 @@ class ShowExecutor {
     equipmentManagerV2.degradeEquipment(1);
 
     // Update show object
-    show.ticketsSold = finalAttendance;
+    show.actualAttendance = finalAttendance;
     show.revenue = Math.floor(revenue);
     show.reputationGain = Math.floor(reputationGain);
     show.fansGained = Math.floor(fansGained);
-    show.stress = stress;
+    show.status = 'COMPLETED';
 
     // Create result
     const result: ShowResult = {
@@ -178,8 +194,9 @@ class ShowExecutor {
       reputationChange: show.reputationGain,
       reputationGain: show.reputationGain,
       fansGained: show.fansGained,
+      stressGain: stress,
       incidentOccurred: incidents.length > 0,
-      incidents: incidents,
+      incidents: incidents.map(i => this.toCoreIncident(i)),
       isSuccess: finalAttendance >= venue.capacity * 0.5,
       financials: {
         revenue: show.revenue,
@@ -193,6 +210,32 @@ class ShowExecutor {
       result,
       incidents,
       synergies,
+    };
+  }
+
+  // Map an IncidentSystem incident onto the core Incident shape used by ShowResult.
+  private toCoreIncident(incident: Incident): CoreIncident {
+    const { effects } = incident;
+    const consequences: Consequence[] = [];
+    if (effects.moneyChange) {
+      consequences.push({ type: ConsequenceType.MONEY_LOSS, value: effects.moneyChange });
+    }
+    if (effects.reputationChange) {
+      consequences.push({ type: ConsequenceType.REPUTATION_LOSS, value: effects.reputationChange });
+    }
+
+    // Approximate a 1-10 severity from the magnitude of the incident's effects.
+    const magnitude =
+      Math.abs(effects.attendanceChange ?? 0) +
+      Math.abs(effects.reputationChange ?? 0) +
+      Math.abs(effects.stressChange ?? 0);
+    const severity = Math.max(1, Math.min(10, Math.round(magnitude / 10)));
+
+    return {
+      type: incident.type,
+      severity,
+      description: incident.description,
+      consequences,
     };
   }
 
@@ -307,7 +350,7 @@ class ShowExecutor {
     const fullGameState: GameState = {
       id: 'current',
       turn: 1, // This should come from the actual game state
-      phase: 'PERFORMANCE' as const,
+      phase: GamePhase.PERFORMANCE,
       resources: {
         money: 0,
         reputation: gameState.reputation,
@@ -324,7 +367,20 @@ class ShowExecutor {
       },
       unlockedContent: [],
       achievements: [],
-      settings: { difficulty: 'normal', musicVolume: 1, sfxVolume: 1 }
+      settings: {
+        difficulty: Difficulty.NORMAL,
+        musicVolume: 1,
+        sfxVolume: 1,
+        hapticFeedback: true,
+        autoSave: true,
+        performanceMode: PerformanceMode.BALANCED,
+        accessibility: {
+          colorblindMode: ColorblindMode.OFF,
+          reduceMotion: false,
+          largerTouchTargets: false,
+          screenReaderOptimized: false,
+        },
+      }
     };
 
     // Execute the show using the internal method

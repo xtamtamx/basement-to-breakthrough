@@ -44,7 +44,8 @@ describe('SaveManager', () => {
     money: 1000,
     reputation: 50,
     fans: 100,
-    influence: 25,
+    connections: 25,
+    stress: 0,
   };
 
   const mockBand: Band = {
@@ -94,19 +95,19 @@ describe('SaveManager', () => {
     id: 'show1',
     venueId: 'v1',
     date: new Date(),
-    bill: [{
-      bandId: 'b1',
-      slot: 'HEADLINER',
-      guaranteedPayment: 100
-    }],
+    bandId: 'b1',
+    bill: {
+      headliner: 'b1',
+      openers: [],
+      dynamics: {
+        chemistryScore: 0,
+        dramaRisk: 0,
+        crowdAppeal: 0,
+        sceneAlignment: 0,
+      },
+    },
     ticketPrice: 10,
-    expectedAttendance: 50,
-    promotionLevel: 'STANDARD',
-    equipmentQuality: 'BASIC',
-    isAllAges: true,
-    hasSpecialGuest: false,
-    theme: null,
-    isFestival: false,
+    status: 'SCHEDULED',
   };
 
   beforeEach(() => {

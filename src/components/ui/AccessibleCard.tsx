@@ -59,11 +59,11 @@ export const AccessibleCard: React.FC<AccessibleCardProps> = ({
         }
         ${className}
       `}
+      {...(isInteractive ? buttonProps : {})}
       onClick={isInteractive ? handleClick : undefined}
       aria-label={ariaDescription}
       aria-selected={selected}
       aria-disabled={disabled}
-      {...(isInteractive ? buttonProps : {})}
     >
       {/* Badge */}
       {badge && (

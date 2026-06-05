@@ -1,4 +1,4 @@
-import { Venue, VenueUpgrade, VenueUpgradeType, Equipment, EquipmentType } from '@game/types';
+import { Venue, VenueUpgrade, VenueUpgradeType, VenueType, Equipment, EquipmentType } from '@game/types';
 import { useGameStore } from '@stores/gameStore';
 
 export interface UpgradeDefinition extends Omit<VenueUpgrade, 'id'> {
@@ -221,6 +221,7 @@ export const VENUE_UPGRADES: UpgradeDefinition[] = [
     description: 'Remove some furniture to fit more people',
     cost: 500,
     type: VenueUpgradeType.CAPACITY,
+    tier: 1,
     requirements: {
       minCapacity: 50,
     },
@@ -235,6 +236,7 @@ export const VENUE_UPGRADES: UpgradeDefinition[] = [
     description: 'Professional renovation to maximize space',
     cost: 2000,
     type: VenueUpgradeType.CAPACITY,
+    tier: 2,
     requirements: {
       minCapacity: 100,
       minReputation: 30,
@@ -250,10 +252,11 @@ export const VENUE_UPGRADES: UpgradeDefinition[] = [
     description: 'Expand to outdoor space for larger crowds',
     cost: 5000,
     type: VenueUpgradeType.CAPACITY,
+    tier: 3,
     requirements: {
       minCapacity: 200,
       minReputation: 50,
-      venueTypes: ['BAR', 'WAREHOUSE', 'THEATER'],
+      venueTypes: [VenueType.DIVE_BAR, VenueType.WAREHOUSE, VenueType.THEATER],
     },
     effects: {
       capacity: 100,
@@ -269,6 +272,7 @@ export const VENUE_UPGRADES: UpgradeDefinition[] = [
     description: 'Basic security staff to handle crowds',
     cost: 1000,
     type: VenueUpgradeType.SECURITY,
+    tier: 1,
     effects: {
       incidentChance: -20,
       authenticity: -10, // Security can kill the vibe
@@ -281,6 +285,7 @@ export const VENUE_UPGRADES: UpgradeDefinition[] = [
     description: 'Experienced security that knows the scene',
     cost: 3000,
     type: VenueUpgradeType.SECURITY,
+    tier: 2,
     requirements: {
       minCapacity: 150,
       minReputation: 40,
@@ -299,7 +304,8 @@ export const VENUE_UPGRADES: UpgradeDefinition[] = [
     name: 'Commission Graffiti Art',
     description: 'Local artists create authentic murals',
     cost: 800,
-    type: VenueUpgradeType.ATMOSPHERE,
+    type: VenueUpgradeType.AMENITIES,
+    tier: 1,
     effects: {
       atmosphere: 15,
       authenticity: 20,
@@ -310,7 +316,8 @@ export const VENUE_UPGRADES: UpgradeDefinition[] = [
     name: 'VIP Area',
     description: 'Exclusive area for special guests',
     cost: 2500,
-    type: VenueUpgradeType.ATMOSPHERE,
+    type: VenueUpgradeType.AMENITIES,
+    tier: 2,
     requirements: {
       minCapacity: 150,
       minReputation: 35,
@@ -329,13 +336,13 @@ export const VENUE_UPGRADES: UpgradeDefinition[] = [
     description: 'Basic bar setup for drink sales',
     cost: 2000,
     type: VenueUpgradeType.BAR,
+    tier: 1,
     requirements: {
-      venueTypes: ['BASEMENT', 'WAREHOUSE', 'THEATER'],
+      venueTypes: [VenueType.BASEMENT, VenueType.WAREHOUSE, VenueType.THEATER],
     },
     effects: {
       revenue: 30,
       atmosphere: 10,
-      allAges: false, // Can't be all-ages with a bar
     },
     upkeepCost: 100,
   },
@@ -345,6 +352,7 @@ export const VENUE_UPGRADES: UpgradeDefinition[] = [
     description: 'Partner with local breweries',
     cost: 1000,
     type: VenueUpgradeType.BAR,
+    tier: 2,
     requirements: {
       minReputation: 25,
     },
@@ -363,6 +371,7 @@ export const VENUE_UPGRADES: UpgradeDefinition[] = [
     description: 'Raised platform for better visibility',
     cost: 1500,
     type: VenueUpgradeType.STAGE,
+    tier: 1,
     effects: {
       atmosphere: 20,
       acoustics: 10,
@@ -375,6 +384,7 @@ export const VENUE_UPGRADES: UpgradeDefinition[] = [
     description: 'Full stage with wings and backdrop',
     cost: 4000,
     type: VenueUpgradeType.STAGE,
+    tier: 3,
     requirements: {
       minCapacity: 200,
       minReputation: 45,
@@ -383,7 +393,6 @@ export const VENUE_UPGRADES: UpgradeDefinition[] = [
       atmosphere: 30,
       acoustics: 20,
       capacity: 20,
-      reputationMultiplier: 1.1,
     }
   }
 ];
@@ -470,11 +479,9 @@ export class VenueUpgradeSystem {
     updatedVenue.upgrades = [...(updatedVenue.upgrades || []), upgrade as VenueUpgrade];
     
     // Special effects
-    if (upgrade.effects.allAges === false) {
-      updatedVenue.allowsAllAges = false;
-    }
     if (upgrade.type === VenueUpgradeType.BAR) {
       updatedVenue.hasBar = true;
+      updatedVenue.allowsAllAges = false; // Can't be all-ages with a bar
     }
     if (upgrade.type === VenueUpgradeType.SECURITY) {
       updatedVenue.hasSecurity = true;
@@ -525,7 +532,7 @@ export class VenueUpgradeSystem {
   }
   
   // Rent equipment for a single show
-  rentEquipment(venueId: string, equipmentId: string): boolean {
+  rentEquipment(_venueId: string, equipmentId: string): boolean {
     const store = useGameStore.getState();
     const equipment = EQUIPMENT_CATALOG.find(e => e.id === equipmentId);
     

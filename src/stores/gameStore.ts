@@ -31,8 +31,8 @@ const loadInitialData = async () => {
       const [bandsModule, venuesModule] = await Promise.all([
         performanceMetrics.trackLazyLoad('initial-bands', () => import("../data/initialBands")),
         performanceMetrics.trackLazyLoad('initial-venues', () => import("../data/initialVenues"))
-      ]);
-      
+      ]) as [typeof import("../data/initialBands"), typeof import("../data/initialVenues")];
+
       return {
         bands: bandsModule.initialBands,
         venues: venuesModule.initialVenues

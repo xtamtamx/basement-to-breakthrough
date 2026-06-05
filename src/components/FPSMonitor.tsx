@@ -43,9 +43,6 @@ export const FPSMonitor: React.FC<FPSMonitorProps> = ({
       const deltaTime = currentTime - lastTimeRef.current;
       lastTimeRef.current = currentTime;
 
-      // Calculate instantaneous FPS
-      const instantFPS = deltaTime > 0 ? 1000 / deltaTime : 0;
-      
       // Store frame time
       frameTimesRef.current.push(deltaTime);
       

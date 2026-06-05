@@ -334,7 +334,17 @@ export class DayJobSystem {
       collectiveName?: string;
     }
   ): DayJob {
-    const template = JOB_TEMPLATES[type];
+    const template = JOB_TEMPLATES[type as keyof typeof JOB_TEMPLATES] as {
+      baseName: string;
+      description: string;
+      moneyPerTurn: number;
+      reputationChange: number;
+      fanChange: number;
+      stressGain: number;
+      connectionGain?: number;
+      requirements?: { minReputation?: number; minConnections?: number };
+      satiricalFlavor: string;
+    };
     const id = `${type}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
     // Generate name based on context

@@ -80,7 +80,7 @@ export const Button: React.FC<ButtonProps> = ({
         <span className="btn-icon btn-icon-right">{icon}</span>
       )}
 
-      <style jsx>{`
+      <style>{`
         .btn {
           position: relative;
           display: inline-flex;

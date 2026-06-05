@@ -1,4 +1,4 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { Component, ErrorInfo, ReactNode } from 'react';
 import { VolumeX } from 'lucide-react';
 
 import { devLog } from '../../utils/devLogger';
@@ -40,7 +40,7 @@ export class AudioErrorBoundary extends Component<Props, State> {
     throw error;
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     // Only handle audio-related errors
     const isAudioError = error.message.toLowerCase().includes('audio') ||
                         error.message.toLowerCase().includes('sound') ||
@@ -80,7 +80,7 @@ export class AudioErrorBoundary extends Component<Props, State> {
     window.location.reload();
   };
 
-  render() {
+  override render() {
     const { hasError, audioDisabled } = this.state;
     const { children } = this.props;
 

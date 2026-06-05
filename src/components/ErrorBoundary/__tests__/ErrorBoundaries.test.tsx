@@ -119,7 +119,7 @@ describe('Error Boundaries', () => {
 
     it('should pass through non-network errors', () => {
       // NetworkErrorBoundary should not catch this error
-      const { container } = render(
+      render(
         <GameErrorBoundary>
           <NetworkErrorBoundary>
             <ThrowError error={new Error('Generic application error')} />

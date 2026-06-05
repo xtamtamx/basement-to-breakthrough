@@ -24,7 +24,6 @@ interface DetailedDistrictViewProps {
 }
 
 export const DetailedDistrictView: React.FC<DetailedDistrictViewProps> = ({
-  districtId,
   districtName,
   districtType,
   onBuildingClick,

@@ -169,8 +169,8 @@ export const SaveLoadTest: React.FC = () => {
 
   const handleClearSaves = () => {
     haptics.warning();
-    saveManager.clearSave();
-    saveManager.clearAutoSave();
+    saveManager.deleteSave();
+    saveManager.deleteAutoSave();
     setSavedData(null);
     setLoadedData(null);
     setStatus('🗑️ All saves cleared');
@@ -178,7 +178,8 @@ export const SaveLoadTest: React.FC = () => {
 
   const handleExport = () => {
     haptics.medium();
-    const exportData = saveManager.exportSave();
+    const save = saveManager.loadGame();
+    const exportData = save ? JSON.stringify(save) : null;
     if (exportData) {
       // In a real app, this would trigger a share sheet on mobile
       navigator.clipboard.writeText(exportData);

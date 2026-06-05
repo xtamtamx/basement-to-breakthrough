@@ -1,5 +1,6 @@
 import { useGameStore } from '@stores/gameStore';
 import { Show } from '@game/types';
+import { prodLog } from '@utils/devLogger';
 
 export enum PromotionType {
   FLYERS = 'FLYERS',
@@ -18,6 +19,14 @@ export interface PromotionActivity {
   timeInvestment: number; // How many "promotion actions" it takes
   effectiveness: number; // Base attendance multiplier
   reputationBonus?: number;
+  /** UI: minimum reputation required to use this activity (mirrors requirements.minReputation). */
+  requiresReputation?: number;
+  /** UI: whether this activity needs scene connections (mirrors requirements.minConnections). */
+  requiresConnections?: boolean;
+  /** UI: attendance multiplier shown to the player (defaults to effectiveness). */
+  attendanceMultiplier?: number;
+  /** UI: fans gained from running this activity. */
+  fansGained?: number;
   requirements?: {
     minReputation?: number;
     minConnections?: number;
@@ -306,24 +315,42 @@ export class ShowPromotionSystem {
     totalInvestment: number;
     effectiveness: number;
     activitiesUsed: PromotionType[];
+    activePromotions: PromotionType[];
+    currentLevel: number;
+    baseAttendance: number;
+    totalMultiplier: number;
+    expectedAttendance: number;
     hype: number;
   } | null {
     const show = this.scheduledShows.get(showId);
     if (!show) return null;
-    
+
     let totalInvestment = 0;
     const activitiesUsed: PromotionType[] = [];
-    
+
     show.promotionInvestment.forEach((times, type) => {
       const activity = PROMOTION_ACTIVITIES[type];
       totalInvestment += activity.cost * times;
       activitiesUsed.push(type);
     });
-    
+
+    // Base (unpromoted) attendance for display purposes
+    const state = useGameStore.getState();
+    const venue = state.venues.find(v => v.id === show.venueId);
+    const band = state.allBands.find(b => b.id === show.bandId);
+    const baseAttendance = venue && band
+      ? Math.floor(venue.capacity * (band.popularity / 100) * (venue.atmosphere / 100))
+      : 0;
+
     return {
       totalInvestment,
       effectiveness: show.totalPromotionEffectiveness,
       activitiesUsed,
+      activePromotions: activitiesUsed,
+      currentLevel: Math.min(activitiesUsed.length, 5),
+      baseAttendance,
+      totalMultiplier: show.totalPromotionEffectiveness,
+      expectedAttendance: show.expectedAttendance,
       hype: show.hype
     };
   }

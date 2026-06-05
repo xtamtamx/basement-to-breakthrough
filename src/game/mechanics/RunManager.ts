@@ -73,6 +73,12 @@ export interface RunResult {
   newHighScore: boolean;
 }
 
+// A persisted run record: the full run state plus its computed result.
+export interface RunHistoryEntry extends RunState {
+  result: RunResult;
+  endTime?: Date;
+}
+
 class RunManager {
   private currentRun: RunState | null = null;
   private runConfigs: Map<string, RunConfig> = new Map();
@@ -223,10 +229,11 @@ class RunManager {
   
   // Check win conditions
   checkWinConditions(gameState: GameStateProps): boolean {
-    if (!this.currentRun) return false;
-    
-    const { winConditions } = this.currentRun.config;
-    
+    const run = this.currentRun;
+    if (!run) return false;
+
+    const { winConditions } = run.config;
+
     return winConditions.every(condition => {
       switch (condition.type) {
         case 'reputation':
@@ -234,9 +241,9 @@ class RunManager {
         case 'money':
           return gameState.money >= condition.target;
         case 'fans':
-          return this.currentRun.stats.totalFans >= condition.target;
+          return run.stats.totalFans >= condition.target;
         case 'shows':
-          return this.currentRun.stats.totalShows >= condition.target;
+          return run.stats.totalShows >= condition.target;
         default:
           return false;
       }
@@ -344,8 +351,8 @@ class RunManager {
         id: 'perfect_run',
         name: satiricalData.name,
         description: satiricalData.description,
-        icon: '⭐',
-        unlockedAt: new Date()
+        progress: 100,
+        unlockedAt: Date.now()
       });
     }
     
@@ -355,8 +362,8 @@ class RunManager {
         id: 'speed_demon',
         name: 'Meth-Free Speed Run Champion',
         description: 'Booked 20 shows in 15 turns using only caffeine and desperation',
-        icon: '⚡',
-        unlockedAt: new Date()
+        progress: 100,
+        unlockedAt: Date.now()
       });
     }
     
@@ -366,7 +373,7 @@ class RunManager {
   }
   
   // Check unlocks earned from score
-  private checkUnlocks(run: RunState, score: number): UnlockableContent[] {
+  private checkUnlocks(_run: RunState, score: number): UnlockableContent[] {
     const unlocks: UnlockableContent[] = [];
     
     // Unlock new bands at score thresholds
@@ -438,7 +445,7 @@ class RunManager {
   }
   
   // Get run history
-  private getRunHistory(): RunResult[] {
+  private getRunHistory(): RunHistoryEntry[] {
     const stored = safeStorage.getItem('btb-run-history');
     return stored ? JSON.parse(stored) : [];
   }

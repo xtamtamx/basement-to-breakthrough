@@ -1,5 +1,4 @@
 import React, { ReactNode } from 'react';
-import { getDeviceInfo } from '@utils/mobile';
 
 interface MobileLayoutProps {
   children: ReactNode;
@@ -14,8 +13,6 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
   footer,
   bottomNav,
 }) => {
-  const deviceInfo = getDeviceInfo();
-  
   return (
     <div className="flex flex-col h-full" style={{ backgroundColor: 'var(--pixel-black)' }}>
       {/* Header with safe area */}

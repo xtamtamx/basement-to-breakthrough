@@ -44,6 +44,7 @@ export const TutorialOverlay: React.FC = () => {
     } else {
       setHighlightBounds(null);
     }
+    return undefined;
   }, [currentStep]);
 
   const handleNext = () => {
@@ -59,7 +60,7 @@ export const TutorialOverlay: React.FC = () => {
   };
 
   const getTooltipPosition = () => {
-    if (!highlightBounds || !currentStep.position) {
+    if (!highlightBounds || !currentStep?.position) {
       return { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' };
     }
 
@@ -182,7 +183,7 @@ export const TutorialOverlay: React.FC = () => {
         </motion.div>
       </motion.div>
 
-      <style jsx>{`
+      <style>{`
         .tutorial-overlay {
           position: fixed;
           inset: 0;

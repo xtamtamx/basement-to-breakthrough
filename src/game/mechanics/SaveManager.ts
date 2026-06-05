@@ -1,4 +1,4 @@
-import { Band, Venue, Show, Resources, Equipment } from '@game/types';
+import { Band, Venue, Show, Resources, Equipment, FactionEvent } from '@game/types';
 import { equipmentManagerV2 } from './EquipmentManagerV2';
 import { venueUpgradeManager } from './VenueUpgradeManager';
 import { factionSystem } from './FactionSystem';
@@ -16,8 +16,8 @@ interface VenueUpgradeStateData {
 }
 
 interface FactionStateData {
-  standings?: Array<[string, number]>;
-  eventHistory?: unknown[];
+  standings?: Record<string, number>;
+  events?: FactionEvent[];
 }
 interface SaveGame {
   version: string;
@@ -195,6 +195,11 @@ class SaveManager {
     safeStorage.removeItem(this.AUTOSAVE_KEY);
   }
 
+  // Export the raw saved game JSON for download/backup
+  exportSave(): string | null {
+    return safeStorage.getItem(this.SAVE_KEY);
+  }
+
   // Get save info without loading full game
   getSaveInfo(): { timestamp: number; turn: number } | null {
     try {
@@ -219,7 +224,7 @@ class SaveManager {
       const rentedEquipment = equipmentManagerV2.getRentedEquipment();
       return {
         owned: ownedEquipment.map(e => ({ ...e })),
-        rented: rentedEquipment.map(e => ({ ...e, turnsRemaining: e.turnsRemaining }))
+        rented: rentedEquipment.map(e => ({ equipmentId: e.id, turnsRemaining: 1 }))
       };
     } catch (error) {
       devLog.error('Failed to serialize equipment state:', error);

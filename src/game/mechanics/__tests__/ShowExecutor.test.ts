@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { showExecutor } from '../ShowExecutor';
-import { Band, Venue, Show, Genre, VenueType, Incident } from '@game/types';
+import { Band, Venue, Show, Genre, VenueType, IncidentType } from '@game/types';
 import { synergyEngine } from '../SynergyEngine';
-import { incidentSystem } from '../IncidentSystem';
+import { incidentSystem, Incident } from '../IncidentSystem';
 
 // Mock dependencies
 vi.mock('../SynergyEngine');
@@ -214,15 +214,13 @@ describe('ShowExecutor', () => {
       // Mock an incident
       vi.mocked(incidentSystem.checkForIncidents).mockReturnValue([
         {
-          type: 'EQUIPMENT_FAILURE',
-          severity: 5,
+          type: IncidentType.EQUIPMENT_FAILURE,
           description: 'PA system failed',
-          consequences: [
-            { type: 'REPUTATION_LOSS', value: 10 }
-          ],
           effects: {
-            attendanceChange: -20
-          }
+            attendanceChange: -20,
+            reputationChange: -10,
+          },
+          preventable: false,
         } as Incident
       ]);
 

@@ -1,4 +1,4 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { Component, ErrorInfo, ReactNode } from 'react';
 import { WifiOff, RefreshCw } from 'lucide-react';
 import { haptics } from '@utils/mobile';
 
@@ -23,12 +23,12 @@ export class NetworkErrorBoundary extends Component<Props, State> {
     };
   }
 
-  componentDidMount() {
+  override componentDidMount() {
     window.addEventListener('online', this.handleOnline);
     window.addEventListener('offline', this.handleOffline);
   }
 
-  componentWillUnmount() {
+  override componentWillUnmount() {
     window.removeEventListener('online', this.handleOnline);
     window.removeEventListener('offline', this.handleOffline);
   }
@@ -60,7 +60,7 @@ export class NetworkErrorBoundary extends Component<Props, State> {
     throw error;
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     // Check if it's a network-related error
     const isNetworkError = 
       error.message.includes('fetch') ||
@@ -91,7 +91,7 @@ export class NetworkErrorBoundary extends Component<Props, State> {
     });
   };
 
-  render() {
+  override render() {
     const { hasError, isOffline, error } = this.state;
     const { children } = this.props;
 

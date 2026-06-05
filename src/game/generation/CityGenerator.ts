@@ -133,15 +133,7 @@ export class CityGenerator {
   }
 
   private simplex2D(x: number, y: number): number {
-    // Simplified noise function
-    const s = (x + y) * 0.5;
-    const i = Math.floor(x + s);
-    const j = Math.floor(y + s);
-
-    const t = (i + j) * 0.211;
-    const X0 = i - t;
-    const Y0 = j - t;
-
+    // Simplified pseudo-noise function
     return (Math.sin(x * 12.9898 + y * 78.233) * 43758.5453) % 1;
   }
 
@@ -151,11 +143,11 @@ export class CityGenerator {
       color: string;
       count: number;
     }> = [
-      { type: "downtown", color: "#3B82F6", count: 1 },
-      { type: "warehouse", color: "#EF4444", count: 1 },
-      { type: "college", color: "#10B981", count: 1 },
-      { type: "residential", color: "#F59E0B", count: 1 },
-      { type: "arts", color: "#8B5CF6", count: 1 },
+      { type: DistrictType.DOWNTOWN, color: "#3B82F6", count: 1 },
+      { type: DistrictType.WAREHOUSE, color: "#EF4444", count: 1 },
+      { type: DistrictType.COLLEGE, color: "#10B981", count: 1 },
+      { type: DistrictType.RESIDENTIAL, color: "#F59E0B", count: 1 },
+      { type: DistrictType.ARTS, color: "#8B5CF6", count: 1 },
     ];
 
     // Create a more structured grid placement
@@ -204,30 +196,6 @@ export class CityGenerator {
         }
 
         this.cells[y][x].districtId = nearestSeed.id;
-      }
-    }
-  }
-
-  private fillEmptyCells(): void {
-    for (let y = 0; y < this.height; y++) {
-      for (let x = 0; x < this.width; x++) {
-        if (this.cells[y][x].districtId === null) {
-          // Find nearest district
-          let minDist = Infinity;
-          let nearestDistrict = this.districtSeeds[0].id;
-
-          for (const seed of this.districtSeeds) {
-            const dist = Math.sqrt(
-              Math.pow(seed.centerX - x, 2) + Math.pow(seed.centerY - y, 2),
-            );
-            if (dist < minDist) {
-              minDist = dist;
-              nearestDistrict = seed.id;
-            }
-          }
-
-          this.cells[y][x].districtId = nearestDistrict;
-        }
       }
     }
   }
@@ -323,7 +291,7 @@ export class CityGenerator {
     }
   }
 
-  private addBoundaryStreets(streets: StreetSegment[]): void {
+  private addBoundaryStreets(_streets: StreetSegment[]): void {
     // Find district boundaries and add streets along them
     for (let y = 1; y < this.height - 1; y++) {
       for (let x = 1; x < this.width - 1; x++) {
@@ -486,7 +454,7 @@ export class CityGenerator {
 
   private seedInitialDevelopment(): void {
     // Start with very sparse development
-    for (const [districtId, district] of this.districts) {
+    for (const [, district] of this.districts) {
       const developmentChance = this.getInitialDevelopmentChance(district.type);
 
       for (const cell of district.cells) {

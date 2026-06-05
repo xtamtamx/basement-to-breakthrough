@@ -98,42 +98,6 @@ export const colorblindPalettes = {
     border: theme.colors.border,
     text: theme.colors.text,
   },
-  
-  [ColorblindMode.ACHROMATOPSIA]: {
-    // Complete color blindness - use only grayscale
-    punk: {
-      pink: "#FFFFFF", // White
-      magenta: "#E0E0E0", // Light gray
-      neon: "#C0C0C0", // Gray
-    },
-    metal: {
-      red: "#808080", // Medium gray
-      blood: "#606060", // Darker gray
-      rust: "#404040", // Dark gray
-    },
-    success: {
-      green: "#FFFFFF", // White for positive
-      emerald: "#E0E0E0", // Light gray
-      mint: "#F0F0F0", // Very light gray
-    },
-    warning: {
-      yellow: "#C0C0C0", // Gray for warning
-      amber: "#A0A0A0", // Darker gray
-      gold: "#D0D0D0", // Light gray
-    },
-    info: {
-      purple: "#909090", // Medium gray
-      violet: "#707070", // Darker gray
-      indigo: "#505050", // Dark gray
-    },
-    bg: theme.colors.bg,
-    border: {
-      default: "#404040",
-      light: "#606060",
-      bright: "#808080",
-    },
-    text: theme.colors.text,
-  },
 };
 
 // Helper function to get colorblind-safe colors
@@ -148,8 +112,8 @@ export const getColorblindSafeColor = (
   for (const key of keys) {
     value = (value as Record<string, unknown>)?.[key];
   }
-  
-  return value || theme.colors.text.primary;
+
+  return typeof value === "string" ? value : theme.colors.text.primary;
 };
 
 // Semantic color mapping for game elements
@@ -182,13 +146,13 @@ export const getSemanticColor = (
   semantic: string,
   mode: ColorblindMode
 ): string => {
-  const colorPath = semantic.split(".").reduce((path, key) => {
-    return (path as Record<string, unknown>)?.[key] || path;
+  const colorPath = semantic.split(".").reduce<unknown>((path, key) => {
+    return (path as Record<string, unknown>)?.[key] ?? path;
   }, semanticColors as Record<string, unknown>);
-  
+
   if (typeof colorPath === "string") {
     return getColorblindSafeColor(colorPath, mode);
   }
-  
+
   return theme.colors.text.primary;
 };

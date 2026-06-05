@@ -13,7 +13,7 @@ vi.mock('../DifficultySystem');
 vi.mock('../ShowPromotionSystem');
 
 // Import after mocking
-import { showPromotionSystem, ScheduledShow } from '../ShowPromotionSystem';
+import { showPromotionSystem, ScheduledShow, PromotionType } from '../ShowPromotionSystem';
 import { difficultySystem } from '../DifficultySystem';
 import { dayJobSystem } from '../DayJobSystem';
 import { showExecutor } from '../ShowExecutor';
@@ -67,23 +67,28 @@ describe('TurnProcessor', () => {
     bookingDifficulty: 3,
   };
 
-  const mockShow = {
+  const mockShow: ScheduledShow = {
     id: 'show1',
+    bandId: 'b1',
     venueId: 'v1',
     date: new Date(),
-    bill: [{
-      bandId: 'b1',
-      slot: 'HEADLINER' as const,
-      guaranteedPayment: 100
-    }],
+    bill: {
+      headliner: 'b1',
+      openers: [],
+      dynamics: {
+        chemistryScore: 0,
+        dramaRisk: 0,
+        crowdAppeal: 0,
+        sceneAlignment: 0,
+      },
+    },
     ticketPrice: 10,
+    status: 'SCHEDULED',
+    turnsUntilShow: 1,
+    promotionInvestment: new Map<PromotionType, number>(),
+    totalPromotionEffectiveness: 1,
     expectedAttendance: 50,
-    promotionLevel: 'STANDARD' as const,
-    equipmentQuality: 'BASIC' as const,
-    isAllAges: true,
-    hasSpecialGuest: false,
-    theme: null,
-    isFestival: false,
+    hype: 0,
   };
 
   beforeEach(() => {
@@ -112,7 +117,6 @@ describe('TurnProcessor', () => {
     vi.mocked(synergySystemV2).calculateTotalMultiplier = vi.fn().mockReturnValue(1);
     
     // Mock dayJobSystem
-    vi.mocked(dayJobSystem).processTurn = vi.fn().mockReturnValue(null);
     vi.mocked(dayJobSystem).processJobIncome = vi.fn().mockReturnValue(null);
     
     // Mock showExecutor
@@ -141,7 +145,7 @@ describe('TurnProcessor', () => {
       fans: 100,
       stress: 20,
       connections: 10,
-      phase: GamePhase.EARLY,
+      phase: GamePhase.PLANNING,
       difficulty: 'NORMAL',
       scheduledShows: [mockShow],
       venues: [mockVenue],
@@ -193,9 +197,9 @@ describe('TurnProcessor', () => {
   });
 
   describe('processNextTurn', () => {
-    it('should process turn and return results', () => {
-      const result = turnProcessor.processNextTurn();
-      
+    it('should process turn and return results', async () => {
+      const result = await turnProcessor.processNextTurn();
+
       expect(result).toBeDefined();
       expect(result.showResults).toBeDefined();
       expect(result.totalVenueRent).toBeDefined();
@@ -203,21 +207,21 @@ describe('TurnProcessor', () => {
       expect(typeof result.totalVenueRent).toBe('number');
     });
 
-    it('should advance the round counter', () => {
-      turnProcessor.processNextTurn();
-      
+    it('should advance the round counter', async () => {
+      await turnProcessor.processNextTurn();
+
       const { nextRound } = useGameStore.getState();
       expect(nextRound).toHaveBeenCalled();
     });
 
-    it('should calculate venue rent correctly', () => {
-      const result = turnProcessor.processNextTurn();
-      
+    it('should calculate venue rent correctly', async () => {
+      const result = await turnProcessor.processNextTurn();
+
       // Venue rent should be 200 (base rent of the test venue)
       expect(result.totalVenueRent).toBe(200);
     });
 
-    it('should return day job results when applicable', () => {
+    it('should return day job results when applicable', async () => {
       // Mock dayJobSystem to return a result
       vi.mocked(dayJobSystem).processJobIncome = vi.fn().mockReturnValue({
         money: 50,
@@ -227,13 +231,13 @@ describe('TurnProcessor', () => {
         message: 'Worked at the record store'
       });
       
-      const result = turnProcessor.processNextTurn();
-      
+      const result = await turnProcessor.processNextTurn();
+
       expect(result.dayJobResult).toBeDefined();
-      expect(result.dayJobResult.money).toBe(50);
+      expect(result.dayJobResult?.money).toBe(50);
     });
 
-    it('should handle shows with missing venue or band gracefully', () => {
+    it('should handle shows with missing venue or band gracefully', async () => {
       // Update the mock to have a show with invalid venue ID
       vi.mocked(showPromotionSystem).processScheduledShows = vi.fn().mockReturnValue({
         showsToExecute: [{
@@ -243,39 +247,39 @@ describe('TurnProcessor', () => {
         promotionUpdates: [] as string[]
       });
       
-      const result = turnProcessor.processNextTurn();
-      
+      const result = await turnProcessor.processNextTurn();
+
       // Should create a failed show result
       expect(result.showResults).toHaveLength(1);
       expect(result.showResults[0].success).toBe(false);
       expect(result.showResults[0].reputationChange).toBeLessThan(0);
     });
 
-    it('should update band and venue stats after shows', () => {
+    it('should update band and venue stats after shows', async () => {
       // Mock showPromotionSystem to return a show to execute
       vi.mocked(showPromotionSystem).processScheduledShows = vi.fn().mockReturnValue({
         showsToExecute: [mockShow as ScheduledShow],
         promotionUpdates: [] as string[]
       });
       
-      turnProcessor.processNextTurn();
-      
+      await turnProcessor.processNextTurn();
+
       const { completeShow } = useGameStore.getState();
       expect(completeShow).toHaveBeenCalled();
     });
 
-    it('should respect phase and difficulty modifiers', () => {
+    it('should respect phase and difficulty modifiers', async () => {
       // Mock difficulty system to return an event
       vi.mocked(difficultySystem).applyPassiveDifficulty = vi.fn().mockReturnValue({
         reputationLost: 0,
         message: 'Increased police presence in the area'
       });
       
-      const result = turnProcessor.processNextTurn();
-      
+      const result = await turnProcessor.processNextTurn();
+
       // Should include the difficulty event
       expect(result.difficultyEvent).toBeDefined();
-      expect(result.difficultyEvent.message).toBe('Increased police presence in the area');
+      expect(result.difficultyEvent?.message).toBe('Increased police presence in the area');
     });
   });
 });

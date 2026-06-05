@@ -1,4 +1,4 @@
-import { Band, Venue, Equipment, Achievement, UnlockableContent } from '@game/types';
+import { Achievement } from '@game/types';
 import { safeStorage } from '@utils/safeStorage';
 
 export interface MetaProgression {

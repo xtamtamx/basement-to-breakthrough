@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { performanceMetrics, usePerformanceMetrics } from '@utils/performanceMetrics';
 import { useGameStore } from '@stores/gameStore';
 import { haptics } from '@utils/haptics';

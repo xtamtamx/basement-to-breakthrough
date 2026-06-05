@@ -1,5 +1,5 @@
 // Dynamic sprite system for evolving city visuals
-import { SPRITE_COLORS_16BIT, createSprite } from './PixelSprites16Bit';
+import { SPRITE_COLORS_16BIT } from './PixelSprites16Bit';
 
 export type DevelopmentLevel = 'empty' | 'construction' | 'basic' | 'developed' | 'thriving';
 
@@ -562,12 +562,12 @@ export function getDevelopmentSprite(
     case 'basic':
     case 'developed':
     case 'thriving':
-      const districtVariations = BUILDING_VARIATIONS[district]?.[level];
+      const districtVariations = BUILDING_VARIATIONS[district as keyof typeof BUILDING_VARIATIONS]?.[level];
       if (districtVariations) {
         const buildingVariation = variation % districtVariations.length;
         return {
           pattern: districtVariations[buildingVariation],
-          colors: DYNAMIC_COLORS[district] || DYNAMIC_COLORS.downtown
+          colors: DYNAMIC_COLORS[district as keyof typeof DYNAMIC_COLORS] || DYNAMIC_COLORS.downtown
         };
       }
       // Fallback to basic building

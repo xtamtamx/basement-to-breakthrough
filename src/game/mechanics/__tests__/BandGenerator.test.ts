@@ -129,7 +129,7 @@ describe('BandGenerator', () => {
       const band = bandGenerator.generateBand();
       
       expect(band.bio).toBeTruthy();
-      expect(band.bio.length).toBeGreaterThan(20);
+      expect(band.bio?.length ?? 0).toBeGreaterThan(20);
     });
 
     it('should generate valid formed date', () => {

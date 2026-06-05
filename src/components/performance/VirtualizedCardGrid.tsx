@@ -51,7 +51,6 @@ export function VirtualizedCardGrid<T>({
   items,
   renderCard,
   getItemKey,
-  columnWidth = 300,
   rowHeight = 200,
   gap = 16,
   mobileColumns = 1,
@@ -75,7 +74,7 @@ export function VirtualizedCardGrid<T>({
   }), [items, renderCard, columns, gap]);
   
   // Column width calculation
-  const getColumnWidth = useCallback((index: number, width: number) => {
+  const getColumnWidth = useCallback((width: number) => {
     return (width - gap) / columns;
   }, [columns, gap]);
   
@@ -95,7 +94,7 @@ export function VirtualizedCardGrid<T>({
         {({ height, width }) => (
           <Grid
             columnCount={columns}
-            columnWidth={(index) => getColumnWidth(index, width)}
+            columnWidth={() => getColumnWidth(width)}
             height={height}
             rowCount={rowCount}
             rowHeight={getRowHeight}

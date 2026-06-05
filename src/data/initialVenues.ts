@@ -19,6 +19,8 @@ export const initialVenues: Venue[] = [
     allowsAllAges: true,
     hasBar: false,
     hasSecurity: false,
+    isPermanent: true,
+    bookingDifficulty: 1,
   },
   {
     id: "abandoned-warehouse",
@@ -36,6 +38,8 @@ export const initialVenues: Venue[] = [
     allowsAllAges: true,
     hasBar: false,
     hasSecurity: false,
+    isPermanent: false,
+    bookingDifficulty: 3,
   },
   {
     id: "community-center",
@@ -53,6 +57,8 @@ export const initialVenues: Venue[] = [
     allowsAllAges: true,
     hasBar: false,
     hasSecurity: false,
+    isPermanent: true,
+    bookingDifficulty: 2,
   },
 
   // Mid-tier venues
@@ -72,11 +78,13 @@ export const initialVenues: Venue[] = [
     allowsAllAges: false,
     hasBar: true,
     hasSecurity: false,
+    isPermanent: true,
+    bookingDifficulty: 4,
   },
   {
     id: "underground-club",
     name: "Underground Club",
-    type: VenueType.SMALL_CLUB,
+    type: VenueType.PUNK_CLUB,
     capacity: 200,
     acoustics: 70,
     authenticity: 65,
@@ -89,6 +97,8 @@ export const initialVenues: Venue[] = [
     allowsAllAges: false,
     hasBar: true,
     hasSecurity: true,
+    isPermanent: true,
+    bookingDifficulty: 5,
   },
 
   // Higher tier venues
@@ -109,6 +119,8 @@ export const initialVenues: Venue[] = [
     hasBar: true,
     hasSecurity: true,
     hasStage: true,
+    isPermanent: true,
+    bookingDifficulty: 6,
   },
   {
     id: "main-street-hall",
@@ -127,6 +139,8 @@ export const initialVenues: Venue[] = [
     hasBar: true,
     hasSecurity: true,
     hasStage: true,
+    isPermanent: true,
+    bookingDifficulty: 7,
   },
 
   // Special venues
@@ -146,6 +160,8 @@ export const initialVenues: Venue[] = [
     allowsAllAges: true,
     hasBar: false,
     hasSecurity: false,
+    isPermanent: false,
+    bookingDifficulty: 3,
   },
   {
     id: "record-store",
@@ -163,6 +179,8 @@ export const initialVenues: Venue[] = [
     allowsAllAges: true,
     hasBar: false,
     hasSecurity: false,
+    isPermanent: true,
+    bookingDifficulty: 3,
   },
 
   // Premium venues
@@ -183,6 +201,8 @@ export const initialVenues: Venue[] = [
     hasBar: true,
     hasSecurity: true,
     hasStage: true,
+    isPermanent: true,
+    bookingDifficulty: 9,
   },
   {
     id: "amphitheater",
@@ -201,5 +221,7 @@ export const initialVenues: Venue[] = [
     hasBar: true,
     hasSecurity: true,
     hasStage: true,
+    isPermanent: true,
+    bookingDifficulty: 10,
   },
 ];

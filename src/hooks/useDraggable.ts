@@ -15,7 +15,7 @@ interface UseDraggableOptions {
   disabled?: boolean;
 }
 
-export const useDraggable = (id: string, options: UseDraggableOptions = {}) => {
+export const useDraggable = (_id: string, options: UseDraggableOptions = {}) => {
   const elementRef = useRef<HTMLDivElement>(null);
   const [dragState, setDragState] = useState<DragState>({
     isDragging: false,
@@ -160,6 +160,7 @@ export const useDraggable = (id: string, options: UseDraggableOptions = {}) => {
         document.removeEventListener("mouseup", handleMouseUp);
       };
     }
+    return undefined;
   }, [dragState.isDragging, handleMouseMove, handleMouseUp]);
 
   return {

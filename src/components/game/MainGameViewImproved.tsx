@@ -19,7 +19,7 @@ import { gameAudio } from "@utils/gameAudio";
 import { GameErrorBoundary } from "@components/ErrorBoundary";
 import { saveGameManager } from "@game/persistence/SaveGameManager";
 import { tutorialManager } from '@game/tutorial/TutorialManager';
-import { Settings, Save, DollarSign, Star, Users as UsersIcon } from 'lucide-react';
+import { Settings, Save } from 'lucide-react';
 import { useSwipeable } from 'react-swipeable';
 import { QuickStartGuide } from './QuickStartGuide';
 

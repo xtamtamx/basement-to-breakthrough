@@ -43,7 +43,7 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ isOpen, onClose })
     setSuccess(null);
     
     try {
-      const saveId = await gameStore.saveGame(saveName || undefined);
+      await gameStore.saveGame(saveName || undefined);
       setSuccess('Game saved successfully!');
       setSaveName('');
       await loadSaves();
@@ -97,7 +97,7 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ isOpen, onClose })
     }
   };
   
-  const formatDate = (timestamp: number) => {
+  const formatDate = (timestamp: number | Date) => {
     const date = new Date(timestamp);
     const now = new Date();
     const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
@@ -477,19 +477,19 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ isOpen, onClose })
                       }}>
                         <div>
                           <span style={{ color: '#6b7280' }}>Round</span>
-                          <div style={{ color: '#ffffff', fontWeight: '500' }}>{save.gameData.round}</div>
+                          <div style={{ color: '#ffffff', fontWeight: '500' }}>{save.turnNumber}</div>
                         </div>
                         <div>
                           <span style={{ color: '#6b7280' }}>Money</span>
-                          <div style={{ color: '#10b981', fontWeight: '500' }}>{formatMoney(save.gameData.money)}</div>
+                          <div style={{ color: '#10b981', fontWeight: '500' }}>{formatMoney(save.money)}</div>
                         </div>
                         <div>
                           <span style={{ color: '#6b7280' }}>Rep</span>
-                          <div style={{ color: '#fbbf24', fontWeight: '500' }}>{save.gameData.reputation}</div>
+                          <div style={{ color: '#fbbf24', fontWeight: '500' }}>{save.reputation}</div>
                         </div>
                         <div>
                           <span style={{ color: '#6b7280' }}>Fans</span>
-                          <div style={{ color: '#a78bfa', fontWeight: '500' }}>{save.gameData.fans}</div>
+                          <div style={{ color: '#a78bfa', fontWeight: '500' }}>{save.fans}</div>
                         </div>
                       </div>
                     </div>

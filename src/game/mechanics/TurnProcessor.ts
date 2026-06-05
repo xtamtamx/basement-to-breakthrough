@@ -4,7 +4,7 @@
  * This file is kept for backwards compatibility during migration.
  */
 import { useGameStore } from '@stores/gameStore';
-import { Show, ShowResult, Incident, IncidentType } from '@game/types';
+import { Show, ShowResult, Incident, IncidentType, ConsequenceType } from '@game/types';
 import { synergyManager } from './SynergyManager';
 import { walkerSystem } from './WalkerSystem';
 import { dayJobSystem } from './DayJobSystem';
@@ -13,7 +13,6 @@ import { showPromotionSystem } from './ShowPromotionSystem';
 import { devLog } from '@utils/devLogger';
 import {
   ESCALATION_START_TURN,
-  ESCALATION_COST_MULTIPLIER,
   ESCALATION_INCIDENT_MULTIPLIER,
 } from '../constants/runConstants';
 
@@ -113,11 +112,13 @@ export class TurnProcessor {
     // Update round counter
     store.nextRound();
     
-    return { 
-      showResults, 
-      totalVenueRent, 
+    return {
+      showResults,
+      totalVenueRent: totalVenueCosts,
       dayJobResult: jobResult || undefined,
-      difficultyEvent: difficultyEvent.message ? difficultyEvent : undefined
+      difficultyEvent: difficultyEvent.message
+        ? { message: difficultyEvent.message, reputationLost: difficultyEvent.reputationLost }
+        : undefined
     };
   }
   
@@ -221,9 +222,6 @@ export class TurnProcessor {
     const moneyBonus = synergyManager.calculateEffectTotal('MONEY_PERCENT', synergyResults);
     const revenueMultiplier = 1 + (moneyBonus / 100);
 
-    // Apply escalation cost increase
-    const escalationCostMult = isEscalation ? ESCALATION_COST_MULTIPLIER : 1;
-
     const finalRevenue = Math.floor(totalRevenue * revenueMultiplier);
     
     // Calculate costs with difficulty scaling
@@ -259,7 +257,7 @@ export class TurnProcessor {
         severity: 3,
         description: 'Neighbors complained about the noise',
         consequences: [
-          { type: 'REPUTATION_LOSS', value: 5 }
+          { type: ConsequenceType.REPUTATION_LOSS, value: 5 }
         ]
       });
       reputationGain -= 5;
@@ -301,7 +299,7 @@ export class TurnProcessor {
         type: IncidentType.BAND_NO_SHOW,
         severity: 8,
         description: 'Show could not be executed',
-        consequences: [{ type: 'REPUTATION_LOSS', value: 10 }]
+        consequences: [{ type: ConsequenceType.REPUTATION_LOSS, value: 10 }]
       }],
       isSuccess: false
     };

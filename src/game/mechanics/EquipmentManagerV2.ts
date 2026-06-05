@@ -495,7 +495,7 @@ class EquipmentManagerV2 {
     }
   }
 
-  rentEquipmentForSave(equipmentId: string, turnsRemaining: number = 1): void {
+  rentEquipmentForSave(equipmentId: string, _turnsRemaining: number = 1): void {
     const equipment = this.equipmentCatalog.find(eq => eq.id === equipmentId);
     if (equipment && !this.inventory.rented.some(eq => eq.id === equipmentId)) {
       this.inventory.rented.push({ ...equipment, owned: false });

@@ -46,11 +46,12 @@ export const useCardStack = (
       cardId: string,
       position: { x: number; y: number },
     ): { targetId: string; isStack: boolean } | null => {
-      let nearest: {
+      type NearestMatch = {
         targetId: string;
         isStack: boolean;
         distance: number;
-      } | null = null;
+      };
+      let nearest: NearestMatch | null = null;
       let minDistance = stackThreshold;
 
       // Check other cards
@@ -79,9 +80,11 @@ export const useCardStack = (
         }
       });
 
-      return nearest
-        ? { targetId: nearest.targetId, isStack: nearest.isStack }
-        : null;
+      if (nearest === null) {
+        return null;
+      }
+      const found: NearestMatch = nearest;
+      return { targetId: found.targetId, isStack: found.isStack };
     },
     [positions, stacks, stackThreshold],
   );

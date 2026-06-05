@@ -6,11 +6,21 @@ interface UpgradeState {
   turnsRemaining: number;
 }
 
+// Local extension of VenueUpgrade adding build duration and typed equipment unlocks
+// (the shared VenueUpgrade type stores unlockEquipment as a single string id).
+type LocalVenueUpgrade = Omit<VenueUpgrade, 'effects' | 'tier'> & {
+  duration: number;
+  tier?: number;
+  effects: Omit<NonNullable<VenueUpgrade['effects']>, 'unlockEquipment'> & {
+    unlockEquipment?: EquipmentType[];
+  };
+};
+
 class VenueUpgradeManager {
-  private activeUpgrades: Map<string, VenueUpgrade[]> = new Map(); // venueId -> completed upgrades
+  private activeUpgrades: Map<string, LocalVenueUpgrade[]> = new Map(); // venueId -> completed upgrades
   private upgradeProgress: UpgradeState[] = [];
 
-  private upgradeCatalog: VenueUpgrade[] = [
+  private upgradeCatalog: LocalVenueUpgrade[] = [
     {
       id: 'expand-basement',
       name: 'Basement Expansion',
@@ -29,7 +39,7 @@ class VenueUpgradeManager {
       id: 'soundproofing-basic',
       name: 'Basic Soundproofing',
       description: 'Reduce noise complaints from neighbors',
-      type: UpgradeType.ACOUSTICS,
+      type: UpgradeType.SOUND_SYSTEM,
       cost: 300,
       duration: 1,
       effects: {
@@ -40,7 +50,7 @@ class VenueUpgradeManager {
       id: 'soundproofing-pro',
       name: 'Professional Soundproofing',
       description: 'Studio-quality acoustic treatment',
-      type: UpgradeType.ACOUSTICS,
+      type: UpgradeType.SOUND_SYSTEM,
       cost: 1500,
       duration: 3,
       effects: {
@@ -173,12 +183,12 @@ class VenueUpgradeManager {
   ];
 
   // Get catalog upgrade by id
-  getCatalogUpgrade(upgradeId: string): VenueUpgrade | undefined {
+  getCatalogUpgrade(upgradeId: string): LocalVenueUpgrade | undefined {
     return this.upgradeCatalog.find(u => u.id === upgradeId);
   }
 
   // Get available upgrades for a venue
-  getAvailableUpgrades(venue: Venue, reputation: number, connections: number): VenueUpgrade[] {
+  getAvailableUpgrades(venue: Venue, reputation: number, connections: number): LocalVenueUpgrade[] {
     const venueUpgrades = this.activeUpgrades.get(venue.id) || [];
     const completedIds = venueUpgrades.map(u => u.id);
     const inProgressIds = this.upgradeProgress
@@ -282,7 +292,7 @@ class VenueUpgradeManager {
   }
 
   // Get completed upgrades for a venue
-  getVenueUpgrades(venueId: string): VenueUpgrade[] {
+  getVenueUpgrades(venueId: string): LocalVenueUpgrade[] {
     return this.activeUpgrades.get(venueId) || [];
   }
 
@@ -338,7 +348,7 @@ class VenueUpgradeManager {
 
   // Apply an upgrade directly (for save/load)
   applyUpgrade(venueId: string, upgradeId: string): void {
-    const upgrade = this.upgrades.find(u => u.id === upgradeId);
+    const upgrade = this.upgradeCatalog.find(u => u.id === upgradeId);
     if (!upgrade) return;
 
     if (!this.activeUpgrades.has(venueId)) {
@@ -346,8 +356,8 @@ class VenueUpgradeManager {
     }
 
     const venueUpgrades = this.activeUpgrades.get(venueId)!;
-    if (!venueUpgrades.includes(upgradeId)) {
-      venueUpgrades.push(upgradeId);
+    if (!venueUpgrades.some(u => u.id === upgradeId)) {
+      venueUpgrades.push(upgrade);
     }
   }
 }

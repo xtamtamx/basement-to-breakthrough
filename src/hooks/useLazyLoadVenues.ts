@@ -38,17 +38,16 @@ export const useLazyLoadVenues = (options: UseLazyLoadVenuesOptions = {}) => {
         filtered = filtered.filter((venue) => venue.type === filterBy.type);
       }
       if (filterBy.minCapacity !== undefined) {
-        filtered = filtered.filter(
-          (venue) => venue.capacity >= filterBy.minCapacity,
-        );
+        const minCapacity = filterBy.minCapacity;
+        filtered = filtered.filter((venue) => venue.capacity >= minCapacity);
       }
       if (filterBy.maxCapacity !== undefined) {
-        filtered = filtered.filter(
-          (venue) => venue.capacity <= filterBy.maxCapacity,
-        );
+        const maxCapacity = filterBy.maxCapacity;
+        filtered = filtered.filter((venue) => venue.capacity <= maxCapacity);
       }
       if (filterBy.maxRent !== undefined) {
-        filtered = filtered.filter((venue) => venue.rent <= filterBy.maxRent);
+        const maxRent = filterBy.maxRent;
+        filtered = filtered.filter((venue) => venue.rent <= maxRent);
       }
       if (filterBy.districtId) {
         filtered = filtered.filter(

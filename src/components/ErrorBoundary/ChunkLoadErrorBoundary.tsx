@@ -1,4 +1,4 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { haptics } from '@utils/mobile';
 
@@ -35,7 +35,7 @@ export class ChunkLoadErrorBoundary extends Component<Props, State> {
     throw error;
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     // Only catch chunk load errors
     if (
       error.name === 'ChunkLoadError' ||
@@ -62,7 +62,7 @@ export class ChunkLoadErrorBoundary extends Component<Props, State> {
     window.location.reload();
   };
 
-  render() {
+  override render() {
     const { hasError, error } = this.state;
     const { children } = this.props;
 

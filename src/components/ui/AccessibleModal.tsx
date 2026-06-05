@@ -53,6 +53,7 @@ export const AccessibleModal: React.FC<AccessibleModalProps> = ({
         document.body.style.overflow = originalOverflow;
       };
     }
+    return undefined;
   }, [isOpen]);
   
   if (!isOpen) return null;

@@ -1,4 +1,4 @@
-import { Band, Genre, TraitType } from "@game/types";
+import { Band, Genre, TraitType, EquipmentType } from "@game/types";
 
 export const initialBands: Band[] = [
   // DIY Punk Bands
@@ -87,7 +87,7 @@ export const initialBands: Band[] = [
     energy: 100,
     technicalSkill: 80,
     technicalRequirements: [
-      { type: "SOUND_SYSTEM", minimumQuality: 3 },
+      { type: EquipmentType.PA_SYSTEM, minimumQuality: 3 },
     ],
     isRealArtist: false,
   },
@@ -110,7 +110,7 @@ export const initialBands: Band[] = [
     energy: 85,
     technicalSkill: 95,
     technicalRequirements: [
-      { type: "SOUND_SYSTEM", minimumQuality: 4 },
+      { type: EquipmentType.PA_SYSTEM, minimumQuality: 4 },
     ],
     isRealArtist: false,
   },
@@ -204,7 +204,7 @@ export const initialBands: Band[] = [
     energy: 85,
     technicalSkill: 75,
     technicalRequirements: [
-      { type: "SOUND_SYSTEM", minimumQuality: 3 },
+      { type: EquipmentType.PA_SYSTEM, minimumQuality: 3 },
     ],
     isRealArtist: false,
   },
@@ -252,7 +252,7 @@ export const initialBands: Band[] = [
     energy: 65,
     technicalSkill: 70,
     technicalRequirements: [
-      { type: "SOUND_SYSTEM", minimumQuality: 3 },
+      { type: EquipmentType.PA_SYSTEM, minimumQuality: 3 },
     ],
     isRealArtist: false,
   },

@@ -230,7 +230,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 <option value={ColorblindMode.PROTANOPIA}>Protanopia (Red-Blind)</option>
                 <option value={ColorblindMode.DEUTERANOPIA}>Deuteranopia (Green-Blind)</option>
                 <option value={ColorblindMode.TRITANOPIA}>Tritanopia (Blue-Blind)</option>
-                <option value={ColorblindMode.ACHROMATOPSIA}>Achromatopsia (Total)</option>
               </select>
             </div>
           </section>

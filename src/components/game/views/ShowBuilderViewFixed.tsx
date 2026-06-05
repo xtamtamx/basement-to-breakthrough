@@ -1,28 +1,23 @@
 import React, { useState } from 'react';
 import { useGameStore } from '@stores/gameStore';
-import { Venue, Show, Band } from '@game/types';
+import { Venue, Show } from '@game/types';
 import { haptics } from '@utils/mobile';
-import { showPromotionSystem } from '@game/mechanics/ShowPromotionSystem';
-import { bookingSystem } from '@game/mechanics/BookingSystem';
 import { synergyEngine } from '@game/mechanics/SynergyEngine';
-import { Calendar, MapPin, Users, DollarSign, ChevronRight, Music, AlertCircle, TrendingUp, Check } from 'lucide-react';
+import { Calendar, MapPin, Users, Music, AlertCircle, TrendingUp, Check } from 'lucide-react';
 
 export const ShowBuilderView: React.FC = () => {
-  const { 
-    allBands, 
-    rosterBandIds, 
-    venues, 
-    money, 
-    reputation,
-    fans,
+  const {
+    allBands,
+    rosterBandIds,
+    venues,
+    money,
     scheduledShows,
-    scheduleShow 
+    scheduleShow
   } = useGameStore();
-  
+
   const [selectedBandIds, setSelectedBandIds] = useState<string[]>([]);
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
   const [ticketPrice, setTicketPrice] = useState(15);
-  const [showPreview, setShowPreview] = useState(false);
 
   const rosterBands = allBands.filter(b => rosterBandIds.includes(b.id));
   const selectedBands = allBands.filter(b => selectedBandIds.includes(b.id));
@@ -51,7 +46,7 @@ export const ShowBuilderView: React.FC = () => {
     
     // Calculate synergies
     const synergies = synergyEngine.calculateSynergies(selectedBands, selectedVenue);
-    const totalMultiplier = synergyEngine.getTotalMultiplier(selectedBands, selectedVenue);
+    const totalMultiplier = synergyEngine.getTotalMultiplier(synergies);
     
     // Calculate expected attendance
     const avgPopularity = selectedBands.reduce((sum, b) => sum + b.popularity, 0) / selectedBands.length;
@@ -84,19 +79,15 @@ export const ShowBuilderView: React.FC = () => {
     // Create show object
     const show: Show = {
       id: `show-${Date.now()}`,
-      venue: selectedVenue!,
-      bands: selectedBands,
+      venueId: selectedVenue!.id,
+      bandId: selectedBands[0].id,
+      lineup: selectedBands.map(b => b.id),
       ticketPrice,
       date: new Date(),
-      isBooked: true,
-      isCancelled: false,
-      attendees: [],
+      status: "SCHEDULED",
       revenue: 0,
-      reputation: 0,
-      turnsUntilShow: 1,
-      promotionLevel: 0
     };
-    
+
     scheduleShow(show);
     haptics.success();
     
@@ -301,7 +292,7 @@ export const ShowBuilderView: React.FC = () => {
                         alignItems: 'center',
                         gap: '12px'
                       }}>
-                        <span><MapPin size={12} style={{ display: 'inline' }} /> {venue.district}</span>
+                        <span><MapPin size={12} style={{ display: 'inline' }} /> {venue.location.name}</span>
                         <span><Users size={12} style={{ display: 'inline' }} /> {venue.capacity}</span>
                       </div>
                     </div>

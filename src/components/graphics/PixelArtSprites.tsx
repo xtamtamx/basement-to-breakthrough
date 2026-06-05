@@ -48,7 +48,7 @@ export const PIXEL_PALETTE = {
 
 // Base types
 type PixelData = string[] | string[][];
-type AnimationFrame = { data: string[]; duration: number };
+type AnimationFrame = { data: PixelData; duration: number };
 type ColorMap = { [key: string]: string };
 
 // Props for base sprite component
@@ -67,7 +67,7 @@ export const BaseSprite: React.FC<BaseSpriteProps> = ({
   className = ''
 }) => {
   const pixels = useMemo(() => {
-    const result: JSX.Element[] = [];
+    const result: React.JSX.Element[] = [];
     // Handle both string[] and string[][] formats
     const rows = typeof data[0] === 'string' ? data as string[] : data as string[][];
     
@@ -600,7 +600,7 @@ export const getSpriteFromSheet = (
   spriteName: string,
   pixelSize: number = 4,
   className: string = ''
-): JSX.Element | null => {
+): React.JSX.Element | null => {
   const sprite = SPRITE_SHEET[spriteName];
   if (!sprite) return null;
 

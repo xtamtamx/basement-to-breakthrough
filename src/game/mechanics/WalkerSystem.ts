@@ -1,5 +1,24 @@
-import { Walker, WalkerType, WalkerState, Venue, Band } from '@game/types';
+import {
+  Walker,
+  WalkerType,
+  WalkerState,
+  Venue,
+  Band,
+  WalkerData,
+  Genre,
+} from '@game/types';
 import { useGameStore } from '@stores/gameStore';
+
+// Extra venue-routing metadata stashed on a walker's `data` payload in addition
+// to the canonical per-walker fields (the shared WalkerData union does not model
+// these, so they are tracked locally).
+type RouteMetadata = {
+  fromVenueId?: string;
+  toVenueId?: string;
+  deliveryType?: string;
+};
+
+type RoutedWalkerData = WalkerData & RouteMetadata;
 
 export class WalkerSystem {
   private walkers: Map<string, Walker> = new Map();
@@ -112,7 +131,11 @@ export class WalkerSystem {
       path: [],
       speed: 2, // 2 cells per second
       state: WalkerState.IDLE,
-      data: { bandId: band.id, fromVenueId: fromVenue.id, toVenueId: toVenue.id }
+      data: {
+        bandId: band.id,
+        fromVenueId: fromVenue.id,
+        toVenueId: toVenue.id,
+      } as RoutedWalkerData,
     };
     
     // Calculate path
@@ -139,19 +162,23 @@ export class WalkerSystem {
       path: [],
       speed: 1.5,
       state: WalkerState.IDLE,
-      data: { toVenueId: toVenue.id }
+      data: {
+        favoriteGenre: Genre.PUNK,
+        enthusiasm: 50,
+        toVenueId: toVenue.id,
+      } as RoutedWalkerData,
     };
-    
+
     walker.path = this.findPath(walker.x, walker.y, walker.targetX!, walker.targetY!, 8, id);
     if (walker.path.length > 0) {
       walker.state = WalkerState.WALKING;
     }
-    
+
     this.walkers.set(id, walker);
     this.occupiedCells.add(this.getCellKey(walker.x, walker.y));
     return walker;
   }
-  
+
   createPromoterWalker(fromVenue: Venue, targetArea: { x: number; y: number }): Walker {
     const id = `walker-${this.nextId++}`;
     const walker: Walker = {
@@ -165,11 +192,11 @@ export class WalkerSystem {
       path: [],
       speed: 1.2, // Promoters move slower, handing out flyers
       state: WalkerState.IDLE,
-      data: { 
-        promotionRadius: 2, 
+      data: {
+        promotionRadius: 2,
         effectiveness: 0.7,
-        fromVenueId: fromVenue.id 
-      } as any
+        fromVenueId: fromVenue.id,
+      } as RoutedWalkerData,
     };
     
     walker.path = this.findPath(walker.x, walker.y, walker.targetX!, walker.targetY!, 8, id);
@@ -195,10 +222,12 @@ export class WalkerSystem {
       path: [],
       speed: 1.0, // Trucks move slower
       state: WalkerState.IDLE,
-      data: { 
+      data: {
+        equipmentType: 'PA_SYSTEM',
+        repairSkill: 0,
         toVenueId: toVenue.id,
-        deliveryType: 'equipment'
-      } as any
+        deliveryType: 'equipment',
+      } as RoutedWalkerData,
     };
     
     walker.path = this.findPath(walker.x, walker.y, walker.targetX!, walker.targetY!, 8, id);
@@ -321,8 +350,7 @@ export class WalkerSystem {
         // Promoters hand out flyers then move to next area
         setTimeout(() => {
           // Increase awareness in the area
-          const store = useGameStore.getState();
-          const promoterData = walker.data as any;
+          const promoterData = walker.data as RoutedWalkerData | undefined;
           if (promoterData?.fromVenueId) {
             // TODO: Implement promotion effect on nearby districts
           }
@@ -346,8 +374,7 @@ export class WalkerSystem {
       case WalkerType.SUPPLIER:
         // Deliver equipment then leave
         setTimeout(() => {
-          const store = useGameStore.getState();
-          const supplierData = walker.data as any;
+          const supplierData = walker.data as RoutedWalkerData | undefined;
           if (supplierData?.toVenueId) {
             // TODO: Add equipment to venue
           }

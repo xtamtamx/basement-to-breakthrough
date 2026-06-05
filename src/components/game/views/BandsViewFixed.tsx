@@ -2,9 +2,8 @@ import React, { useState } from 'react';
 import { Band, Genre } from '@game/types';
 import { haptics } from '@utils/mobile';
 import { BandUpgradeModal } from '../BandUpgradeModal';
-import { synergySystemV2 } from '@game/mechanics/SynergySystemV2';
 import { useGameStore } from '@stores/gameStore';
-import { Users, UserPlus, UserMinus, TrendingUp, Star, Zap, Music } from 'lucide-react';
+import { UserPlus, UserMinus, TrendingUp, Star, Zap } from 'lucide-react';
 
 export const BandsView: React.FC = () => {
   const { allBands, rosterBandIds, addBandToRoster, removeBandFromRoster } = useGameStore();
@@ -40,7 +39,6 @@ export const BandsView: React.FC = () => {
       case Genre.PUNK: return '🎸';
       case Genre.METAL: return '🤘';
       case Genre.INDIE: return '🎵';
-      case Genre.HIPHOP: return '🎤';
       case Genre.ELECTRONIC: return '🎹';
       default: return '🎵';
     }
@@ -362,7 +360,7 @@ export const BandsView: React.FC = () => {
                       </div>
                       
                       {/* Synergies */}
-                      {band.relationships && Object.keys(band.relationships).length > 0 && (
+                      {band.relationships && band.relationships.length > 0 && (
                         <div style={{ marginBottom: '16px' }}>
                           <h4 style={{
                             fontSize: '14px',
@@ -371,20 +369,23 @@ export const BandsView: React.FC = () => {
                             marginBottom: '8px'
                           }}>Band Relationships</h4>
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                            {Object.entries(band.relationships).map(([bandId, type]) => (
-                              <span
-                                key={bandId}
-                                style={{
-                                  padding: '4px 8px',
-                                  backgroundColor: type === 'friends' ? '#10b981' : '#ef4444',
-                                  color: '#ffffff',
-                                  fontSize: '12px',
-                                  borderRadius: '4px'
-                                }}
-                              >
-                                {type === 'friends' ? '👫' : '⚔️'} {allBands.find(b => b.id === bandId)?.name}
-                              </span>
-                            ))}
+                            {band.relationships.map((rel) => {
+                              const isFriendly = rel.relationship >= 0;
+                              return (
+                                <span
+                                  key={rel.bandId}
+                                  style={{
+                                    padding: '4px 8px',
+                                    backgroundColor: isFriendly ? '#10b981' : '#ef4444',
+                                    color: '#ffffff',
+                                    fontSize: '12px',
+                                    borderRadius: '4px'
+                                  }}
+                                >
+                                  {isFriendly ? '👫' : '⚔️'} {allBands.find(b => b.id === rel.bandId)?.name}
+                                </span>
+                              );
+                            })}
                           </div>
                         </div>
                       )}

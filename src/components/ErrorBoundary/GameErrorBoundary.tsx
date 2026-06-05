@@ -40,7 +40,7 @@ export class GameErrorBoundary extends Component<Props, State> {
     };
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     const { onError } = this.props;
     
     // Log to console in development
@@ -68,7 +68,7 @@ export class GameErrorBoundary extends Component<Props, State> {
     }
   }
 
-  componentDidUpdate(prevProps: Props) {
+  override componentDidUpdate(prevProps: Props) {
     const { resetKeys } = this.props;
     const { hasError } = this.state;
     
@@ -78,7 +78,7 @@ export class GameErrorBoundary extends Component<Props, State> {
     }
   }
 
-  componentWillUnmount() {
+  override componentWillUnmount() {
     if (this.resetTimeoutId) {
       clearTimeout(this.resetTimeoutId);
     }
@@ -112,7 +112,7 @@ export class GameErrorBoundary extends Component<Props, State> {
     window.location.href = '/';
   };
 
-  render() {
+  override render() {
     const { hasError, error, errorInfo } = this.state;
     const { children, fallback, isolate } = this.props;
 

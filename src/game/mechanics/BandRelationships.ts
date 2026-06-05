@@ -139,7 +139,7 @@ class BandRelationshipSystem {
   getBandRelationships(bandId: string): Array<{ bandId: string; relationship: number }> {
     const results: Array<{ bandId: string; relationship: number }> = [];
     
-    this.relationships.forEach((rel, key) => {
+    this.relationships.forEach((rel) => {
       if (rel.band1Id === bandId) {
         results.push({ bandId: rel.band2Id, relationship: rel.relationship });
       } else if (rel.band2Id === bandId) {

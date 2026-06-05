@@ -1,13 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useGameStore } from '@stores/gameStore';
 import { SimplerCity } from '@/components/map/SimplerCity';
-import { DetailedDistrictView } from '@/components/map/DetailedDistrictView';
 import { haptics } from '@utils/mobile';
 import { DistrictViewBasic } from '../DistrictViewBasic';
 import { DistrictInfo } from '@/game/generation/CityGenerator';
 import { VenueUpgradeModal } from '@/components/venue/VenueUpgradeModal';
-import { Plus, ZoomOut, Building2, TrendingUp, MapPin, Users, X } from 'lucide-react';
+import { Plus, ZoomOut, Building2, TrendingUp, MapPin, X } from 'lucide-react';
 import { MapTile, VenueData, WorkplaceData } from '@/components/map/MapTypes';
+import { DistrictType as CoreDistrictType } from '@/game/types/core';
+
+// Maps SimplerCity district types onto the core DistrictType used by DistrictInfo.
+const SIMPLER_CITY_DISTRICT_TYPE: Record<string, CoreDistrictType> = {
+  downtown: CoreDistrictType.DOWNTOWN,
+  residential: CoreDistrictType.RESIDENTIAL,
+  commercial: CoreDistrictType.ARTS,
+  industrial: CoreDistrictType.WAREHOUSE,
+};
 
 const animationStyles = `
   @keyframes fadeIn {
@@ -48,15 +56,8 @@ export const CityView: React.FC = () => {
 
 
 
-  const handleDistrictClick = (districtId: string, districtInfo: DistrictInfo) => {
-    setSelectedDistrictId(districtId);
-    setSelectedDistrictInfo(districtInfo);
-    setViewMode('district');
-    haptics.light();
-  };
-
   const handleZoomOut = () => {
-    setViewMode('worldmap');
+    setViewMode('overview');
     setSelectedDistrictId(null);
     setSelectedDistrictInfo(null);
     haptics.light();
@@ -65,52 +66,6 @@ export const CityView: React.FC = () => {
   const handlePlaceVenue = () => {
     // TODO: Implement venue placement
     haptics.medium();
-  };
-
-  const handleBuildingClick = (building: any) => {
-    haptics.medium();
-    
-    if (building.type === 'venue') {
-      // Find a matching venue in the game store
-      const gameVenue = gameStore.venues[0]; // For now, just use the first venue
-      setSelectedTileData({ 
-        tile: {
-          x: building.x,
-          y: building.y,
-          type: 'venue',
-          district: 'downtown',
-          spriteId: 'venue',
-          interactable: true,
-          data: {
-            id: gameVenue?.id || 'venue-1',
-            name: gameVenue?.name || 'The Basement',
-            capacity: gameVenue?.capacity || 50,
-            venueType: gameVenue?.type || 'basement',
-            hasActiveShow: false,
-          } as VenueData
-        },
-        venue: gameVenue 
-      });
-    } else if (building.type === 'workplace') {
-      setSelectedTileData({
-        tile: {
-          x: building.x,
-          y: building.y,
-          type: 'workplace',
-          district: 'downtown',
-          spriteId: 'workplace',
-          interactable: true,
-          data: {
-            id: `job-${building.x}-${building.y}`,
-            name: building.subtype || 'Coffee Shop',
-            jobType: building.subtype || 'Barista',
-            wage: 30,
-            stress: 20,
-            available: true,
-          } as WorkplaceData
-        }
-      });
-    }
   };
 
   return (
@@ -197,9 +152,22 @@ export const CityView: React.FC = () => {
                   setSelectedDistrictInfo({
                     id: district.id,
                     name: district.name,
-                    type: district.type,
+                    type: SIMPLER_CITY_DISTRICT_TYPE[district.type] ?? CoreDistrictType.DOWNTOWN,
                     cells: [], // DistrictViewBasic expects these
-                    neighbors: []
+                    bounds: {
+                      x: district.x,
+                      y: district.y,
+                      width: district.width,
+                      height: district.height,
+                    },
+                    center: {
+                      x: district.x + district.width / 2,
+                      y: district.y + district.height / 2,
+                    },
+                    neighbors: [],
+                    color: '#374151',
+                    sceneStrength: 50,
+                    rentMultiplier: 1,
                   });
                   setViewMode('district');
                 }}

@@ -1,4 +1,3 @@
-import { Band, Venue, Equipment } from '@game/types';
 import { haptics } from '@utils/mobile';
 import { audio } from '@utils/audio';
 
@@ -11,9 +10,9 @@ interface EventGameState {
 }
 
 interface EventApplyResult {
-  appliedEffects: EventCardEffect[];
+  appliedEffects: EventEffect[];
   modifiedCards: Array<{ target: string; modifications: unknown }>;
-  resourceChanges: Record<string, unknown>;
+  resourceChanges: ResourceModification;
   spawnedCards: unknown[];
 }
 
@@ -32,32 +31,81 @@ export interface EventCard {
   artStyle?: 'concert_poster' | 'backstage_pass' | 'tour_flyer' | 'press_release';
 }
 
-export type EventEffect = 
+export type EventTarget =
+  | 'all_bands'
+  | 'all_venues'
+  | 'random_band'
+  | 'random_venue'
+  | 'player'
+  | 'specific';
+
+/** Stat deltas applied to bands or venues by a modify_stat effect. */
+export interface StatModification {
+  popularity?: number;
+  authenticity?: number;
+  energy?: number;
+  technicalSkill?: number;
+  stress?: number;
+  capacity?: number;
+}
+
+/** Resource deltas applied to the player by a resource_change effect. */
+export interface ResourceModification {
+  money?: number;
+  reputation?: number;
+  fans?: number;
+  stress?: number;
+  connections?: number;
+  legacy?: number;
+}
+
+/** Payload describing a card spawned or transformed by an effect. */
+export interface CardModification {
+  type?: string;
+  cardType?: string;
+  cardData?: unknown;
+  closed?: boolean;
+}
+
+/** Payload describing a change to the broader scene state. */
+export interface SceneModification {
+  exposure?: string;
+  [key: string]: unknown;
+}
+
+export type EventEffect =
   | {
       type: 'modify_stat';
-      target: 'all_bands' | 'all_venues' | 'random_band' | 'random_venue' | 'player' | 'specific';
-      value: { stat: string; amount: number };
+      target: EventTarget;
+      value: StatModification;
       duration?: number;
       description: string;
     }
   | {
       type: 'spawn_card' | 'transform_card';
-      target: 'all_bands' | 'all_venues' | 'random_band' | 'random_venue' | 'player' | 'specific';
-      value: { cardType: string; cardData?: unknown };
+      target: EventTarget;
+      value: CardModification;
       duration?: number;
       description: string;
     }
   | {
-      type: 'trigger_synergy' | 'scene_change';
-      target: 'all_bands' | 'all_venues' | 'random_band' | 'random_venue' | 'player' | 'specific';
+      type: 'trigger_synergy';
+      target: EventTarget;
       value: string;
+      duration?: number;
+      description: string;
+    }
+  | {
+      type: 'scene_change';
+      target: EventTarget;
+      value: SceneModification;
       duration?: number;
       description: string;
     }
   | {
       type: 'resource_change';
       target: 'player';
-      value: { money?: number; reputation?: number; fans?: number; stress?: number };
+      value: ResourceModification;
       duration?: number;
       description: string;
     };
@@ -81,10 +129,16 @@ export interface ActiveEvent {
   appliedEffects: EventEffect[];
 }
 
+export interface EventHistoryEntry {
+  cardId: string;
+  turn: number;
+  choice?: string;
+}
+
 class EventCardSystem {
   private eventCards: Map<string, EventCard> = new Map();
   private activeEvents: ActiveEvent[] = [];
-  private eventHistory: { cardId: string; turn: number; choice?: string }[] = [];
+  private eventHistory: EventHistoryEntry[] = [];
   
   constructor() {
     this.initializeEventCards();
@@ -424,15 +478,15 @@ class EventCardSystem {
         return card.requirements.every(req => {
           switch (req.type) {
             case 'turn_number':
-              return this.compareValue(gameState.turn, req.value, req.operator);
+              return this.compareValue(gameState.turn ?? 0, req.value, req.operator);
             case 'reputation':
-              return this.compareValue(gameState.reputation, req.value, req.operator);
+              return this.compareValue(gameState.reputation ?? 0, req.value, req.operator);
             case 'scene_state':
               return gameState.sceneState === req.value;
             case 'active_synergies':
-              return this.compareValue(gameState.activeSynergies, req.value, req.operator);
+              return this.compareValue(gameState.activeSynergies ?? 0, req.value, req.operator);
             case 'card_count':
-              return this.compareValue(gameState.totalCards, req.value, req.operator);
+              return this.compareValue(gameState.totalCards ?? 0, req.value, req.operator);
             default:
               return true;
           }
@@ -525,7 +579,7 @@ class EventCardSystem {
     // Record history
     this.eventHistory.push({
       cardId: card.id,
-      turn: gameState.turn,
+      turn: gameState.turn ?? 0,
       choice: choiceId || undefined
     });
     
@@ -533,9 +587,9 @@ class EventCardSystem {
   }
   
   // Process turn-based event effects
-  processTurnEffects(): EventCardEffect[] {
-    const expiredEffects: EventCardEffect[] = [];
-    
+  processTurnEffects(): ActiveEvent[] {
+    const expiredEffects: ActiveEvent[] = [];
+
     this.activeEvents = this.activeEvents.filter(event => {
       event.turnsRemaining--;
       
@@ -549,15 +603,16 @@ class EventCardSystem {
     return expiredEffects;
   }
   
-  private compareValue(actual: number, expected: number, operator: string): boolean {
+  private compareValue(actual: number, expected: unknown, operator: string): boolean {
+    const expectedNum = typeof expected === 'number' ? expected : Number(expected);
     switch (operator) {
       case 'greater_than':
-        return actual > expected;
+        return actual > expectedNum;
       case 'less_than':
-        return actual < expected;
+        return actual < expectedNum;
       case 'equals':
       default:
-        return actual === expected;
+        return actual === expectedNum;
     }
   }
   
@@ -567,7 +622,7 @@ class EventCardSystem {
   }
   
   // Get event history
-  getEventHistory(): EventCard[] {
+  getEventHistory(): EventHistoryEntry[] {
     return this.eventHistory;
   }
 }

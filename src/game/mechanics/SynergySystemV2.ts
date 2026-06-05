@@ -333,7 +333,7 @@ class SynergySystemV2 {
         if (condition.operator === 'equals') {
           return bands.length === condition.value;
         } else if (condition.operator === 'greater_than') {
-          return bands.length > condition.value;
+          return typeof condition.value === 'number' && bands.length > condition.value;
         }
         break;
         

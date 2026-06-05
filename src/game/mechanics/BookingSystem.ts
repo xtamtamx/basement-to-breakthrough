@@ -1,4 +1,4 @@
-import { Band, Venue, Show, GameState, Resources, Incident, IncidentType } from '@game/types';
+import { Band, Venue, Show, GameState, Resources, Incident, IncidentType, ConsequenceType } from '@game/types';
 import { synergyEngine } from './SynergyEngine';
 
 export interface BookingResult {
@@ -62,20 +62,15 @@ export class BookingSystem {
       return { success: false, message: canBookResult.reason! };
     }
 
-    // Calculate expected attendance
-    const baseAttendance = this.calculateBaseAttendance(band, venue);
-    const synergies = synergyEngine.calculateSynergies([band], venue);
-    const synergyMultiplier = synergies.reduce((mult, syn) => mult * syn.multiplier, 1);
-    const expectedAttendance = Math.floor(baseAttendance * synergyMultiplier);
-
     // Create the show
     const show: Show = {
       id: `show-${Date.now()}`,
-      date: Date.now() + (24 * 60 * 60 * 1000), // Tomorrow
-      venue,
-      lineup: [band],
+      bandId: band.id,
+      venueId: venue.id,
+      date: new Date(Date.now() + (24 * 60 * 60 * 1000)), // Tomorrow
+      lineup: [band.id],
       ticketPrice,
-      expectedAttendance: Math.min(expectedAttendance, venue.capacity),
+      status: "SCHEDULED",
     };
 
     // Deduct venue rent
@@ -92,13 +87,16 @@ export class BookingSystem {
   }
 
   // Simulate show results
-  simulateShow(show: Show, gameState: GameState): ShowResult {
-    const band = show.lineup[0]; // For now, single band shows
-    const venue = show.venue;
+  simulateShow(show: Show, band: Band, venue: Venue, gameState: GameState): ShowResult {
+    // Calculate expected attendance from band/venue synergies
+    const baseAttendance = this.calculateBaseAttendance(band, venue);
+    const expectedSynergies = synergyEngine.calculateSynergies([band], venue);
+    const synergyMultiplier = expectedSynergies.reduce((mult, syn) => mult * syn.multiplier, 1);
+    const expectedAttendance = Math.min(Math.floor(baseAttendance * synergyMultiplier), venue.capacity);
 
     // Calculate actual attendance (with some randomness)
     const attendanceRate = 0.7 + (Math.random() * 0.4); // 70-110% of expected
-    const actualAttendance = Math.floor(show.expectedAttendance * attendanceRate);
+    const actualAttendance = Math.floor(expectedAttendance * attendanceRate);
     const finalAttendance = Math.min(actualAttendance, venue.capacity);
 
     // Calculate revenue
@@ -107,15 +105,15 @@ export class BookingSystem {
     const totalRevenue = ticketRevenue + barRevenue;
 
     // Check for incidents
-    const incidents = this.checkForIncidents(show, finalAttendance, gameState);
+    const incidents = this.checkForIncidents(show, band, venue, finalAttendance, gameState);
 
     // Calculate reputation and fan gains
-    const synergies = synergyEngine.calculateSynergies(show.lineup, venue);
+    const synergies = synergyEngine.calculateSynergies([band], venue);
     const synergyBonus = synergies.reduce((sum, syn) => sum + syn.reputationBonus, 0);
-    
+
     let reputationGain = Math.floor((finalAttendance / venue.capacity) * 10);
     reputationGain += synergyBonus;
-    
+
     // Authenticity bonus
     if (band.authenticity > 80 && venue.authenticity > 80) {
       reputationGain += 5;
@@ -123,7 +121,7 @@ export class BookingSystem {
 
     // Apply incident penalties
     for (const incident of incidents) {
-      const repLoss = incident.consequences.find(c => c.type === 'REPUTATION_LOSS');
+      const repLoss = incident.consequences.find(c => c.type === ConsequenceType.REPUTATION_LOSS);
       if (repLoss) {
         reputationGain -= repLoss.value;
       }
@@ -150,10 +148,8 @@ export class BookingSystem {
     return Math.floor(capacityTarget * popularityFactor * sceneFactor);
   }
 
-  private checkForIncidents(show: Show, attendance: number, gameState: GameState): Incident[] {
+  private checkForIncidents(show: Show, band: Band, venue: Venue, attendance: number, _gameState: GameState): Incident[] {
     const incidents: Incident[] = [];
-    const venue = show.venue;
-    const band = show.lineup[0];
 
     // Noise complaints in residential areas
     if (venue.type === 'BASEMENT' || venue.type === 'HOUSE_SHOW') {
@@ -162,7 +158,7 @@ export class BookingSystem {
           type: IncidentType.NOISE_COMPLAINT,
           severity: 3,
           description: 'Neighbors called in a noise complaint',
-          consequences: [{ type: 'REPUTATION_LOSS', value: 2 }],
+          consequences: [{ type: ConsequenceType.REPUTATION_LOSS, value: 2 }],
         });
       }
     }
@@ -175,8 +171,8 @@ export class BookingSystem {
           severity: 7,
           description: 'Police shut down the show early',
           consequences: [
-            { type: 'REPUTATION_LOSS', value: 5 },
-            { type: 'MONEY_LOSS', value: show.ticketPrice * attendance * 0.5 },
+            { type: ConsequenceType.REPUTATION_LOSS, value: 5 },
+            { type: ConsequenceType.MONEY_LOSS, value: show.ticketPrice * attendance * 0.5 },
           ],
         });
       }
@@ -189,7 +185,7 @@ export class BookingSystem {
           type: IncidentType.VENUE_DAMAGE,
           severity: 4,
           description: 'Overcrowding caused minor venue damage',
-          consequences: [{ type: 'MONEY_LOSS', value: 200 }],
+          consequences: [{ type: ConsequenceType.MONEY_LOSS, value: 200 }],
         });
       }
     }
@@ -201,7 +197,7 @@ export class BookingSystem {
           type: IncidentType.FIGHT,
           severity: 5,
           description: 'A fight broke out in the pit',
-          consequences: [{ type: 'REPUTATION_LOSS', value: 3 }],
+          consequences: [{ type: ConsequenceType.REPUTATION_LOSS, value: 3 }],
         });
       }
     }

@@ -1,9 +1,42 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { FixedSizeList as List } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { Band } from '@game/types';
-import { UnifiedBandCard } from '@components/unified';
 import { useIsMobile } from '@utils/mobile';
+
+type BandCardVariant = 'default' | 'pixel' | 'glass' | 'compact' | 'premium';
+
+interface UnifiedBandCardProps {
+  band: Band;
+  variant?: BandCardVariant;
+  selected?: boolean;
+  onSelect?: (band: Band) => void;
+  onSwipeLeft?: (band: Band) => void;
+  onSwipeRight?: (band: Band) => void;
+}
+
+const UnifiedBandCard: React.FC<UnifiedBandCardProps> = ({
+  band,
+  selected = false,
+  onSelect,
+}) => (
+  <button
+    type="button"
+    onClick={() => onSelect?.(band)}
+    className={`w-full h-full text-left rounded-lg border px-4 py-3 transition-colors ${
+      selected
+        ? 'border-pink-500 bg-pink-950/30'
+        : 'border-gray-700 bg-gray-800 hover:border-gray-500'
+    }`}
+  >
+    <div className="font-bold text-white truncate">{band.name}</div>
+    <div className="text-xs text-gray-400">{band.genre}</div>
+    <div className="mt-1 flex gap-3 text-xs text-gray-500">
+      <span>Pop {band.popularity}</span>
+      <span>Auth {band.authenticity}</span>
+    </div>
+  </button>
+);
 
 interface VirtualizedBandListProps {
   bands: Band[];

@@ -171,6 +171,7 @@ export const usePerformanceMetrics = () => {
       });
     } else {
       performanceMetrics.endMetric(actionName);
+      return;
     }
   };
   

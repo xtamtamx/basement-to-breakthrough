@@ -1,5 +1,4 @@
 import React, { useRef, useEffect, useCallback, useState } from "react";
-import { useGameStore } from "@stores/gameStore";
 import { haptics } from "@utils/mobile";
 import { soundManager } from "@/game/audio/SoundManager";
 

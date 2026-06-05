@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useGameStore } from '@stores/gameStore';
 import { showPromotionSystem, PromotionType, PROMOTION_ACTIVITIES } from '@game/mechanics/ShowPromotionSystem';
 import { haptics } from '@utils/mobile';
-import { Megaphone, Radio, Globe, Users, TrendingUp, DollarSign, Clock } from 'lucide-react';
+import { Megaphone, Radio, Globe, Users, TrendingUp, Clock } from 'lucide-react';
 
 type ViewType = "city" | "bands" | "shows" | "promotion" | "synergies" | "jobs" | "progression";
 
@@ -11,7 +11,7 @@ interface PromotionViewProps {
 }
 
 export const PromotionView: React.FC<PromotionViewProps> = ({ onNavigate }) => {
-  const { money, reputation, connections, fans } = useGameStore();
+  const { money, reputation, connections, allBands, venues } = useGameStore();
   const [selectedShowId, setSelectedShowId] = useState<string | null>(null);
   const scheduledShows = showPromotionSystem.getScheduledShows();
   
@@ -141,7 +141,13 @@ export const PromotionView: React.FC<PromotionViewProps> = ({ onNavigate }) => {
                 {scheduledShows.map(show => {
                   const isSelected = show.id === selectedShowId;
                   const report = showPromotionSystem.getPromotionReport(show.id);
-                  
+                  const showBandIds = show.lineup ?? [show.bandId];
+                  const bandNames = showBandIds
+                    .map(id => allBands.find(b => b.id === id)?.name)
+                    .filter((name): name is string => Boolean(name))
+                    .join(' + ');
+                  const showVenue = venues.find(v => v.id === show.venueId);
+
                   return (
                     <div
                       key={show.id}
@@ -167,13 +173,13 @@ export const PromotionView: React.FC<PromotionViewProps> = ({ onNavigate }) => {
                             color: '#ffffff',
                             marginBottom: '2px'
                           }}>
-                            {show.bands.map(b => b.name).join(' + ')}
+                            {bandNames}
                           </h4>
                           <p style={{
                             fontSize: '12px',
                             color: '#9ca3af'
                           }}>
-                            @ {show.venue.name}
+                            @ {showVenue?.name}
                           </p>
                           <div style={{
                             display: 'flex',
@@ -199,13 +205,13 @@ export const PromotionView: React.FC<PromotionViewProps> = ({ onNavigate }) => {
                               color: '#ec4899'
                             }}>
                               <TrendingUp size={10} />
-                              Level {report.currentLevel}
+                              Level {report?.currentLevel ?? 0}
                             </span>
                           </div>
                         </div>
                         <div style={{ textAlign: 'right' }}>
                           <p style={{ fontSize: '10px', color: '#9ca3af' }}>Expected</p>
-                          <p style={{ fontSize: '16px', fontWeight: 'bold', color: '#10b981' }}>{report.expectedAttendance}</p>
+                          <p style={{ fontSize: '16px', fontWeight: 'bold', color: '#10b981' }}>{report?.expectedAttendance ?? 0}</p>
                         </div>
                       </div>
                       
@@ -221,7 +227,7 @@ export const PromotionView: React.FC<PromotionViewProps> = ({ onNavigate }) => {
                             style={{
                               height: '100%',
                               backgroundImage: 'linear-gradient(to right, #ec4899, #a855f7)',
-                              width: `${(report.currentLevel / 5) * 100}%`,
+                              width: `${((report?.currentLevel ?? 0) / 5) * 100}%`,
                               transition: 'width 0.3s'
                             }}
                           />
@@ -343,13 +349,13 @@ export const PromotionView: React.FC<PromotionViewProps> = ({ onNavigate }) => {
                               fontSize: '11px',
                               color: '#10b981'
                             }}>
-                              {activity.attendanceMultiplier > 1 && (
+                              {(activity.attendanceMultiplier ?? 0) > 1 && (
                                 <span>{activity.attendanceMultiplier}x attendance</span>
                               )}
-                              {activity.reputationBonus > 0 && (
+                              {(activity.reputationBonus ?? 0) > 0 && (
                                 <span>+{activity.reputationBonus} REP</span>
                               )}
-                              {activity.fansGained > 0 && (
+                              {(activity.fansGained ?? 0) > 0 && (
                                 <span>+{activity.fansGained} fans</span>
                               )}
                             </div>

@@ -45,8 +45,7 @@ const CURRENT_SAVE_VERSION = '1.0.0';
 export class SaveGameManager {
   private db: IDBPDatabase<BasementToBThroughDB> | null = null;
   private autoSaveInterval: NodeJS.Timeout | null = null;
-  private lastSaveTime: number = Date.now();
-  
+
   async initialize(): Promise<void> {
     try {
       this.db = await openDB<BasementToBThroughDB>(DB_NAME, DB_VERSION, {
@@ -92,7 +91,6 @@ export class SaveGameManager {
     
     try {
       await this.db!.put('saves', saveGame);
-      this.lastSaveTime = Date.now();
       console.log(`Game saved successfully: ${saveId}`);
       return saveId;
     } catch (error) {
@@ -143,9 +141,9 @@ export class SaveGameManager {
         timestamp: save.timestamp,
         playTime: save.playTime,
         turnNumber: save.turnNumber,
-        money: save.gameState.money || 0,
-        reputation: save.gameState.reputation || 0,
-        fans: save.gameState.fans || 0,
+        money: save.gameState.resources?.money || 0,
+        reputation: save.gameState.resources?.reputation || 0,
+        fans: save.gameState.resources?.fans || 0,
         version: save.version,
         thumbnail: save.thumbnail,
       }));
@@ -291,8 +289,8 @@ export class SaveGameManager {
     const date = new Date().toLocaleDateString();
     const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const turn = gameState.turn || 0;
-    const money = gameState.money || 0;
-    
+    const money = gameState.resources?.money || 0;
+
     return `Turn ${turn} - $${money} - ${date} ${time}`;
   }
   

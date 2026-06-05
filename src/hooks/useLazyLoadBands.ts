@@ -36,13 +36,15 @@ export const useLazyLoadBands = (options: UseLazyLoadBandsOptions = {}) => {
         filtered = filtered.filter((band) => band.genre === filterBy.genre);
       }
       if (filterBy.minPopularity !== undefined) {
+        const minPopularity = filterBy.minPopularity;
         filtered = filtered.filter(
-          (band) => band.popularity >= filterBy.minPopularity,
+          (band) => band.popularity >= minPopularity,
         );
       }
       if (filterBy.maxPopularity !== undefined) {
+        const maxPopularity = filterBy.maxPopularity;
         filtered = filtered.filter(
-          (band) => band.popularity <= filterBy.maxPopularity,
+          (band) => band.popularity <= maxPopularity,
         );
       }
       if (filterBy.isRealArtist !== undefined) {

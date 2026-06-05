@@ -1,4 +1,4 @@
-import { Faction, Band, Venue, VenueType, Show, FactionEvent, FactionEventType, FactionValues, FactionModifiers, FactionChoice, FactionChoiceEffects, Resources, TraitType } from '@game/types';
+import { Faction, Band, Venue, VenueType, FactionEvent, FactionEventType, FactionModifiers, Resources } from '@game/types';
 import { SATIRICAL_FACTION_DESCRIPTIONS } from '@game/data/satiricalText';
 
 class FactionSystem {
@@ -438,8 +438,7 @@ class FactionSystem {
           text: 'Accept their support',
           effects: {
             reputation: 10,
-            factionChanges,
-            bandRelations: {}
+            factionChanges
           }
         }
       ],
@@ -464,8 +463,7 @@ class FactionSystem {
           text: 'Try to make amends',
           effects: {
             reputation: -5,
-            factionChanges: { [faction.id]: 10 },
-            bandRelations: {}
+            factionChanges: { [faction.id]: 10 }
           }
         },
         {
@@ -473,8 +471,7 @@ class FactionSystem {
           text: 'Ignore their complaints',
           effects: {
             reputation: 5,
-            factionChanges,
-            bandRelations: {}
+            factionChanges
           }
         }
       ],
@@ -503,11 +500,11 @@ class FactionSystem {
       case 'diy-purists':
         return venue.type === VenueType.BASEMENT || venue.type === VenueType.DIY_SPACE;
       case 'metal-elite':
-        return venue.type === VenueType.METAL_BAR || venue.capacity > 200;
+        return venue.type === VenueType.METAL_VENUE || venue.capacity > 200;
       case 'indie-crowd':
-        return venue.type === VenueType.COFFEE_SHOP || venue.type === VenueType.GALLERY;
+        return venue.type === VenueType.DIY_SPACE || venue.type === VenueType.UNDERGROUND;
       case 'old-guard':
-        return venue.type === VenueType.DIVE_BAR || venue.type === VenueType.LEGION_HALL;
+        return venue.type === VenueType.DIVE_BAR || venue.type === VenueType.CONCERT_HALL;
       case 'new-wave':
         return venue.type === VenueType.THEATER || venue.type === VenueType.CONCERT_HALL;
       default:
@@ -532,7 +529,7 @@ class FactionSystem {
   calculateReputationChange(action: string, band: Band, _venue: Venue): Map<string, number> {
     const changes = new Map<string, number>();
     
-    this.factions.forEach((faction, factionId) => {
+    this.factions.forEach((_faction, factionId) => {
       const alignment = this.calculateBandAlignment(band, factionId);
       let change = 0;
       
@@ -565,7 +562,7 @@ class FactionSystem {
     let bestFaction: string | null = null;
     let bestAlignment = 0;
 
-    this.factions.forEach((faction, factionId) => {
+    this.factions.forEach((_faction, factionId) => {
       const alignment = this.calculateBandAlignment(band, factionId);
       if (alignment > bestAlignment && alignment > 60) {
         bestFaction = factionId;

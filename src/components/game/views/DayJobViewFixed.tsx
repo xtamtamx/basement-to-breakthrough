@@ -12,18 +12,18 @@ export const DayJobView: React.FC = () => {
 
   useEffect(() => {
     // Load available jobs
-    const jobs = dayJobSystem.getAvailableJobs({ reputation, connections });
+    const jobs = dayJobSystem.getAvailableJobs();
     setAvailableJobs(jobs);
   }, [reputation, connections]);
 
   const currentJob = dayJobSystem.getCurrentJob();
   
   const handleTakeJob = (job: DayJob) => {
-    if (dayJobSystem.takeJob(job.id)) {
+    if (dayJobSystem.setJob(job)) {
       haptics.success();
       setSelectedJob(null);
       // Refresh available jobs
-      const jobs = dayJobSystem.getAvailableJobs({ reputation, connections });
+      const jobs = dayJobSystem.getAvailableJobs();
       setAvailableJobs(jobs);
     } else {
       haptics.error();
@@ -34,7 +34,7 @@ export const DayJobView: React.FC = () => {
     dayJobSystem.quitJob();
     haptics.light();
     // Refresh available jobs
-    const jobs = dayJobSystem.getAvailableJobs({ reputation, connections });
+    const jobs = dayJobSystem.getAvailableJobs();
     setAvailableJobs(jobs);
   };
 
@@ -44,10 +44,9 @@ export const DayJobView: React.FC = () => {
 
   const getCategoryIcon = (category: JobCategory) => {
     switch (category) {
-      case JobCategory.MUSIC_STORE: return '🎸';
-      case JobCategory.VENUE_STAFF: return '🏠';
-      case JobCategory.FREELANCE: return '💻';
+      case JobCategory.VENUE: return '🏠';
       case JobCategory.CORPORATE: return '👔';
+      case JobCategory.COMMUNITY: return '🎸';
       default: return '💼';
     }
   };
@@ -157,14 +156,14 @@ export const DayJobView: React.FC = () => {
                         </span>
                       </div>
                     )}
-                    {currentJob.stressPerTurn && (
+                    {currentJob.stressGain > 0 && (
                       <div style={{
                         display: 'flex',
                         alignItems: 'center',
                         gap: '6px'
                       }}>
                         <Clock size={14} color="#fb923c" />
-                        <span style={{ fontSize: '12px', color: '#ffffff' }}>+{currentJob.stressPerTurn}% stress/turn</span>
+                        <span style={{ fontSize: '12px', color: '#ffffff' }}>+{currentJob.stressGain}% stress/turn</span>
                       </div>
                     )}
                   </div>
@@ -511,7 +510,7 @@ export const DayJobView: React.FC = () => {
         )}
       </div>
       
-      <style jsx>{`
+      <style>{`
         @keyframes slideUp {
           from {
             opacity: 0;

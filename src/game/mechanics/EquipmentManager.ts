@@ -1,5 +1,6 @@
-import { Equipment, EquipmentEffect, EQUIPMENT_CATALOG } from '@game/types/equipment';
+import { Equipment, EQUIPMENT_CATALOG } from '@game/types/equipment';
 import { Band, Venue } from '@game/types';
+import { prodLog } from '@utils/devLogger';
 
 export interface OwnedEquipment {
   equipmentId: string;

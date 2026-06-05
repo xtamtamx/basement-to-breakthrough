@@ -103,6 +103,7 @@ export const useGesture = (
           el.removeEventListener("touchmove", preventDefault);
         };
       }
+      return undefined;
     },
     [preventScroll, disabled],
   );

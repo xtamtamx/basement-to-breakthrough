@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ShowResult } from '@game/types';
 import { useGameStore } from '@stores/gameStore';
 import { SATIRICAL_TURN_RESULTS } from '@game/data/satiricalText';
-import { X, TrendingUp, TrendingDown, Users, DollarSign, Star } from 'lucide-react';
+import { X, Users, DollarSign, Star } from 'lucide-react';
 
 interface TurnResultsModalProps {
   isOpen: boolean;
@@ -35,17 +35,30 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
   dayJobResult,
   difficultyEvent
 }) => {
-  const { money, reputation, fans } = useGameStore();
-  
+  const allBands = useGameStore((state) => state.allBands);
+  const venues = useGameStore((state) => state.venues);
+  const scheduledShows = useGameStore((state) => state.scheduledShows);
+
+  const getShowDetails = (showId: string) => {
+    const show = scheduledShows.find((s) => s.id === showId);
+    const band = show ? allBands.find((b) => b.id === show.bandId) : undefined;
+    const venue = show ? venues.find((v) => v.id === show.venueId) : undefined;
+    return {
+      bandName: band?.name ?? 'Unknown Band',
+      venueName: venue?.name ?? 'Unknown Venue',
+      capacity: venue?.capacity ?? 0,
+    };
+  };
+
   const totalRevenue = showResults.reduce((sum, result) => sum + result.revenue, 0);
   const totalCosts = showResults.reduce((sum, result) => sum + result.financials.costs, 0) + totalVenueRent;
   const totalProfit = totalRevenue - totalCosts;
   const totalFans = showResults.reduce((sum, result) => sum + result.fansGained, 0);
-  const totalRep = showResults.reduce((sum, result) => sum + result.reputationChange, 0);
+  const totalRep = showResults.reduce((sum, result) => sum + (result.reputationChange ?? result.reputationGain ?? 0), 0);
 
   const getTurnResultMessage = () => {
     if (showResults.length === 0) {
-      return SATIRICAL_TURN_RESULTS.NO_SHOWS;
+      return "No Shows Booked: Scene Holds Its Breath in Collective Indifference";
     }
     if (totalProfit > 100) {
       return SATIRICAL_TURN_RESULTS.GREAT_NIGHT;
@@ -276,7 +289,9 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
                   marginBottom: '12px'
                 }}>Tonight's Shows</h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {showResults.map((result, index) => (
+                  {showResults.map((result, index) => {
+                    const details = getShowDetails(result.showId);
+                    return (
                     <div key={index} style={{
                       backgroundColor: '#1f2937',
                       borderRadius: '8px',
@@ -289,7 +304,7 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
                         marginBottom: '4px'
                       }}>
                         <span style={{ color: '#ffffff', fontWeight: '500' }}>
-                          {result.bandName} @ {result.venueName}
+                          {details.bandName} @ {details.venueName}
                         </span>
                         <span style={{
                           color: result.revenue - result.financials.costs > 0 ? '#10b981' : '#ef4444'
@@ -298,10 +313,11 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
                         </span>
                       </div>
                       <div style={{ color: '#9ca3af', fontSize: '12px' }}>
-                        {result.attendance}/{result.capacity} attended • +{result.fansGained} fans
+                        {result.attendance}/{details.capacity} attended • +{result.fansGained} fans
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}

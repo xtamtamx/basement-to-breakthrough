@@ -1,5 +1,4 @@
 import { useGameStore } from '@stores/gameStore';
-import { BALANCE_CONFIG, BalanceHelpers } from '@game/config/balanceConfig';
 
 // Difficulty scaling factors based on round progression
 export interface DifficultyFactors {
@@ -104,7 +103,7 @@ export class DifficultySystem {
   }
   
   // Calculate show difficulty modifiers
-  getShowDifficultyModifiers(baseAttendance: number, ticketPrice: number): {
+  getShowDifficultyModifiers(_baseAttendance: number, ticketPrice: number): {
     attendanceMultiplier: number;
     revenueMultiplier: number;
   } {

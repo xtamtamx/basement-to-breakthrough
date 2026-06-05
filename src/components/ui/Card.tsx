@@ -49,7 +49,7 @@ export const Card: React.FC<CardProps> = ({
     >
       {children}
 
-      <style jsx>{`
+      <style>{`
         .card {
           background: var(--bg-card);
           border: 2px solid var(--border-default);

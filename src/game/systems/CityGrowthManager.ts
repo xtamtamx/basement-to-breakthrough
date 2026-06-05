@@ -2,7 +2,7 @@
 import { MapTile, DistrictType } from '@/components/map/MapTypes';
 import { useGameStore } from '@/stores/gameStore';
 import { useMapStore } from '@/stores/mapStore';
-import { calculateDevelopmentLevel, shouldSpawnBuilding } from '@/components/map/sprites/DynamicSprites';
+import { District } from '@game/types';
 import { haptics } from '@/utils/mobile';
 
 export interface GrowthEvent {
@@ -46,11 +46,11 @@ export class CityGrowthManager {
         if (tile.type === 'street' || tile.type === 'park') continue;
         
         // Get district info
-        const district = gameStore.districts.find(d => 
+        const district = gameStore.districts.find(d =>
           d.type === tile.district
         );
-        if (!district) continue;
-        
+        if (!district || district.type === undefined) continue;
+
         // Calculate if this tile should evolve
         this.processTileGrowth(tile, district, districtActivity[district.type] || 0);
       }
@@ -73,6 +73,7 @@ export class CityGrowthManager {
     
     // Initialize all districts with base activity
     for (const district of gameStore.districts) {
+      if (district.type === undefined) continue;
       activity[district.type] = district.sceneStrength * 0.01;
     }
     
@@ -97,7 +98,7 @@ export class CityGrowthManager {
       activity[DistrictType.WAREHOUSE]! += this.playerMetrics.showsBookedThisTurn * 0.1;
     }
     if (activity[DistrictType.ARTS]) {
-      activity[DistrictType.ARTS]! += gameStore.sceneReputation * 0.002;
+      activity[DistrictType.ARTS]! += gameStore.reputation * 0.002;
     }
     if (activity[DistrictType.DOWNTOWN]) {
       activity[DistrictType.DOWNTOWN]! += this.playerMetrics.jobsWorkedThisTurn * 0.05;
@@ -108,7 +109,7 @@ export class CityGrowthManager {
 
   private processTileGrowth(
     tile: MapTile,
-    district: any,
+    _district: District,
     activityScore: number
   ): void {
     const currentLevel = tile.developmentLevel || 'empty';

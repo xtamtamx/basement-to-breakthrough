@@ -14,7 +14,7 @@ export interface Incident {
 }
 
 class IncidentSystem {
-  private incidents: Record<IncidentType, Incident[]> = {
+  private incidents: Partial<Record<IncidentType, Incident[]>> = {
     [IncidentType.EQUIPMENT_FAILURE]: [
       {
         type: IncidentType.EQUIPMENT_FAILURE,
@@ -186,6 +186,7 @@ class IncidentSystem {
     
     // Select specific incident
     const possibleIncidents = this.incidents[selectedType];
+    if (!possibleIncidents || possibleIncidents.length === 0) return null;
     return possibleIncidents[Math.floor(Math.random() * possibleIncidents.length)];
   }
 

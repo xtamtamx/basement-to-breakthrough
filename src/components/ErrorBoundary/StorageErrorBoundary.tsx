@@ -1,4 +1,4 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { Component, ErrorInfo, ReactNode } from 'react';
 import { Database, AlertTriangle, Download, Trash2 } from 'lucide-react';
 import { haptics } from '@utils/mobile';
 import { saveManager } from '@game/mechanics/SaveManager';
@@ -26,7 +26,7 @@ export class StorageErrorBoundary extends Component<Props, State> {
     };
   }
 
-  async componentDidMount() {
+  override async componentDidMount() {
     // Check storage quota
     if ('storage' in navigator && 'estimate' in navigator.storage) {
       try {
@@ -64,7 +64,7 @@ export class StorageErrorBoundary extends Component<Props, State> {
     return null;
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('Storage error caught:', error, errorInfo);
     haptics.error();
   }
@@ -133,7 +133,7 @@ export class StorageErrorBoundary extends Component<Props, State> {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  render() {
+  override render() {
     const { hasError, error, storageInfo } = this.state;
     const { children } = this.props;
 

@@ -368,7 +368,7 @@ export const WalkerSprite: React.FC<WalkerSpriteProps> = ({ walker, cellSize, gr
         <div className="arrival-pulse" />
       )}
       
-      <style jsx>{`
+      <style>{`
         .walker-sprite {
           user-select: none;
           pointer-events: none;
