@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { safeStorage } from '../safeStorage';
 
 describe('Safe Storage', () => {
@@ -6,6 +6,12 @@ describe('Safe Storage', () => {
     // Clear all mocks before each test
     vi.clearAllMocks();
     localStorage.clear();
+  });
+
+  afterEach(() => {
+    // Restore spied globals (e.g. Object.keys) so a mock implementation
+    // can't leak into Vitest's own snapshot teardown.
+    vi.restoreAllMocks();
   });
 
   describe('getItem', () => {
