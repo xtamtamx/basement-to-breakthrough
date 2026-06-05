@@ -41,7 +41,8 @@
       "@utils/*": ["src/utils/*"],
       "@stores/*": ["src/stores/*"],
       "@hooks/*": ["src/hooks/*"],
-      "@assets/*": ["src/assets/*"]
+      "@assets/*": ["src/assets/*"],
+      "@styles/*": ["src/styles/*"]
     }
   },
   "include": ["src"]
