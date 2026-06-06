@@ -147,29 +147,51 @@ export const SimplerCity: React.FC<SimplerCityProps> = ({
     
     ctx.save();
     ctx.translate(camera.x, camera.y);
-    
-    // Draw grass tiles as base
-    for (let y = -32; y < 400; y += 32) {
-      for (let x = -32; x < 700; x += 32) {
-        ctx.drawImage(cityTileset, 0, 0, 16, 16, x, y, 32, 32);
+
+    // Draw grass tiles as base — cover the whole visible viewport (pans with camera)
+    const tile = 32;
+    const startX = Math.floor(-camera.x / tile) * tile - tile;
+    const endX = -camera.x + width + tile;
+    const startY = Math.floor(-camera.y / tile) * tile - tile;
+    const endY = -camera.y + height + tile;
+    for (let y = startY; y < endY; y += tile) {
+      for (let x = startX; x < endX; x += tile) {
+        ctx.drawImage(cityTileset, 0, 0, 16, 16, x, y, tile, tile);
       }
     }
-    
-    // Draw roads - just simple gray lines
-    ctx.fillStyle = "#555555";
-    // Main horizontal road
-    ctx.fillRect(0, 240, 700, 32);
-    // Main vertical road  
-    ctx.fillRect(320, 0, 32, 400);
-    
+
+    // Roads — asphalt with dashed lane markings, spanning the viewport
+    const roadW = 40;
+    const hRoadY = 240;
+    const vRoadX = 316;
+    ctx.fillStyle = "#404040";
+    ctx.fillRect(startX, hRoadY, endX - startX, roadW);
+    ctx.fillRect(vRoadX, startY, roadW, endY - startY);
+    ctx.strokeStyle = "#f2c200";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([14, 12]);
+    ctx.beginPath();
+    ctx.moveTo(startX, hRoadY + roadW / 2);
+    ctx.lineTo(endX, hRoadY + roadW / 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(vRoadX + roadW / 2, startY);
+    ctx.lineTo(vRoadX + roadW / 2, endY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
     // Draw districts
     districts.forEach(district => {
-      // Light background for district
-      ctx.fillStyle = district.type === 'downtown' ? "rgba(100, 100, 100, 0.3)" :
-                     district.type === 'residential' ? "rgba(100, 200, 100, 0.3)" :
-                     district.type === 'commercial' ? "rgba(100, 100, 200, 0.3)" :
-                     "rgba(150, 100, 50, 0.3)";
+      const accent = district.type === 'downtown' ? "120, 130, 150" :
+                     district.type === 'residential' ? "110, 190, 110" :
+                     district.type === 'commercial' ? "110, 140, 210" :
+                     "190, 140, 80";
+      // Subtle plot fill + clean border so each district reads as a defined plot
+      ctx.fillStyle = `rgba(${accent}, 0.16)`;
       ctx.fillRect(district.x, district.y, district.width, district.height);
+      ctx.strokeStyle = `rgba(${accent}, 0.9)`;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(district.x + 1, district.y + 1, district.width - 2, district.height - 2);
       
       // Draw buildings
       if (district.type === 'downtown') {
@@ -192,9 +214,6 @@ export const SimplerCity: React.FC<SimplerCityProps> = ({
               48, 48);
           }
         }
-        // Add trees
-        ctx.drawImage(cityTileset, 32, 16, 32, 32, district.x + 40, district.y + 160, 32, 32);
-        ctx.drawImage(cityTileset, 64, 16, 32, 32, district.x + 100, district.y + 160, 32, 32);
       } else if (district.type === 'commercial') {
         // Blue shops
         ctx.drawImage(cityTileset, 0, 432, 64, 64, district.x + 20, district.y + 20, 64, 64);
@@ -204,12 +223,7 @@ export const SimplerCity: React.FC<SimplerCityProps> = ({
         ctx.drawImage(cityTileset, 0, 496, 128, 64, district.x + 20, district.y + 20, 128, 64);
       }
     });
-    
-    // Street lamps along main roads
-    for (let x = 50; x < 650; x += 100) {
-      ctx.drawImage(cityTileset, 96, 80, 16, 32, x, 210, 16, 32);
-    }
-    
+
     // District hover
     if (hoveredDistrict) {
       ctx.strokeStyle = "#FFD700";
