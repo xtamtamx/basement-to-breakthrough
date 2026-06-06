@@ -17,7 +17,6 @@ import { turnProcessor } from "@game/mechanics/TurnProcessor";
 import { gameAudio } from "@utils/gameAudio";
 import { GameErrorBoundary } from "@components/ErrorBoundary";
 import { saveGameManager } from "@game/persistence/SaveGameManager";
-import { tutorialManager } from '@game/tutorial/TutorialManager';
 import { Settings, Save } from 'lucide-react';
 import { useSwipeable } from 'react-swipeable';
 import { QuickStartGuide } from './QuickStartGuide';
@@ -35,21 +34,15 @@ export const MainGameView: React.FC = () => {
   
   const { money, reputation, fans, stress } = useGameStore();
 
-  // Start background music and tutorial
+  // Start background music + auto-save (the new-game intro is QuickStartGuide;
+  // the element-highlight TutorialOverlay is launched on demand from Settings).
   useEffect(() => {
     gameAudio.startBackgroundMusic("chill");
-    
+
     // Initialize save manager and start auto-save
     saveGameManager.initialize().then(() => {
       saveGameManager.startAutoSave(5); // Auto-save every 5 minutes
     });
-
-    // Check if tutorial should start
-    if (tutorialManager.shouldShowTutorial({ turn: useGameStore.getState().currentRound })) {
-      setTimeout(() => {
-        tutorialManager.startTutorial();
-      }, 1000);
-    }
 
     return () => {
       gameAudio.stopBackgroundMusic();
