@@ -264,25 +264,17 @@ export class SaveGameManager {
   
   // Helper methods
   private sanitizeGameState(gameState: Partial<GameState>): Partial<GameState> {
-    // Remove any non-serializable data or circular references
-    const sanitized = { ...gameState };
-    
-    // Remove functions and other non-serializable properties
-    const keysToRemove = [
-      'addMoney', 'setMoney', 'addFans', 'addReputation', 'addConnections',
-      'nextRound', 'resetGame', 'loadInitialGameData', 'updateDistricts',
-      'updateVenues', 'updateVenue', 'updateWalkers', 'addVenue',
-      'addBandToRoster', 'removeBandFromRoster', 'updateBand',
-      'scheduleShow', 'completeShow', 'loadMetaProgression',
-      'saveMetaProgression', 'loadVenues', 'loadBands',
-      'handleFactionChoice', 'endRun'
-    ];
-    
-    keysToRemove.forEach(key => {
-      delete (sanitized as Record<string, unknown>)[key];
-    });
-    
-    return sanitized;
+    // Zustand mixes its action functions into the store state. IndexedDB's
+    // structured-clone algorithm cannot serialize functions, so strip every
+    // function-valued property. This replaces a fragile hardcoded blacklist of
+    // action names that missed entries (e.g. setPhase = (phase) => set({ phase })),
+    // causing DataCloneError on every save.
+    const sanitized: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(gameState)) {
+      if (typeof value === 'function') continue;
+      sanitized[key] = value;
+    }
+    return sanitized as Partial<GameState>;
   }
   
   private generateSaveName(gameState: Partial<GameState>): string {
