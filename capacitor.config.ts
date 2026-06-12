@@ -1,5 +1,31 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
+/**
+ * ORIENTATION: this game is landscape-first.
+ *
+ * Capacitor 7 has no cross-platform orientation key in CapacitorConfig, so the
+ * lock must be applied in the generated native projects after running
+ * `npx cap add ios` / `npx cap add android`:
+ *
+ * iOS — ios/App/App/Info.plist:
+ *   <key>UISupportedInterfaceOrientations</key>
+ *   <array>
+ *     <string>UIInterfaceOrientationLandscapeLeft</string>
+ *     <string>UIInterfaceOrientationLandscapeRight</string>
+ *   </array>
+ *   <key>UISupportedInterfaceOrientations~ipad</key>
+ *   <array>
+ *     <string>UIInterfaceOrientationLandscapeLeft</string>
+ *     <string>UIInterfaceOrientationLandscapeRight</string>
+ *   </array>
+ *
+ * Android — android/app/src/main/AndroidManifest.xml (main activity):
+ *   <activity ... android:screenOrientation="sensorLandscape">
+ *
+ * Optional runtime lock (web + native): install @capacitor/screen-orientation
+ * and call ScreenOrientation.lock({ orientation: 'landscape' }) on startup.
+ * The plugin is intentionally NOT a dependency yet — see project follow-ups.
+ */
 const config: CapacitorConfig = {
   appId: 'com.basementtobreakthrough.app',
   appName: 'Basement to Breakthrough',
