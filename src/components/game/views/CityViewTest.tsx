@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useGameStore } from '@stores/gameStore';
-import { SimplerCity } from '@/components/map/SimplerCity';
+import { PixelCityMap } from '@/components/map/PixelCityMap';
 import { haptics } from '@utils/mobile';
 import { DistrictViewBasic } from '../DistrictViewBasic';
 import { DistrictInfo } from '@/game/generation/CityGenerator';
@@ -10,12 +10,12 @@ import { MapTile, VenueData, WorkplaceData } from '@/components/map/MapTypes';
 import { DistrictType as CoreDistrictType } from '@/game/types/core';
 import { Venue } from '@game/types';
 
-// Maps SimplerCity district types onto the core DistrictType used by DistrictInfo.
-const SIMPLER_CITY_DISTRICT_TYPE: Record<string, CoreDistrictType> = {
+// Maps store district ids onto the core DistrictType used by DistrictInfo.
+const STORE_DISTRICT_TYPE: Record<string, CoreDistrictType> = {
   downtown: CoreDistrictType.DOWNTOWN,
-  residential: CoreDistrictType.RESIDENTIAL,
-  commercial: CoreDistrictType.ARTS,
+  eastside: CoreDistrictType.ARTS,
   industrial: CoreDistrictType.WAREHOUSE,
+  university: CoreDistrictType.COLLEGE,
 };
 
 const animationStyles = `
@@ -149,30 +149,58 @@ export const CityView: React.FC = () => {
               bottom: 0,
               backgroundColor: '#0a0a0a'
             }}>
-              <SimplerCity 
+              <PixelCityMap
                 onDistrictClick={(district) => {
                   setSelectedDistrictId(district.id);
                   setSelectedDistrictInfo({
                     id: district.id,
                     name: district.name,
-                    type: SIMPLER_CITY_DISTRICT_TYPE[district.type] ?? CoreDistrictType.DOWNTOWN,
+                    type: STORE_DISTRICT_TYPE[district.id] ?? CoreDistrictType.DOWNTOWN,
                     cells: [], // DistrictViewBasic expects these
                     bounds: {
-                      x: district.x,
-                      y: district.y,
-                      width: district.width,
-                      height: district.height,
+                      x: district.bounds.x,
+                      y: district.bounds.y,
+                      width: district.bounds.width,
+                      height: district.bounds.height,
                     },
                     center: {
-                      x: district.x + district.width / 2,
-                      y: district.y + district.height / 2,
+                      x: district.bounds.x + district.bounds.width / 2,
+                      y: district.bounds.y + district.bounds.height / 2,
                     },
                     neighbors: [],
-                    color: '#374151',
-                    sceneStrength: 50,
-                    rentMultiplier: 1,
+                    color: district.color,
+                    sceneStrength: district.sceneStrength,
+                    rentMultiplier: district.rentMultiplier,
                   });
                   setViewMode('district');
+                }}
+                onVenueClick={(venue: Venue) => {
+                  setSelectedTileData({
+                    tile: {
+                      x: 0,
+                      y: 0,
+                      type: 'venue',
+                      district:
+                        STORE_DISTRICT_TYPE[venue.location?.id ?? ''] ??
+                        CoreDistrictType.DOWNTOWN,
+                      spriteId: 'venue',
+                      interactable: true,
+                      data: {
+                        id: venue.id,
+                        name: venue.name,
+                        capacity: venue.capacity,
+                        venueType: venue.type,
+                        hasActiveShow: useGameStore
+                          .getState()
+                          .scheduledShows.some(
+                            (s) =>
+                              s.venueId === venue.id &&
+                              s.status === 'SCHEDULED',
+                          ),
+                      },
+                    },
+                    venue,
+                  });
                 }}
               />
             </div>

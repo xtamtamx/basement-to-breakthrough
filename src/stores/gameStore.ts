@@ -22,6 +22,7 @@ import { SATIRICAL_VENUE_DESCRIPTIONS } from "@game/data/satiricalText";
 import { gameAudio } from "@utils/gameAudio";
 import { clamp, CONSTRAINTS } from "@utils/validation";
 import { performanceMetrics } from "@utils/performanceMetrics";
+import { ALL_DISTRICTS } from "../data/districts";
 
 // Lazy load initial data
 let initialDataPromise: Promise<{ bands: Band[], venues: Venue[] }> | null = null;
@@ -140,49 +141,8 @@ interface GameStore {
   loadAllVenues: () => void;
 }
 
-// Initial districts for the city
-const initialDistricts: District[] = [
-  {
-    id: "eastside",
-    name: "Eastside",
-    sceneStrength: 80,
-    gentrificationLevel: 30,
-    policePresence: 20,
-    rentMultiplier: 1,
-    bounds: { x: 0, y: 0, width: 4, height: 4 },
-    color: "#ec4899",
-  },
-  {
-    id: "downtown",
-    name: "Downtown",
-    sceneStrength: 60,
-    gentrificationLevel: 70,
-    policePresence: 50,
-    rentMultiplier: 1.5,
-    bounds: { x: 4, y: 0, width: 4, height: 4 },
-    color: "#3b82f6",
-  },
-  {
-    id: "industrial",
-    name: "Industrial",
-    sceneStrength: 70,
-    gentrificationLevel: 20,
-    policePresence: 60,
-    rentMultiplier: 0.8,
-    bounds: { x: 0, y: 4, width: 4, height: 4 },
-    color: "#10b981",
-  },
-  {
-    id: "university",
-    name: "University",
-    sceneStrength: 50,
-    gentrificationLevel: 40,
-    policePresence: 30,
-    rentMultiplier: 1.2,
-    bounds: { x: 4, y: 4, width: 4, height: 4 },
-    color: "#f59e0b",
-  },
-];
+// Initial districts for the city — single source of truth in data/districts.ts
+const initialDistricts: District[] = ALL_DISTRICTS;
 
 // Initial venues for the city
 const initialVenues: Venue[] = [
