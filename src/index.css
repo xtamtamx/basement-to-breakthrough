@@ -567,3 +567,33 @@ code, pre {
 .animate-float-up {
   animation: float-up 1s ease-out forwards;
 }
+
+/* ============================================
+   Landscape-first orientation fallback
+   ============================================
+   The game is designed for landscape. On touch devices held in portrait,
+   show a full-screen "rotate your device" overlay. Implemented as a
+   body::after pseudo-element so no React components are involved.
+   `pointer: coarse` keeps it off desktops (narrow windows stay usable);
+   outside portrait the pseudo-element doesn't render at all. */
+@media (orientation: portrait) and (pointer: coarse) {
+  body::after {
+    content: "\21BB\A\A Rotate your device\A This game plays in landscape";
+    white-space: pre-line;
+    position: fixed;
+    inset: 0;
+    z-index: 2147483647;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 24px;
+    padding-top: max(24px, env(safe-area-inset-top));
+    padding-bottom: max(24px, env(safe-area-inset-bottom));
+    background: #000;
+    color: #fff;
+    font-family: 'Press Start 2P', 'Inter', system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 2;
+  }
+}

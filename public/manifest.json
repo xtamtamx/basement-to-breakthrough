@@ -5,7 +5,7 @@
   "theme_color": "#EC4899",
   "background_color": "#0A0A0A",
   "display": "standalone",
-  "orientation": "portrait",
+  "orientation": "landscape",
   "scope": "/",
   "start_url": "/",
   "id": "com.basementtobreakthrough.diy",
