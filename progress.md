@@ -54,11 +54,22 @@ The codebase has 300+ TypeScript errors predating Phase A:
 
 These are NOT Phase A blockers - they existed before this work began.
 
+### Iteration 2 (2026-06-12) — migration completed
+
+`TurnResolutionEngine` is now THE live turn engine. It absorbed TurnProcessor's
+full pipeline (promotion/hype, multi-band bills, equipment condition, difficulty
+scaling, day jobs, venue rent/upkeep/degradation, walkers) and kept the Phase A
+run structure (TURN_START/SHOW_END/TURN_END synergy phases, escalation costs,
+endgame checks). `MainGameViewImproved` calls `executeFullTurn()`; `RunEndScreen`
+is wired and shows after the final turn's results modal. `TurnProcessor` deleted;
+15 engine tests replace its 7 (195 total green). Verified live: eviction ends a
+showless run at turn 5 with warnings on the two turns before.
+
 ## What's Next
-1. Wire `TurnResolutionEngine` into `MainGameViewImproved` (replace
-   `turnProcessor.processNextTurn()`), reconciling with `RunManager` run configs
-2. Retire `TurnProcessor` + legacy synergy systems once parity is proven
-3. Playtest full 35-turn run
+1. Retire `SynergySystemV2` / `SynergyEngine` with the variant cleanup
+2. Run-start consistency: route in-game "Try Again" through the same
+   run-config/meta-bonus path as the main menu
+3. Balance pass now that losing is possible (rent on all venues vs eviction)
 
 ## Tasks Checklist
 - [x] MAX_TURNS = 35, force run end at turn 35

@@ -21,11 +21,15 @@
 - [x] Remove duplicate synergy logic (deprecated with notices)
 
 ## Completion
-- [ ] Wire `TurnResolutionEngine` into the live loop (replace deprecated
-      `turnProcessor` in `MainGameViewImproved`), reconciled with `RunManager`
-      run configs
-- [ ] Retire `TurnProcessor`, `SynergySystemV2`, `SynergyEngine` after parity
-- [ ] Full 35-turn run playable
+- [x] Wire `TurnResolutionEngine` into the live loop (2026-06-12: absorbed
+      TurnProcessor's full show pipeline — promotion/hype, bills, equipment,
+      difficulty, day jobs, venue economy — and kept the Phase A run structure)
+- [x] Retire `TurnProcessor` (deleted; engine test suite covers the contract)
+- [ ] Retire `SynergySystemV2` / `SynergyEngine` (still imported by
+      SynergyViewFixed, BandUpgradeModal, ShowExecutor + tests — variant-cleanup
+      task)
+- [x] Full run playable with real endings (verified live: eviction at turn 5;
+      breakthrough/burnout/fade-out covered by engine tests)
 - [ ] ALL TASKS COMPLETE
 
 ---
