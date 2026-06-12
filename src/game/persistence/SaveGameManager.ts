@@ -1,6 +1,32 @@
 import { GameState, useGameStore } from '@stores/gameStore';
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
 
+/**
+ * SaveGameManager — the SINGLE save-slot system for the game.
+ *
+ * Persists named/auto save slots to IndexedDB (database "BasementToBreakthrough",
+ * stores 'saves' + 'settings') via `idb`. Initialized from the main game view
+ * (initialize() + startAutoSave(5)); gameStore's saveGame/loadGame actions and
+ * the SaveLoadModal UI go through this class.
+ *
+ * Relationship to the zustand `persist` middleware in gameStore
+ * (localStorage key "diy-indie-empire-storage", safeZustandStorage):
+ * the two layers are complementary, not redundant.
+ *   - zustand persist = LIVE-STATE layer. It continuously mirrors the current
+ *     (partialized) store state to localStorage so a page refresh/crash resumes
+ *     the session in progress. One implicit slot, no user interaction.
+ *   - SaveGameManager = SAVE-SLOT layer. Explicit, user-visible snapshots
+ *     (multiple slots, metadata, import/export, delete) plus the 5-minute
+ *     auto-save. Loading a slot rehydrates the store via gameStore.loadGame(),
+ *     after which zustand persist resumes mirroring the restored state.
+ * Do not fold one into the other.
+ *
+ * History: two other persistence layers were consolidated into this one on
+ * 2026-06-12 — src/utils/db.ts (a second, unused idb wrapper on a separate
+ * database; deleted) and src/game/mechanics/SaveManager.ts (legacy localStorage
+ * serializer; deprecated, pending removal of its last component consumers).
+ */
+
 // Define the database schema
 interface BasementToBThroughDB extends DBSchema {
   saves: {

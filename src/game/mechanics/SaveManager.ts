@@ -1,3 +1,25 @@
+/**
+ * @deprecated LEGACY localStorage save serializer — do NOT use for new code.
+ *
+ * The canonical save system is SaveGameManager
+ * (src/game/persistence/SaveGameManager.ts), which persists save slots to
+ * IndexedDB. This class predates it and writes a different, incompatible
+ * format to the localStorage keys 'basement-to-breakthrough-save' /
+ * 'basement-to-breakthrough-autosave'. Nothing in the live gameplay flow
+ * writes through it anymore.
+ *
+ * It survives only because two read-only components still import it:
+ *   - src/components/SaveLoadTest.tsx (dev harness behind `?test=saveload`
+ *     in App.tsx) — exercises saveGame/loadGame/autoSave/deleteSave/
+ *     deleteAutoSave round-trips.
+ *   - src/components/ErrorBoundary/StorageErrorBoundary.tsx — calls
+ *     exportSave() to offer a raw-JSON backup download on storage errors.
+ *
+ * Removal plan: once those components are updated (SaveLoadTest deleted or
+ * ported to SaveGameManager; StorageErrorBoundary exporting via
+ * SaveGameManager.exportSave()), delete this file and its test
+ * (src/game/mechanics/__tests__/SaveManager.test.ts).
+ */
 import { Band, Venue, Show, Resources, Equipment, FactionEvent } from '@game/types';
 import { equipmentManagerV2 } from './EquipmentManagerV2';
 import { venueUpgradeManager } from './VenueUpgradeManager';

@@ -4,15 +4,14 @@ import './styles/pixel-art.css'
 import './styles/glassmorphism.css'
 import App from './App.tsx'
 import { initializeMobile } from '@utils/mobile'
-import { db } from '@utils/db'
-import { prodLog } from '@utils/devLogger'
 import { registerServiceWorker, requestPersistentStorage } from '@utils/serviceWorker'
 
 // Initialize mobile features
 initializeMobile();
 
-// Initialize database
-db.init().catch(prodLog.error);
+// NOTE: Save-game persistence (IndexedDB) is owned by SaveGameManager
+// (src/game/persistence/SaveGameManager.ts). It is initialized lazily from the
+// main game view, so no database setup is needed at app bootstrap.
 
 // Register service worker for PWA support
 if (process.env.NODE_ENV === 'production') {
