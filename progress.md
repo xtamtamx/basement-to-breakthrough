@@ -1,7 +1,11 @@
 # Progress - Phase A
 
 ## Status
-**IN PROGRESS** - Core systems implemented, preexisting build issues blocking final validation.
+**IN PROGRESS** — Core systems implemented. The "preexisting build issues" that
+blocked validation were fixed by the June 2026 reel-in (1842 tsc errors → 0,
+187/187 tests, 0 lint problems; merged to `main` 2026-06-12). The remaining work
+is the actual migration: wire `TurnResolutionEngine` into the live game loop in
+place of the deprecated `TurnProcessor` (decided 2026-06-12).
 
 ## What Changed
 
@@ -51,10 +55,10 @@ The codebase has 300+ TypeScript errors predating Phase A:
 These are NOT Phase A blockers - they existed before this work began.
 
 ## What's Next
-1. Run lint to check Phase A code style
-2. Run tests if test infrastructure exists
-3. Wire up UI components to main game flow
-4. Playtest full 35-turn run
+1. Wire `TurnResolutionEngine` into `MainGameViewImproved` (replace
+   `turnProcessor.processNextTurn()`), reconciling with `RunManager` run configs
+2. Retire `TurnProcessor` + legacy synergy systems once parity is proven
+3. Playtest full 35-turn run
 
 ## Tasks Checklist
 - [x] MAX_TURNS = 35, force run end at turn 35
@@ -71,4 +75,5 @@ These are NOT Phase A blockers - they existed before this work began.
 - [ ] Full 35-turn run playable (needs UI wiring)
 
 ## Blocked
-Not blocked - Phase A core implementation complete. Preexisting build errors need separate cleanup effort.
+Not blocked. (The separate cleanup effort happened: branch `cleanup/reel-it-in`,
+merged to `main` 2026-06-12 — build fully green.)

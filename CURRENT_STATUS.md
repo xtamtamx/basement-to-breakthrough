@@ -1,93 +1,50 @@
 # Basement to Breakthrough - Current Status
 
-## Recently Completed ✅
+*Last full audit: 2026-06-12. Supersedes the earlier version of this file, which
+predated the June 2026 cleanup and described some stubs as working features.*
 
-### UI/UX Improvements
-- **Consolidated Headers**: Single 48px header combining logo, navigation, resources, and next turn button
-- **Dynamic UI**: Panels that hide/show based on context to reduce clutter
-- **Spacious Show Booking**: 3-step flow (Bands → Venue → Confirm) with minimal progress dots
-- **City View**: Floating controls, collapsible build panel, venue placement mode
-- **Responsive Design**: Mobile-first with proper breakpoints
+## Health
 
-### Core Mechanics
-- **Turn Processing**: Shows are executed with detailed results modal
-- **Venue Placement**: Click-to-place system on city grid
-- **Show Scheduling**: Visual indicators on city view for scheduled shows
-- **Economy Balance**: Starting money increased to $500, added 3 new starter venues
+- `npx tsc -b` — 0 errors · `npx eslint .` — 0 problems · 187/187 tests pass
+- `main` is current and pushed; `cleanup/reel-it-in` (the June reel-in) is merged
 
-## Working Features 🎮
+## Direction (decided 2026-06-12)
 
-1. **City Management**
-   - 8x8 grid-based city view with districts
-   - Venue placement with cost/rent system
-   - Walker animations (citizens moving between venues)
-   - District stats (gentrification, police presence, scene strength)
+1. **Tone:** cutesy pixel satire is canon (SNES pixel art + self-aware scene humor)
+2. **Real artist integration:** post-launch goal; v1 ships the fictional roster
+3. **Engine:** finish the Phase A migration — `TurnResolutionEngine` becomes the
+   authoritative turn engine, `TurnProcessor` retires
 
-2. **Band Management**
-   - Band roster system
-   - Stats display (popularity, authenticity, energy, technical skill)
-   - Traits system
-   - Add/remove from roster
+## What actually works today
 
-3. **Show Booking**
-   - Multi-band bills (up to 3 bands)
-   - Ticket pricing control
-   - Venue availability checking
-   - Cost calculations
+- **Core loop:** select 1–3 bands + venue + ticket price → synergy/attendance
+  preview → book → Next Turn → results modal. Real validation (rent, all-ages,
+  tech requirements, authenticity clash).
+- **Resources:** money, reputation, fans, stress, connections.
+- **Runs:** `RunManager` with 4 configs (Classic/Speed/Hardcore/Festival) and real
+  win/loss conditions; `MetaProgressionManager` tracks history (bonuses calculated
+  but not yet visible to the player).
+- **Content:** 26 fictional bands, 11 venues, 14 equipment items, 9 day jobs,
+  ~11 band↔venue synergies + 12 equippable synergies (SynergyManager).
+- **UX:** tutorial system, IndexedDB save + 5-min autosave, swipe tabs, haptics.
 
-4. **Turn System**
-   - Show execution with attendance calculation
-   - Revenue/profit tracking
-   - Fan growth
-   - Reputation changes
+## Known gaps (audited 2026-06-12)
 
-## Known Issues 🐛
+- **Two turn engines:** live path uses deprecated `TurnProcessor`; Phase A
+  `TurnResolutionEngine` is written but unwired. → Task: finish the migration.
+- **Roguelike not felt:** meta-progression invisible, soft losses, no run-end
+  ceremony beyond `RunEndScreen` scaffolding.
+- **Stubs that lie:** venue raids don't block shows, bands never go unavailable,
+  recording-studio upgrades do nothing, Festival mode is a stat reskin,
+  gentrification affects nothing, walker promotion effects are TODO.
+- **Residual duplication:** `MainGameView→Fixed→Improved` shim chain, 6 orphaned
+  city/district view variants, V1/V2 manager pairs, 3 overlapping persistence
+  layers (`SaveGameManager` is primary).
 
-1. **Performance**
-   - Many ESLint warnings (mostly unused imports)
-   - No critical TypeScript errors
+## Build-out roadmap
 
-2. **Game Balance**
-   - Venue costs and returns need tuning
-   - Show attendance calculations need refinement
-   - Fan growth rates need balancing
-
-## Next Steps 🚀
-
-### High Priority
-1. **Walker System Polish**: Improve animations and pathfinding
-2. **Venue Upgrades**: Equipment, capacity expansions, modifiers
-3. **Data Persistence**: Save/load game state with IndexedDB
-4. **Tutorial**: First-time player onboarding
-
-### Medium Priority
-1. **Gentrification System**: District evolution over time
-2. **Scene Politics**: Band rivalries, faction relationships
-3. **Equipment System**: PA systems, lighting, security
-4. **Emergent Events**: Police raids, noise complaints, scene drama
-
-### Low Priority
-1. **Artist Integration**: Real band permissions and profiles
-2. **Audio System**: Music samples, sound effects
-3. **Achievements**: Milestone tracking
-4. **Mobile Native**: Capacitor iOS/Android builds
-
-## Technical Debt 🔧
-
-1. Clean up unused imports and components
-2. Consolidate duplicate UI components
-3. Optimize re-renders in city view
-4. Add proper error boundaries
-5. Implement proper logging system
-
-## Current Game Loop 🎯
-
-1. Start with $500 and basic venues
-2. Book shows by selecting bands and venues
-3. Set ticket prices to balance attendance vs revenue
-4. Execute turn to see show results
-5. Grow scene through successful shows
-6. Expand with new venues as money allows
-7. Build synergies between bands and venues
-
-The core gameplay loop is functional but needs more depth through the planned systems (politics, equipment, gentrification) to create meaningful long-term progression and strategic decisions.
+1. Finish Phase A migration (TurnResolutionEngine authoritative, all tests green)
+2. Delete orphaned variants, collapse view shims, consolidate persistence
+3. Make the roguelike felt: visible meta-progression, win/loss ceremony, unlocks
+4. Give stubbed systems teeth or cut them explicitly
+5. Content & tone pass leaning into the cutesy-satirical voice

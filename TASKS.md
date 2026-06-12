@@ -21,12 +21,18 @@
 - [x] Remove duplicate synergy logic (deprecated with notices)
 
 ## Completion
+- [ ] Wire `TurnResolutionEngine` into the live loop (replace deprecated
+      `turnProcessor` in `MainGameViewImproved`), reconciled with `RunManager`
+      run configs
+- [ ] Retire `TurnProcessor`, `SynergySystemV2`, `SynergyEngine` after parity
 - [ ] Full 35-turn run playable
 - [ ] ALL TASKS COMPLETE
 
 ---
 
 ## Notes
-- Preexisting TypeScript errors (300+) found in codebase, unrelated to Phase A
-- Phase A files compile without errors
+- 2026-06-12: build is green (0 tsc errors / 0 lint / 187 tests) — the old
+  "300+ preexisting errors" note is resolved (June reel-in, merged to main)
+- Direction decided 2026-06-12: cutesy pixel satire is canon; real artists are
+  post-launch; TurnResolutionEngine is the authoritative engine going forward
 - UI components created but need to be wired into main game flow

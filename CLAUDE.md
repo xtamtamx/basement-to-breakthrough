@@ -6,13 +6,20 @@
 > recreate `package.json`/`src` in the parent directory — that is not the project.)
 
 ## Project Overview
-Premium mobile-first PWA roguelike underground music scene builder. Think Balatro's synergy discovery + SimCity's infrastructure + authentic punk/metal scene management.
+Premium mobile-first PWA roguelike music-promotion game: a cutesy pixel-art satire
+of the underground scene. Think Balatro's synergy discovery + booking shows from
+basements to festivals.
+
+**Tone (decided 2026-06-12): cutesy pixel satire is canon.** SNES-style pixel art,
+neon palette, self-aware scene humor ("mandatory fun meeting during band practice").
+Punk attitude lives in the writing, not in grimdark visuals.
 
 **Key Differentiators:**
 - Premium app model ($6.99, no ads/tracking/IAP)
-- Real artist integration with permission system
 - Mobile-first design (iOS/Android primary targets)
-- Authentic underground music culture representation
+- Affectionate, self-aware take on underground music culture
+- Real artist integration with permission system — **post-launch goal**; v1 ships
+  with the fictional roster (keep the `isRealArtist` scaffolding)
 
 ## Tech Stack
 - **Frontend:** React 19 + TypeScript + Vite 7
@@ -40,7 +47,7 @@ Premium mobile-first PWA roguelike underground music scene builder. Think Balatr
 4. **Discover Synergies:** Find powerful band/venue combinations
 5. **Unlock Content:** New bands, venues, equipment through progression
 
-## Artist Integration
+## Artist Integration (post-launch — not in the v1 roadmap)
 - Real bands integrated with permission
 - Attribution and links to artist profiles
 - Music samples via Web Audio API
@@ -65,10 +72,12 @@ Premium mobile-first PWA roguelike underground music scene builder. Think Balatr
 - `src/utils/mobile.ts` - Mobile platform utilities
 - `capacitor.config.ts` - Native app configuration
 
-## Current State
+## Current State (2026-06-12)
+- **Build is GREEN:** `npx tsc -b` 0 errors, `npx eslint .` 0 problems, 187/187
+  tests pass. The `cleanup/reel-it-in` work is merged to `main` and pushed.
 - Live render path: `main.tsx` → `App.tsx` → `MainGameView`.
-- Active WIP: "Phase A" synergy run-structure work (see `progress.md` / `TASKS.md`).
-  `SynergyManager` + `TurnResolutionEngine` are the intended authoritative systems.
-- **Known issue:** `npx tsc -b` currently reports a large error count and the
-  production build does not yet pass. De-duplication of dead variants and a
-  type-error cleanup are in progress on branch `cleanup/reel-it-in`.
+- **Active work: finish the Phase A migration.** `TurnResolutionEngine` +
+  `SynergyManager` become the authoritative turn/synergy systems, replacing the
+  deprecated `turnProcessor`. See `TASKS.md` / `progress.md`.
+- Older docs in `docs/` (TOWN_*, DEVELOPMENT_PLAN phases) partially describe
+  systems removed in the June 2026 cleanup — treat them as historical.
