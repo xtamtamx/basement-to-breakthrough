@@ -13,7 +13,10 @@ import { SettingsModal } from "@components/ui/SettingsModal";
 import { SaveLoadModal } from "@components/ui/SaveLoadModal";
 import { useGameStore } from "@stores/gameStore";
 import { haptics } from "@utils/mobile";
-import { turnProcessor } from "@game/mechanics/TurnProcessor";
+import { turnResolutionEngine, TurnResult } from "@game/mechanics/TurnResolutionEngine";
+import { RunEndScreen } from "./RunEndScreen";
+import { RunEndState } from "@game/constants/runConstants";
+import { dayJobSystem } from "@game/mechanics/DayJobSystem";
 import { gameAudio } from "@utils/gameAudio";
 import { GameErrorBoundary } from "@components/ErrorBoundary";
 import { saveGameManager } from "@game/persistence/SaveGameManager";
@@ -23,14 +26,27 @@ import { QuickStartGuide } from './QuickStartGuide';
 
 type ViewType = "city" | "bands" | "shows" | "promotion" | "synergies" | "jobs" | "progression";
 
-export const MainGameView: React.FC = () => {
+interface MainGameViewProps {
+  onExitToMenu?: () => void;
+}
+
+const EMPTY_TURN_RESULT: TurnResult = {
+  showResults: [],
+  totalVenueRent: 0,
+  turn: 0,
+  isEscalation: false,
+  warnings: [],
+  runEnd: null,
+  synergyEffects: [],
+};
+
+export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
   const [currentView, setCurrentView] = useState<ViewType>("city");
   const [showTurnResults, setShowTurnResults] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showSaveLoad, setShowSaveLoad] = useState(false);
-  const [turnResults, setTurnResults] = useState<
-    Awaited<ReturnType<typeof turnProcessor.processNextTurn>>
-  >({ showResults: [], totalVenueRent: 0 });
+  const [runEnd, setRunEnd] = useState<RunEndState | null>(null);
+  const [turnResults, setTurnResults] = useState<TurnResult>(EMPTY_TURN_RESULT);
   
   const { money, reputation, fans, stress } = useGameStore();
 
@@ -56,10 +72,35 @@ export const MainGameView: React.FC = () => {
   };
 
   const handleNextTurn = async () => {
-    const results = await turnProcessor.processNextTurn();
+    const results = await turnResolutionEngine.executeFullTurn();
     setTurnResults(results);
     setShowTurnResults(true);
     haptics.success();
+  };
+
+  // The run-end screen appears once the player closes the final turn's results
+  const handleTurnResultsClose = () => {
+    setShowTurnResults(false);
+    if (turnResults.runEnd) {
+      setRunEnd(turnResults.runEnd);
+    }
+  };
+
+  const handlePlayAgain = async () => {
+    const store = useGameStore.getState();
+    store.resetGame();
+    turnResolutionEngine.reset();
+    await store.loadInitialGameData();
+    dayJobSystem.refreshJobs();
+    setRunEnd(null);
+    setTurnResults(EMPTY_TURN_RESULT);
+    setCurrentView("city");
+    haptics.success();
+  };
+
+  const handleMainMenu = () => {
+    setRunEnd(null);
+    onExitToMenu?.();
   };
 
   // Swipe navigation
@@ -185,12 +226,20 @@ export const MainGameView: React.FC = () => {
       {/* Modals */}
       <TurnResultsModal
         isOpen={showTurnResults}
-        onClose={() => setShowTurnResults(false)}
+        onClose={handleTurnResultsClose}
         showResults={turnResults.showResults}
         totalVenueRent={turnResults.totalVenueRent}
         dayJobResult={turnResults.dayJobResult}
         difficultyEvent={turnResults.difficultyEvent}
       />
+
+      {runEnd && (
+        <RunEndScreen
+          result={runEnd}
+          onPlayAgain={handlePlayAgain}
+          onMainMenu={handleMainMenu}
+        />
+      )}
 
       <SettingsModal
         isOpen={showSettings}

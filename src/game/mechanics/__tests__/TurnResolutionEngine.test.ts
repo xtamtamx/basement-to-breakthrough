@@ -1,0 +1,349 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { turnResolutionEngine } from '../TurnResolutionEngine';
+import { useGameStore } from '@stores/gameStore';
+import { GamePhase, VenueType, Genre } from '@game/types';
+
+// Mock dependencies
+vi.mock('@stores/gameStore');
+vi.mock('../SynergyManager');
+vi.mock('../WalkerSystem');
+vi.mock('../DayJobSystem');
+vi.mock('../DifficultySystem');
+vi.mock('../ShowPromotionSystem');
+vi.mock('../VenueUpgradeSystem');
+
+// Import after mocking
+import { showPromotionSystem, ScheduledShow, PromotionType } from '../ShowPromotionSystem';
+import { difficultySystem } from '../DifficultySystem';
+import { dayJobSystem } from '../DayJobSystem';
+import { synergyManager } from '../SynergyManager';
+import { walkerSystem } from '../WalkerSystem';
+import { venueUpgradeSystem } from '../VenueUpgradeSystem';
+
+describe('TurnResolutionEngine', () => {
+  const mockBand = {
+    id: 'b1',
+    name: 'Test Band',
+    genre: Genre.PUNK,
+    isRealArtist: false,
+    subgenres: [],
+    traits: [],
+    popularity: 50,
+    authenticity: 70,
+    energy: 80,
+    technicalSkill: 60,
+    technicalRequirements: [],
+    reputation: 40,
+    fanbase: 100,
+    stress: 20,
+  };
+
+  const mockVenue = {
+    id: 'v1',
+    name: 'Test Venue',
+    type: VenueType.DIY_SPACE,
+    capacity: 100,
+    acoustics: 70,
+    authenticity: 80,
+    atmosphere: 75,
+    location: {
+      id: 'downtown',
+      name: 'Downtown',
+      sceneStrength: 75,
+      gentrificationLevel: 30,
+      policePresence: 40,
+      rentMultiplier: 1.5,
+      bounds: { x: 0, y: 0, width: 10, height: 10 },
+      color: '#FF0000',
+    },
+    rent: 200,
+    equipment: [],
+    modifiers: [],
+    traits: [],
+    allowsAllAges: true,
+    hasBar: false,
+    hasSecurity: false,
+    isPermanent: true,
+    bookingDifficulty: 3,
+  };
+
+  const mockShow: ScheduledShow = {
+    id: 'show1',
+    bandId: 'b1',
+    venueId: 'v1',
+    date: new Date(),
+    bill: {
+      headliner: 'b1',
+      openers: [],
+      dynamics: {
+        chemistryScore: 0,
+        dramaRisk: 0,
+        crowdAppeal: 0,
+        sceneAlignment: 0,
+      },
+    },
+    ticketPrice: 10,
+    status: 'SCHEDULED',
+    turnsUntilShow: 1,
+    promotionInvestment: new Map<PromotionType, number>(),
+    totalPromotionEffectiveness: 1,
+    expectedAttendance: 50,
+    hype: 0,
+  };
+
+  const makeState = (overrides: Record<string, unknown> = {}) => ({
+    currentRound: 1,
+    reputation: 50,
+    money: 1000,
+    fans: 100,
+    stress: 20,
+    connections: 10,
+    phase: GamePhase.PLANNING,
+    difficulty: 'NORMAL',
+    scheduledShows: [mockShow],
+    venues: [mockVenue],
+    allBands: [mockBand],
+    rosterBandIds: ['b1'],
+    showHistory: [],
+    lastTurnResults: [],
+    discoveredSynergies: [],
+    completedFestivals: [],
+    districts: [],
+    walkers: [],
+    nextRound: vi.fn(),
+    addMoney: vi.fn(),
+    addFans: vi.fn(),
+    addReputation: vi.fn(),
+    addStress: vi.fn(),
+    completeShow: vi.fn(),
+    setPhase: vi.fn(),
+    resetGame: vi.fn(),
+    ...overrides,
+  });
+
+  let state: ReturnType<typeof makeState>;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    // No incidents during tests (10% base chance otherwise)
+    vi.spyOn(Math, 'random').mockReturnValue(0.99);
+
+    vi.mocked(showPromotionSystem).processScheduledShows = vi.fn().mockReturnValue({
+      showsToExecute: [] as ScheduledShow[],
+      promotionUpdates: [] as string[],
+    });
+
+    vi.mocked(difficultySystem).applyPassiveDifficulty = vi.fn().mockReturnValue({
+      reputationLost: 0,
+      message: '',
+    });
+    vi.mocked(difficultySystem).getDifficultyMilestone = vi.fn().mockReturnValue(null);
+    vi.mocked(difficultySystem).getShowDifficultyModifiers = vi.fn().mockReturnValue({
+      attendanceMultiplier: 1,
+      revenueMultiplier: 1,
+    });
+    vi.mocked(difficultySystem).getScaledVenueCost = vi
+      .fn()
+      .mockImplementation((cost: number) => cost);
+    vi.mocked(difficultySystem).getScaledBandCost = vi.fn().mockReturnValue(25);
+
+    vi.mocked(venueUpgradeSystem).calculateUpkeepCost = vi.fn().mockReturnValue(0);
+    vi.mocked(venueUpgradeSystem).degradeEquipment = vi.fn();
+
+    vi.mocked(walkerSystem).createMusicianWalker = vi.fn();
+    vi.mocked(walkerSystem).spawnShowResultWalkers = vi.fn();
+
+    vi.mocked(dayJobSystem).processJobIncome = vi.fn().mockReturnValue(null);
+
+    vi.mocked(synergyManager).triggerSynergies = vi.fn().mockReturnValue([]);
+    vi.mocked(synergyManager).calculateEffectTotal = vi.fn().mockReturnValue(0);
+    vi.mocked(synergyManager).getPassiveEffects = vi.fn().mockReturnValue([]);
+    vi.mocked(synergyManager).reset = vi.fn();
+
+    state = makeState();
+    vi.mocked(useGameStore).getState = vi.fn().mockImplementation(() => state);
+    vi.mocked(useGameStore).setState = vi.fn();
+
+    // Singleton holds broke-turn state between tests
+    turnResolutionEngine.reset();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  describe('executeFullTurn', () => {
+    it('returns a result compatible with TurnResultsModal plus run structure', async () => {
+      const result = await turnResolutionEngine.executeFullTurn();
+
+      expect(Array.isArray(result.showResults)).toBe(true);
+      expect(typeof result.totalVenueRent).toBe('number');
+      expect(result.turn).toBe(1);
+      expect(result.isEscalation).toBe(false);
+      expect(result.runEnd).toBeNull();
+      expect(Array.isArray(result.warnings)).toBe(true);
+      expect(Array.isArray(result.synergyEffects)).toBe(true);
+    });
+
+    it('advances the round when the run continues', async () => {
+      await turnResolutionEngine.executeFullTurn();
+
+      expect(state.nextRound).toHaveBeenCalled();
+      expect(state.setPhase).not.toHaveBeenCalledWith(GamePhase.GAME_OVER);
+    });
+
+    it('charges venue rent', async () => {
+      const result = await turnResolutionEngine.executeFullTurn();
+
+      expect(result.totalVenueRent).toBe(200);
+      expect(state.addMoney).toHaveBeenCalledWith(-200);
+    });
+
+    it('passes through day job results', async () => {
+      vi.mocked(dayJobSystem).processJobIncome = vi.fn().mockReturnValue({
+        money: 50,
+        reputationLoss: 2,
+        fanLoss: 1,
+        stressGain: 5,
+        message: 'Worked at the record store',
+      });
+
+      const result = await turnResolutionEngine.executeFullTurn();
+
+      expect(result.dayJobResult?.money).toBe(50);
+    });
+
+    it('passes through difficulty events', async () => {
+      vi.mocked(difficultySystem).applyPassiveDifficulty = vi.fn().mockReturnValue({
+        reputationLost: 0,
+        message: 'Increased police presence in the area',
+      });
+
+      const result = await turnResolutionEngine.executeFullTurn();
+
+      expect(result.difficultyEvent?.message).toBe(
+        'Increased police presence in the area',
+      );
+    });
+
+    it('executes scheduled shows and records them', async () => {
+      vi.mocked(showPromotionSystem).processScheduledShows = vi.fn().mockReturnValue({
+        showsToExecute: [mockShow],
+        promotionUpdates: [] as string[],
+      });
+
+      const result = await turnResolutionEngine.executeFullTurn();
+
+      expect(result.showResults).toHaveLength(1);
+      expect(result.showResults[0].success).toBe(true);
+      expect(result.showResults[0].attendance).toBeGreaterThan(0);
+      expect(state.completeShow).toHaveBeenCalled();
+    });
+
+    it('creates a failed result when venue or band is missing', async () => {
+      vi.mocked(showPromotionSystem).processScheduledShows = vi.fn().mockReturnValue({
+        showsToExecute: [{ ...mockShow, venueId: 'invalid-venue-id' }],
+        promotionUpdates: [] as string[],
+      });
+
+      const result = await turnResolutionEngine.executeFullTurn();
+
+      expect(result.showResults).toHaveLength(1);
+      expect(result.showResults[0].success).toBe(false);
+      expect(result.showResults[0].reputationChange).toBeLessThan(0);
+    });
+  });
+
+  describe('endgame', () => {
+    it('ends the run with BREAKTHROUGH_WIN at the thresholds', async () => {
+      state = makeState({ reputation: 100, fans: 600 });
+
+      const result = await turnResolutionEngine.executeFullTurn();
+
+      expect(result.runEnd?.reason).toBe('BREAKTHROUGH_WIN');
+      expect(state.setPhase).toHaveBeenCalledWith(GamePhase.GAME_OVER);
+      expect(state.nextRound).not.toHaveBeenCalled();
+    });
+
+    it('ends the run with BURNOUT_LOSS at max stress', async () => {
+      state = makeState({ stress: 100 });
+
+      const result = await turnResolutionEngine.executeFullTurn();
+
+      expect(result.runEnd?.reason).toBe('BURNOUT_LOSS');
+      expect(state.setPhase).toHaveBeenCalledWith(GamePhase.GAME_OVER);
+    });
+
+    it('ends the run with FADE_OUT_LOSS at the turn cap', async () => {
+      state = makeState({ currentRound: 35 });
+
+      const result = await turnResolutionEngine.executeFullTurn();
+
+      expect(result.runEnd?.reason).toBe('FADE_OUT_LOSS');
+      expect(result.runEnd?.turn).toBe(35);
+    });
+
+    it('evicts after three consecutive broke turns, with warnings first', async () => {
+      state = makeState({ money: 0 });
+
+      const first = await turnResolutionEngine.executeFullTurn();
+      expect(first.runEnd).toBeNull();
+      expect(first.warnings.some((w) => w.includes('EVICTION WARNING: 1/3'))).toBe(true);
+
+      const second = await turnResolutionEngine.executeFullTurn();
+      expect(second.runEnd).toBeNull();
+
+      const third = await turnResolutionEngine.executeFullTurn();
+      expect(third.runEnd?.reason).toBe('EVICTION_LOSS');
+    });
+
+    it('recovers the broke counter after a solvent turn', async () => {
+      state = makeState({ money: 0 });
+      await turnResolutionEngine.executeFullTurn();
+      await turnResolutionEngine.executeFullTurn();
+
+      state = makeState({ money: 500 });
+      await turnResolutionEngine.executeFullTurn();
+
+      state = makeState({ money: 0 });
+      const result = await turnResolutionEngine.executeFullTurn();
+
+      expect(result.runEnd).toBeNull();
+      expect(result.warnings.some((w) => w.includes('EVICTION WARNING: 1/3'))).toBe(true);
+    });
+
+    it('flags escalation turns and raises show costs', async () => {
+      state = makeState({ currentRound: 31 });
+      vi.mocked(showPromotionSystem).processScheduledShows = vi.fn().mockReturnValue({
+        showsToExecute: [mockShow],
+        promotionUpdates: [] as string[],
+      });
+
+      const result = await turnResolutionEngine.executeFullTurn();
+
+      expect(result.isEscalation).toBe(true);
+      expect(result.warnings.some((w) => w.includes('ESCALATION'))).toBe(true);
+      // Base costs: 1 band x 25 + 200 rent = 225; escalated x1.5 = 337
+      expect(result.showResults[0].financials.costs).toBe(337);
+    });
+  });
+
+  describe('getEscalationStatus', () => {
+    it('reports escalation multipliers inside the window', () => {
+      const status = turnResolutionEngine.getEscalationStatus(32);
+
+      expect(status.isEscalation).toBe(true);
+      expect(status.costMultiplier).toBe(1.5);
+      expect(status.incidentMultiplier).toBe(2.0);
+      expect(status.turnsRemaining).toBe(3);
+    });
+
+    it('reports no escalation before the window', () => {
+      const status = turnResolutionEngine.getEscalationStatus(10);
+
+      expect(status.isEscalation).toBe(false);
+      expect(status.costMultiplier).toBe(1);
+    });
+  });
+});

@@ -5,6 +5,7 @@ import { useGameStore } from "@stores/gameStore";
 import { SettingsModal } from "@components/ui/SettingsModal";
 import { TutorialOverlay } from "@components/tutorial/TutorialOverlay";
 import { RunConfig, runManager } from "@game/mechanics/RunManager";
+import { turnResolutionEngine } from "@game/mechanics/TurnResolutionEngine";
 import { metaProgressionManager } from "@game/mechanics/MetaProgressionManager";
 import { haptics } from "@utils/mobile";
 import { audio } from "@utils/audio";
@@ -49,7 +50,10 @@ function App() {
 
   const handleStartGame = async (runConfig?: RunConfig) => {
     if (runConfig) {
-      // Start a new run with selected config
+      // Start a new run with selected config — wipe any previous run first so
+      // a finished (GAME_OVER) run can't bleed into the new one
+      useGameStore.getState().resetGame();
+      turnResolutionEngine.reset();
       runManager.startRun(runConfig.id);
 
       // Apply meta progression bonuses
@@ -151,7 +155,12 @@ function App() {
   return (
     <ColorblindProvider initialMode={savedColorblindMode}>
       <AppErrorBoundary>
-        <MainGameView />
+        <MainGameView
+          onExitToMenu={() => {
+            setGameStarted(false);
+            setShowMainMenu(true);
+          }}
+        />
 
         {/* Settings Modal */}
         <SettingsModal
