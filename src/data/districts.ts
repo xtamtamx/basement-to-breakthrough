@@ -2,7 +2,7 @@ import { District } from "@game/types";
 
 // THE canonical district list. The gameStore's initial state and all venue
 // locations reference these objects — keep ids in sync with
-// CityViewTest.STORE_DISTRICT_TYPE and PixelCityMap.DISTRICT_LANDMARKS.
+// CityView.STORE_DISTRICT_TYPE and PixelCityMap.FILLER_BUILDINGS.
 export const DISTRICTS = {
   EASTSIDE: {
     id: "eastside",
