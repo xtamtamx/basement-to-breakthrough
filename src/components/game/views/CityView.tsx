@@ -5,7 +5,7 @@ import { haptics } from '@utils/mobile';
 import { DistrictViewBasic } from '../DistrictViewBasic';
 import { DistrictInfo } from '@/game/generation/CityGenerator';
 import { VenueUpgradeModal } from '@/components/venue/VenueUpgradeModal';
-import { Plus, ZoomOut, Building2, TrendingUp, MapPin, X } from 'lucide-react';
+import { ZoomOut, Building2, TrendingUp, MapPin, X } from 'lucide-react';
 import { MapTile, VenueData, WorkplaceData } from '@/components/map/MapTypes';
 import { DistrictType as CoreDistrictType } from '@/game/types/core';
 import { Venue } from '@game/types';
@@ -64,11 +64,6 @@ export const CityView: React.FC = () => {
     setSelectedDistrictId(null);
     setSelectedDistrictInfo(null);
     haptics.light();
-  };
-
-  const handlePlaceVenue = () => {
-    // TODO: Implement venue placement
-    haptics.medium();
   };
 
   return (
@@ -256,33 +251,6 @@ export const CityView: React.FC = () => {
           />
         )}
       </div>
-
-      {/* Floating Action Button for district view */}
-      {viewMode === 'district' && (
-        <button
-          onClick={handlePlaceVenue}
-          style={{
-            position: 'fixed',
-            right: '80px',
-            bottom: 'calc(3.5rem + env(safe-area-inset-bottom) + 0.5rem)',
-            width: '48px',
-            height: '48px',
-            backgroundColor: '#10b981',
-            color: '#ffffff',
-            borderRadius: '24px',
-            boxShadow: '0 4px 12px rgba(16, 185, 129, 0.4)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            border: 'none',
-            cursor: 'pointer',
-            transition: 'transform 0.2s'
-          }}
-          aria-label="Place new venue"
-        >
-          <Plus size={20} />
-        </button>
-      )}
 
       {/* Venue Modal */}
       {selectedTileData && selectedTileData.tile.type === 'venue' && (
@@ -868,59 +836,6 @@ export const CityView: React.FC = () => {
                   • Unlocks "Studio Access" perk at level 3
                 </p>
               </div>
-              
-              {/* Upgrade Info */}
-              {(() => {
-                // TODO: Check for actual workplace perks/upgrades
-                const hasPerks = false; // Placeholder - replace with actual perk check
-                
-                return (
-                  <button
-                    onClick={() => {
-                      if (hasPerks) {
-                        // TODO: Show workplace upgrades/perks
-                        haptics.light();
-                      }
-                    }}
-                    disabled={!hasPerks}
-                    style={{
-                      width: '100%',
-                      padding: '12px',
-                      backgroundImage: hasPerks 
-                        ? 'linear-gradient(135deg, #06b6d4, #0891b2)'
-                        : 'none',
-                      backgroundColor: hasPerks 
-                        ? 'transparent' 
-                        : '#374151',
-                      color: hasPerks 
-                        ? '#ffffff' 
-                        : '#6b7280',
-                      border: 'none',
-                      borderRadius: '10px',
-                      fontSize: '13px',
-                      fontWeight: '600',
-                      cursor: hasPerks 
-                        ? 'pointer' 
-                        : 'not-allowed',
-                      minHeight: '40px',
-                      boxShadow: hasPerks 
-                        ? '0 4px 12px rgba(6, 182, 212, 0.3)' 
-                        : 'none',
-                      transition: 'transform 0.2s',
-                      opacity: hasPerks ? 1 : 0.6
-                    }}
-                    onMouseDown={(e) => {
-                      if (hasPerks) {
-                        e.currentTarget.style.transform = 'scale(0.98)';
-                      }
-                    }}
-                    onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                    onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                  >
-                    {hasPerks ? 'View Job Perks' : 'No Perks Available'}
-                  </button>
-                );
-              })()}
             </div>
           </div>
         </div>
