@@ -2,6 +2,18 @@ import { GameState, useGameStore } from '@stores/gameStore';
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
 
 /**
+ * The fields the LIVE Zustand store actually exposes (flat money/currentRound),
+ * which differ from the core GameState shape (turn/resources) this module is
+ * typed against. Save metadata is read through this view.
+ */
+interface LiveSnapshot {
+  currentRound?: number;
+  money?: number;
+  reputation?: number;
+  fans?: number;
+}
+
+/**
  * SaveGameManager — the SINGLE save-slot system for the game.
  *
  * Persists named/auto save slots to IndexedDB (database "BasementToBreakthrough",
@@ -109,7 +121,9 @@ export class SaveGameManager {
       name: saveName || this.generateSaveName(gameState),
       timestamp: new Date(),
       playTime,
-      turnNumber: gameState.turn || 0,
+      // The live store uses flat fields (currentRound/money/...), not the
+      // core GameState shape (turn/resources) this is typed against.
+      turnNumber: (gameState as unknown as LiveSnapshot).currentRound ?? 0,
       gameState: this.sanitizeGameState(gameState),
       version: CURRENT_SAVE_VERSION,
       thumbnail: await this.captureGameThumbnail(),
@@ -167,9 +181,9 @@ export class SaveGameManager {
         timestamp: save.timestamp,
         playTime: save.playTime,
         turnNumber: save.turnNumber,
-        money: save.gameState.resources?.money || 0,
-        reputation: save.gameState.resources?.reputation || 0,
-        fans: save.gameState.resources?.fans || 0,
+        money: (save.gameState as unknown as LiveSnapshot).money ?? 0,
+        reputation: (save.gameState as unknown as LiveSnapshot).reputation ?? 0,
+        fans: (save.gameState as unknown as LiveSnapshot).fans ?? 0,
         version: save.version,
         thumbnail: save.thumbnail,
       }));
@@ -306,16 +320,18 @@ export class SaveGameManager {
   private generateSaveName(gameState: Partial<GameState>): string {
     const date = new Date().toLocaleDateString();
     const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const turn = gameState.turn || 0;
-    const money = gameState.resources?.money || 0;
+    const live = gameState as unknown as LiveSnapshot;
+    const turn = live.currentRound ?? 0;
+    const money = live.money ?? 0;
 
     return `Turn ${turn} - $${money} - ${date} ${time}`;
   }
-  
+
   private calculatePlayTime(): number {
     // This would need to track actual play time
     // For now, estimate based on turn number
-    const turn = (useGameStore.getState() as unknown as GameState).turn;
+    const turn =
+      (useGameStore.getState() as unknown as LiveSnapshot).currentRound ?? 0;
     return turn * 180; // Assume 3 minutes per turn
   }
   

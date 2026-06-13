@@ -1,5 +1,6 @@
 import { Achievement } from '@game/types';
 import { safeStorage } from '@utils/safeStorage';
+import { devLog } from '@utils/devLogger';
 
 export interface MetaProgression {
   totalRuns: number;
@@ -61,13 +62,9 @@ class MetaProgressionManager {
   }
   
   private loadProgression(): MetaProgression {
-    const stored = safeStorage.getItem('btb-meta-progression');
-    if (stored) {
-      return JSON.parse(stored);
-    }
-    
-    // Default progression
-    return {
+    // Default progression — also the safe fallback if the stored blob is
+    // missing, malformed, or from an older shape.
+    const defaults: MetaProgression = {
       totalRuns: 0,
       totalScore: 0,
       achievements: [],
@@ -87,6 +84,29 @@ class MetaProgressionManager {
       },
       upgrades: []
     };
+
+    const stored = safeStorage.getItem('btb-meta-progression');
+    if (!stored) return defaults;
+
+    // Deep-merge over defaults so a partial/legacy blob can't leave required
+    // fields (currency, upgrades, stats) undefined. A bad parse would throw at
+    // module-eval (the singleton is constructed eagerly) and white-screen the
+    // whole app, so failures fall back to defaults instead.
+    try {
+      const parsed = JSON.parse(stored) as Partial<MetaProgression>;
+      return {
+        ...defaults,
+        ...parsed,
+        currency: { ...defaults.currency, ...(parsed.currency ?? {}) },
+        stats: { ...defaults.stats, ...(parsed.stats ?? {}) },
+        achievements: parsed.achievements ?? defaults.achievements,
+        unlocks: parsed.unlocks ?? defaults.unlocks,
+        upgrades: parsed.upgrades ?? defaults.upgrades,
+      };
+    } catch (e) {
+      devLog.warn('Corrupt meta-progression blob; resetting to defaults', e);
+      return defaults;
+    }
   }
   
   private saveProgression() {

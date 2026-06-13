@@ -365,6 +365,38 @@ describe('TurnResolutionEngine', () => {
       expect(result.showResults[0].reputationChange).toBe(-8);
       // Raid blocks are consumed so the penalty lasts exactly one turn
       expect(difficultySystem.consumeTurnBlocks).toHaveBeenCalled();
+      // The -8 routes ONLY through completeShow (reputationChange); it must
+      // NOT also be applied directly, or it lands twice (-16).
+      expect(state.addReputation).not.toHaveBeenCalled();
+    });
+
+    it('counts every band in a multi-band lineup for cost and draw', async () => {
+      const opener = { ...mockBand, id: 'b2', name: 'Opener', popularity: 90 };
+      state = makeState({ allBands: [mockBand, opener] });
+      const billed = { ...mockShow, lineup: ['b1', 'b2'] };
+      vi.mocked(showPromotionSystem).processScheduledShows = vi.fn().mockReturnValue({
+        showsToExecute: [billed],
+        promotionUpdates: [] as string[],
+      });
+
+      const result = await turnResolutionEngine.executeFullTurn();
+
+      // Two bands x mocked getScaledBandCost(25) = 50 band cost + 200 rent = 250
+      expect(result.showResults[0].financials.costs).toBe(250);
+    });
+
+    it('refuses to resolve a turn once the run is over', async () => {
+      state = makeState({ phase: GamePhase.GAME_OVER });
+      vi.mocked(showPromotionSystem).processScheduledShows = vi.fn().mockReturnValue({
+        showsToExecute: [mockShow],
+        promotionUpdates: [] as string[],
+      });
+
+      const result = await turnResolutionEngine.executeFullTurn();
+
+      expect(result.showResults).toHaveLength(0);
+      expect(state.nextRound).not.toHaveBeenCalled();
+      expect(state.addMoney).not.toHaveBeenCalled();
     });
 
     it('pays passive income from owned recording gear', async () => {

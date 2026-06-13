@@ -811,21 +811,44 @@ export const useGameStore = create<GameStore>()(
           const finalResult = result;
           // District bonuses are already applied in the result
 
+          // Bank GROSS revenue unconditionally (?? not ||): a zero-revenue
+          // show must add 0, NOT fall through to financials.profit (which is
+          // negative once costs exist) — the engine deducts costs separately.
+          // Route every resource through the same clamps the addX actions use
+          // so reputation/connections can't exceed [0,100] etc.
+          const repDelta =
+            finalResult.reputationGain ?? result.reputationChange ?? 0;
           return {
             scheduledShows: state.scheduledShows.filter((s) => s.id !== showId),
             showHistory: [
               ...state.showHistory,
               { ...show, status: "COMPLETED" },
             ],
-            money:
-              state.money +
-              (finalResult.revenue || result.financials?.profit || 0),
-            fans: state.fans + (finalResult.fansGained || 0),
-            reputation:
-              state.reputation +
-              (finalResult.reputationGain || result.reputationChange || 0),
-            stress: Math.min(100, state.stress + (finalResult.stressGain || 0)),
-            connections: state.connections + (finalResult.connectionsGain || 0),
+            money: clamp(
+              state.money + (finalResult.revenue ?? 0),
+              CONSTRAINTS.MIN_MONEY,
+              CONSTRAINTS.MAX_MONEY,
+            ),
+            fans: clamp(
+              state.fans + (finalResult.fansGained || 0),
+              CONSTRAINTS.MIN_FANS,
+              CONSTRAINTS.MAX_FANS,
+            ),
+            reputation: clamp(
+              state.reputation + repDelta,
+              CONSTRAINTS.MIN_REPUTATION,
+              CONSTRAINTS.MAX_REPUTATION,
+            ),
+            stress: clamp(
+              state.stress + (finalResult.stressGain || 0),
+              CONSTRAINTS.MIN_STRESS,
+              CONSTRAINTS.MAX_STRESS,
+            ),
+            connections: clamp(
+              state.connections + (finalResult.connectionsGain || 0),
+              CONSTRAINTS.MIN_CONNECTIONS,
+              CONSTRAINTS.MAX_CONNECTIONS,
+            ),
             lastTurnResults: [finalResult],
           };
         }),

@@ -107,6 +107,21 @@ export class TurnResolutionEngine {
     const turn = store.currentRound;
     const isEscalation = turn >= ESCALATION_START_TURN;
 
+    // The run is over — refuse to re-resolve (guards a same-tick double-tap on
+    // the run-ending turn, which would double-charge upkeep and re-run events).
+    if (store.phase === GamePhase.GAME_OVER) {
+      return {
+        showResults: [],
+        totalUpkeep: 0,
+        turn,
+        isEscalation,
+        warnings: [],
+        runEnd: null,
+        ceremony: null,
+        synergyEffects: [],
+      };
+    }
+
     // 1. Turn start triggers
     const turnStartEffects = this.applySynergyPhase('TURN_START');
 
@@ -449,14 +464,19 @@ export class TurnResolutionEngine {
       return this.createFailedShowResult(show.id);
     }
 
-    // Get all bands in the show
+    // Get all bands in the show. The live booking path sets show.lineup
+    // (band ids, headliner first); the older show.bill is a legacy shape.
+    // Support both so multi-band bills actually draw a crowd and get charged.
     const allShowBands = [mainBand];
-    if (show.bill) {
-      show.bill.openers.forEach((bandId) => {
-        const band = store.allBands.find((b) => b.id === bandId);
-        if (band) allShowBands.push(band);
-      });
-    }
+    const openerIds: string[] = show.lineup
+      ? show.lineup.filter((id) => id !== mainBand.id)
+      : show.bill
+        ? show.bill.openers
+        : [];
+    openerIds.forEach((bandId) => {
+      const band = store.allBands.find((b) => b.id === bandId);
+      if (band) allShowBands.push(band);
+    });
 
     // Trigger SHOW_START synergies
     const synergyContext = {
@@ -561,10 +581,16 @@ export class TurnResolutionEngine {
 
     // Calculate costs with difficulty scaling; escalation turns raise costs.
     // Rent also creeps up with district gentrification and the run's rent
-    // modifier (Hardcore).
+    // modifier (Hardcore), and varies by the district's base rentMultiplier
+    // (looked up live — the value the City view shows the player).
+    const liveDistrict = store.districts.find(
+      (d) => d.id === venue.location.id,
+    );
+    const districtRentMult = liveDistrict?.rentMultiplier ?? 1;
     const bandCosts = allShowBands.length * difficultySystem.getScaledBandCost();
     const venueCost = Math.floor(
       difficultySystem.getScaledVenueCost(venue.rent) *
+        districtRentMult *
         gentrificationSystem.getRentMultiplier(venue.location.id) *
         runMods.venueRentMultiplier *
         metaBonuses.venueDiscountMultiplier,
@@ -670,8 +696,8 @@ export class TurnResolutionEngine {
 
   /** A show cancelled because its venue was raided by the police this turn. */
   private createRaidedShowResult(showId: string): ShowResult {
-    const store = useGameStore.getState();
-    store.addReputation(-8);
+    // The -8 reputation hit routes through completeShow (reputationChange);
+    // do NOT also apply it directly here, or it lands twice (-16).
     return {
       showId,
       success: false,
