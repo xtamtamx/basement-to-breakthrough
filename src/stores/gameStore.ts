@@ -17,6 +17,7 @@ import {
 } from "@game/types";
 import { safeZustandStorage } from "@utils/safeZustandStorage";
 import { factionSystem } from "@game/mechanics/FactionSystem";
+import { showPromotionSystem } from "@game/mechanics/ShowPromotionSystem";
 import { VENUE_TRAITS } from "@game/data/venueTraits";
 import { SATIRICAL_VENUE_DESCRIPTIONS } from "@game/data/satiricalText";
 import { gameAudio } from "@utils/gameAudio";
@@ -111,7 +112,7 @@ interface GameStore {
   updateBand: (bandId: string, updates: Partial<Band>) => void;
 
   // Show actions
-  scheduleShow: (show: Show) => void;
+  scheduleShow: (show: Show, turnsInAdvance?: number) => void;
   completeShow: (showId: string, result: ShowResult) => void;
 
   // Faction actions
@@ -775,12 +776,24 @@ export const useGameStore = create<GameStore>()(
         })),
 
       // Show actions
-      scheduleShow: (show) => {
+      // Booking a show is the single canonical entry point. It registers the
+      // show with the ShowPromotionSystem — the execution + promotion owner that
+      // the Promo tab reads and that TurnResolutionEngine runs each turn — AND
+      // mirrors it into `scheduledShows` for reactive display (nav badges, map
+      // markers) and for completeShow's payout lookup. Both lists are cleared
+      // together when the show resolves. Without the promotion-system
+      // registration the booked show would sit here forever and never execute.
+      // turnsInAdvance is clamped to the system's 1-5 window so registration
+      // can never silently fail and strand an unrunnable show in the display list.
+      scheduleShow: (show, turnsInAdvance = 3) => {
+        const turns = Math.max(1, Math.min(5, Math.round(turnsInAdvance)));
+        showPromotionSystem.scheduleShow(show, turns);
+
         // Import dynamically to avoid circular dependency
         import('@/game/systems/CityGrowthManager').then(({ cityGrowthManager }) => {
           cityGrowthManager.recordShowBooked();
         });
-        
+
         set((state) => ({
           scheduledShows: [
             ...state.scheduledShows.slice(-199), // Keep last 200 shows

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { MainGameView } from "@components/game/MainGameView";
 import { PixelArtMainMenu } from "@components/game/PixelArtMainMenu";
+import { MetaProgressionShop } from "@components/game/MetaProgressionShop";
 import { useGameStore } from "@stores/gameStore";
 import { SettingsModal } from "@components/ui/SettingsModal";
 import { TutorialOverlay } from "@components/tutorial/TutorialOverlay";
@@ -20,6 +21,7 @@ import { PerformanceTest } from "@components/PerformanceTest";
 
 function App() {
   const [showSettings, setShowSettings] = useState(false);
+  const [showUpgrades, setShowUpgrades] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
   const [showMainMenu, setShowMainMenu] = useState(true);
   const [showSaveLoadTest, setShowSaveLoadTest] = useState(false);
@@ -102,6 +104,7 @@ function App() {
                 : undefined
             }
             onSettings={() => setShowSettings(true)}
+            onUpgrades={() => setShowUpgrades(true)}
             hasSavedGame={hasSavedGame}
           />
 
@@ -110,6 +113,11 @@ function App() {
             isOpen={showSettings}
             onClose={() => setShowSettings(false)}
           />
+
+          {/* Meta-progression fame shop */}
+          {showUpgrades && (
+            <MetaProgressionShop onClose={() => setShowUpgrades(false)} />
+          )}
         </AppErrorBoundary>
       </ColorblindProvider>
     );

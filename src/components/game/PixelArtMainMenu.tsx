@@ -8,6 +8,7 @@ interface PixelArtMainMenuProps {
   onStartGame: () => void;
   onContinueGame?: () => void;
   onSettings?: () => void;
+  onUpgrades?: () => void;
   hasSavedGame?: boolean;
 }
 
@@ -15,6 +16,7 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
   onStartGame,
   onContinueGame,
   onSettings,
+  onUpgrades,
   hasSavedGame = false,
 }) => {
   const [glitchText, setGlitchText] = useState(false);
@@ -112,6 +114,21 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
             New Game
           </PixelButton>
           
+          {onUpgrades && (
+            <PixelButton
+              variant="secondary"
+              size="lg"
+              fullWidth
+              onClick={() => {
+                haptics.light();
+                onUpgrades();
+              }}
+              icon="⭐"
+            >
+              Scene Cred
+            </PixelButton>
+          )}
+
           {onSettings && (
             <PixelButton
               variant="ghost"

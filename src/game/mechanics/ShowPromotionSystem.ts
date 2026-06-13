@@ -278,6 +278,12 @@ export class ShowPromotionSystem {
   getScheduledShows(): ScheduledShow[] {
     return Array.from(this.scheduledShows.values());
   }
+
+  // Clear the schedule. Called when a run resets so booked-but-unplayed shows
+  // can't bleed into the next run and desync from the store's display list.
+  reset(): void {
+    this.scheduledShows.clear();
+  }
   
   // Check if a promotion creates synergy
   checkPromotionSynergy(

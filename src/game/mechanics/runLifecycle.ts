@@ -50,14 +50,18 @@ export async function startNewRun(
   await store.loadInitialGameData();
   dayJobSystem.refreshJobs();
 
-  // Some modes (Hardcore) start with weaker bands. Apply once to the roster.
-  const bandQuality = runManager.getStartingBandQualityModifier();
-  if (bandQuality !== 0) {
+  // Starting band quality: a flat run-modifier shift (Hardcore −10) plus the
+  // meta Talent Scout multiplier (+10%/level). Apply once to the roster.
+  const bandQualityShift = runManager.getStartingBandQualityModifier();
+  const bandQualityMult = bonuses.bandQualityMultiplier;
+  if (bandQualityShift !== 0 || bandQualityMult !== 1) {
     const fresh = useGameStore.getState();
+    const adjust = (stat: number) =>
+      Math.max(1, Math.round((stat + bandQualityShift) * bandQualityMult));
     fresh.allBands.forEach((band) => {
       fresh.updateBand(band.id, {
-        popularity: Math.max(1, band.popularity + bandQuality),
-        technicalSkill: Math.max(1, band.technicalSkill + bandQuality),
+        popularity: adjust(band.popularity),
+        technicalSkill: adjust(band.technicalSkill),
       });
     });
   }

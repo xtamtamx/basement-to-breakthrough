@@ -544,8 +544,11 @@ export class TurnResolutionEngine {
     const barRevenue = venue.hasBar ? finalAttendance * 5 : 0;
     const totalRevenue = ticketRevenue + barRevenue;
 
-    // Per-run modifiers (Speed/Hardcore bend these; Classic = all 1)
+    // Per-run modifiers (Speed/Hardcore bend these; Classic = all 1) plus the
+    // permanent meta-upgrade bonuses bought with fame (Venue Connections,
+    // Zen Master).
     const runMods = runManager.getRunModifiers();
+    const metaBonuses = metaProgressionManager.getRunStartBonuses();
 
     const moneyBonus = synergyManager.calculateEffectTotal(
       'MONEY_PERCENT',
@@ -563,7 +566,8 @@ export class TurnResolutionEngine {
     const venueCost = Math.floor(
       difficultySystem.getScaledVenueCost(venue.rent) *
         gentrificationSystem.getRentMultiplier(venue.location.id) *
-        runMods.venueRentMultiplier,
+        runMods.venueRentMultiplier *
+        metaBonuses.venueDiscountMultiplier,
     );
     let totalCosts = bandCosts + venueCost;
     if (isEscalation) {
@@ -591,7 +595,11 @@ export class TurnResolutionEngine {
 
     // Playing a show is tiring — base stress scaled by the run's modifier.
     // This is what makes Burnout reachable through normal play.
-    const stressGain = Math.round(SHOW_STRESS_BASE * runMods.stressMultiplier);
+    const stressGain = Math.round(
+      SHOW_STRESS_BASE *
+        runMods.stressMultiplier *
+        metaBonuses.stressReductionMultiplier,
+    );
 
     // Check for incidents with escalation and synergy modifiers
     const passiveEffects = synergyManager.getPassiveEffects();
@@ -761,6 +769,7 @@ export class TurnResolutionEngine {
     this.consecutiveBrokeTurns = 0;
     difficultySystem.resetBlocks();
     synergyManager.reset();
+    showPromotionSystem.reset();
   }
 }
 
