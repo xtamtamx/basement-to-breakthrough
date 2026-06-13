@@ -187,6 +187,8 @@ export const EQUIPMENT_CATALOG: Equipment[] = [
     effects: {
       reputationMultiplier: 1.1, // Bands love being recorded
       atmosphereBonus: 5,
+      passiveIncome: 30, // demo tapes move slowly
+      passiveFame: 2,
     }
   },
   {
@@ -203,7 +205,9 @@ export const EQUIPMENT_CATALOG: Equipment[] = [
     effects: {
       reputationMultiplier: 1.3,
       atmosphereBonus: 10,
-      // TODO: Add ability to generate revenue from recordings
+      // A working studio: recorded EPs sell + circulate every turn
+      passiveIncome: 120,
+      passiveFame: 8,
     },
     requirements: {
       powerRequirements: 3,
@@ -567,10 +571,25 @@ export class VenueUpgradeSystem {
         totalUpkeep += equipment.maintenanceCost;
       }
     });
-    
+
     return totalUpkeep;
   }
-  
+
+  // Passive per-turn income/fame from owned equipment (e.g. recording gear
+  // selling EPs). Scales with condition so neglected gear earns less.
+  calculatePassiveIncome(venue: Venue): { money: number; fans: number } {
+    let money = 0;
+    let fans = 0;
+    venue.equipment.forEach(equipment => {
+      if (equipment.owned && equipment.condition > 20) {
+        const conditionFactor = equipment.condition / 100;
+        money += Math.floor((equipment.effects.passiveIncome ?? 0) * conditionFactor);
+        fans += Math.floor((equipment.effects.passiveFame ?? 0) * conditionFactor);
+      }
+    });
+    return { money, fans };
+  }
+
   // Degrade equipment condition over time
   degradeEquipment(venue: Venue): void {
     const store = useGameStore.getState();

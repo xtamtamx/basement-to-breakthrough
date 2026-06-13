@@ -113,6 +113,15 @@ export class TurnResolutionEngine {
     const showResults: ShowResult[] = [];
 
     showsToExecute.forEach((scheduledShow) => {
+      // A venue raided by last turn's police crackdown can't host — the show
+      // is cancelled with a reputation hit instead of resolving.
+      if (difficultySystem.isVenueRaided(scheduledShow.venueId)) {
+        const cancelled = this.createRaidedShowResult(scheduledShow.id);
+        showResults.push(cancelled);
+        store.completeShow(scheduledShow.id, cancelled);
+        return;
+      }
+
       const result = this.executeShow(
         scheduledShow,
         scheduledShow.totalPromotionEffectiveness,
@@ -135,6 +144,10 @@ export class TurnResolutionEngine {
       }
     });
 
+    // One-turn raid/drama blocks have now done their job this turn; clear them
+    // before step 4 declares fresh ones for next turn.
+    difficultySystem.consumeTurnBlocks();
+
     // SHOW_END triggers scale with what the shows actually produced
     const showEndEffects = this.applyShowEndPhase(showResults);
 
@@ -142,11 +155,19 @@ export class TurnResolutionEngine {
     // difficulty. Venue rent is paid per show (in executeShow) — charging it
     // again per turn for every city venue double-billed the player.
     let totalUpkeep = LIVING_COSTS_PER_TURN;
+    let passiveMoney = 0;
+    let passiveFans = 0;
     useGameStore.getState().venues.forEach((venue) => {
       totalUpkeep += venueUpgradeSystem.calculateUpkeepCost(venue);
+      const passive = venueUpgradeSystem.calculatePassiveIncome(venue);
+      passiveMoney += passive.money;
+      passiveFans += passive.fans;
       venueUpgradeSystem.degradeEquipment(venue);
     });
     store.addMoney(-totalUpkeep);
+    // Recording gear sells EPs between shows
+    if (passiveMoney > 0) store.addMoney(passiveMoney);
+    if (passiveFans > 0) store.addFans(passiveFans);
 
     const jobResult = dayJobSystem.processJobIncome();
     if (jobResult) {
@@ -595,6 +616,31 @@ export class TurnResolutionEngine {
     };
   }
 
+  /** A show cancelled because its venue was raided by the police this turn. */
+  private createRaidedShowResult(showId: string): ShowResult {
+    const store = useGameStore.getState();
+    store.addReputation(-8);
+    return {
+      showId,
+      success: false,
+      attendance: 0,
+      revenue: 0,
+      reputationChange: -8,
+      fansGained: 0,
+      incidentOccurred: true,
+      financials: { revenue: 0, costs: 0, profit: 0 },
+      incidents: [
+        {
+          type: IncidentType.POLICE_SHUTDOWN,
+          severity: 7,
+          description: 'Police shut the venue down — show cancelled',
+          consequences: [{ type: ConsequenceType.REPUTATION_LOSS, value: 8 }],
+        },
+      ],
+      isSuccess: false,
+    };
+  }
+
   /**
    * Check all endgame conditions
    */
@@ -659,6 +705,7 @@ export class TurnResolutionEngine {
    */
   reset(): void {
     this.consecutiveBrokeTurns = 0;
+    difficultySystem.resetBlocks();
     synergyManager.reset();
   }
 }

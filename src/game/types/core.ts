@@ -319,6 +319,8 @@ export interface EquipmentEffects {
   reputationMultiplier?: number; // Show reputation multiplier
   stressReduction?: number; // Reduces band stress
   incidentReduction?: number; // Reduces chance of technical failures
+  passiveIncome?: number; // Flat $ earned each turn (e.g. recordings sell)
+  passiveFame?: number; // Flat fans/turn from recordings circulating
 }
 
 export interface EquipmentRequirements {

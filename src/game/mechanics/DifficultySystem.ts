@@ -23,6 +23,34 @@ export interface DifficultyFactors {
 }
 
 export class DifficultySystem {
+  // Transient one-turn penalties declared by passive difficulty events.
+  // A raided venue can't host and a band on a drama break can't be booked
+  // for the turn after the event fires. The engine consumes these after the
+  // affected turn's shows resolve; the booking UI reads them to disable picks.
+  private raidedVenueIds = new Set<string>();
+  private unavailableBandIds = new Set<string>();
+
+  isVenueRaided(venueId: string): boolean {
+    return this.raidedVenueIds.has(venueId);
+  }
+
+  isBandUnavailable(bandId: string): boolean {
+    return this.unavailableBandIds.has(bandId);
+  }
+
+  // Clear the one-turn blocks (called by the engine once the affected turn's
+  // shows have resolved, so the penalty lasts exactly one turn).
+  consumeTurnBlocks(): void {
+    this.raidedVenueIds.clear();
+    this.unavailableBandIds.clear();
+  }
+
+  // Full reset for a new run
+  resetBlocks(): void {
+    this.raidedVenueIds.clear();
+    this.unavailableBandIds.clear();
+  }
+
   // Get current difficulty factors based on game progression
   getCurrentDifficulty(): DifficultyFactors {
     const state = useGameStore.getState();
@@ -73,11 +101,12 @@ export class DifficultySystem {
     // Check for random difficulty events
     const events: string[] = [];
     
-    // Police crackdown
-    if (Math.random() < difficulty.policeAttention) {
+    // Police crackdown — the venue is shut down for the next turn (its shows
+    // get cancelled; booking is disabled until it clears)
+    if (Math.random() < difficulty.policeAttention && state.venues.length > 0) {
       const venue = state.venues[Math.floor(Math.random() * state.venues.length)];
-      events.push(`Police shut down shows at ${venue.name} this turn!`);
-      // TODO: Actually prevent shows at this venue
+      this.raidedVenueIds.add(venue.id);
+      events.push(`Police shut down ${venue.name} — no shows there next turn!`);
     }
     
     // Equipment failure
@@ -87,12 +116,12 @@ export class DifficultySystem {
       events.push(`PA system blew out! Emergency repairs cost $${cost}`);
     }
     
-    // Band drama
+    // Band drama — the band takes the next turn off (can't be booked)
     if (Math.random() < difficulty.bandDrama && state.rosterBandIds.length > 1) {
       const band = state.allBands.find(b => state.rosterBandIds.includes(b.id));
       if (band) {
-        events.push(`${band.name} is having internal conflicts. They need a break.`);
-        // TODO: Make band unavailable for a turn
+        this.unavailableBandIds.add(band.id);
+        events.push(`${band.name} is having internal conflicts — they're sitting out next turn.`);
       }
     }
     

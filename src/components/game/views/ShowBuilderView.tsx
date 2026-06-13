@@ -3,7 +3,8 @@ import { useGameStore } from '@stores/gameStore';
 import { Venue, Show } from '@game/types';
 import { haptics } from '@utils/mobile';
 import { synergyEngine } from '@game/mechanics/SynergyEngine';
-import { Calendar, MapPin, Users, Music, AlertCircle, TrendingUp, Check } from 'lucide-react';
+import { difficultySystem } from '@game/mechanics/DifficultySystem';
+import { Calendar, MapPin, Users, Music, AlertCircle, TrendingUp, Check, Ban } from 'lucide-react';
 
 export const ShowBuilderView: React.FC = () => {
   const {
@@ -23,6 +24,10 @@ export const ShowBuilderView: React.FC = () => {
   const selectedBands = allBands.filter(b => selectedBandIds.includes(b.id));
   
   const handleBandToggle = (bandId: string) => {
+    if (difficultySystem.isBandUnavailable(bandId)) {
+      haptics.error();
+      return;
+    }
     setSelectedBandIds(prev => {
       if (prev.includes(bandId)) {
         return prev.filter(id => id !== bandId);
@@ -37,6 +42,10 @@ export const ShowBuilderView: React.FC = () => {
   };
 
   const handleVenueSelect = (venue: Venue) => {
+    if (difficultySystem.isVenueRaided(venue.id)) {
+      haptics.error();
+      return;
+    }
     setSelectedVenue(venue);
     haptics.light();
   };
@@ -187,20 +196,22 @@ export const ShowBuilderView: React.FC = () => {
             <div style={{ display: 'grid', gap: '6px' }}>
               {rosterBands.map(band => {
                 const isSelected = selectedBandIds.includes(band.id);
+                const isUnavailable = difficultySystem.isBandUnavailable(band.id);
+                const isBlocked = isUnavailable || (!isSelected && selectedBandIds.length >= 3);
                 return (
                   <button
                     key={band.id}
                     onClick={() => handleBandToggle(band.id)}
-                    disabled={!isSelected && selectedBandIds.length >= 3}
+                    disabled={isBlocked}
                     style={{
                       backgroundColor: isSelected ? '#ec4899' : '#1f2937',
                       border: '1px solid',
-                      borderColor: isSelected ? '#ec4899' : '#374151',
+                      borderColor: isUnavailable ? '#b91c1c' : isSelected ? '#ec4899' : '#374151',
                       borderRadius: '8px',
                       padding: '10px',
                       minHeight: '44px',
-                      cursor: !isSelected && selectedBandIds.length >= 3 ? 'not-allowed' : 'pointer',
-                      opacity: !isSelected && selectedBandIds.length >= 3 ? 0.5 : 1,
+                      cursor: isBlocked ? 'not-allowed' : 'pointer',
+                      opacity: isBlocked ? 0.5 : 1,
                       transition: 'all 0.2s',
                       textAlign: 'left'
                     }}
@@ -215,12 +226,16 @@ export const ShowBuilderView: React.FC = () => {
                         }}>{band.name}</div>
                         <div style={{
                           fontSize: '11px',
-                          color: isSelected ? '#fce7f3' : '#9ca3af'
+                          color: isUnavailable ? '#f87171' : isSelected ? '#fce7f3' : '#9ca3af'
                         }}>
-                          {band.genre} • Pop: {band.popularity}
+                          {isUnavailable
+                            ? 'On a drama break this turn'
+                            : `${band.genre} • Pop: ${band.popularity}`}
                         </div>
                       </div>
-                      {isSelected && <Check size={14} color="#ffffff" />}
+                      {isUnavailable
+                        ? <Ban size={14} color="#f87171" />
+                        : isSelected && <Check size={14} color="#ffffff" />}
                     </div>
                   </button>
                 );
@@ -258,21 +273,23 @@ export const ShowBuilderView: React.FC = () => {
           <div style={{ display: 'grid', gap: '8px' }}>
             {venues.map(venue => {
               const isSelected = selectedVenue?.id === venue.id;
+              const isRaided = difficultySystem.isVenueRaided(venue.id);
               const canAfford = money >= venue.rent;
-              
+              const isBlocked = !canAfford || isRaided;
+
               return (
                 <button
                   key={venue.id}
                   onClick={() => handleVenueSelect(venue)}
-                  disabled={!canAfford}
+                  disabled={isBlocked}
                   style={{
                     backgroundColor: isSelected ? '#ec4899' : '#1f2937',
                     border: '1px solid',
-                    borderColor: isSelected ? '#ec4899' : '#374151',
+                    borderColor: isRaided ? '#b91c1c' : isSelected ? '#ec4899' : '#374151',
                     borderRadius: '8px',
                     padding: '12px',
-                    cursor: canAfford ? 'pointer' : 'not-allowed',
-                    opacity: canAfford ? 1 : 0.5,
+                    cursor: isBlocked ? 'not-allowed' : 'pointer',
+                    opacity: isBlocked ? 0.5 : 1,
                     transition: 'all 0.2s',
                     textAlign: 'left'
                   }}
@@ -295,6 +312,18 @@ export const ShowBuilderView: React.FC = () => {
                         <span><MapPin size={12} style={{ display: 'inline' }} /> {venue.location.name}</span>
                         <span><Users size={12} style={{ display: 'inline' }} /> {venue.capacity}</span>
                       </div>
+                      {isRaided && (
+                        <div style={{
+                          fontSize: '11px',
+                          color: '#f87171',
+                          marginTop: '4px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}>
+                          <Ban size={12} style={{ display: 'inline' }} /> Police shutdown — closed this turn
+                        </div>
+                      )}
                     </div>
                     <div style={{
                       fontSize: '14px',

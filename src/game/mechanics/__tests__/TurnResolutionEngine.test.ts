@@ -151,8 +151,15 @@ describe('TurnResolutionEngine', () => {
       .fn()
       .mockImplementation((cost: number) => cost);
     vi.mocked(difficultySystem).getScaledBandCost = vi.fn().mockReturnValue(25);
+    vi.mocked(difficultySystem).isVenueRaided = vi.fn().mockReturnValue(false);
+    vi.mocked(difficultySystem).isBandUnavailable = vi.fn().mockReturnValue(false);
+    vi.mocked(difficultySystem).consumeTurnBlocks = vi.fn();
+    vi.mocked(difficultySystem).resetBlocks = vi.fn();
 
     vi.mocked(venueUpgradeSystem).calculateUpkeepCost = vi.fn().mockReturnValue(0);
+    vi.mocked(venueUpgradeSystem).calculatePassiveIncome = vi
+      .fn()
+      .mockReturnValue({ money: 0, fans: 0 });
     vi.mocked(venueUpgradeSystem).degradeEquipment = vi.fn();
 
     vi.mocked(walkerSystem).createMusicianWalker = vi.fn();
@@ -285,6 +292,36 @@ describe('TurnResolutionEngine', () => {
       expect(result.showResults).toHaveLength(1);
       expect(result.showResults[0].success).toBe(false);
       expect(result.showResults[0].reputationChange).toBeLessThan(0);
+    });
+
+    it('cancels shows at a raided venue instead of executing them', async () => {
+      vi.mocked(showPromotionSystem).processScheduledShows = vi.fn().mockReturnValue({
+        showsToExecute: [mockShow],
+        promotionUpdates: [] as string[],
+      });
+      vi.mocked(difficultySystem).isVenueRaided = vi
+        .fn()
+        .mockImplementation((id: string) => id === 'v1');
+
+      const result = await turnResolutionEngine.executeFullTurn();
+
+      expect(result.showResults).toHaveLength(1);
+      expect(result.showResults[0].success).toBe(false);
+      expect(result.showResults[0].attendance).toBe(0);
+      expect(result.showResults[0].reputationChange).toBe(-8);
+      // Raid blocks are consumed so the penalty lasts exactly one turn
+      expect(difficultySystem.consumeTurnBlocks).toHaveBeenCalled();
+    });
+
+    it('pays passive income from owned recording gear', async () => {
+      vi.mocked(venueUpgradeSystem).calculatePassiveIncome = vi
+        .fn()
+        .mockReturnValue({ money: 120, fans: 8 });
+
+      await turnResolutionEngine.executeFullTurn();
+
+      expect(state.addMoney).toHaveBeenCalledWith(120);
+      expect(state.addFans).toHaveBeenCalledWith(8);
     });
   });
 
