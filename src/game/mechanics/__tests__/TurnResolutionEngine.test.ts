@@ -13,6 +13,7 @@ vi.mock('../ShowPromotionSystem');
 vi.mock('../VenueUpgradeSystem');
 vi.mock('../RunManager');
 vi.mock('../MetaProgressionManager');
+vi.mock('../GentrificationSystem');
 
 // Import after mocking
 import { showPromotionSystem, ScheduledShow, PromotionType } from '../ShowPromotionSystem';
@@ -23,6 +24,7 @@ import { walkerSystem } from '../WalkerSystem';
 import { venueUpgradeSystem } from '../VenueUpgradeSystem';
 import { runManager } from '../RunManager';
 import { metaProgressionManager } from '../MetaProgressionManager';
+import { gentrificationSystem } from '../GentrificationSystem';
 
 describe('TurnResolutionEngine', () => {
   const mockBand = {
@@ -161,6 +163,14 @@ describe('TurnResolutionEngine', () => {
       .fn()
       .mockReturnValue({ money: 0, fans: 0 });
     vi.mocked(venueUpgradeSystem).degradeEquipment = vi.fn();
+
+    vi.mocked(gentrificationSystem).getRentMultiplier = vi.fn().mockReturnValue(1);
+    vi.mocked(gentrificationSystem).getAttendanceMultiplier = vi
+      .fn()
+      .mockReturnValue(1);
+    vi.mocked(gentrificationSystem).applyTurnGentrification = vi
+      .fn()
+      .mockReturnValue({ notices: [] });
 
     vi.mocked(walkerSystem).createMusicianWalker = vi.fn();
     vi.mocked(walkerSystem).spawnShowResultWalkers = vi.fn();

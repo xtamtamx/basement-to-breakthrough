@@ -19,6 +19,7 @@ import { showPromotionSystem } from './ShowPromotionSystem';
 import { venueUpgradeSystem } from './VenueUpgradeSystem';
 import { runManager } from './RunManager';
 import { metaProgressionManager } from './MetaProgressionManager';
+import { gentrificationSystem } from './GentrificationSystem';
 import { devLog } from '@utils/devLogger';
 import {
   MAX_TURNS,
@@ -111,6 +112,8 @@ export class TurnResolutionEngine {
     // 3. Show resolution (player actions in step 2 happened before this call)
     const { showsToExecute } = showPromotionSystem.processScheduledShows();
     const showResults: ShowResult[] = [];
+    // Districts that hosted a show this turn gentrify faster
+    const activeDistrictIds = new Set<string>();
 
     showsToExecute.forEach((scheduledShow) => {
       // A venue raided by last turn's police crackdown can't host — the show
@@ -133,6 +136,7 @@ export class TurnResolutionEngine {
 
       const venue = store.venues.find((v) => v.id === scheduledShow.venueId);
       const band = store.allBands.find((b) => b.id === scheduledShow.bandId);
+      if (venue) activeDistrictIds.add(venue.location.id);
       if (venue && band) {
         if (store.venues[0]) {
           walkerSystem.createMusicianWalker(band, store.venues[0], venue);
@@ -182,6 +186,17 @@ export class TurnResolutionEngine {
       difficultyEvent.message = `${milestone} ${difficultyEvent.message}`;
     } else if (milestone) {
       difficultyEvent.message = milestone;
+    }
+
+    // Districts gentrify with the scene's success; fold any threshold-crossing
+    // notices into the turn's difficulty message.
+    const gentrification =
+      gentrificationSystem.applyTurnGentrification(activeDistrictIds);
+    if (gentrification.notices.length > 0) {
+      const notice = gentrification.notices.join(' ');
+      difficultyEvent.message = difficultyEvent.message
+        ? `${difficultyEvent.message} ${notice}`
+        : notice;
     }
 
     // 5. End-of-turn triggers
@@ -502,13 +517,18 @@ export class TurnResolutionEngine {
     );
     const promotedAttendance = baseAttendance * promotionEffectiveness;
     const hypeMultiplier = 1 + hype / 200; // Up to 50% bonus at max hype
+    // Gentrified neighborhoods draw thinner, less authentic crowds
+    const gentrificationAttendance = gentrificationSystem.getAttendanceMultiplier(
+      venue.location.id,
+    );
 
     const finalAttendance = Math.min(
       Math.floor(
         promotedAttendance *
           synergyMultiplier *
           difficultyModifiers.attendanceMultiplier *
-          hypeMultiplier,
+          hypeMultiplier *
+          gentrificationAttendance,
       ),
       effectiveCapacity,
     );
@@ -525,9 +545,13 @@ export class TurnResolutionEngine {
     const revenueMultiplier = 1 + moneyBonus / 100;
     const finalRevenue = Math.floor(totalRevenue * revenueMultiplier);
 
-    // Calculate costs with difficulty scaling; escalation turns raise costs
+    // Calculate costs with difficulty scaling; escalation turns raise costs.
+    // Rent also creeps up with the district's gentrification.
     const bandCosts = allShowBands.length * difficultySystem.getScaledBandCost();
-    const venueCost = difficultySystem.getScaledVenueCost(venue.rent);
+    const venueCost = Math.floor(
+      difficultySystem.getScaledVenueCost(venue.rent) *
+        gentrificationSystem.getRentMultiplier(venue.location.id),
+    );
     let totalCosts = bandCosts + venueCost;
     if (isEscalation) {
       totalCosts = Math.floor(totalCosts * ESCALATION_COST_MULTIPLIER);
