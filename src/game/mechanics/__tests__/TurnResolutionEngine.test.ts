@@ -187,6 +187,16 @@ describe('TurnResolutionEngine', () => {
     vi.mocked(runManager).syncTurn = vi.fn();
     vi.mocked(runManager).updateRunStats = vi.fn();
     vi.mocked(runManager).endRun = vi.fn();
+    vi.mocked(runManager).checkWinConditions = vi.fn().mockReturnValue(false);
+    vi.mocked(runManager).getRunModifiers = vi.fn().mockReturnValue({
+      moneyMultiplier: 1,
+      reputationMultiplier: 1,
+      stressMultiplier: 1,
+      venueRentMultiplier: 1,
+    });
+    vi.mocked(runManager).getStartingBandQualityModifier = vi
+      .fn()
+      .mockReturnValue(0);
     vi.mocked(metaProgressionManager).calculateFameEarned = vi.fn().mockReturnValue(0);
     vi.mocked(metaProgressionManager).updateStats = vi.fn();
     vi.mocked(metaProgressionManager).addAchievements = vi.fn();
@@ -289,6 +299,40 @@ describe('TurnResolutionEngine', () => {
       expect(result.showResults[0].success).toBe(true);
       expect(result.showResults[0].attendance).toBeGreaterThan(0);
       expect(state.completeShow).toHaveBeenCalled();
+    });
+
+    it('deducts each show\'s band + venue costs from money', async () => {
+      vi.mocked(showPromotionSystem).processScheduledShows = vi.fn().mockReturnValue({
+        showsToExecute: [mockShow],
+        promotionUpdates: [] as string[],
+      });
+
+      const result = await turnResolutionEngine.executeFullTurn();
+      const costs = result.showResults[0].financials.costs;
+
+      // completeShow banks gross revenue; the engine then deducts the costs
+      // (without this, venue rent / gentrification creep would be cosmetic)
+      expect(costs).toBeGreaterThan(0);
+      expect(state.addMoney).toHaveBeenCalledWith(-costs);
+    });
+
+    it('applies the run reputation modifier to show rep gains', async () => {
+      vi.mocked(showPromotionSystem).processScheduledShows = vi.fn().mockReturnValue({
+        showsToExecute: [mockShow],
+        promotionUpdates: [] as string[],
+      });
+      vi.mocked(runManager).getRunModifiers = vi.fn().mockReturnValue({
+        moneyMultiplier: 1,
+        reputationMultiplier: 2,
+        stressMultiplier: 1,
+        venueRentMultiplier: 1,
+      });
+
+      const result = await turnResolutionEngine.executeFullTurn();
+
+      // base rep gain is attendance/10; ×2 from the Speed-style modifier
+      expect(result.showResults[0].reputationChange).toBeGreaterThan(0);
+      expect(result.showResults[0].stressGain).toBeGreaterThan(0);
     });
 
     it('creates a failed result when venue or band is missing', async () => {
@@ -434,6 +478,7 @@ describe('TurnResolutionEngine', () => {
       vi.mocked(runManager).getCurrentRun = vi
         .fn()
         .mockReturnValue(activeRun);
+      vi.mocked(runManager).checkWinConditions = vi.fn().mockReturnValue(true);
       vi.mocked(runManager).endRun = vi.fn().mockReturnValue({
         success: true,
         score: 1234.6,

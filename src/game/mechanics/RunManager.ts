@@ -280,6 +280,44 @@ class RunManager {
     }
   }
 
+  // Merge the active run's modifiers into a single set of multipliers the
+  // engine applies each show. Defaults to 1 (no active run / no modifiers),
+  // so Classic plays straight while Speed/Hardcore bend the numbers.
+  getRunModifiers(): {
+    moneyMultiplier: number;
+    reputationMultiplier: number;
+    stressMultiplier: number;
+    venueRentMultiplier: number;
+  } {
+    const merged = {
+      moneyMultiplier: 1,
+      reputationMultiplier: 1,
+      stressMultiplier: 1,
+      venueRentMultiplier: 1,
+    };
+    if (!this.currentRun) return merged;
+    this.currentRun.config.modifiers.forEach((mod) => {
+      const e = mod.effects;
+      if (e.moneyMultiplier != null) merged.moneyMultiplier *= e.moneyMultiplier;
+      if (e.reputationMultiplier != null)
+        merged.reputationMultiplier *= e.reputationMultiplier;
+      if (e.stressMultiplier != null)
+        merged.stressMultiplier *= e.stressMultiplier;
+      if (e.venueRentMultiplier != null)
+        merged.venueRentMultiplier *= e.venueRentMultiplier;
+    });
+    return merged;
+  }
+
+  // Sum of startingBandQuality across the active run's modifiers (0 if none).
+  getStartingBandQualityModifier(): number {
+    if (!this.currentRun) return 0;
+    return this.currentRun.config.modifiers.reduce(
+      (sum, mod) => sum + (mod.effects.startingBandQuality ?? 0),
+      0,
+    );
+  }
+
   // End the current run
   endRun(gameState: GameStateProps, successOverride?: boolean): RunResult {
     if (!this.currentRun) {
@@ -475,6 +513,11 @@ class RunManager {
   // Get current run
   getCurrentRun(): RunState | null {
     return this.currentRun;
+  }
+
+  // Drop the active run without scoring it (e.g. quitting to the menu).
+  abandonRun(): void {
+    this.currentRun = null;
   }
   
   // Advance turn

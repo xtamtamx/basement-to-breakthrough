@@ -31,6 +31,7 @@ import {
   BURNOUT_STRESS_CAP,
   EVICTION_TURNS_BROKE,
   LIVING_COSTS_PER_TURN,
+  SHOW_STRESS_BASE,
   RunEndState,
 } from '../constants/runConstants';
 import {
@@ -133,6 +134,11 @@ export class TurnResolutionEngine {
       );
       showResults.push(result);
       store.completeShow(scheduledShow.id, result);
+      // completeShow banks gross revenue; deduct the show's band + venue costs
+      // so rent (gentrification creep, escalation, Hardcore) actually bites.
+      if (result.financials.costs > 0) {
+        store.addMoney(-result.financials.costs);
+      }
 
       const venue = store.venues.find((v) => v.id === scheduledShow.venueId);
       const band = store.allBands.find((b) => b.id === scheduledShow.bandId);
@@ -538,19 +544,26 @@ export class TurnResolutionEngine {
     const barRevenue = venue.hasBar ? finalAttendance * 5 : 0;
     const totalRevenue = ticketRevenue + barRevenue;
 
+    // Per-run modifiers (Speed/Hardcore bend these; Classic = all 1)
+    const runMods = runManager.getRunModifiers();
+
     const moneyBonus = synergyManager.calculateEffectTotal(
       'MONEY_PERCENT',
       synergyResults,
     );
     const revenueMultiplier = 1 + moneyBonus / 100;
-    const finalRevenue = Math.floor(totalRevenue * revenueMultiplier);
+    const finalRevenue = Math.floor(
+      totalRevenue * revenueMultiplier * runMods.moneyMultiplier,
+    );
 
     // Calculate costs with difficulty scaling; escalation turns raise costs.
-    // Rent also creeps up with the district's gentrification.
+    // Rent also creeps up with district gentrification and the run's rent
+    // modifier (Hardcore).
     const bandCosts = allShowBands.length * difficultySystem.getScaledBandCost();
     const venueCost = Math.floor(
       difficultySystem.getScaledVenueCost(venue.rent) *
-        gentrificationSystem.getRentMultiplier(venue.location.id),
+        gentrificationSystem.getRentMultiplier(venue.location.id) *
+        runMods.venueRentMultiplier,
     );
     let totalCosts = bandCosts + venueCost;
     if (isEscalation) {
@@ -572,7 +585,13 @@ export class TurnResolutionEngine {
       synergyResults,
     );
     fanGain = Math.floor(fanGain * (1 + fansBonus / 100));
-    reputationGain = Math.floor(reputationGain * (1 + repBonus / 100));
+    reputationGain = Math.floor(
+      reputationGain * (1 + repBonus / 100) * runMods.reputationMultiplier,
+    );
+
+    // Playing a show is tiring — base stress scaled by the run's modifier.
+    // This is what makes Burnout reachable through normal play.
+    const stressGain = Math.round(SHOW_STRESS_BASE * runMods.stressMultiplier);
 
     // Check for incidents with escalation and synergy modifiers
     const passiveEffects = synergyManager.getPassiveEffects();
@@ -603,6 +622,7 @@ export class TurnResolutionEngine {
       revenue: finalRevenue,
       reputationChange: reputationGain,
       fansGained: fanGain,
+      stressGain,
       incidentOccurred: incidents.length > 0,
       financials: {
         revenue: finalRevenue,
@@ -680,11 +700,21 @@ export class TurnResolutionEngine {
       showsPlayed: store.showHistory.length,
     };
 
-    // WIN: Breakthrough Show
-    if (
-      store.reputation >= BREAKTHROUGH_REPUTATION_THRESHOLD &&
-      store.fans >= BREAKTHROUGH_FANS_THRESHOLD
-    ) {
+    // WIN: the active run's win conditions (per-mode), falling back to the
+    // default breakthrough thresholds when no formal run is active. The
+    // 35-turn escalation spine (below) is unchanged — modes differ in their
+    // win bar, not their pacing.
+    const activeRun = runManager.getCurrentRun();
+    const won = activeRun
+      ? runManager.checkWinConditions({
+          money: store.money,
+          reputation: store.reputation,
+          stress: store.stress,
+          connections: store.connections,
+        })
+      : store.reputation >= BREAKTHROUGH_REPUTATION_THRESHOLD &&
+        store.fans >= BREAKTHROUGH_FANS_THRESHOLD;
+    if (won) {
       return { reason: 'BREAKTHROUGH_WIN', turn, finalStats };
     }
 

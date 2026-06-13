@@ -50,6 +50,18 @@ export async function startNewRun(
   await store.loadInitialGameData();
   dayJobSystem.refreshJobs();
 
+  // Some modes (Hardcore) start with weaker bands. Apply once to the roster.
+  const bandQuality = runManager.getStartingBandQualityModifier();
+  if (bandQuality !== 0) {
+    const fresh = useGameStore.getState();
+    fresh.allBands.forEach((band) => {
+      fresh.updateBand(band.id, {
+        popularity: Math.max(1, band.popularity + bandQuality),
+        technicalSkill: Math.max(1, band.technicalSkill + bandQuality),
+      });
+    });
+  }
+
   return {
     run,
     bonuses: {

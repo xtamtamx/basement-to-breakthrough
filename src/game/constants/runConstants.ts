@@ -27,6 +27,11 @@ export const EVICTION_TURNS_BROKE = 3;
 // show at booking/resolution time — NOT per turn for every city venue.
 export const LIVING_COSTS_PER_TURN = 30;
 
+// Base stress each show adds before the run's stressMultiplier. Touring is
+// tiring — this is what makes the Burnout loss reachable through play (not
+// just day jobs) and gives Speed mode's stress modifier teeth.
+export const SHOW_STRESS_BASE = 4;
+
 // Run End Reasons
 export type RunEndReason =
   | 'BREAKTHROUGH_WIN'
