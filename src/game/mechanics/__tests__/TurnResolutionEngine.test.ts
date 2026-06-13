@@ -11,6 +11,8 @@ vi.mock('../DayJobSystem');
 vi.mock('../DifficultySystem');
 vi.mock('../ShowPromotionSystem');
 vi.mock('../VenueUpgradeSystem');
+vi.mock('../RunManager');
+vi.mock('../MetaProgressionManager');
 
 // Import after mocking
 import { showPromotionSystem, ScheduledShow, PromotionType } from '../ShowPromotionSystem';
@@ -19,6 +21,8 @@ import { dayJobSystem } from '../DayJobSystem';
 import { synergyManager } from '../SynergyManager';
 import { walkerSystem } from '../WalkerSystem';
 import { venueUpgradeSystem } from '../VenueUpgradeSystem';
+import { runManager } from '../RunManager';
+import { metaProgressionManager } from '../MetaProgressionManager';
 
 describe('TurnResolutionEngine', () => {
   const mockBand = {
@@ -161,6 +165,32 @@ describe('TurnResolutionEngine', () => {
     vi.mocked(synergyManager).getPassiveEffects = vi.fn().mockReturnValue([]);
     vi.mocked(synergyManager).reset = vi.fn();
 
+    // No formal run by default — ceremony paths are tested explicitly
+    vi.mocked(runManager).getCurrentRun = vi.fn().mockReturnValue(null);
+    vi.mocked(runManager).syncTurn = vi.fn();
+    vi.mocked(runManager).updateRunStats = vi.fn();
+    vi.mocked(runManager).endRun = vi.fn();
+    vi.mocked(metaProgressionManager).calculateFameEarned = vi.fn().mockReturnValue(0);
+    vi.mocked(metaProgressionManager).updateStats = vi.fn();
+    vi.mocked(metaProgressionManager).addAchievements = vi.fn();
+    vi.mocked(metaProgressionManager).addCurrency = vi.fn();
+    vi.mocked(metaProgressionManager).getProgression = vi.fn().mockReturnValue({
+      totalRuns: 0,
+      totalScore: 0,
+      achievements: [],
+      unlocks: [],
+      currency: { fame: 0, legacy: 0 },
+      stats: {},
+      upgrades: [],
+    });
+    vi.mocked(metaProgressionManager).getRunStartBonuses = vi.fn().mockReturnValue({
+      startingMoney: 0,
+      startingReputation: 0,
+      bandQualityMultiplier: 1,
+      venueDiscountMultiplier: 1,
+      stressReductionMultiplier: 1,
+    });
+
     state = makeState();
     vi.mocked(useGameStore).getState = vi.fn().mockImplementation(() => state);
     vi.mocked(useGameStore).setState = vi.fn();
@@ -178,10 +208,11 @@ describe('TurnResolutionEngine', () => {
       const result = await turnResolutionEngine.executeFullTurn();
 
       expect(Array.isArray(result.showResults)).toBe(true);
-      expect(typeof result.totalVenueRent).toBe('number');
+      expect(typeof result.totalUpkeep).toBe('number');
       expect(result.turn).toBe(1);
       expect(result.isEscalation).toBe(false);
       expect(result.runEnd).toBeNull();
+      expect(result.ceremony).toBeNull();
       expect(Array.isArray(result.warnings)).toBe(true);
       expect(Array.isArray(result.synergyEffects)).toBe(true);
     });
@@ -193,11 +224,13 @@ describe('TurnResolutionEngine', () => {
       expect(state.setPhase).not.toHaveBeenCalledWith(GamePhase.GAME_OVER);
     });
 
-    it('charges venue rent', async () => {
+    it('charges flat living costs instead of per-venue rent', async () => {
       const result = await turnResolutionEngine.executeFullTurn();
 
-      expect(result.totalVenueRent).toBe(200);
-      expect(state.addMoney).toHaveBeenCalledWith(-200);
+      // LIVING_COSTS_PER_TURN (30) + mocked upkeep (0); venue rent is paid
+      // per show, never per turn for unbooked city venues
+      expect(result.totalUpkeep).toBe(30);
+      expect(state.addMoney).toHaveBeenCalledWith(-30);
     });
 
     it('passes through day job results', async () => {
@@ -273,6 +306,9 @@ describe('TurnResolutionEngine', () => {
 
       expect(result.runEnd?.reason).toBe('BURNOUT_LOSS');
       expect(state.setPhase).toHaveBeenCalledWith(GamePhase.GAME_OVER);
+      // No formal run active → no ceremony, and nothing recorded
+      expect(result.ceremony).toBeNull();
+      expect(metaProgressionManager.updateStats).not.toHaveBeenCalled();
     });
 
     it('ends the run with FADE_OUT_LOSS at the turn cap', async () => {
@@ -326,6 +362,95 @@ describe('TurnResolutionEngine', () => {
       expect(result.warnings.some((w) => w.includes('ESCALATION'))).toBe(true);
       // Base costs: 1 band x 25 + 200 rent = 225; escalated x1.5 = 337
       expect(result.showResults[0].financials.costs).toBe(337);
+    });
+  });
+
+  describe('ceremony', () => {
+    const activeRun = {
+      runId: 'run-1',
+      config: { id: 'classic', maxTurns: 50 },
+      currentTurn: 1,
+      stats: {
+        totalShows: 2,
+        totalRevenue: 800,
+        totalFans: 40,
+        peakReputation: 60,
+        bandsManaged: 3,
+        venuesPlayed: 1,
+        billsCreated: 0,
+        perfectShows: 0,
+        disasters: 0,
+      },
+    };
+
+    beforeEach(() => {
+      vi.mocked(runManager).getCurrentRun = vi
+        .fn()
+        .mockReturnValue(activeRun);
+      vi.mocked(runManager).endRun = vi.fn().mockReturnValue({
+        success: true,
+        score: 1234.6,
+        achievements: [
+          { id: 'a1', name: 'Sold Out', description: 'Packed the house' },
+        ],
+        unlocks: [],
+        stats: activeRun.stats,
+        newHighScore: true,
+      });
+      vi.mocked(metaProgressionManager).calculateFameEarned = vi
+        .fn()
+        .mockReturnValue(123);
+      vi.mocked(metaProgressionManager).getProgression = vi
+        .fn()
+        .mockReturnValue({
+          totalRuns: 5,
+          totalScore: 9000,
+          achievements: [],
+          unlocks: [],
+          currency: { fame: 500, legacy: 0 },
+          stats: {},
+          upgrades: [],
+        });
+      vi.mocked(metaProgressionManager).getRunStartBonuses = vi
+        .fn()
+        .mockReturnValue({
+          startingMoney: 50,
+          startingReputation: 5,
+          bandQualityMultiplier: 1,
+          venueDiscountMultiplier: 1,
+          stressReductionMultiplier: 1,
+        });
+    });
+
+    it('banks the run into meta-progression and returns the payload on a win', async () => {
+      state = makeState({ reputation: 100, fans: 600 });
+
+      const result = await turnResolutionEngine.executeFullTurn();
+
+      expect(result.ceremony).not.toBeNull();
+      expect(result.ceremony?.isWin).toBe(true);
+      expect(result.ceremony?.score).toBe(1235);
+      expect(result.ceremony?.fameEarned).toBe(123);
+      expect(result.ceremony?.newHighScore).toBe(true);
+      expect(result.ceremony?.achievements[0].name).toBe('Sold Out');
+      expect(result.ceremony?.lifetime).toEqual({ totalRuns: 5, fame: 500 });
+      expect(result.ceremony?.nextRunBonuses).toEqual({
+        startingMoney: 50,
+        startingReputation: 5,
+      });
+
+      // Engine verdict overrides RunManager's own win check
+      expect(runManager.endRun).toHaveBeenCalledWith(expect.anything(), true);
+      expect(metaProgressionManager.addCurrency).toHaveBeenCalledWith(123);
+      expect(metaProgressionManager.updateStats).toHaveBeenCalled();
+      expect(metaProgressionManager.addAchievements).toHaveBeenCalled();
+    });
+
+    it('feeds run stats and the turn counter every turn', async () => {
+      await turnResolutionEngine.executeFullTurn();
+
+      expect(runManager.syncTurn).toHaveBeenCalledWith(1);
+      expect(runManager.updateRunStats).toHaveBeenCalled();
     });
   });
 

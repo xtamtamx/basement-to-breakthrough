@@ -13,10 +13,10 @@ import { SettingsModal } from "@components/ui/SettingsModal";
 import { SaveLoadModal } from "@components/ui/SaveLoadModal";
 import { useGameStore } from "@stores/gameStore";
 import { haptics } from "@utils/mobile";
-import { turnResolutionEngine, TurnResult } from "@game/mechanics/TurnResolutionEngine";
+import { turnResolutionEngine, TurnResult, RunCeremony } from "@game/mechanics/TurnResolutionEngine";
+import { startNewRun } from "@game/mechanics/runLifecycle";
 import { RunEndScreen } from "./RunEndScreen";
 import { RunEndState } from "@game/constants/runConstants";
-import { dayJobSystem } from "@game/mechanics/DayJobSystem";
 import { gameAudio } from "@utils/gameAudio";
 import { GameErrorBoundary } from "@components/ErrorBoundary";
 import { saveGameManager } from "@game/persistence/SaveGameManager";
@@ -32,11 +32,12 @@ interface MainGameViewProps {
 
 const EMPTY_TURN_RESULT: TurnResult = {
   showResults: [],
-  totalVenueRent: 0,
+  totalUpkeep: 0,
   turn: 0,
   isEscalation: false,
   warnings: [],
   runEnd: null,
+  ceremony: null,
   synergyEffects: [],
 };
 
@@ -46,6 +47,7 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
   const [showSettings, setShowSettings] = useState(false);
   const [showSaveLoad, setShowSaveLoad] = useState(false);
   const [runEnd, setRunEnd] = useState<RunEndState | null>(null);
+  const [ceremony, setCeremony] = useState<RunCeremony | null>(null);
   const [turnResults, setTurnResults] = useState<TurnResult>(EMPTY_TURN_RESULT);
   
   const { money, reputation, fans, stress } = useGameStore();
@@ -83,16 +85,15 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
     setShowTurnResults(false);
     if (turnResults.runEnd) {
       setRunEnd(turnResults.runEnd);
+      setCeremony(turnResults.ceremony);
     }
   };
 
+  // Same path as the main menu's start — config resources + meta bonuses
   const handlePlayAgain = async () => {
-    const store = useGameStore.getState();
-    store.resetGame();
-    turnResolutionEngine.reset();
-    await store.loadInitialGameData();
-    dayJobSystem.refreshJobs();
+    await startNewRun();
     setRunEnd(null);
+    setCeremony(null);
     setTurnResults(EMPTY_TURN_RESULT);
     setCurrentView("city");
     haptics.success();
@@ -100,6 +101,7 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
 
   const handleMainMenu = () => {
     setRunEnd(null);
+    setCeremony(null);
     onExitToMenu?.();
   };
 
@@ -228,7 +230,7 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
         isOpen={showTurnResults}
         onClose={handleTurnResultsClose}
         showResults={turnResults.showResults}
-        totalVenueRent={turnResults.totalVenueRent}
+        totalUpkeep={turnResults.totalUpkeep}
         dayJobResult={turnResults.dayJobResult}
         difficultyEvent={turnResults.difficultyEvent}
       />
@@ -236,6 +238,7 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
       {runEnd && (
         <RunEndScreen
           result={runEnd}
+          ceremony={ceremony}
           onPlayAgain={handlePlayAgain}
           onMainMenu={handleMainMenu}
         />

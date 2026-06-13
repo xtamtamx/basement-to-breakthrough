@@ -4,12 +4,10 @@ import { PixelArtMainMenu } from "@components/game/PixelArtMainMenu";
 import { useGameStore } from "@stores/gameStore";
 import { SettingsModal } from "@components/ui/SettingsModal";
 import { TutorialOverlay } from "@components/tutorial/TutorialOverlay";
-import { RunConfig, runManager } from "@game/mechanics/RunManager";
-import { turnResolutionEngine } from "@game/mechanics/TurnResolutionEngine";
-import { metaProgressionManager } from "@game/mechanics/MetaProgressionManager";
+import { RunConfig } from "@game/mechanics/RunManager";
+import { startNewRun } from "@game/mechanics/runLifecycle";
 import { haptics } from "@utils/mobile";
 import { audio } from "@utils/audio";
-import { dayJobSystem } from "@game/mechanics/DayJobSystem";
 import { safeStorage } from "@utils/safeStorage";
 import { AppErrorBoundary } from "@components/ErrorBoundary/AppErrorBoundary";
 import { ColorblindProvider } from "@contexts/ColorblindContext";
@@ -49,44 +47,9 @@ function App() {
   }
 
   const handleStartGame = async (runConfig?: RunConfig) => {
-    if (runConfig) {
-      // Start a new run with selected config — wipe any previous run first so
-      // a finished (GAME_OVER) run can't bleed into the new one
-      useGameStore.getState().resetGame();
-      turnResolutionEngine.reset();
-      runManager.startRun(runConfig.id);
-
-      // Apply meta progression bonuses
-      const bonuses = metaProgressionManager.getRunStartBonuses();
-      const store = useGameStore.getState();
-
-      // Set starting resources with bonuses
-      store.addMoney(
-        -store.money + runConfig.startingMoney + bonuses.startingMoney,
-      );
-      store.addReputation(
-        -store.reputation +
-          runConfig.startingReputation +
-          bonuses.startingReputation,
-      );
-      store.addConnections(-store.connections + runConfig.startingConnections);
-    } else {
-      // Quick play - use classic run
-      const classicConfig = runManager
-        .getRunConfigs()
-        .find((r) => r.id === "classic");
-      if (classicConfig) {
-        handleStartGame(classicConfig);
-        return;
-      }
-    }
-
-    // Initialize game data
-    const store = useGameStore.getState();
-    await store.loadInitialGameData();
-    
-    // Initialize job system
-    dayJobSystem.refreshJobs();
+    // One canonical start path (config resources + meta bonuses + fresh
+    // engine/store) — shared with the run-end screen's "Play Again"
+    await startNewRun(runConfig?.id ?? "classic");
 
     setShowMainMenu(false);
     setGameStarted(true);

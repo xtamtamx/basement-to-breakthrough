@@ -17,6 +17,8 @@ import { dayJobSystem } from './DayJobSystem';
 import { difficultySystem } from './DifficultySystem';
 import { showPromotionSystem } from './ShowPromotionSystem';
 import { venueUpgradeSystem } from './VenueUpgradeSystem';
+import { runManager } from './RunManager';
+import { metaProgressionManager } from './MetaProgressionManager';
 import { devLog } from '@utils/devLogger';
 import {
   MAX_TURNS,
@@ -27,6 +29,7 @@ import {
   BREAKTHROUGH_FANS_THRESHOLD,
   BURNOUT_STRESS_CAP,
   EVICTION_TURNS_BROKE,
+  LIVING_COSTS_PER_TURN,
   RunEndState,
 } from '../constants/runConstants';
 import {
@@ -60,10 +63,29 @@ export interface DifficultyTurnEvent {
   reputationLost: number;
 }
 
+/** End-of-run ceremony payload: score, meta-currency, and legacy context */
+export interface RunCeremony {
+  isWin: boolean;
+  score: number;
+  fameEarned: number;
+  newHighScore: boolean;
+  achievements: { id: string; name: string; description: string }[];
+  unlocks: string[];
+  lifetime: {
+    totalRuns: number;
+    fame: number;
+  };
+  nextRunBonuses: {
+    startingMoney: number;
+    startingReputation: number;
+  };
+}
+
 export interface TurnResult {
   // Consumed by TurnResultsModal
   showResults: ShowResult[];
-  totalVenueRent: number;
+  /** Flat living costs + equipment upkeep (venue rent is per-show, not per-turn) */
+  totalUpkeep: number;
   dayJobResult?: DayJobTurnResult;
   difficultyEvent?: DifficultyTurnEvent;
   // Phase A run structure
@@ -71,6 +93,7 @@ export interface TurnResult {
   isEscalation: boolean;
   warnings: string[];
   runEnd: RunEndState | null;
+  ceremony: RunCeremony | null;
   synergyEffects: SynergyTriggerResult[];
 }
 
@@ -115,18 +138,15 @@ export class TurnResolutionEngine {
     // SHOW_END triggers scale with what the shows actually produced
     const showEndEffects = this.applyShowEndPhase(showResults);
 
-    // 4. Turn economy: venue rent + upkeep, day jobs, passive difficulty
-    let totalVenueCosts = 0;
+    // 4. Turn economy: living costs + equipment upkeep, day jobs, passive
+    // difficulty. Venue rent is paid per show (in executeShow) — charging it
+    // again per turn for every city venue double-billed the player.
+    let totalUpkeep = LIVING_COSTS_PER_TURN;
     useGameStore.getState().venues.forEach((venue) => {
-      const scaledRent = difficultySystem.getScaledVenueCost(venue.rent);
-      const upkeepCost = venueUpgradeSystem.calculateUpkeepCost(venue);
-      const totalCost = scaledRent + upkeepCost;
-
-      totalVenueCosts += totalCost;
-      store.addMoney(-totalCost);
-
+      totalUpkeep += venueUpgradeSystem.calculateUpkeepCost(venue);
       venueUpgradeSystem.degradeEquipment(venue);
     });
+    store.addMoney(-totalUpkeep);
 
     const jobResult = dayJobSystem.processJobIncome();
     if (jobResult) {
@@ -154,6 +174,25 @@ export class TurnResolutionEngine {
       this.consecutiveBrokeTurns = 0;
     }
 
+    // Feed the formal run record (score inputs for the ceremony)
+    const activeRun = runManager.getCurrentRun();
+    if (activeRun) {
+      runManager.syncTurn(turn);
+      runManager.updateRunStats({
+        totalShows: activeRun.stats.totalShows + showResults.length,
+        totalRevenue:
+          activeRun.stats.totalRevenue +
+          showResults.reduce((sum, r) => sum + r.revenue, 0),
+        totalFans:
+          activeRun.stats.totalFans +
+          showResults.reduce((sum, r) => sum + r.fansGained, 0),
+        peakReputation: postTurnStore.reputation,
+        disasters:
+          activeRun.stats.disasters +
+          showResults.filter((r) => r.incidentOccurred).length,
+      });
+    }
+
     const warnings: string[] = [];
     if (isEscalation) {
       warnings.push(
@@ -173,8 +212,10 @@ export class TurnResolutionEngine {
 
     // 6. Endgame check, then turn increment
     const runEnd = this.checkEndgame(postTurnStore, turn);
+    let ceremony: RunCeremony | null = null;
     if (runEnd) {
       store.setPhase(GamePhase.GAME_OVER);
+      ceremony = this.concludeRun(runEnd, postTurnStore);
     } else {
       store.nextRound();
     }
@@ -183,7 +224,7 @@ export class TurnResolutionEngine {
 
     return {
       showResults,
-      totalVenueRent: totalVenueCosts,
+      totalUpkeep,
       dayJobResult: jobResult || undefined,
       difficultyEvent: difficultyEvent.message
         ? {
@@ -195,7 +236,75 @@ export class TurnResolutionEngine {
       isEscalation,
       warnings,
       runEnd,
+      ceremony,
       synergyEffects: [...turnStartEffects, ...showEndEffects, ...turnEndEffects],
+    };
+  }
+
+  /**
+   * Close out the formal run: score it, bank fame and lifetime stats into
+   * meta-progression, and build the ceremony payload for the end screen.
+   * Returns null when no formal run is active (e.g. dev hot-reload).
+   */
+  private concludeRun(
+    runEnd: RunEndState,
+    store: ReturnType<typeof useGameStore.getState>,
+  ): RunCeremony | null {
+    const run = runManager.getCurrentRun();
+    if (!run) return null;
+
+    const isWin = runEnd.reason === 'BREAKTHROUGH_WIN';
+    const configId = run.config.id;
+    const result = runManager.endRun(
+      {
+        money: store.money,
+        reputation: store.reputation,
+        stress: store.stress,
+        connections: store.connections,
+      },
+      isWin,
+    );
+
+    const fameEarned = metaProgressionManager.calculateFameEarned(
+      result.score,
+      configId,
+    );
+    metaProgressionManager.updateStats({
+      score: result.score,
+      totalShows: result.stats.totalShows,
+      totalRevenue: result.stats.totalRevenue,
+      totalFans: result.stats.totalFans,
+      bandsManaged: result.stats.bandsManaged,
+    });
+    if (result.achievements.length > 0) {
+      metaProgressionManager.addAchievements(result.achievements);
+    }
+    metaProgressionManager.addCurrency(fameEarned);
+
+    const progression = metaProgressionManager.getProgression();
+    const bonuses = metaProgressionManager.getRunStartBonuses();
+
+    return {
+      isWin,
+      score: Math.round(result.score),
+      fameEarned,
+      newHighScore: result.newHighScore,
+      achievements: result.achievements.map((a) => ({
+        id: a.id,
+        name: a.name,
+        description: a.description,
+      })),
+      unlocks: result.unlocks.map((u) =>
+        typeof u === 'string' ? u : (u as { name?: string }).name ?? String(u),
+      ),
+      lifetime: {
+        totalRuns: progression.totalRuns,
+        fame: progression.currency.fame,
+      },
+      nextRunBonuses: {
+        startingMoney: bonuses.startingMoney,
+        startingReputation: bonuses.startingReputation,
+      },
     };
   }
 

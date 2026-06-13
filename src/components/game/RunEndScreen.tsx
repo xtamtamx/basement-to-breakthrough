@@ -1,55 +1,63 @@
 /**
- * RunEndScreen - Displays the end-of-run results
+ * RunEndScreen - end-of-run ceremony: verdict, final stats, score/fame, legacy.
+ * Inline-styled (house style) and compact enough for landscape phones.
  */
 
 import React from 'react';
 import { RunEndState, RunEndReason } from '@game/constants/runConstants';
+import { RunCeremony } from '@game/mechanics/TurnResolutionEngine';
 
 interface RunEndScreenProps {
   result: RunEndState;
+  /** Score/fame/legacy payload from the engine; null for informal runs */
+  ceremony?: RunCeremony | null;
   onPlayAgain: () => void;
   onMainMenu: () => void;
 }
 
-const RESULT_CONFIGS: Record<RunEndReason, {
-  title: string;
-  subtitle: string;
-  icon: string;
-  bgClass: string;
-  borderClass: string;
-}> = {
+const RESULT_CONFIGS: Record<
+  RunEndReason,
+  {
+    title: string;
+    subtitle: string;
+    icon: string;
+    accent: string;
+    gradient: string;
+  }
+> = {
   BREAKTHROUGH_WIN: {
     title: 'BREAKTHROUGH!',
-    subtitle: 'You made it from the basement to the big time!',
+    subtitle: 'From a moldy basement to the big stage. The scene will pretend it always believed in you.',
     icon: '🎸',
-    bgClass: 'bg-gradient-to-b from-yellow-900 to-orange-900',
-    borderClass: 'border-yellow-500',
+    accent: '#eab308',
+    gradient: 'linear-gradient(180deg, #713f12 0%, #7c2d12 100%)',
   },
   BURNOUT_LOSS: {
     title: 'BURNOUT',
-    subtitle: 'The stress was too much. You need a break from the scene.',
+    subtitle: 'The stress was too much. Even your tinnitus needs a vacation.',
     icon: '😵',
-    bgClass: 'bg-gradient-to-b from-red-900 to-gray-900',
-    borderClass: 'border-red-500',
+    accent: '#ef4444',
+    gradient: 'linear-gradient(180deg, #7f1d1d 0%, #111827 100%)',
   },
   EVICTION_LOSS: {
     title: 'EVICTED',
-    subtitle: 'Can\'t pay rent, can\'t book shows. Time to move back home.',
+    subtitle: "Can't pay rent, can't book shows. Your parents' couch awaits.",
     icon: '🏠',
-    bgClass: 'bg-gradient-to-b from-gray-800 to-gray-900',
-    borderClass: 'border-gray-500',
+    accent: '#9ca3af',
+    gradient: 'linear-gradient(180deg, #1f2937 0%, #111827 100%)',
   },
   FADE_OUT_LOSS: {
     title: 'FADE OUT',
-    subtitle: 'The scene moved on without you. Another forgotten name.',
+    subtitle: 'The scene moved on without you. Another name for the "whatever happened to..." thread.',
     icon: '👻',
-    bgClass: 'bg-gradient-to-b from-purple-900 to-gray-900',
-    borderClass: 'border-purple-500',
+    accent: '#a855f7',
+    gradient: 'linear-gradient(180deg, #581c87 0%, #111827 100%)',
   },
 };
 
 export const RunEndScreen: React.FC<RunEndScreenProps> = ({
   result,
+  ceremony,
   onPlayAgain,
   onMainMenu,
 }) => {
@@ -57,36 +65,84 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
   const isWin = result.reason === 'BREAKTHROUGH_WIN';
 
   return (
-    <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.88)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 9999,
+        padding: '12px',
+      }}
+    >
       <div
-        className={`${config.bgClass} ${config.borderClass} border-4 rounded-2xl
-                   max-w-lg w-full shadow-2xl animate-fadeIn overflow-hidden`}
+        style={{
+          backgroundImage: config.gradient,
+          border: `3px solid ${config.accent}`,
+          borderRadius: '16px',
+          maxWidth: '680px',
+          width: '100%',
+          maxHeight: '94vh',
+          overflowY: 'auto',
+          boxShadow: '0 12px 48px rgba(0,0,0,0.6)',
+        }}
       >
         {/* Header */}
-        <div className="p-8 text-center">
-          <div className="text-6xl mb-4 animate-bounce">{config.icon}</div>
-          <h1 className={`text-4xl font-black mb-2 ${isWin ? 'text-yellow-300' : 'text-white'}`}>
-            {config.title}
-          </h1>
-          <p className="text-gray-300 text-lg">{config.subtitle}</p>
+        <div
+          style={{
+            padding: '14px 20px 10px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '14px',
+          }}
+        >
+          <div style={{ fontSize: '40px', lineHeight: 1 }}>{config.icon}</div>
+          <div>
+            <h1
+              style={{
+                fontSize: '26px',
+                fontWeight: 900,
+                margin: 0,
+                color: isWin ? '#fde047' : '#ffffff',
+                letterSpacing: '0.02em',
+              }}
+            >
+              {config.title}
+            </h1>
+            <p style={{ color: '#d1d5db', fontSize: '13px', margin: '2px 0 0' }}>
+              {config.subtitle}
+            </p>
+          </div>
         </div>
 
         {/* Stats */}
-        <div className="bg-black/40 p-6">
-          <h2 className="text-sm uppercase text-gray-400 mb-4 font-bold">Final Stats</h2>
-
-          <div className="grid grid-cols-2 gap-4">
-            <StatBox
-              label="Turn"
-              value={result.turn}
-              suffix="/35"
-              highlight={result.turn >= 31}
-            />
-            <StatBox
-              label="Shows Played"
-              value={result.finalStats.showsPlayed}
-              icon="🎤"
-            />
+        <div style={{ backgroundColor: 'rgba(0,0,0,0.4)', padding: '12px 20px' }}>
+          <div
+            style={{
+              fontSize: '10px',
+              textTransform: 'uppercase',
+              color: '#9ca3af',
+              fontWeight: 700,
+              marginBottom: '8px',
+              letterSpacing: '0.06em',
+            }}
+          >
+            Final Stats
+          </div>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: '8px',
+            }}
+          >
+            <StatBox label="Turn" value={result.turn} suffix="/35" highlight={result.turn >= 31} />
+            <StatBox label="Shows" value={result.finalStats.showsPlayed} icon="🎤" />
             <StatBox
               label="Reputation"
               value={result.finalStats.reputation}
@@ -114,34 +170,147 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
           </div>
         </div>
 
+        {/* Ceremony: score, fame, and scene legacy */}
+        {ceremony && (
+          <div style={{ backgroundColor: 'rgba(0,0,0,0.25)', padding: '12px 20px' }}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'baseline',
+              }}
+            >
+              <div>
+                <div
+                  style={{
+                    fontSize: '10px',
+                    textTransform: 'uppercase',
+                    color: '#9ca3af',
+                    fontWeight: 700,
+                  }}
+                >
+                  Final Score
+                </div>
+                <div style={{ fontSize: '24px', fontWeight: 900, color: '#ffffff' }}>
+                  {ceremony.score.toLocaleString()}
+                  {ceremony.newHighScore && (
+                    <span
+                      style={{
+                        marginLeft: '8px',
+                        fontSize: '12px',
+                        color: '#fde047',
+                      }}
+                    >
+                      ★ NEW BEST
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <div
+                  style={{
+                    fontSize: '10px',
+                    textTransform: 'uppercase',
+                    color: '#9ca3af',
+                    fontWeight: 700,
+                  }}
+                >
+                  Fame Earned
+                </div>
+                <div style={{ fontSize: '24px', fontWeight: 900, color: '#f472b6' }}>
+                  +{ceremony.fameEarned}
+                </div>
+              </div>
+            </div>
+
+            {ceremony.achievements.length > 0 && (
+              <div style={{ marginTop: '8px' }}>
+                {ceremony.achievements.map((a) => (
+                  <div key={a.id} style={{ fontSize: '12px', color: '#fef08a' }}>
+                    🏆 {a.name}
+                    <span style={{ color: '#9ca3af' }}> — {a.description}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div
+              style={{
+                marginTop: '10px',
+                paddingTop: '8px',
+                borderTop: '1px solid rgba(255,255,255,0.12)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                fontSize: '11px',
+                color: '#9ca3af',
+                flexWrap: 'wrap',
+                gap: '4px',
+              }}
+            >
+              <span>
+                Scene legacy: run #{ceremony.lifetime.totalRuns} ·{' '}
+                {ceremony.lifetime.fame.toLocaleString()} fame banked
+              </span>
+              {(ceremony.nextRunBonuses.startingMoney > 0 ||
+                ceremony.nextRunBonuses.startingReputation > 0) && (
+                <span style={{ color: '#4ade80' }}>
+                  Next run: +${ceremony.nextRunBonuses.startingMoney} · +
+                  {ceremony.nextRunBonuses.startingReputation} rep
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Win condition reminder */}
         {!isWin && (
-          <div className="bg-black/20 px-6 py-4 text-center">
-            <p className="text-sm text-gray-400">
-              Win by reaching <span className="text-yellow-400">80 reputation</span> and{' '}
-              <span className="text-yellow-400">500 fans</span> before turn 35
-            </p>
+          <div
+            style={{
+              backgroundColor: 'rgba(0,0,0,0.15)',
+              padding: '8px 20px',
+              textAlign: 'center',
+              fontSize: '12px',
+              color: '#9ca3af',
+            }}
+          >
+            Win by reaching <span style={{ color: '#fde047' }}>80 reputation</span> and{' '}
+            <span style={{ color: '#fde047' }}>500 fans</span> before turn 35
           </div>
         )}
 
         {/* Actions */}
-        <div className="p-6 flex gap-4">
+        <div style={{ padding: '12px 20px 16px', display: 'flex', gap: '12px' }}>
           <button
             onClick={onMainMenu}
-            className="flex-1 py-4 px-6 bg-gray-700 hover:bg-gray-600
-                     text-white rounded-xl font-bold transition-colors
-                     touch-manipulation min-h-[48px]"
+            style={{
+              flex: 1,
+              padding: '12px',
+              backgroundColor: '#374151',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '10px',
+              fontWeight: 700,
+              fontSize: '14px',
+              cursor: 'pointer',
+              minHeight: '44px',
+            }}
           >
             Main Menu
           </button>
           <button
             onClick={onPlayAgain}
-            className={`flex-1 py-4 px-6 rounded-xl font-bold transition-colors
-                       touch-manipulation min-h-[48px]
-                       ${isWin
-                         ? 'bg-yellow-600 hover:bg-yellow-500 text-black'
-                         : 'bg-green-600 hover:bg-green-500 text-white'
-                       }`}
+            style={{
+              flex: 1,
+              padding: '12px',
+              backgroundColor: isWin ? '#ca8a04' : '#16a34a',
+              color: isWin ? '#111827' : '#ffffff',
+              border: 'none',
+              borderRadius: '10px',
+              fontWeight: 700,
+              fontSize: '14px',
+              cursor: 'pointer',
+              minHeight: '44px',
+            }}
           >
             {isWin ? 'Play Again' : 'Try Again'}
           </button>
@@ -170,18 +339,41 @@ const StatBox: React.FC<StatBoxProps> = ({
   highlight,
   negative,
 }) => {
-  const valueClass = negative
-    ? 'text-red-400'
-    : highlight
-    ? 'text-yellow-400'
-    : 'text-white';
+  const color = negative ? '#f87171' : highlight ? '#fde047' : '#ffffff';
 
   return (
-    <div className="bg-black/30 rounded-lg p-3">
-      <div className="text-xs text-gray-400 uppercase mb-1">{label}</div>
-      <div className={`text-2xl font-bold ${valueClass} flex items-center gap-1`}>
-        {icon && <span className="text-base">{icon}</span>}
-        {prefix}{value.toLocaleString()}{suffix}
+    <div
+      style={{
+        backgroundColor: 'rgba(0,0,0,0.3)',
+        borderRadius: '8px',
+        padding: '8px 10px',
+      }}
+    >
+      <div
+        style={{
+          fontSize: '9px',
+          color: '#9ca3af',
+          textTransform: 'uppercase',
+          marginBottom: '2px',
+          letterSpacing: '0.05em',
+        }}
+      >
+        {label}
+      </div>
+      <div
+        style={{
+          fontSize: '18px',
+          fontWeight: 700,
+          color,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '4px',
+        }}
+      >
+        {icon && <span style={{ fontSize: '13px' }}>{icon}</span>}
+        {prefix}
+        {value.toLocaleString()}
+        {suffix}
       </div>
     </div>
   );

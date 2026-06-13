@@ -272,28 +272,38 @@ class RunManager {
     return { shouldEnd: false };
   }
   
+  // Sync the run's turn counter with the authoritative engine each turn
+  // (score's turn-efficiency multiplier depends on it)
+  syncTurn(turn: number) {
+    if (this.currentRun) {
+      this.currentRun.currentTurn = turn;
+    }
+  }
+
   // End the current run
-  endRun(gameState: GameStateProps): RunResult {
+  endRun(gameState: GameStateProps, successOverride?: boolean): RunResult {
     if (!this.currentRun) {
       throw new Error('No active run to end');
     }
-    
+
     this.currentRun.endTime = new Date();
-    
-    // Calculate score
-    const score = this.calculateScore(this.currentRun, gameState);
-    
+
+    // Calculate score (the engine's verdict decides the efficiency bonus)
+    const won = successOverride ?? this.checkWinConditions(gameState);
+    const score = this.calculateScore(this.currentRun, gameState, won);
+
     // Check achievements
     const achievements = this.checkAchievements(this.currentRun, gameState);
-    
+
     // Check unlocks
     const unlocks = this.checkUnlocks(this.currentRun, score);
-    
+
     // Check if new high score
     const newHighScore = this.isNewHighScore(this.currentRun.config.id, score);
-    
+
     const result: RunResult = {
-      success: this.checkWinConditions(gameState),
+      // TurnResolutionEngine's endgame verdict is authoritative when given
+      success: successOverride ?? this.checkWinConditions(gameState),
       score,
       achievements,
       unlocks,
@@ -311,20 +321,27 @@ class RunManager {
   }
   
   // Calculate run score
-  private calculateScore(run: RunState, _gameState: GameStateProps): number {
+  private calculateScore(
+    run: RunState,
+    _gameState: GameStateProps,
+    won: boolean = false,
+  ): number {
     let score = 0;
-    
+
     // Base score from stats
     score += run.stats.totalRevenue * 0.1;
     score += run.stats.totalFans * 1;
     score += run.stats.peakReputation * 10;
     score += run.stats.perfectShows * 100;
     score -= run.stats.disasters * 50;
-    
-    // Multipliers from run config
-    const turnEfficiency = run.config.maxTurns / run.currentTurn;
-    score *= turnEfficiency;
-    
+
+    // Fast WINS score higher; losses get no efficiency bonus (otherwise an
+    // instant loss farms a 50x multiplier and mints free fame)
+    if (won) {
+      const turnEfficiency = run.config.maxTurns / Math.max(1, run.currentTurn);
+      score *= turnEfficiency;
+    }
+
     // Difficulty multiplier
     const difficultyMultipliers: Record<string, number> = {
       classic: 1.0,

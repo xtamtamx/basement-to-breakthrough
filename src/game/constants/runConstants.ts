@@ -22,6 +22,11 @@ export const BREAKTHROUGH_FANS_THRESHOLD = 500;
 export const BURNOUT_STRESS_CAP = 100;
 export const EVICTION_TURNS_BROKE = 3;
 
+// Turn Economy
+// Flat per-turn burn ("rent, ramen, and regret"). Venue rent is paid per
+// show at booking/resolution time — NOT per turn for every city venue.
+export const LIVING_COSTS_PER_TURN = 30;
+
 // Run End Reasons
 export type RunEndReason =
   | 'BREAKTHROUGH_WIN'

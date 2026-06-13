@@ -9,7 +9,8 @@ interface TurnResultsModalProps {
   isOpen: boolean;
   onClose: () => void;
   showResults: ShowResult[];
-  totalVenueRent: number;
+  /** Flat living costs + equipment upkeep for the turn */
+  totalUpkeep: number;
   dayJobResult?: {
     money: number;
     reputationLoss: number;
@@ -27,11 +28,11 @@ interface TurnResultsModalProps {
   };
 }
 
-export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({ 
-  isOpen, 
+export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
+  isOpen,
   onClose,
   showResults = [],
-  totalVenueRent = 0,
+  totalUpkeep = 0,
   dayJobResult,
   difficultyEvent
 }) => {
@@ -51,7 +52,7 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
   };
 
   const totalRevenue = showResults.reduce((sum, result) => sum + result.revenue, 0);
-  const totalCosts = showResults.reduce((sum, result) => sum + result.financials.costs, 0) + totalVenueRent;
+  const totalCosts = showResults.reduce((sum, result) => sum + result.financials.costs, 0) + totalUpkeep;
   const totalProfit = totalRevenue - totalCosts;
   const totalFans = showResults.reduce((sum, result) => sum + result.fansGained, 0);
   const totalRep = showResults.reduce((sum, result) => sum + (result.reputationChange ?? result.reputationGain ?? 0), 0);
@@ -213,10 +214,10 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
                   <span style={{ color: '#9ca3af' }}>Costs</span>
                   <span style={{ color: '#ef4444', fontWeight: '600' }}>-${totalCosts}</span>
                 </div>
-                {totalVenueRent > 0 && (
+                {totalUpkeep > 0 && (
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
-                    <span style={{ color: '#6b7280' }}>└ Venue Rent</span>
-                    <span style={{ color: '#ef4444' }}>-${totalVenueRent}</span>
+                    <span style={{ color: '#6b7280' }}>└ Living Costs (rent, ramen, regret)</span>
+                    <span style={{ color: '#ef4444' }}>-${totalUpkeep}</span>
                   </div>
                 )}
                 <div style={{

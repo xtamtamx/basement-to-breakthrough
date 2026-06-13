@@ -5,9 +5,16 @@ import './styles/glassmorphism.css'
 import App from './App.tsx'
 import { initializeMobile } from '@utils/mobile'
 import { registerServiceWorker, requestPersistentStorage } from '@utils/serviceWorker'
+import { useGameStore } from '@stores/gameStore'
 
 // Initialize mobile features
 initializeMobile();
+
+// Dev-only store handle for testing/debugging from the browser console
+if (import.meta.env.DEV) {
+  (window as Window & { __gameStore?: typeof useGameStore }).__gameStore =
+    useGameStore;
+}
 
 // NOTE: Save-game persistence (IndexedDB) is owned by SaveGameManager
 // (src/game/persistence/SaveGameManager.ts). It is initialized lazily from the
