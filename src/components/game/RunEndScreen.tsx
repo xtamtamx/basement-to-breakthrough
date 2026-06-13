@@ -88,10 +88,15 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
           maxWidth: '680px',
           width: '100%',
           maxHeight: '94vh',
-          overflowY: 'auto',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
           boxShadow: '0 12px 48px rgba(0,0,0,0.6)',
         }}
       >
+        {/* Scrollable body — keeps the action buttons pinned on short
+            (landscape phone) viewports */}
+        <div style={{ overflowY: 'auto', flex: '1 1 auto', minHeight: 0 }}>
         {/* Header */}
         <div
           style={{
@@ -277,9 +282,20 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
             <span style={{ color: '#fde047' }}>500 fans</span> before turn 35
           </div>
         )}
+        </div>
+        {/* End scrollable body */}
 
-        {/* Actions */}
-        <div style={{ padding: '12px 20px 16px', display: 'flex', gap: '12px' }}>
+        {/* Actions (pinned footer) */}
+        <div
+          style={{
+            padding: '12px 20px 16px',
+            display: 'flex',
+            gap: '12px',
+            flexShrink: 0,
+            borderTop: '1px solid rgba(255,255,255,0.1)',
+            backgroundColor: 'rgba(0,0,0,0.25)',
+          }}
+        >
           <button
             onClick={onMainMenu}
             style={{
