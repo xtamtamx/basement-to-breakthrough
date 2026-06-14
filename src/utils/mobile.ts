@@ -4,6 +4,7 @@ import { StatusBar, Style } from "@capacitor/status-bar";
 import { SplashScreen } from "@capacitor/splash-screen";
 import { App } from "@capacitor/app";
 import { Haptics, ImpactStyle, NotificationType } from "@capacitor/haptics";
+import { ScreenOrientation } from "@capacitor/screen-orientation";
 
 import { prodLog } from "./devLogger";
 // Check if running on native platform
@@ -23,11 +24,29 @@ export const useIsMobile = (breakpoint = 768): boolean => {
   return isMobile;
 };
 
+/**
+ * Lock the device to landscape on native platforms. No-ops on web, where the
+ * Screen Orientation API can throw (e.g. unsupported browsers or non-fullscreen
+ * contexts) — the PWA manifest handles orientation preference for the web build.
+ */
+export const lockLandscapeOrientation = async () => {
+  if (!isNative) return;
+
+  try {
+    await ScreenOrientation.lock({ orientation: "landscape" });
+  } catch (error) {
+    prodLog.error("Error locking landscape orientation:", error);
+  }
+};
+
 // Initialize mobile-specific features
 export const initializeMobile = async () => {
   if (!isNative) return;
 
   try {
+    // Lock to landscape — this game is landscape-first.
+    await lockLandscapeOrientation();
+
     // Set status bar to dark style to match our theme
     await StatusBar.setStyle({ style: Style.Dark });
     await StatusBar.setBackgroundColor({ color: "#000000" });
