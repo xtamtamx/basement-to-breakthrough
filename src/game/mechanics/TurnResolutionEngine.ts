@@ -332,6 +332,10 @@ export class TurnResolutionEngine {
 
     const isWin = runEnd.reason === 'BREAKTHROUGH_WIN';
     const configId = run.config.id;
+    // Capture before endRun() nulls the active run — banking is keyed on this so
+    // a replayed conclusion (load a mid-run save, play it out again) is a no-op
+    // for currency.
+    const runId = run.runId;
     const result = runManager.endRun(
       {
         money: store.money,
@@ -356,7 +360,8 @@ export class TurnResolutionEngine {
     if (result.achievements.length > 0) {
       metaProgressionManager.addAchievements(result.achievements);
     }
-    metaProgressionManager.addCurrency(fameEarned);
+    // Credit fame at most once per run id; a replayed conclusion is a no-op.
+    metaProgressionManager.bankRunOnce(runId, fameEarned);
 
     const progression = metaProgressionManager.getProgression();
     const bonuses = metaProgressionManager.getRunStartBonuses();

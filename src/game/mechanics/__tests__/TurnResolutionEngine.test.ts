@@ -202,6 +202,7 @@ describe('TurnResolutionEngine', () => {
     vi.mocked(metaProgressionManager).updateStats = vi.fn();
     vi.mocked(metaProgressionManager).addAchievements = vi.fn();
     vi.mocked(metaProgressionManager).addCurrency = vi.fn();
+    vi.mocked(metaProgressionManager).bankRunOnce = vi.fn().mockReturnValue(true);
     vi.mocked(metaProgressionManager).getProgression = vi.fn().mockReturnValue({
       totalRuns: 0,
       totalScore: 0,
@@ -604,7 +605,11 @@ describe('TurnResolutionEngine', () => {
 
       // Engine verdict overrides RunManager's own win check
       expect(runManager.endRun).toHaveBeenCalledWith(expect.anything(), true);
-      expect(metaProgressionManager.addCurrency).toHaveBeenCalledWith(123);
+      // Fame is banked once, keyed on the run id, not via a raw addCurrency
+      expect(metaProgressionManager.bankRunOnce).toHaveBeenCalledWith(
+        'run-1',
+        123,
+      );
       expect(metaProgressionManager.updateStats).toHaveBeenCalled();
       expect(metaProgressionManager.addAchievements).toHaveBeenCalled();
     });
