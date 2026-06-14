@@ -59,6 +59,11 @@ export const CityView: React.FC = () => {
 
 
 
+  // Read the live store district for the header so its sceneStrength /
+  // rentMultiplier track per-turn gentrification drift, rather than the frozen
+  // snapshot captured into selectedDistrictInfo when the district was selected.
+  const liveDistrict = gameStore.districts.find((d) => d.id === selectedDistrictId);
+
   const handleZoomOut = () => {
     setViewMode('overview');
     setSelectedDistrictId(null);
@@ -99,8 +104,8 @@ export const CityView: React.FC = () => {
               color: '#9ca3af',
               marginTop: '2px'
             }}>
-              <span>🏘️ {selectedDistrictInfo?.sceneStrength}%</span>
-              <span>💰 {selectedDistrictInfo?.rentMultiplier}x</span>
+              <span>🏘️ {liveDistrict?.sceneStrength ?? selectedDistrictInfo?.sceneStrength}%</span>
+              <span>💰 {liveDistrict?.rentMultiplier ?? selectedDistrictInfo?.rentMultiplier}x</span>
             </div>
           </div>
           <button
