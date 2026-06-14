@@ -15,6 +15,7 @@ import { useGameStore } from "@stores/gameStore";
 import { haptics } from "@utils/mobile";
 import { turnResolutionEngine, TurnResult, RunCeremony } from "@game/mechanics/TurnResolutionEngine";
 import { startNewRun } from "@game/mechanics/runLifecycle";
+import { runManager } from "@game/mechanics/RunManager";
 import { RunEndScreen } from "./RunEndScreen";
 import { RunEndState } from "@game/constants/runConstants";
 import { gameAudio } from "@utils/gameAudio";
@@ -108,6 +109,10 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
   const handleMainMenu = () => {
     setRunEnd(null);
     setCeremony(null);
+    // Drop the active run without scoring it, and clear its persisted runtime
+    // so a later "Continue" doesn't resume a run the player abandoned.
+    runManager.abandonRun();
+    useGameStore.setState({ runtimeSnapshot: null });
     onExitToMenu?.();
   };
 
