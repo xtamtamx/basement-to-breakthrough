@@ -22,9 +22,11 @@ import type { CapacitorConfig } from '@capacitor/cli';
  * Android — android/app/src/main/AndroidManifest.xml (main activity):
  *   <activity ... android:screenOrientation="sensorLandscape">
  *
- * Optional runtime lock (web + native): install @capacitor/screen-orientation
- * and call ScreenOrientation.lock({ orientation: 'landscape' }) on startup.
- * The plugin is intentionally NOT a dependency yet — see project follow-ups.
+ * Runtime lock (native): @capacitor/screen-orientation is now a dependency and
+ * initializeMobile() calls ScreenOrientation.lock({ orientation: 'landscape' })
+ * at startup (no-op on web — see src/utils/mobile.ts). The native Info.plist /
+ * AndroidManifest entries above are still required so the app launches in
+ * landscape before JS runs and the OS never offers portrait. See DEVICE.md.
  */
 const config: CapacitorConfig = {
   appId: 'com.basementtobreakthrough.app',
