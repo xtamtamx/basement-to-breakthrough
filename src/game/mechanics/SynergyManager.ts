@@ -461,7 +461,7 @@ class SynergyManager {
     };
   }
 
-  // Serialize state for save/load
+  // Serialize state for save/load (used by durable resume)
   serialize(): SynergyState {
     return JSON.parse(JSON.stringify(this.state));
   }

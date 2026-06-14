@@ -104,6 +104,7 @@ describe('TurnResolutionEngine', () => {
     fans: 100,
     stress: 20,
     connections: 10,
+    consecutiveBrokeTurns: 0,
     phase: GamePhase.PLANNING,
     difficulty: 'NORMAL',
     scheduledShows: [mockShow],
@@ -220,7 +221,12 @@ describe('TurnResolutionEngine', () => {
 
     state = makeState();
     vi.mocked(useGameStore).getState = vi.fn().mockImplementation(() => state);
-    vi.mocked(useGameStore).setState = vi.fn();
+    // Merge writes into `state` (like real zustand) so store-backed counters
+    // such as consecutiveBrokeTurns accumulate across executeFullTurn calls.
+    vi.mocked(useGameStore).setState = vi.fn().mockImplementation((patch) => {
+      const next = typeof patch === 'function' ? patch(state) : patch;
+      Object.assign(state, next);
+    });
 
     // Singleton holds broke-turn state between tests
     turnResolutionEngine.reset();

@@ -47,6 +47,13 @@ export interface ScheduledShow extends Show {
   hype: number; // 0-100, affects attendance and merch sales
 }
 
+// JSON-safe form of ScheduledShow: the promotionInvestment Map becomes entries
+// so it can ride the persistence layer and be rebuilt on resume.
+export type SerializedScheduledShow = Omit<
+  ScheduledShow,
+  'promotionInvestment'
+> & { promotionInvestment: [PromotionType, number][] };
+
 // Promotion activities with different costs and effectiveness
 export const PROMOTION_ACTIVITIES: Record<PromotionType, PromotionActivity> = {
   [PromotionType.FLYERS]: {
@@ -283,6 +290,28 @@ export class ShowPromotionSystem {
   // can't bleed into the next run and desync from the store's display list.
   reset(): void {
     this.scheduledShows.clear();
+  }
+
+  // --- durable resume: the scheduled-show Map is in-memory only, so it must
+  // be serialized (promotionInvestment is a Map → entries) and rebuilt, or
+  // booked shows are stranded after a refresh/load ---
+  serialize(): SerializedScheduledShow[] {
+    return Array.from(this.scheduledShows.values()).map((s) => ({
+      ...s,
+      promotionInvestment: Array.from(s.promotionInvestment.entries()),
+    }));
+  }
+
+  restore(data?: SerializedScheduledShow[]): void {
+    this.scheduledShows = new Map(
+      (data ?? []).map((s) => [
+        s.id,
+        {
+          ...s,
+          promotionInvestment: new Map(s.promotionInvestment),
+        } as ScheduledShow,
+      ]),
+    );
   }
   
   // Check if a promotion creates synergy

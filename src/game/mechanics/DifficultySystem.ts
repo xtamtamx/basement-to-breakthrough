@@ -51,6 +51,19 @@ export class DifficultySystem {
     this.unavailableBandIds.clear();
   }
 
+  // --- durable resume: the one-turn blocks must survive a refresh/load ---
+  serializeBlocks(): { raided: string[]; unavailable: string[] } {
+    return {
+      raided: Array.from(this.raidedVenueIds),
+      unavailable: Array.from(this.unavailableBandIds),
+    };
+  }
+
+  restoreBlocks(data?: { raided?: string[]; unavailable?: string[] }): void {
+    this.raidedVenueIds = new Set(data?.raided ?? []);
+    this.unavailableBandIds = new Set(data?.unavailable ?? []);
+  }
+
   // Get current difficulty factors based on game progression
   getCurrentDifficulty(): DifficultyFactors {
     const state = useGameStore.getState();

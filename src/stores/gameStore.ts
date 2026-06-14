@@ -16,6 +16,7 @@ import {
   ShowResult,
 } from "@game/types";
 import { safeZustandStorage } from "@utils/safeZustandStorage";
+import type { RuntimeSnapshot } from "@game/persistence/runtimeSnapshot";
 import { factionSystem } from "@game/mechanics/FactionSystem";
 import { showPromotionSystem } from "@game/mechanics/ShowPromotionSystem";
 import { VENUE_TRAITS } from "@game/data/venueTraits";
@@ -68,6 +69,10 @@ interface GameStore {
   scheduledShows: Show[];
   showHistory: Show[];
   lastTurnResults: ShowResult[];
+
+  // Durable-resume state (persisted so a refresh/load resumes the run intact)
+  consecutiveBrokeTurns: number;
+  runtimeSnapshot: RuntimeSnapshot | null;
 
   // Faction state
   currentFactionEvent: FactionEvent | null;
@@ -618,6 +623,8 @@ const getInitialState = () => ({
   scheduledShows: [],
   showHistory: [],
   lastTurnResults: [],
+  consecutiveBrokeTurns: 0,
+  runtimeSnapshot: null,
   discoveredSynergies: [],
   completedFestivals: [],
   festivalHistory: [],
@@ -731,7 +738,15 @@ export const useGameStore = create<GameStore>()(
             ...state,
             ...savedState,
           }));
-          
+
+          // Rehydrate the run's singletons (active run, scheduled-show Map,
+          // difficulty blocks, synergies) from the restored snapshot, or the
+          // resumed run loses its win conditions and strands booked shows.
+          const { restoreRuntimeSnapshot } = await import(
+            '@game/persistence/runtimeSnapshot'
+          );
+          restoreRuntimeSnapshot(get().runtimeSnapshot);
+
           console.log('Game loaded successfully:', saveId);
           return true;
         } catch (error) {
@@ -800,6 +815,14 @@ export const useGameStore = create<GameStore>()(
             show
           ],
         }));
+
+        // Capture the singleton snapshot so this booking survives a refresh
+        // (the show now lives in the in-memory promotion Map).
+        import('@game/persistence/runtimeSnapshot').then(
+          ({ captureRuntimeSnapshot }) => {
+            set({ runtimeSnapshot: captureRuntimeSnapshot() });
+          },
+        );
       },
 
       completeShow: (showId, result) =>
@@ -994,6 +1017,8 @@ export const useGameStore = create<GameStore>()(
         rosterBandIds: state.rosterBandIds,
         scheduledShows: state.scheduledShows,
         showHistory: state.showHistory,
+        consecutiveBrokeTurns: state.consecutiveBrokeTurns,
+        runtimeSnapshot: state.runtimeSnapshot,
         discoveredSynergies: state.discoveredSynergies,
         completedFestivals: state.completedFestivals,
         festivalHistory: state.festivalHistory,
@@ -1002,6 +1027,17 @@ export const useGameStore = create<GameStore>()(
         pathAlignment: state.pathAlignment,
         // Don't persist: walkers, lastTurnResults, currentFactionEvent (transient state)
       }),
+      // On page refresh, rebuild the run's in-memory singletons from the
+      // persisted snapshot so a resumed run keeps its win conditions, banked
+      // fame, booked shows, and loss state instead of silently resetting.
+      onRehydrateStorage: () => (state) => {
+        if (!state?.runtimeSnapshot) return;
+        import('@game/persistence/runtimeSnapshot').then(
+          ({ restoreRuntimeSnapshot }) => {
+            restoreRuntimeSnapshot(state.runtimeSnapshot);
+          },
+        );
+      },
     },
   ),
 );

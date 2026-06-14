@@ -20,6 +20,7 @@ import { venueUpgradeSystem } from './VenueUpgradeSystem';
 import { runManager } from './RunManager';
 import { metaProgressionManager } from './MetaProgressionManager';
 import { gentrificationSystem } from './GentrificationSystem';
+import { captureRuntimeSnapshot } from '../persistence/runtimeSnapshot';
 import { devLog } from '@utils/devLogger';
 import {
   MAX_TURNS,
@@ -100,8 +101,6 @@ export interface TurnResult {
 }
 
 export class TurnResolutionEngine {
-  private consecutiveBrokeTurns: number = 0;
-
   async executeFullTurn(): Promise<TurnResult> {
     const store = useGameStore.getState();
     const turn = store.currentRound;
@@ -223,13 +222,15 @@ export class TurnResolutionEngine {
     // 5. End-of-turn triggers
     const turnEndEffects = this.applySynergyPhase('TURN_END');
 
-    // Track broke turns for eviction
+    // Track broke turns for eviction. Lives in the store so it survives a
+    // refresh/load (an in-memory counter would reset and grant a free escape
+    // from an imminent eviction).
     const postTurnStore = useGameStore.getState();
-    if (postTurnStore.money <= 0) {
-      this.consecutiveBrokeTurns++;
-    } else {
-      this.consecutiveBrokeTurns = 0;
-    }
+    const brokeTurns =
+      postTurnStore.money <= 0
+        ? (postTurnStore.consecutiveBrokeTurns ?? 0) + 1
+        : 0;
+    useGameStore.setState({ consecutiveBrokeTurns: brokeTurns });
 
     // Feed the formal run record (score inputs for the ceremony)
     const activeRun = runManager.getCurrentRun();
@@ -256,9 +257,9 @@ export class TurnResolutionEngine {
         `ESCALATION: Turn ${turn}/${MAX_TURNS} - Costs +50%, incidents +100%`,
       );
     }
-    if (this.consecutiveBrokeTurns > 0) {
+    if (brokeTurns > 0) {
       warnings.push(
-        `EVICTION WARNING: ${this.consecutiveBrokeTurns}/${EVICTION_TURNS_BROKE} turns broke`,
+        `EVICTION WARNING: ${brokeTurns}/${EVICTION_TURNS_BROKE} turns broke`,
       );
     }
     if (postTurnStore.stress >= BURNOUT_STRESS_CAP - 20) {
@@ -268,7 +269,7 @@ export class TurnResolutionEngine {
     }
 
     // 6. Endgame check, then turn increment
-    const runEnd = this.checkEndgame(postTurnStore, turn);
+    const runEnd = this.checkEndgame(postTurnStore, turn, brokeTurns);
     let ceremony: RunCeremony | null = null;
     if (runEnd) {
       store.setPhase(GamePhase.GAME_OVER);
@@ -277,7 +278,11 @@ export class TurnResolutionEngine {
       store.nextRound();
     }
 
-    useGameStore.setState({ lastTurnResults: showResults });
+    // Persist the run's singleton state so a refresh/load resumes intact.
+    useGameStore.setState({
+      lastTurnResults: showResults,
+      runtimeSnapshot: captureRuntimeSnapshot(),
+    });
 
     return {
       showResults,
@@ -725,6 +730,7 @@ export class TurnResolutionEngine {
   private checkEndgame(
     store: ReturnType<typeof useGameStore.getState>,
     turn: number,
+    brokeTurns: number,
   ): RunEndState | null {
     const finalStats = {
       money: store.money,
@@ -758,7 +764,7 @@ export class TurnResolutionEngine {
     }
 
     // LOSS: Eviction
-    if (this.consecutiveBrokeTurns >= EVICTION_TURNS_BROKE) {
+    if (brokeTurns >= EVICTION_TURNS_BROKE) {
       return { reason: 'EVICTION_LOSS', turn, finalStats };
     }
 
@@ -792,7 +798,7 @@ export class TurnResolutionEngine {
    * Reset for new run
    */
   reset(): void {
-    this.consecutiveBrokeTurns = 0;
+    useGameStore.setState({ consecutiveBrokeTurns: 0 });
     difficultySystem.resetBlocks();
     synergyManager.reset();
     showPromotionSystem.reset();

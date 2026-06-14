@@ -519,6 +519,16 @@ class RunManager {
   abandonRun(): void {
     this.currentRun = null;
   }
+
+  // --- durable resume: the active run must survive a refresh/load, or the
+  // engine falls back to default win conditions and banks zero fame ---
+  serializeRun(): RunState | null {
+    return this.currentRun;
+  }
+
+  restoreRun(run: RunState | null | undefined): void {
+    this.currentRun = run ?? null;
+  }
   
   // Advance turn
   advanceTurn() {
