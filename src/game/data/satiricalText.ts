@@ -60,6 +60,36 @@ export const SATIRICAL_ACHIEVEMENTS = {
   VENUE_MOGUL: {
     name: "Man Who Started in Basement Now Owns Multiple Basements",
     description: "Empire Built on Foundation of Concrete and Regret"
+  },
+
+  // Synergy & Lineup
+  SYNERGY_HUNTER: {
+    name: "Promoter Stumbles Into Perfect Lineup, Refuses to Admit It Was Luck",
+    description: "Now Claims 'Curatorial Vision' in Every Interview With Local Zine"
+  },
+  GENRE_BENDER: {
+    name: "Mismatched Bill Somehow Works, Scene Purists Furious It Was Good",
+    description: "Crust Punks and Twinkle Emo Kids Forced to Acknowledge Each Other"
+  },
+
+  // Touring & Growth
+  ROAD_TESTED: {
+    name: "Band Returns From Tour With Stories, Debt, and One Fewer Member",
+    description: "Van Now Held Together by Stickers and a Single Functioning Door"
+  },
+  SOLD_OUT_LITERALLY: {
+    name: "Show Sells Out, Three People Immediately Accuse Venue of Selling Out",
+    description: "'It Was Better When Nobody Came,' Says Guy Who Never Came"
+  },
+
+  // Survival
+  SURVIVED_THE_RAID: {
+    name: "Venue Survives Police Visit, Gains Mythical Status Overnight",
+    description: "Officer's Bored Expression Now Immortalized in Show Flyer Art"
+  },
+  SCENE_HISTORIAN: {
+    name: "Local Achieves Total Recall of Every Show Since 2014, Friends Concerned",
+    description: "Can Name Every Opening Band, Cannot Name a Single Coworker"
   }
 };
 
@@ -108,6 +138,26 @@ export const SATIRICAL_VENUE_DESCRIPTIONS = {
     name: "The Pentagram",
     tagline: "Neighbors Love Us! (Citation Needed)",
     description: "Sound ordinance violations framed on wall like achievements"
+  },
+  HOUSE_SHOW: {
+    name: "Someone's Living Room, Probably",
+    tagline: "Watch Your Step, That's a Real Cat and Also the Drummer",
+    description: "Capacity determined entirely by how much the roommate hates this"
+  },
+  CONCERT_HALL: {
+    name: "The Velvet Repossession",
+    tagline: "Seated, Ticketed, and Spiritually Bankrupt",
+    description: "Ushers will absolutely tell you to stop moshing in row G"
+  },
+  ARENA: {
+    name: "The Sponsorship Dome",
+    tagline: "Brought to You by a Bank You'll Never Be Approved By",
+    description: "$19 beers, $0 authenticity, and a band that used to play basements"
+  },
+  FESTIVAL_GROUNDS: {
+    name: "Mud Lake Fairgrounds",
+    tagline: "Four Stages, One Working Bathroom, Zero Shade",
+    description: "Your favorite band plays at 1PM opposite your other favorite band"
   }
 };
 
@@ -131,7 +181,21 @@ export const SATIRICAL_LOADING_TIPS = [
   "Breaking: Band Actually Shows Up at Load-In Time, Confuses Everyone",
   "Economic Report: Dollar-Per-Minute at DIY Shows Now Less Than Minimum Wage",
   "Venue's 'No Moshing' Sign Purely Decorative, Study Confirms",
-  "Investigation Reveals 'Touring' Band From Next Town Over"
+  "Investigation Reveals 'Touring' Band From Next Town Over",
+  "Band's New Single 'Definitely Different' Confirmed Identical to Last Single",
+  "Local Guitarist Owns Six Pedals, Uses Two, Talks About Eleven",
+  "Breaking: Headliner's Soundcheck Now Longer Than Opener's Entire Set",
+  "Scene Mourns Beloved Venue, Already Forgot Its Name by Following Tuesday",
+  "Study: 100% of Bands 'Working on New Material' for Past Four Years",
+  "Promoter's 'Guaranteed Door Split' Reportedly Guaranteed by No One",
+  "Area Drummer Quits Third Band This Month, Cites 'Direction'",
+  "Report: Merch Table Now Outearns Band, Band Considers Becoming Merch",
+  "Local Zine Reviews Show It Didn't Attend, Nails It Anyway",
+  "Breaking: Band Photo Taken in Front of Brick Wall, Scene Stunned by Originality",
+  "Survey: Every 'Final Show Ever' Followed by Reunion Within 18 Months",
+  "Vinyl Pressing Delayed Again, Band's Hype Now Older Than Band",
+  "Sound Person Achieves Inner Peace by No Longer Caring About Monitor Mix",
+  "Investigation: Who Keeps Booking the Ska Band, and Why Won't They Stop"
 ];
 
 export const SATIRICAL_ERROR_MESSAGES = {
@@ -144,7 +208,12 @@ export const SATIRICAL_ERROR_MESSAGES = {
   NOISE_VIOLATION: "Cops Called by Same Neighbor Who Definitely Peaked in High School",
   EQUIPMENT_BROKEN: "PA System Died, Just Like Your Dreams of Good Sound",
   BAND_DRAMA: "Band Broke Up in Parking Lot, Classic Move",
-  VENUE_CLOSED: "Venue Shut Down for Definitely Not Gentrification Reasons"
+  VENUE_CLOSED: "Venue Shut Down for Definitely Not Gentrification Reasons",
+  ROSTER_FULL: "Roster Full: You Cannot Adopt Another Band, This Is Not a Shelter",
+  BAND_ON_TOUR: "Band Currently 'On Tour' (Visiting Their Parents Three States Over)",
+  TOO_LOUD: "Even by Our Standards That's Too Loud, and Our Standards Are a Crime",
+  SCHEDULE_CONFLICT: "Two Shows, One Night: Even the Scene Can't Be in Two Basements at Once",
+  EQUIPMENT_QUALITY: "Your Gear Isn't Good Enough for This Band's Three Working Pedals"
 };
 
 export const SATIRICAL_SYNERGIES = {
@@ -175,6 +244,18 @@ export const SATIRICAL_SYNERGIES = {
   GENRE_CLASH: {
     name: "Mistake That Somehow Works Out",
     description: "Like pineapple on pizza but with more safety pins"
+  },
+  HOMETOWN_HERO: {
+    name: "Local Band Plays Local Show, Local Crowd Loses Local Mind",
+    description: "Every single attendee went to high school with the bassist"
+  },
+  SAD_BOY_SUMMIT: {
+    name: "Collective Crying Reaches Critical Mass",
+    description: "Room humidity rises noticeably during the bridge of song four"
+  },
+  TOO_FAST_TO_FAIL: {
+    name: "Set Over Before Anyone Realizes It Started",
+    description: "Eleven songs, zero survivors, one very confused sound person"
   }
 };
 
@@ -216,6 +297,37 @@ export const SATIRICAL_SYNERGY_DATA = {
     name: "The Prophecy Fulfilled",
     description: "All elements align to create show so legendary it becomes urban myth",
     discoveryText: "MYTHIC SYNERGY: Local show enters folklore, becomes cautionary tale parents tell their children"
+  },
+
+  // More Common Synergies
+  emo_intimate: {
+    name: "The Shared Trauma Discount",
+    description: "Twinkle emo in a tiny room means everyone leaves having processed something",
+    discoveryText: "SYNERGY DISCOVERED: Intimate venue + open tunings causes spontaneous group therapy, no licensed professional present"
+  },
+  noise_blown_speakers: {
+    name: "Working As Intended, Tragically",
+    description: "Harsh noise through already-blown speakers achieves a purity science cannot measure",
+    discoveryText: "SYNERGY DISCOVERED: Sound person stops trying to fix the buzz after realizing the buzz IS the band"
+  },
+
+  // More Rare Synergies
+  hardcore_youth_crew: {
+    name: "Mic Grab Apocalypse",
+    description: "Straight edge hardcore + a room full of kids equals zero injuries and infinite finger-points",
+    discoveryText: "RARE SYNERGY: Every single attendee somehow knows the words to a song the band wrote yesterday"
+  },
+  black_metal_cursed_stage: {
+    name: "Suburban Necromancy",
+    description: "Corpse paint meets a genuinely cursed stage, and the cul-de-sac will never be the same",
+    discoveryText: "RARE SYNERGY: Show fog machine and actual occult mist become indistinguishable, fire marshal declines to investigate"
+  },
+
+  // More Legendary Synergies
+  doom_drone_eternal: {
+    name: "Time Becomes a Suggestion",
+    description: "One riff, stretched across the heat death of the local scene",
+    discoveryText: "LEGENDARY SYNERGY: Set technically still ongoing, attendees have aged, formed families, returned"
   }
 };
 
@@ -254,6 +366,42 @@ export const SATIRICAL_EVENT_CARDS = {
       EMBRACE: "Book 'TikTok Kid' for Clout",
       IGNORE: "Maintain Underground Integrity (Stay Broke)",
       MONETIZE: "Sell Out Just a Little Bit"
+    }
+  },
+  VAN_BREAKDOWN: {
+    title: "Touring Band's Van Dies in Your Parking Lot, Becomes Permanent Resident",
+    description: "Drummer Already Asking If The Couch In Your Office Is 'A Whole Thing'",
+    choices: {
+      HOST: "Let Them Crash, Inherit Their Problems",
+      FUNDRAISE: "Pass a Hat, Pretend It'll Cover a Transmission",
+      ABANDON: "The Van Is The Scene's Problem Now"
+    }
+  },
+  SOUND_PERSON_QUITS: {
+    title: "Sound Person Walks Mid-Set, Cites 'Every Single One of You'",
+    description: "Leaves Behind a Mixing Board and a Note That Just Says 'lol no'",
+    choices: {
+      BEG: "Promise Raises You Cannot Possibly Afford",
+      DIY: "Let The Bassist's Cousin 'Figure It Out'",
+      EMBRACE: "Declare the Feedback 'Part of the Set'"
+    }
+  },
+  GENTRIFICATION_SCOUT: {
+    title: "Person in Patagonia Vest Spotted Taking Photos of Your Loading Dock",
+    description: "Mutters 'Great Bones' While a Band Loads In Behind Them",
+    choices: {
+      CONFRONT: "Ask If They're 'Into the Music' (They Are Not)",
+      IGNORE: "Pretend the Inevitable Isn't Happening",
+      ORGANIZE: "Rally the Scene for a Doomed Tenant Meeting"
+    }
+  },
+  SURPRISE_LABEL_REP: {
+    title: "A&R Guy Shows Up, Loves a Band, Cannot Name a Single Song",
+    description: "Keeps Calling the Headliner 'You Guys' and Checking His Phone",
+    choices: {
+      SCHMOOZE: "Play Along, Maybe Free Drinks Happen",
+      ROAST: "Loudly Ask Which Album He's Heard",
+      LEVERAGE: "Use His Presence to Hype the Whole Bill"
     }
   }
 };
@@ -310,7 +458,10 @@ export const SATIRICAL_TUTORIAL_TIPS = {
   VENUES: "Start small in basements, end small in slightly larger basements",
   BANDS: "Managing bands is like herding cats, if cats had substance abuse problems",
   EQUIPMENT: "Good equipment is expensive, bad equipment builds character",
-  SCENE: "The scene is what you make it (usually a mess)"
+  SCENE: "The scene is what you make it (usually a mess)",
+  SYNERGY: "Match the right band to the right room and the room will forgive everything else",
+  TOURING: "Sending a band on tour is just paying for them to break up somewhere scenic",
+  FACTIONS: "Every faction thinks they're the real scene; humor all of them, trust none"
 };
 
 export const SATIRICAL_UI_LABELS = {
@@ -333,7 +484,12 @@ export const SATIRICAL_TURN_RESULTS = {
   BROKE_EVEN: "IRS Auditors En Route to Investigate 'Profit' Claims",
   LOST_MONEY: "Another Day, Another Dollar (Lost)",
   REPUTATION_UP: "Three People Said Nice Things, Scene Buzz Achieved",
-  REPUTATION_DOWN: "That One Guy with a Blog Wrote Mean Things Again"
+  REPUTATION_DOWN: "That One Guy with a Blog Wrote Mean Things Again",
+  LEGENDARY_NIGHT: "Show Enters Local Folklore, Will Be Misremembered Fondly Forever",
+  SOLD_OUT: "Sold Out: The Show, Not Your Principles (This Time)",
+  EMPTY_ROOM: "Band Plays to Sound Person and a Mop, Sound Person Unmoved",
+  SCENE_DRAMA: "Two Subgenres Beefed in the Comments, Engagement Through the Roof",
+  GEAR_SURVIVED: "All Equipment Survived the Night, Suspicious and Unprecedented"
 };
 
 export const SATIRICAL_EQUIPMENT = {
@@ -426,7 +582,17 @@ export const RANDOM_SCENE_FACTS = [
   "Alert: That one promoter still owes you $50 from 2019",
   "Update: Venue's 'house kit' missing everything but kick drum",
   "Notice: Bar prices increase 400% when bands' parents attend",
-  "Warning: Saying 'we're influenced by Black Flag' no longer interesting"
+  "Warning: Saying 'we're influenced by Black Flag' no longer interesting",
+  "Fact: The band with the most pedals always plays the quietest set",
+  "Study: 'We're basically family' said by bands who break up in six weeks",
+  "Report: Headliner's rider is one (1) specific brand of seltzer, unavailable locally",
+  "Notice: The 'green room' is a folding chair next to the water heater",
+  "Alert: That 'rare tape' on the merch table is a CD-R in a Ziploc bag",
+  "Statistics: 100% of guest lists are 40% longer than the venue's capacity",
+  "Update: Touring band's 'day off' spent entirely in a Cracker Barrel parking lot",
+  "Warning: Describing your sound as 'genre-fluid' adds 20 minutes to load-in",
+  "Fact: The most authentic band in town has the least functional gear",
+  "Research: Crowd size inversely correlated with how much the band needed the money"
 ];
 
 export const getRandomSatiricalText = (category: keyof typeof SATIRICAL_TEXT_POOLS): string => {
