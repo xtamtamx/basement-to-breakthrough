@@ -11,6 +11,7 @@ import {
 import { difficultySystem } from '@game/mechanics/DifficultySystem';
 import { synergyManager } from '@game/mechanics/SynergyManager';
 import { PromotionType } from '@game/mechanics/ShowPromotionSystem';
+import { useGameStore } from '@stores/gameStore';
 
 // The whole point of durable resume: capture -> JSON round-trip (as the
 // persistence layer does) -> restore must rebuild the in-memory singletons,
@@ -82,5 +83,28 @@ describe('runtimeSnapshot round-trip', () => {
   it('no-ops safely on an undefined snapshot', () => {
     expect(() => restoreRuntimeSnapshot(undefined)).not.toThrow();
     expect(() => restoreRuntimeSnapshot(null)).not.toThrow();
+  });
+
+  it('drops a show already in showHistory (idempotent — no duplicate re-fire)', () => {
+    // Simulate a mid-turn-refresh snapshot: it still lists a show the store
+    // already resolved into showHistory, plus a genuinely-pending one.
+    useGameStore.setState({
+      showHistory: [{ id: 'done-1', status: 'COMPLETED' }] as never,
+    });
+    const done = { ...seedShow(), id: 'done-1' };
+    const pending = { ...seedShow(), id: 'pending-1' };
+
+    restoreRuntimeSnapshot({
+      run: null,
+      scheduledShows: [done, pending],
+      difficultyBlocks: { raided: [], unavailable: [] },
+      synergy: synergyManager.serialize(),
+    });
+
+    const ids = showPromotionSystem.getScheduledShows().map((s) => s.id);
+    expect(ids).toContain('pending-1');
+    expect(ids).not.toContain('done-1'); // already resolved → not re-injected
+
+    useGameStore.setState({ showHistory: [] });
   });
 });

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CityView } from "./views/CityView";
 import { BandsView } from "./views/BandsView";
@@ -49,7 +49,10 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
   const [runEnd, setRunEnd] = useState<RunEndState | null>(null);
   const [ceremony, setCeremony] = useState<RunCeremony | null>(null);
   const [turnResults, setTurnResults] = useState<TurnResult>(EMPTY_TURN_RESULT);
-  
+  // Re-entrancy guard: blocks a same-tick double-tap (and taps while the
+  // results modal is up) from resolving the same turn twice.
+  const resolvingRef = useRef(false);
+
   const { money, reputation, fans, stress } = useGameStore();
 
   // Start background music + auto-save (the new-game intro is QuickStartGuide;
@@ -74,6 +77,8 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
   };
 
   const handleNextTurn = async () => {
+    if (resolvingRef.current) return; // ignore re-entrant taps
+    resolvingRef.current = true;
     const results = await turnResolutionEngine.executeFullTurn();
     setTurnResults(results);
     setShowTurnResults(true);
@@ -83,6 +88,7 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
   // The run-end screen appears once the player closes the final turn's results
   const handleTurnResultsClose = () => {
     setShowTurnResults(false);
+    resolvingRef.current = false; // ready for the next turn
     if (turnResults.runEnd) {
       setRunEnd(turnResults.runEnd);
       setCeremony(turnResults.ceremony);

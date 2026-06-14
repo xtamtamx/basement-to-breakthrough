@@ -15,6 +15,7 @@
  * and restored on rehydrate (page refresh) and loadGame (save slot).
  */
 
+import { useGameStore } from '@stores/gameStore';
 import { runManager, RunState } from '../mechanics/RunManager';
 import {
   showPromotionSystem,
@@ -42,7 +43,20 @@ export function captureRuntimeSnapshot(): RuntimeSnapshot {
 export function restoreRuntimeSnapshot(snap?: RuntimeSnapshot | null): void {
   if (!snap) return;
   runManager.restoreRun(snap.run);
-  showPromotionSystem.restore(snap.scheduledShows);
+
+  // Idempotency guard: a refresh mid-turn can leave the persisted snapshot
+  // describing a show the store already resolved (completeShow removed it from
+  // scheduledShows + recorded it in showHistory before the snapshot was
+  // recaptured). Drop any already-completed show so it can't be re-injected
+  // into the live Map and fire — and pay out — a second time.
+  const completedIds = new Set(
+    useGameStore.getState().showHistory.map((s) => s.id),
+  );
+  const liveShows = (snap.scheduledShows ?? []).filter(
+    (s) => !completedIds.has(s.id),
+  );
+  showPromotionSystem.restore(liveShows);
+
   difficultySystem.restoreBlocks(snap.difficultyBlocks);
   if (snap.synergy) synergyManager.deserialize(snap.synergy);
 }
