@@ -5,10 +5,12 @@ import { BandUpgradeModal } from '../BandUpgradeModal';
 import { useGameStore } from '@stores/gameStore';
 import { UserPlus, UserMinus, TrendingUp, Star, Zap } from 'lucide-react';
 
+type Filter = 'all' | 'available' | 'roster';
+
 export const BandsView: React.FC = () => {
   const { allBands, rosterBandIds, addBandToRoster, removeBandFromRoster } = useGameStore();
   const [selectedBand, setSelectedBand] = useState<Band | null>(null);
-  const [filter, setFilter] = useState<'all' | 'available' | 'roster'>('all');
+  const [filter, setFilter] = useState<Filter>('all');
   const [upgradeModalBand, setUpgradeModalBand] = useState<Band | null>(null);
 
   const handleAddToRoster = (bandId: string) => {
@@ -44,81 +46,81 @@ export const BandsView: React.FC = () => {
     }
   };
 
+  const availableCount = allBands.length - rosterBandIds.length;
+  const filterTabs: { id: Filter; label: string; count: number }[] = [
+    { id: 'all', label: 'All', count: allBands.length },
+    { id: 'roster', label: 'Roster', count: rosterBandIds.length },
+    { id: 'available', label: 'Available', count: availableCount },
+  ];
+
   return (
     <div style={{
       display: 'flex',
       flexDirection: 'column',
       height: '100%',
-      backgroundColor: '#0a0a0a',
+      backgroundImage: 'linear-gradient(to bottom, #1a1030, #0c0a14)',
       overflow: 'hidden'
     }}>
       {/* Header */}
       <div style={{
-        backgroundColor: '#111827',
-        borderBottom: '1px solid #374151',
-        padding: '8px 12px',
+        backgroundColor: 'rgba(10, 8, 18, 0.6)',
+        backdropFilter: 'blur(8px)',
+        borderBottom: '1px solid #1f2937',
+        padding: 'calc(8px + env(safe-area-inset-top)) 14px 8px',
         flexShrink: 0,
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-between'
+        justifyContent: 'space-between',
+        gap: '10px'
       }}>
-        <h2 style={{
-          fontSize: '14px',
-          fontWeight: 'bold',
-          color: '#ec4899',
-          margin: 0
-        }}>Bands</h2>
-        
+        <div style={{ minWidth: 0 }}>
+          <h2 style={{
+            fontSize: '17px',
+            fontWeight: 900,
+            color: '#ffffff',
+            margin: 0,
+            letterSpacing: '-0.01em'
+          }}>The Roster</h2>
+          <p style={{
+            fontSize: '11px',
+            color: '#9ca3af',
+            margin: '1px 0 0'
+          }}>Scout the scene, sign the legends.</p>
+        </div>
+
         {/* Filter Tabs */}
-        <div style={{ display: 'flex', gap: '4px' }}>
-          <button
-            onClick={() => setFilter('all')}
-            style={{
-              padding: '4px 10px',
-              backgroundColor: filter === 'all' ? '#ec4899' : 'transparent',
-              color: filter === 'all' ? '#ffffff' : '#9ca3af',
-              border: 'none',
-              borderRadius: '4px',
-              fontSize: '12px',
-              fontWeight: '500',
-              cursor: 'pointer',
-              transition: 'all 0.2s'
-            }}
-          >
-            All ({allBands.length})
-          </button>
-          <button
-            onClick={() => setFilter('roster')}
-            style={{
-              padding: '4px 10px',
-              backgroundColor: filter === 'roster' ? '#ec4899' : 'transparent',
-              color: filter === 'roster' ? '#ffffff' : '#9ca3af',
-              border: 'none',
-              borderRadius: '4px',
-              fontSize: '12px',
-              fontWeight: '500',
-              cursor: 'pointer',
-              transition: 'all 0.2s'
-            }}
-          >
-            Roster ({rosterBandIds.length})
-          </button>
-          <button
-            onClick={() => setFilter('available')}
-            style={{
-              padding: '4px 10px',
-              backgroundColor: filter === 'available' ? '#ec4899' : 'transparent',
-              color: filter === 'available' ? '#ffffff' : '#9ca3af',
-              border: 'none',
-              borderRadius: '4px',
-              fontSize: '12px',
-              fontWeight: '500',
-              cursor: 'pointer',
-              transition: 'all 0.2s'
-            }}
-          >
-            Available
-          </button>
+        <div style={{
+          display: 'flex',
+          gap: '4px',
+          backgroundColor: 'rgba(0,0,0,0.3)',
+          border: '1px solid #1f2937',
+          borderRadius: '10px',
+          padding: '3px',
+          flexShrink: 0
+        }}>
+          {filterTabs.map(tab => {
+            const active = filter === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setFilter(tab.id)}
+                style={{
+                  padding: '6px 10px',
+                  backgroundColor: active ? '#ec4899' : 'transparent',
+                  color: active ? '#ffffff' : '#9ca3af',
+                  border: 'none',
+                  borderRadius: '7px',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                {tab.label} <span style={{ opacity: 0.7 }}>{tab.count}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -127,39 +129,45 @@ export const BandsView: React.FC = () => {
         flex: 1,
         overflowY: 'auto',
         padding: '12px',
-        paddingBottom: '80px'
+        paddingBottom: 'calc(5rem + env(safe-area-inset-bottom))'
       }}>
         {filteredBands.length === 0 ? (
           <div style={{
             textAlign: 'center',
-            padding: '60px 20px',
+            padding: '48px 24px',
+            backgroundColor: 'rgba(0,0,0,0.3)',
+            border: '1px solid #1f2937',
+            borderRadius: '14px',
             color: '#9ca3af'
           }}>
-            <div style={{ fontSize: '48px', marginBottom: '16px' }}>🎸</div>
+            <div style={{ fontSize: '44px', marginBottom: '12px', opacity: 0.85 }}>🎸</div>
             <h3 style={{
-              fontSize: '18px',
-              fontWeight: '600',
+              fontSize: '16px',
+              fontWeight: 700,
               color: '#ffffff',
-              marginBottom: '8px'
-            }}>No bands found</h3>
-            <p style={{ fontSize: '14px' }}>
-              {filter === 'roster' ? 'Add some bands to your roster!' : 'No bands match your filter'}
+              margin: '0 0 6px'
+            }}>{filter === 'roster' ? 'Empty roster' : 'No bands here'}</h3>
+            <p style={{ fontSize: '13px', margin: 0, lineHeight: 1.5 }}>
+              {filter === 'roster'
+                ? 'Sign some acts and start a scene worth bragging about.'
+                : 'Nothing matches this filter — try another tab.'}
             </p>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {filteredBands.map(band => {
               const isInRoster = rosterBandIds.includes(band.id);
               const isSelected = selectedBand?.id === band.id;
-              
+
               return (
                 <div key={band.id} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   {/* Band Card */}
-                  <div 
+                  <div
                     style={{
-                      backgroundColor: '#1f2937',
-                      border: isSelected ? '2px solid #ec4899' : '1px solid #374151',
-                      borderRadius: '10px',
+                      backgroundColor: '#111827',
+                      border: isSelected ? '1px solid #ec4899' : '1px solid #1f2937',
+                      boxShadow: isSelected ? '0 0 0 1px #ec4899, 0 6px 16px rgba(236,72,153,0.18)' : 'none',
+                      borderRadius: '12px',
                       padding: '12px',
                       cursor: 'pointer',
                       transition: 'all 0.2s',
@@ -170,19 +178,20 @@ export const BandsView: React.FC = () => {
                     <div style={{ display: 'flex', gap: '12px' }}>
                       {/* Band Icon */}
                       <div style={{
-                        fontSize: '24px',
+                        fontSize: '22px',
                         flexShrink: 0,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        width: '40px',
-                        height: '40px',
-                        backgroundColor: '#111827',
-                        borderRadius: '8px'
+                        width: '44px',
+                        height: '44px',
+                        backgroundColor: 'rgba(0,0,0,0.35)',
+                        border: '1px solid #1f2937',
+                        borderRadius: '10px'
                       }}>
                         {getGenreIcon(band.genre)}
                       </div>
-                      
+
                       {/* Band Info */}
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{
@@ -195,71 +204,84 @@ export const BandsView: React.FC = () => {
                           <div style={{ minWidth: 0, flex: 1 }}>
                             <h3 style={{
                               fontSize: '15px',
-                              fontWeight: 'bold',
+                              fontWeight: 700,
                               color: '#ffffff',
                               margin: 0,
+                              letterSpacing: '-0.01em',
                               whiteSpace: 'nowrap',
                               overflow: 'hidden',
                               textOverflow: 'ellipsis'
                             }}>{band.name}</h3>
                             <p style={{
-                              fontSize: '12px',
+                              fontSize: '11px',
                               color: '#9ca3af',
                               margin: '2px 0 0 0'
                             }}>
-                              {band.genre} • {band.hometown}
+                              {band.genre}{band.hometown ? ` • ${band.hometown}` : ''}
                             </p>
                           </div>
-                          
+
                           {/* Badges */}
                           <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
                             {isInRoster && (
                               <span style={{
-                                padding: '2px 6px',
-                                backgroundColor: '#10b981',
-                                color: '#ffffff',
+                                padding: '2px 8px',
+                                backgroundColor: 'rgba(16,185,129,0.15)',
+                                border: '1px solid #10b981',
+                                color: '#34d399',
                                 fontSize: '10px',
-                                fontWeight: '600',
-                                borderRadius: '4px'
-                              }}>Roster</span>
+                                fontWeight: 700,
+                                borderRadius: '999px',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.03em'
+                              }}>Signed</span>
                             )}
                             {band.isRealArtist && (
                               <span style={{
-                                padding: '2px 6px',
-                                backgroundColor: '#ec4899',
-                                color: '#ffffff',
+                                padding: '2px 8px',
+                                backgroundColor: 'rgba(236,72,153,0.15)',
+                                border: '1px solid #ec4899',
+                                color: '#f9a8d4',
                                 fontSize: '10px',
-                                fontWeight: '600',
-                                borderRadius: '4px'
+                                fontWeight: 700,
+                                borderRadius: '999px',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.03em'
                               }}>Real</span>
                             )}
                           </div>
                         </div>
-                        
+
                         {/* Stats Preview */}
                         <div style={{
                           display: 'grid',
                           gridTemplateColumns: '1fr 1fr',
-                          gap: '8px',
-                          marginTop: '6px'
+                          gap: '10px',
+                          marginTop: '8px'
                         }}>
                           <div>
                             <div style={{
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'space-between',
-                              marginBottom: '2px'
+                              marginBottom: '3px'
                             }}>
-                              <span style={{ fontSize: '10px', color: '#6b7280' }}>Pop</span>
-                              <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#ec4899' }}>{band.popularity}</span>
+                              <span style={{
+                                fontSize: '9px',
+                                color: '#6b7280',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.05em',
+                                fontWeight: 700
+                              }}>Pop</span>
+                              <span style={{ fontSize: '11px', fontWeight: 700, color: '#ec4899' }}>{band.popularity}</span>
                             </div>
                             <div style={{
-                              height: '3px',
-                              backgroundColor: '#374151',
+                              height: '4px',
+                              backgroundColor: '#1f2937',
                               borderRadius: '2px',
                               overflow: 'hidden'
                             }}>
-                              <div 
+                              <div
                                 style={{
                                   height: '100%',
                                   backgroundColor: '#ec4899',
@@ -274,21 +296,27 @@ export const BandsView: React.FC = () => {
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'space-between',
-                              marginBottom: '2px'
+                              marginBottom: '3px'
                             }}>
-                              <span style={{ fontSize: '10px', color: '#6b7280' }}>Energy</span>
-                              <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#fbbf24' }}>{band.energy}</span>
+                              <span style={{
+                                fontSize: '9px',
+                                color: '#6b7280',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.05em',
+                                fontWeight: 700
+                              }}>Energy</span>
+                              <span style={{ fontSize: '11px', fontWeight: 700, color: '#f59e0b' }}>{band.energy}</span>
                             </div>
                             <div style={{
-                              height: '3px',
-                              backgroundColor: '#374151',
+                              height: '4px',
+                              backgroundColor: '#1f2937',
                               borderRadius: '2px',
                               overflow: 'hidden'
                             }}>
-                              <div 
+                              <div
                                 style={{
                                   height: '100%',
-                                  backgroundColor: '#fbbf24',
+                                  backgroundColor: '#f59e0b',
                                   width: `${band.energy}%`,
                                   transition: 'width 0.3s'
                                 }}
@@ -299,13 +327,13 @@ export const BandsView: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   {/* Expanded Details */}
                   {isSelected && (
                     <div style={{
-                      backgroundColor: '#1f2937',
-                      border: '1px solid #374151',
-                      borderRadius: '10px',
+                      backgroundColor: '#111827',
+                      border: '1px solid #1f2937',
+                      borderRadius: '12px',
                       padding: '12px',
                       animation: 'slideDown 0.2s ease-out'
                     }}>
@@ -313,73 +341,91 @@ export const BandsView: React.FC = () => {
                         <p style={{
                           fontSize: '12px',
                           color: '#d1d5db',
-                          marginBottom: '10px',
+                          margin: '0 0 12px',
                           lineHeight: '1.5'
                         }}>{band.bio}</p>
                       )}
-                      
+
                       {/* Full Stats */}
                       <div style={{
                         display: 'grid',
                         gridTemplateColumns: 'repeat(2, 1fr)',
                         gap: '8px',
-                        marginBottom: '10px'
+                        marginBottom: '12px'
                       }}>
                         <div style={{
-                          backgroundColor: '#111827',
-                          borderRadius: '6px',
+                          backgroundColor: 'rgba(0,0,0,0.3)',
+                          border: '1px solid #1f2937',
+                          borderRadius: '10px',
                           padding: '10px'
                         }}>
                           <div style={{
                             display: 'flex',
                             alignItems: 'center',
                             gap: '6px',
-                            marginBottom: '2px'
+                            marginBottom: '4px'
                           }}>
                             <Star size={12} color="#ec4899" />
-                            <span style={{ fontSize: '11px', color: '#9ca3af' }}>Popularity</span>
+                            <span style={{
+                              fontSize: '10px',
+                              color: '#9ca3af',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.05em',
+                              fontWeight: 700
+                            }}>Popularity</span>
                           </div>
-                          <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#ffffff' }}>{band.popularity}</div>
+                          <div style={{ fontSize: '20px', fontWeight: 800, color: '#ffffff', lineHeight: 1 }}>{band.popularity}</div>
                         </div>
                         <div style={{
-                          backgroundColor: '#111827',
-                          borderRadius: '6px',
+                          backgroundColor: 'rgba(0,0,0,0.3)',
+                          border: '1px solid #1f2937',
+                          borderRadius: '10px',
                           padding: '10px'
                         }}>
                           <div style={{
                             display: 'flex',
                             alignItems: 'center',
                             gap: '6px',
-                            marginBottom: '2px'
+                            marginBottom: '4px'
                           }}>
-                            <Zap size={12} color="#fbbf24" />
-                            <span style={{ fontSize: '11px', color: '#9ca3af' }}>Energy</span>
+                            <Zap size={12} color="#f59e0b" />
+                            <span style={{
+                              fontSize: '10px',
+                              color: '#9ca3af',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.05em',
+                              fontWeight: 700
+                            }}>Energy</span>
                           </div>
-                          <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#ffffff' }}>{band.energy}</div>
+                          <div style={{ fontSize: '20px', fontWeight: 800, color: '#ffffff', lineHeight: 1 }}>{band.energy}</div>
                         </div>
                       </div>
-                      
+
                       {/* Synergies */}
                       {band.relationships && band.relationships.length > 0 && (
-                        <div style={{ marginBottom: '16px' }}>
+                        <div style={{ marginBottom: '12px' }}>
                           <h4 style={{
-                            fontSize: '14px',
-                            fontWeight: '600',
-                            color: '#ec4899',
-                            marginBottom: '8px'
+                            fontSize: '10px',
+                            fontWeight: 700,
+                            color: '#9ca3af',
+                            margin: '0 0 8px',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.05em'
                           }}>Band Relationships</h4>
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                             {band.relationships.map((rel) => {
                               const isFriendly = rel.relationship >= 0;
                               return (
                                 <span
                                   key={rel.bandId}
                                   style={{
-                                    padding: '4px 8px',
-                                    backgroundColor: isFriendly ? '#10b981' : '#ef4444',
-                                    color: '#ffffff',
-                                    fontSize: '12px',
-                                    borderRadius: '4px'
+                                    padding: '4px 10px',
+                                    backgroundColor: isFriendly ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)',
+                                    border: `1px solid ${isFriendly ? '#10b981' : '#ef4444'}`,
+                                    color: isFriendly ? '#34d399' : '#f87171',
+                                    fontSize: '11px',
+                                    fontWeight: 600,
+                                    borderRadius: '999px'
                                   }}
                                 >
                                   {isFriendly ? '👫' : '⚔️'} {allBands.find(b => b.id === rel.bandId)?.name}
@@ -389,7 +435,7 @@ export const BandsView: React.FC = () => {
                           </div>
                         </div>
                       )}
-                      
+
                       {/* Actions */}
                       <div style={{ display: 'flex', gap: '8px' }}>
                         {isInRoster ? (
@@ -400,25 +446,26 @@ export const BandsView: React.FC = () => {
                             }}
                             style={{
                               flex: 1,
-                              padding: '10px',
-                              backgroundColor: '#dc2626',
-                              color: '#ffffff',
-                              border: 'none',
-                              borderRadius: '8px',
+                              padding: '12px',
+                              backgroundColor: 'transparent',
+                              color: '#f87171',
+                              border: '1px solid #b91c1c',
+                              borderRadius: '10px',
                               fontSize: '14px',
-                              fontWeight: '600',
+                              fontWeight: 700,
                               cursor: 'pointer',
+                              minHeight: '44px',
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
                               gap: '8px',
-                              transition: 'background-color 0.2s'
+                              transition: 'all 0.2s'
                             }}
-                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#b91c1c'}
-                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#dc2626'}
+                            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(185,28,28,0.18)'; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
                           >
                             <UserMinus size={16} />
-                            Remove from Roster
+                            Drop from Roster
                           </button>
                         ) : (
                           <button
@@ -428,28 +475,31 @@ export const BandsView: React.FC = () => {
                             }}
                             style={{
                               flex: 1,
-                              padding: '10px',
-                              backgroundColor: '#10b981',
+                              padding: '12px',
+                              backgroundImage: 'linear-gradient(135deg, #10b981, #059669)',
                               color: '#ffffff',
                               border: 'none',
-                              borderRadius: '8px',
+                              borderRadius: '10px',
                               fontSize: '14px',
-                              fontWeight: '600',
+                              fontWeight: 700,
                               cursor: 'pointer',
+                              minHeight: '44px',
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
                               gap: '8px',
-                              transition: 'background-color 0.2s'
+                              boxShadow: '0 4px 12px rgba(16,185,129,0.3)',
+                              transition: 'transform 0.15s'
                             }}
-                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#059669'}
-                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#10b981'}
+                            onMouseDown={(e) => { e.currentTarget.style.transform = 'scale(0.98)'; }}
+                            onMouseUp={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
                           >
                             <UserPlus size={16} />
-                            Add to Roster
+                            Sign to Roster
                           </button>
                         )}
-                        
+
                         {band.upgrades && (
                           <button
                             onClick={(e) => {
@@ -457,21 +507,22 @@ export const BandsView: React.FC = () => {
                               setUpgradeModalBand(band);
                             }}
                             style={{
-                              padding: '10px 16px',
-                              backgroundColor: '#374151',
+                              padding: '12px 16px',
+                              backgroundColor: 'rgba(0,0,0,0.3)',
                               color: '#ffffff',
-                              border: 'none',
-                              borderRadius: '8px',
+                              border: '1px solid #1f2937',
+                              borderRadius: '10px',
                               fontSize: '14px',
-                              fontWeight: '600',
+                              fontWeight: 700,
                               cursor: 'pointer',
+                              minHeight: '44px',
                               display: 'flex',
                               alignItems: 'center',
                               gap: '8px',
-                              transition: 'background-color 0.2s'
+                              transition: 'all 0.2s'
                             }}
-                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#4b5563'}
-                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#374151'}
+                            onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#374151'; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#1f2937'; }}
                           >
                             <TrendingUp size={16} />
                             Upgrade
