@@ -92,15 +92,21 @@ class GentrificationSystem {
         });
       }
 
-      // Notices only on the turn a threshold is first crossed
+      // Notices only on the turn a threshold is first crossed. These align to
+      // the *mechanical* inflection points, not round numbers:
+      //   - ATTENDANCE_FREE_BELOW (40): the first real bite — turnout starts
+      //     to thin as the crowd changes.
+      //   - SOUL_THRESHOLD (60): scene strength begins to erode.
       const crossed = (t: number) =>
         district.gentrificationLevel < t && newGent >= t;
-      if (crossed(50)) {
-        notices.push(`${district.name} is gentrifying — rents are creeping up.`);
-      }
-      if (crossed(80)) {
+      if (crossed(ATTENDANCE_FREE_BELOW)) {
         notices.push(
-          `${district.name} has been fully gentrified. The scene is getting priced out.`,
+          `${district.name} is starting to draw a different crowd — turnout's getting thinner.`,
+        );
+      }
+      if (crossed(SOUL_THRESHOLD)) {
+        notices.push(
+          `The soul is leaving ${district.name} — its scene strength is eroding.`,
         );
       }
     });

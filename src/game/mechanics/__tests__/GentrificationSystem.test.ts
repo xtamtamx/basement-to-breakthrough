@@ -97,12 +97,33 @@ describe('GentrificationSystem', () => {
       expect(districts.find((d) => d.id === 'eastside')!.sceneStrength).toBe(80);
     });
 
-    it('emits a notice when a district crosses a gentrification threshold', () => {
-      districts[0].gentrificationLevel = 49; // eastside about to cross 50
+    it('emits a turnout notice when a district first crosses the attendance threshold (40)', () => {
+      districts[0].gentrificationLevel = 39; // eastside about to cross 40
       const result = gentrificationSystem.applyTurnGentrification(
         new Set(['eastside']),
       );
-      expect(result.notices.some((n) => n.includes('gentrifying'))).toBe(true);
+      expect(districts.find((d) => d.id === 'eastside')!.gentrificationLevel)
+        .toBeGreaterThanOrEqual(40);
+      expect(result.notices.some((n) => n.includes('different crowd'))).toBe(true);
+    });
+
+    it('emits a soul-decay notice when a district first crosses the soul threshold (60)', () => {
+      districts[0].gentrificationLevel = 59; // eastside about to cross 60
+      const result = gentrificationSystem.applyTurnGentrification(
+        new Set(['eastside']),
+      );
+      expect(districts.find((d) => d.id === 'eastside')!.gentrificationLevel)
+        .toBeGreaterThanOrEqual(60);
+      expect(result.notices.some((n) => n.includes('soul is leaving'))).toBe(true);
+    });
+
+    it('does not re-emit a threshold notice once already past it', () => {
+      // eastside already well past both thresholds; should announce neither.
+      districts[0].gentrificationLevel = 75;
+      districts[1].gentrificationLevel = 75;
+      const result = gentrificationSystem.applyTurnGentrification(new Set());
+      expect(result.notices.some((n) => n.includes('different crowd'))).toBe(false);
+      expect(result.notices.some((n) => n.includes('soul is leaving'))).toBe(false);
     });
 
     it('clamps gentrification at 100', () => {
