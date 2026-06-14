@@ -34,6 +34,7 @@ export interface RunModifier {
   effects: {
     moneyMultiplier?: number;
     reputationMultiplier?: number;
+    fansMultiplier?: number;
     stressMultiplier?: number;
     startingBandQuality?: number;
     venueRentMultiplier?: number;
@@ -98,7 +99,8 @@ class RunManager {
       startingConnections: 5,
       maxTurns: 50,
       winConditions: [
-        { type: 'reputation', target: 100, description: 'Reach 100 reputation' }
+        { type: 'reputation', target: 80, description: 'Reach 80 reputation' },
+        { type: 'fans', target: 350, description: 'Build a 350-strong following' }
       ],
       modifiers: []
     });
@@ -113,7 +115,7 @@ class RunManager {
       startingConnections: 10,
       maxTurns: 20,
       winConditions: [
-        { type: 'reputation', target: 80, description: 'Reach 80 reputation in 20 turns' }
+        { type: 'reputation', target: 70, description: 'Reach 70 reputation in 20 turns' }
       ],
       modifiers: [
         {
@@ -133,13 +135,15 @@ class RunManager {
       id: 'hardcore',
       name: 'Hardcore',
       description: 'No room for mistakes. One bankruptcy and it\'s over.',
-      startingMoney: 200,
+      startingMoney: 700,
       startingReputation: 5,
       startingConnections: 2,
       maxTurns: 100,
       winConditions: [
-        { type: 'reputation', target: 150, description: 'Reach legendary status (150 rep)' },
-        { type: 'money', target: 10000, description: 'Bank $10,000' }
+        // rep is clamped at 100, so the old 150 target was literally
+        // unreachable; pair a high rep with a real bankroll instead.
+        { type: 'reputation', target: 80, description: 'Reach legendary status (80 rep)' },
+        { type: 'money', target: 1000, description: 'Bank $1,000' }
       ],
       modifiers: [
         {
@@ -147,9 +151,9 @@ class RunManager {
           name: 'Brutal Scene',
           description: 'Everything costs more, bands are pickier',
           effects: {
-            venueRentMultiplier: 1.5,
-            startingBandQuality: -10,
-            moneyMultiplier: 0.8
+            venueRentMultiplier: 1.05,
+            startingBandQuality: -3,
+            moneyMultiplier: 1.0
           }
         }
       ]
@@ -165,16 +169,17 @@ class RunManager {
       startingConnections: 15,
       maxTurns: 40,
       winConditions: [
-        { type: 'shows', target: 20, description: 'Run 20 successful multi-band shows' },
-        { type: 'fans', target: 10000, description: 'Attract 10,000 total fans' }
+        { type: 'shows', target: 15, description: 'Run 15 multi-band shows' },
+        { type: 'fans', target: 500, description: 'Attract 500 total fans' }
       ],
       modifiers: [
         {
           id: 'bill_bonus',
           name: 'Bill Specialist',
-          description: 'Multi-band shows give bonus reputation',
+          description: 'Big bills pull bigger crowds',
           effects: {
-            reputationMultiplier: 1.3
+            fansMultiplier: 1.6,
+            reputationMultiplier: 1.15
           }
         }
       ]
@@ -286,12 +291,14 @@ class RunManager {
   getRunModifiers(): {
     moneyMultiplier: number;
     reputationMultiplier: number;
+    fansMultiplier: number;
     stressMultiplier: number;
     venueRentMultiplier: number;
   } {
     const merged = {
       moneyMultiplier: 1,
       reputationMultiplier: 1,
+      fansMultiplier: 1,
       stressMultiplier: 1,
       venueRentMultiplier: 1,
     };
@@ -299,6 +306,7 @@ class RunManager {
     this.currentRun.config.modifiers.forEach((mod) => {
       const e = mod.effects;
       if (e.moneyMultiplier != null) merged.moneyMultiplier *= e.moneyMultiplier;
+      if (e.fansMultiplier != null) merged.fansMultiplier *= e.fansMultiplier;
       if (e.reputationMultiplier != null)
         merged.reputationMultiplier *= e.reputationMultiplier;
       if (e.stressMultiplier != null)

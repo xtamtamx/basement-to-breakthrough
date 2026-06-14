@@ -10,25 +10,22 @@ describe('RunManager run modifiers', () => {
     runManager.abandonRun();
   });
 
+  const NEUTRAL = {
+    moneyMultiplier: 1,
+    reputationMultiplier: 1,
+    fansMultiplier: 1,
+    stressMultiplier: 1,
+    venueRentMultiplier: 1,
+  };
+
   it('returns neutral multipliers with no active run', () => {
-    const mods = runManager.getRunModifiers();
-    expect(mods).toEqual({
-      moneyMultiplier: 1,
-      reputationMultiplier: 1,
-      stressMultiplier: 1,
-      venueRentMultiplier: 1,
-    });
+    expect(runManager.getRunModifiers()).toEqual(NEUTRAL);
     expect(runManager.getStartingBandQualityModifier()).toBe(0);
   });
 
   it('Classic run has no modifiers (plays straight)', () => {
     runManager.startRun('classic');
-    expect(runManager.getRunModifiers()).toEqual({
-      moneyMultiplier: 1,
-      reputationMultiplier: 1,
-      stressMultiplier: 1,
-      venueRentMultiplier: 1,
-    });
+    expect(runManager.getRunModifiers()).toEqual(NEUTRAL);
     expect(runManager.getStartingBandQualityModifier()).toBe(0);
   });
 
@@ -40,11 +37,15 @@ describe('RunManager run modifiers', () => {
     expect(mods.moneyMultiplier).toBe(1);
   });
 
-  it('Hardcore run raises rent, cuts money, weakens bands (Brutal Scene)', () => {
+  it('Hardcore run raises rent and weakens bands (Brutal Scene)', () => {
     runManager.startRun('hardcore');
     const mods = runManager.getRunModifiers();
-    expect(mods.venueRentMultiplier).toBe(1.5);
-    expect(mods.moneyMultiplier).toBe(0.8);
-    expect(runManager.getStartingBandQualityModifier()).toBe(-10);
+    expect(mods.venueRentMultiplier).toBe(1.05);
+    expect(runManager.getStartingBandQualityModifier()).toBe(-3);
+  });
+
+  it('Festival run boosts crowd size (Bill Specialist)', () => {
+    runManager.startRun('festival');
+    expect(runManager.getRunModifiers().fansMultiplier).toBe(1.6);
   });
 });

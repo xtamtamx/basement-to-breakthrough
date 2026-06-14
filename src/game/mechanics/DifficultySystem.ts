@@ -76,14 +76,15 @@ export class DifficultySystem {
     const successFactor = Math.min((reputation + fans) / 1000, 1.5);
     
     return {
-      // Economic pressure increases over time
-      rentMultiplier: 1 + (roundFactor * 0.5) + (successFactor * 0.3),
-      bandCostMultiplier: 1 + (roundFactor * 0.3) + (successFactor * 0.2),
+      // Economic pressure increases over time (balance pass: the original
+      // ramps outran revenue and bankrupted competent players by mid-run)
+      rentMultiplier: 1 + (roundFactor * 0.25) + (successFactor * 0.15),
+      bandCostMultiplier: 1 + (roundFactor * 0.15) + (successFactor * 0.1),
       ticketPriceResistance: 1 + (roundFactor * 0.4),
-      
+
       // Scene becomes more demanding
       fanExpectations: 1 + (roundFactor * 0.6) + (successFactor * 0.4),
-      reputationDecay: Math.min(roundFactor * 2, 5), // Max 5 rep lost per turn
+      reputationDecay: Math.min(roundFactor * 1, 3), // Max 3 rep lost per turn
       competitionLevel: Math.floor(1 + (roundFactor * 3)), // More competing shows
       
       // Risks increase with visibility
@@ -172,7 +173,7 @@ export class DifficultySystem {
   }
   
   // Get band cost with difficulty scaling
-  getScaledBandCost(baseCost: number = 50): number {
+  getScaledBandCost(baseCost: number = 35): number {
     const difficulty = this.getCurrentDifficulty();
     return Math.floor(baseCost * difficulty.bandCostMultiplier);
   }

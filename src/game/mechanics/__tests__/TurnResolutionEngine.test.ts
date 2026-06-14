@@ -192,6 +192,7 @@ describe('TurnResolutionEngine', () => {
     vi.mocked(runManager).getRunModifiers = vi.fn().mockReturnValue({
       moneyMultiplier: 1,
       reputationMultiplier: 1,
+      fansMultiplier: 1,
       stressMultiplier: 1,
       venueRentMultiplier: 1,
     });
@@ -261,10 +262,10 @@ describe('TurnResolutionEngine', () => {
     it('charges flat living costs instead of per-venue rent', async () => {
       const result = await turnResolutionEngine.executeFullTurn();
 
-      // LIVING_COSTS_PER_TURN (30) + mocked upkeep (0); venue rent is paid
+      // LIVING_COSTS_PER_TURN (20) + mocked upkeep (0); venue rent is paid
       // per show, never per turn for unbooked city venues
-      expect(result.totalUpkeep).toBe(30);
-      expect(state.addMoney).toHaveBeenCalledWith(-30);
+      expect(result.totalUpkeep).toBe(20);
+      expect(state.addMoney).toHaveBeenCalledWith(-20);
     });
 
     it('passes through day job results', async () => {
@@ -331,6 +332,7 @@ describe('TurnResolutionEngine', () => {
       vi.mocked(runManager).getRunModifiers = vi.fn().mockReturnValue({
         moneyMultiplier: 1,
         reputationMultiplier: 2,
+        fansMultiplier: 1,
         stressMultiplier: 1,
         venueRentMultiplier: 1,
       });

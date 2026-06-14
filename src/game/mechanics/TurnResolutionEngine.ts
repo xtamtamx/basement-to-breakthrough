@@ -33,6 +33,7 @@ import {
   EVICTION_TURNS_BROKE,
   LIVING_COSTS_PER_TURN,
   SHOW_STRESS_BASE,
+  STRESS_RECOVERY_PER_TURN,
   RunEndState,
 } from '../constants/runConstants';
 import {
@@ -207,6 +208,10 @@ export class TurnResolutionEngine {
     // Recording gear sells EPs between shows
     if (passiveMoney > 0) store.addMoney(passiveMoney);
     if (passiveFans > 0) store.addFans(passiveFans);
+
+    // Rest between shows sheds some stress (clamped at 0 by addStress), so
+    // Burnout is a paced resource, not an inevitable death timer.
+    store.addStress(-STRESS_RECOVERY_PER_TURN);
 
     const jobResult = dayJobSystem.processJobIncome();
     if (jobResult) {
@@ -568,6 +573,10 @@ export class TurnResolutionEngine {
     );
     const promotedAttendance = baseAttendance * promotionEffectiveness;
     const hypeMultiplier = 1 + hype / 200; // Up to 50% bonus at max hype
+    // A fuller bill draws a bigger crowd (+20% per opener) — this is what
+    // makes multi-band shows worth their extra band fees and gives Festival
+    // mode its identity.
+    const billMultiplier = 1 + 0.2 * Math.max(0, allShowBands.length - 1);
     // Gentrified neighborhoods draw thinner, less authentic crowds
     const gentrificationAttendance = gentrificationSystem.getAttendanceMultiplier(
       venue.location.id,
@@ -579,6 +588,7 @@ export class TurnResolutionEngine {
           synergyMultiplier *
           difficultyModifiers.attendanceMultiplier *
           hypeMultiplier *
+          billMultiplier *
           gentrificationAttendance,
       ),
       effectiveCapacity,
@@ -625,11 +635,13 @@ export class TurnResolutionEngine {
       totalCosts = Math.floor(totalCosts * ESCALATION_COST_MULTIPLIER);
     }
 
-    // Calculate reputation and fan gains with equipment bonus
+    // Calculate reputation and fan gains with equipment bonus. (Balance pass:
+    // gains were ~1 order of magnitude below the win thresholds, making every
+    // mode unwinnable; raised the per-show yield so a competent run can climb.)
     let reputationGain = Math.floor(
-      (finalAttendance / 10) * equipmentReputationMultiplier,
+      (finalAttendance / 5) * equipmentReputationMultiplier,
     );
-    let fanGain = Math.floor(finalAttendance / 5);
+    let fanGain = Math.floor(finalAttendance / 2);
 
     const fansBonus = synergyManager.calculateEffectTotal(
       'FANS_PERCENT',
@@ -639,7 +651,7 @@ export class TurnResolutionEngine {
       'REPUTATION_PERCENT',
       synergyResults,
     );
-    fanGain = Math.floor(fanGain * (1 + fansBonus / 100));
+    fanGain = Math.floor(fanGain * (1 + fansBonus / 100) * runMods.fansMultiplier);
     reputationGain = Math.floor(
       reputationGain * (1 + repBonus / 100) * runMods.reputationMultiplier,
     );

@@ -25,12 +25,17 @@ export const EVICTION_TURNS_BROKE = 3;
 // Turn Economy
 // Flat per-turn burn ("rent, ramen, and regret"). Venue rent is paid per
 // show at booking/resolution time — NOT per turn for every city venue.
-export const LIVING_COSTS_PER_TURN = 30;
+export const LIVING_COSTS_PER_TURN = 20;
 
 // Base stress each show adds before the run's stressMultiplier. Touring is
 // tiring — this is what makes the Burnout loss reachable through play (not
 // just day jobs) and gives Speed mode's stress modifier teeth.
 export const SHOW_STRESS_BASE = 4;
+
+// Stress shed each turn from simply resting (the scene breathes between shows).
+// Without this, stress only ever climbs and Burnout was a near-certainty in
+// longer runs; with it, stress is a resource you pace rather than a death timer.
+export const STRESS_RECOVERY_PER_TURN = 5;
 
 // Run End Reasons
 export type RunEndReason =
