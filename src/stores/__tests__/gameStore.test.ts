@@ -186,7 +186,8 @@ describe('Game Store', () => {
       
       scheduleShow(show);
       expect(useGameStore.getState().scheduledShows).toHaveLength(1);
-      expect(useGameStore.getState().scheduledShows[0]).toEqual(show);
+      // toMatchObject: the stored show also carries a bookingDeposit field
+      expect(useGameStore.getState().scheduledShows[0]).toMatchObject(show);
     });
   });
 

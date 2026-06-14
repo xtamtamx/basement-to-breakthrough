@@ -59,13 +59,43 @@ describe('show booking → execution flow (real path)', () => {
     useGameStore.getState().scheduleShow(show, 3);
 
     // Display mirror used by nav badges / map markers / completeShow lookup.
-    expect(useGameStore.getState().scheduledShows).toContainEqual(show);
+    // (the stored show also carries a bookingDeposit field, so match a subset)
+    const mirror = useGameStore.getState().scheduledShows;
+    expect(mirror).toHaveLength(1);
+    expect(mirror[0]).toMatchObject(show);
 
     // The execution + promotion owner now actually knows about the show.
     const scheduled = showPromotionSystem.getScheduledShows();
     expect(scheduled).toHaveLength(1);
     expect(scheduled[0].id).toBe(show.id);
     expect(scheduled[0].turnsUntilShow).toBe(3); // countdown starts here
+  });
+
+  it('holds the venue rent as a deposit at booking (escrow)', () => {
+    const store = useGameStore.getState();
+    const venue = store.venues.find((v) => v.rent > 0) ?? store.venues[0];
+    const band = store.allBands.find((b) =>
+      store.rosterBandIds.includes(b.id),
+    )!;
+    const show: Show = {
+      id: 'escrow-test',
+      venueId: venue.id,
+      bandId: band.id,
+      lineup: [band.id],
+      ticketPrice: 20,
+      date: new Date(),
+      status: 'SCHEDULED',
+      revenue: 0,
+    };
+    const moneyBefore = useGameStore.getState().money;
+
+    useGameStore.getState().scheduleShow(show, 3);
+
+    // Booking immediately reserves the rent so you can't over-book one balance
+    expect(useGameStore.getState().money).toBe(moneyBefore - venue.rent);
+    expect(useGameStore.getState().scheduledShows[0].bookingDeposit).toBe(
+      venue.rent,
+    );
   });
 
   it('clamps turnsInAdvance into the promotion system 1-5 window', () => {

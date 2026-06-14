@@ -450,6 +450,7 @@ export interface Show {
   reputationGain?: number;
   round?: number;
   fansGained?: number;
+  bookingDeposit?: number; // Rent held at booking, refunded when the show resolves
 }
 
 export interface Bill {

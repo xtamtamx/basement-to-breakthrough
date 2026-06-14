@@ -141,6 +141,11 @@ export class TurnResolutionEngine {
     const activeDistrictIds = new Set<string>();
 
     showsToExecute.forEach((scheduledShow) => {
+      // Refund the booking deposit now that the show resolves — the full cost
+      // is charged below (or, for a cancelled show, nothing is owed).
+      const deposit = scheduledShow.bookingDeposit ?? 0;
+      if (deposit > 0) store.addMoney(deposit);
+
       // A venue raided by last turn's police crackdown can't host — the show
       // is cancelled with a reputation hit instead of resolving.
       if (difficultySystem.isVenueRaided(scheduledShow.venueId)) {

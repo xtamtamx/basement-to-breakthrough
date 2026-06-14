@@ -802,7 +802,15 @@ export const useGameStore = create<GameStore>()(
       // can never silently fail and strand an unrunnable show in the display list.
       scheduleShow: (show, turnsInAdvance = 3) => {
         const turns = Math.max(1, Math.min(5, Math.round(turnsInAdvance)));
-        showPromotionSystem.scheduleShow(show, turns);
+
+        // Hold the venue rent as a deposit at booking so the player can't book
+        // more shows than they can afford against one balance (refunded when
+        // the show resolves; the full cost is charged at execution).
+        const venue = get().venues.find((v) => v.id === show.venueId);
+        const deposit = venue ? Math.max(0, venue.rent) : 0;
+        const bookedShow = { ...show, bookingDeposit: deposit };
+
+        showPromotionSystem.scheduleShow(bookedShow, turns);
 
         // Import dynamically to avoid circular dependency
         import('@/game/systems/CityGrowthManager').then(({ cityGrowthManager }) => {
@@ -810,9 +818,14 @@ export const useGameStore = create<GameStore>()(
         });
 
         set((state) => ({
+          money: clamp(
+            state.money - deposit,
+            CONSTRAINTS.MIN_MONEY,
+            CONSTRAINTS.MAX_MONEY,
+          ),
           scheduledShows: [
             ...state.scheduledShows.slice(-199), // Keep last 200 shows
-            show
+            bookedShow,
           ],
         }));
 
