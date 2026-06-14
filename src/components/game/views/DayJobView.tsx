@@ -17,7 +17,7 @@ export const DayJobView: React.FC = () => {
   }, [reputation, connections]);
 
   const currentJob = dayJobSystem.getCurrentJob();
-  
+
   const handleTakeJob = (job: DayJob) => {
     if (dayJobSystem.setJob(job)) {
       haptics.success();
@@ -38,8 +38,8 @@ export const DayJobView: React.FC = () => {
     setAvailableJobs(jobs);
   };
 
-  const filteredJobs = filterCategory === 'all' 
-    ? availableJobs 
+  const filteredJobs = filterCategory === 'all'
+    ? availableJobs
     : availableJobs.filter(job => job.category === filterCategory);
 
   const getCategoryIcon = (category: JobCategory) => {
@@ -51,34 +51,57 @@ export const DayJobView: React.FC = () => {
     }
   };
 
+  // Small chip used for a job's effect stats.
+  const StatChip: React.FC<{ bg: string; color: string; children: React.ReactNode }> = ({ bg, color, children }) => (
+    <span style={{
+      padding: '3px 8px',
+      backgroundColor: bg,
+      color,
+      fontSize: '11px',
+      borderRadius: '6px',
+      fontWeight: 600
+    }}>{children}</span>
+  );
+
   return (
     <div style={{
       display: 'flex',
       flexDirection: 'column',
       height: '100%',
-      backgroundColor: '#0a0a0a',
+      backgroundImage: 'linear-gradient(to bottom, #1a1030, #0c0a14)',
       overflow: 'hidden'
     }}>
       {/* Header */}
       <div style={{
         backgroundColor: '#111827',
-        borderBottom: '1px solid #374151',
-        padding: '8px 12px',
-        flexShrink: 0
+        borderBottom: '1px solid #1f2937',
+        padding: '10px 14px',
+        paddingTop: 'calc(10px + env(safe-area-inset-top))',
+        flexShrink: 0,
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px'
       }}>
-        <h2 style={{
-          fontSize: '14px',
-          fontWeight: 'bold',
-          color: '#ec4899',
-          margin: 0
-        }}>Day Job</h2>
-        <p style={{
-          fontSize: '11px',
-          color: '#9ca3af',
-          marginTop: '2px'
-        }}>
-          {currentJob ? `Current: ${currentJob.name}` : 'Find a job to earn steady income'}
-        </p>
+        <Briefcase size={18} color="#06b6d4" />
+        <div style={{ minWidth: 0 }}>
+          <h2 style={{
+            fontSize: '15px',
+            fontWeight: 900,
+            color: '#ffffff',
+            margin: 0,
+            letterSpacing: '0.02em'
+          }}>Day Job</h2>
+          <p style={{
+            fontSize: '11px',
+            color: '#9ca3af',
+            margin: '1px 0 0',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
+          }}>
+            {currentJob ? `Clocking in at ${currentJob.name}` : 'Pay rent so the dream survives'}
+          </p>
+        </div>
       </div>
 
       {/* Content */}
@@ -86,84 +109,71 @@ export const DayJobView: React.FC = () => {
         flex: 1,
         overflowY: 'auto',
         padding: '12px',
-        paddingBottom: '80px'
+        paddingBottom: 'calc(88px + env(safe-area-inset-bottom))'
       }}>
         {/* Current Job */}
         {currentJob && (
           <section style={{ marginBottom: '16px' }}>
             <h3 style={{
-              fontSize: '14px',
-              fontWeight: '600',
-              color: '#ffffff',
-              marginBottom: '8px'
+              fontSize: '10px',
+              fontWeight: 700,
+              color: '#9ca3af',
+              textTransform: 'uppercase',
+              letterSpacing: '0.06em',
+              margin: '0 0 8px 2px'
             }}>Current Employment</h3>
             <div style={{
-              backgroundImage: 'linear-gradient(to bottom right, rgba(59, 130, 246, 0.1), rgba(168, 85, 247, 0.1))',
-              border: '1px solid #374151',
-              borderRadius: '10px',
-              padding: '12px'
+              backgroundImage: 'linear-gradient(135deg, rgba(6, 182, 212, 0.12), rgba(168, 85, 247, 0.12))',
+              border: '1px solid #06b6d4',
+              borderRadius: '12px',
+              padding: '14px'
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
-                <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', gap: '10px' }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
                   <h4 style={{
                     fontSize: '15px',
-                    fontWeight: 'bold',
+                    fontWeight: 800,
                     color: '#ffffff',
-                    marginBottom: '4px'
+                    margin: '0 0 4px'
                   }}>{currentJob.name}</h4>
                   <p style={{
                     fontSize: '12px',
                     color: '#9ca3af',
-                    marginBottom: '8px'
+                    margin: '0 0 10px',
+                    lineHeight: 1.4
                   }}>{currentJob.description}</p>
-                  
+
                   {/* Job Benefits */}
                   <div style={{
                     display: 'grid',
                     gridTemplateColumns: '1fr 1fr',
                     gap: '8px',
-                    marginBottom: '8px'
+                    marginBottom: stress > 70 ? '10px' : 0
                   }}>
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px'
-                    }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <DollarSign size={14} color="#10b981" />
-                      <span style={{ fontSize: '12px', color: '#ffffff' }}>+${currentJob.moneyPerTurn}/turn</span>
+                      <span style={{ fontSize: '12px', color: '#ffffff', fontWeight: 600 }}>+${currentJob.moneyPerTurn}/turn</span>
                     </div>
                     {currentJob.reputationChange !== 0 && (
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px'
-                      }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <Star size={14} color={currentJob.reputationChange > 0 ? '#fbbf24' : '#ef4444'} />
-                        <span style={{ fontSize: '12px', color: '#ffffff' }}>
+                        <span style={{ fontSize: '12px', color: '#ffffff', fontWeight: 600 }}>
                           {currentJob.reputationChange > 0 ? '+' : ''}{currentJob.reputationChange} rep/turn
                         </span>
                       </div>
                     )}
                     {currentJob.fanChange !== 0 && (
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px'
-                      }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <Users size={14} color={currentJob.fanChange > 0 ? '#ec4899' : '#ef4444'} />
-                        <span style={{ fontSize: '12px', color: '#ffffff' }}>
+                        <span style={{ fontSize: '12px', color: '#ffffff', fontWeight: 600 }}>
                           {currentJob.fanChange > 0 ? '+' : ''}{currentJob.fanChange} fans/turn
                         </span>
                       </div>
                     )}
                     {currentJob.stressGain > 0 && (
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px'
-                      }}>
-                        <Clock size={14} color="#fb923c" />
-                        <span style={{ fontSize: '12px', color: '#ffffff' }}>+{currentJob.stressGain}% stress/turn</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Clock size={14} color="#f59e0b" />
+                        <span style={{ fontSize: '12px', color: '#ffffff', fontWeight: 600 }}>+{currentJob.stressGain}% stress/turn</span>
                       </div>
                     )}
                   </div>
@@ -171,33 +181,35 @@ export const DayJobView: React.FC = () => {
                   {/* Stress Warning */}
                   {stress > 70 && (
                     <div style={{
-                      backgroundColor: 'rgba(251, 146, 60, 0.2)',
-                      border: '1px solid #fb923c',
-                      borderRadius: '6px',
-                      padding: '8px',
+                      backgroundColor: 'rgba(245, 158, 11, 0.15)',
+                      border: '1px solid #f59e0b',
+                      borderRadius: '8px',
+                      padding: '8px 10px',
                       fontSize: '11px',
-                      color: '#ffffff'
+                      color: '#fbbf24',
+                      fontWeight: 600
                     }}>
-                      ⚠️ High stress levels affecting performance
+                      ⚠️ Burning out — high stress is dragging your performance down
                     </div>
                   )}
                 </div>
-                
+
                 <button
                   onClick={handleQuitJob}
                   style={{
-                    padding: '6px 12px',
-                    backgroundColor: '#dc2626',
-                    color: '#ffffff',
-                    border: 'none',
-                    borderRadius: '6px',
+                    flexShrink: 0,
+                    padding: '8px 14px',
+                    backgroundColor: 'rgba(220, 38, 38, 0.15)',
+                    color: '#f87171',
+                    border: '1px solid #dc2626',
+                    borderRadius: '8px',
                     fontSize: '12px',
-                    fontWeight: '600',
+                    fontWeight: 700,
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '4px',
-                    minHeight: '32px'
+                    minHeight: '44px'
                   }}
                   aria-label="Quit job"
                 >
@@ -221,17 +233,17 @@ export const DayJobView: React.FC = () => {
             <button
               onClick={() => setFilterCategory('all')}
               style={{
-                padding: '6px 12px',
-                backgroundColor: filterCategory === 'all' ? '#ec4899' : '#1f2937',
+                padding: '8px 14px',
+                backgroundColor: filterCategory === 'all' ? '#ec4899' : '#111827',
                 color: filterCategory === 'all' ? '#ffffff' : '#9ca3af',
                 border: '1px solid',
-                borderColor: filterCategory === 'all' ? '#ec4899' : '#374151',
-                borderRadius: '6px',
+                borderColor: filterCategory === 'all' ? '#ec4899' : '#1f2937',
+                borderRadius: '999px',
                 fontSize: '12px',
-                fontWeight: '500',
+                fontWeight: 600,
                 cursor: 'pointer',
                 whiteSpace: 'nowrap',
-                minHeight: '32px'
+                minHeight: '36px'
               }}
             >
               All Jobs
@@ -241,20 +253,21 @@ export const DayJobView: React.FC = () => {
                 key={category}
                 onClick={() => setFilterCategory(category)}
                 style={{
-                  padding: '6px 12px',
-                  backgroundColor: filterCategory === category ? '#ec4899' : '#1f2937',
+                  padding: '8px 14px',
+                  backgroundColor: filterCategory === category ? '#ec4899' : '#111827',
                   color: filterCategory === category ? '#ffffff' : '#9ca3af',
                   border: '1px solid',
-                  borderColor: filterCategory === category ? '#ec4899' : '#374151',
-                  borderRadius: '6px',
+                  borderColor: filterCategory === category ? '#ec4899' : '#1f2937',
+                  borderRadius: '999px',
                   fontSize: '12px',
-                  fontWeight: '500',
+                  fontWeight: 600,
                   cursor: 'pointer',
                   whiteSpace: 'nowrap',
-                  minHeight: '32px'
+                  minHeight: '36px',
+                  textTransform: 'capitalize'
                 }}
               >
-                {getCategoryIcon(category)} {category.replace('_', ' ')}
+                {getCategoryIcon(category)} {category.replace('_', ' ').toLowerCase()}
               </button>
             ))}
           </div>
@@ -263,23 +276,26 @@ export const DayJobView: React.FC = () => {
         {/* Available Jobs */}
         <section>
           <h3 style={{
-            fontSize: '14px',
-            fontWeight: '600',
-            color: '#ffffff',
-            marginBottom: '8px'
+            fontSize: '10px',
+            fontWeight: 700,
+            color: '#9ca3af',
+            textTransform: 'uppercase',
+            letterSpacing: '0.06em',
+            margin: '0 0 8px 2px'
           }}>
             {currentJob ? 'Other Available Jobs' : 'Available Jobs'}
           </h3>
-          
+
           {filteredJobs.length === 0 ? (
             <div style={{
-              backgroundColor: '#1f2937',
-              border: '1px solid #374151',
-              borderRadius: '10px',
-              padding: '32px',
+              backgroundColor: '#111827',
+              border: '1px solid #1f2937',
+              borderRadius: '16px',
+              padding: '40px 24px',
               textAlign: 'center'
             }}>
-              <p style={{ color: '#9ca3af', fontSize: '14px' }}>No jobs available in this category</p>
+              <div style={{ fontSize: '36px', marginBottom: '10px', lineHeight: 1 }}>💼</div>
+              <p style={{ color: '#9ca3af', fontSize: '13px', margin: 0 }}>No gigs in this category right now</p>
             </div>
           ) : (
             <div style={{ display: 'grid', gap: '8px' }}>
@@ -289,112 +305,104 @@ export const DayJobView: React.FC = () => {
                   (!job.requirements.minReputation || reputation >= job.requirements.minReputation) &&
                   (!job.requirements.minConnections || connections >= job.requirements.minConnections)
                 );
-                
+                const isSelected = selectedJob?.id === job.id;
+
                 return (
                   <div
                     key={job.id}
                     onClick={() => meetsRequirements && setSelectedJob(job)}
                     style={{
-                      backgroundColor: '#1f2937',
-                      border: selectedJob?.id === job.id ? '2px solid #ec4899' : '1px solid #374151',
-                      borderRadius: '10px',
+                      backgroundColor: isSelected ? 'rgba(236, 72, 153, 0.08)' : '#111827',
+                      border: isSelected ? '1px solid #ec4899' : '1px solid #1f2937',
+                      borderRadius: '12px',
                       padding: '12px',
                       cursor: meetsRequirements ? 'pointer' : 'not-allowed',
-                      opacity: meetsRequirements ? 1 : 0.5,
+                      opacity: meetsRequirements ? 1 : 0.55,
                       transition: 'all 0.2s',
                       minHeight: '44px'
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'start', gap: '10px' }}>
-                      <div style={{ fontSize: '20px', flexShrink: 0 }}>{getCategoryIcon(job.category)}</div>
-                      <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'start', gap: '12px' }}>
+                      <div style={{
+                        flexShrink: 0,
+                        width: '38px',
+                        height: '38px',
+                        borderRadius: '10px',
+                        backgroundColor: 'rgba(6, 182, 212, 0.12)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '20px'
+                      }}>{getCategoryIcon(job.category)}</div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
                         <h4 style={{
                           fontSize: '14px',
-                          fontWeight: '600',
+                          fontWeight: 700,
                           color: '#ffffff',
-                          marginBottom: '2px'
+                          margin: '0 0 2px'
                         }}>{job.name}</h4>
                         {venue && (
                           <p style={{
                             fontSize: '11px',
                             color: '#9ca3af',
-                            marginBottom: '2px'
+                            margin: '0 0 2px'
                           }}>📍 {venue.location.name}</p>
                         )}
                         <p style={{
                           fontSize: '12px',
                           color: '#9ca3af',
-                          marginBottom: '6px'
+                          margin: '0 0 8px',
+                          lineHeight: 1.4
                         }}>{job.description}</p>
-                        
+
                         {/* Job Stats */}
                         <div style={{
                           display: 'flex',
                           flexWrap: 'wrap',
-                          gap: '4px'
+                          gap: '5px'
                         }}>
                           {job.moneyPerTurn > 0 && (
-                            <span style={{
-                              padding: '2px 6px',
-                              backgroundColor: 'rgba(16, 185, 129, 0.2)',
-                              color: '#10b981',
-                              fontSize: '11px',
-                              borderRadius: '4px',
-                              fontWeight: '500'
-                            }}>+${job.moneyPerTurn}</span>
+                            <StatChip bg="rgba(16, 185, 129, 0.15)" color="#10b981">+${job.moneyPerTurn}</StatChip>
                           )}
                           {job.reputationChange !== 0 && (
-                            <span style={{
-                              padding: '2px 6px',
-                              backgroundColor: job.reputationChange > 0 ? 'rgba(251, 191, 36, 0.2)' : 'rgba(239, 68, 68, 0.2)',
-                              color: job.reputationChange > 0 ? '#fbbf24' : '#ef4444',
-                              fontSize: '11px',
-                              borderRadius: '4px',
-                              fontWeight: '500'
-                            }}>
+                            <StatChip
+                              bg={job.reputationChange > 0 ? 'rgba(251, 191, 36, 0.15)' : 'rgba(239, 68, 68, 0.15)'}
+                              color={job.reputationChange > 0 ? '#fbbf24' : '#ef4444'}
+                            >
                               {job.reputationChange > 0 ? '+' : ''}{job.reputationChange} rep
-                            </span>
+                            </StatChip>
                           )}
                           {job.fanChange !== 0 && (
-                            <span style={{
-                              padding: '2px 6px',
-                              backgroundColor: job.fanChange > 0 ? 'rgba(236, 72, 153, 0.2)' : 'rgba(239, 68, 68, 0.2)',
-                              color: job.fanChange > 0 ? '#ec4899' : '#ef4444',
-                              fontSize: '11px',
-                              borderRadius: '4px',
-                              fontWeight: '500'
-                            }}>
+                            <StatChip
+                              bg={job.fanChange > 0 ? 'rgba(236, 72, 153, 0.15)' : 'rgba(239, 68, 68, 0.15)'}
+                              color={job.fanChange > 0 ? '#ec4899' : '#ef4444'}
+                            >
                               {job.fanChange > 0 ? '+' : ''}{job.fanChange} fans
-                            </span>
+                            </StatChip>
                           )}
                           {job.connectionGain && job.connectionGain > 0 && (
-                            <span style={{
-                              padding: '2px 6px',
-                              backgroundColor: 'rgba(236, 72, 153, 0.2)',
-                              color: '#ec4899',
-                              fontSize: '11px',
-                              borderRadius: '4px',
-                              fontWeight: '500'
-                            }}>+{job.connectionGain} conn</span>
+                            <StatChip bg="rgba(6, 182, 212, 0.15)" color="#06b6d4">+{job.connectionGain} conn</StatChip>
                           )}
                         </div>
-                        
+
                         {/* Requirements */}
-                        {job.requirements && (
+                        {job.requirements && (job.requirements.minReputation || job.requirements.minConnections) && (
                           <div style={{
                             display: 'flex',
+                            flexWrap: 'wrap',
                             gap: '6px',
-                            marginTop: '4px',
-                            fontSize: '11px'
+                            marginTop: '6px',
+                            fontSize: '11px',
+                            fontWeight: 600
                           }}>
                             {job.requirements.minReputation && (
                               <span style={{ color: reputation >= job.requirements.minReputation ? '#10b981' : '#ef4444' }}>
-                                {job.requirements.minReputation}+ REP
+                                {reputation >= job.requirements.minReputation ? '✓' : '✕'} {job.requirements.minReputation}+ REP
                               </span>
                             )}
                             {job.requirements.minConnections && (
                               <span style={{ color: connections >= job.requirements.minConnections ? '#10b981' : '#ef4444' }}>
-                                {job.requirements.minConnections}+ CONN
+                                {connections >= job.requirements.minConnections ? '✓' : '✕'} {job.requirements.minConnections}+ CONN
                               </span>
                             )}
                           </div>
@@ -416,54 +424,65 @@ export const DayJobView: React.FC = () => {
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            backgroundColor: 'rgba(0, 0, 0, 0.85)',
             zIndex: 50,
             display: 'flex',
             alignItems: 'flex-end',
             justifyContent: 'center',
             padding: '16px'
-          }}>
+          }}
+          onClick={() => setSelectedJob(null)}
+          >
             <div style={{
-              backgroundColor: '#1f2937',
-              border: '1px solid #374151',
-              borderRadius: '12px',
+              backgroundImage: 'linear-gradient(to bottom, #1a1030, #0c0a14)',
+              border: '1px solid #1f2937',
+              borderTop: '2px solid #ec4899',
+              borderRadius: '16px',
               padding: '20px',
+              paddingBottom: 'calc(20px + env(safe-area-inset-bottom))',
               width: '100%',
               maxWidth: '448px',
+              boxShadow: '0 12px 48px rgba(0,0,0,0.6)',
               animation: 'slideUp 0.3s ease-out'
-            }}>
+            }}
+            onClick={e => e.stopPropagation()}
+            >
               <h3 style={{
-                fontSize: '16px',
-                fontWeight: 'bold',
-                color: '#ffffff',
-                marginBottom: '12px'
+                fontSize: '10px',
+                fontWeight: 700,
+                color: '#9ca3af',
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+                margin: '0 0 10px'
               }}>Take This Job?</h3>
               <h4 style={{
-                fontSize: '14px',
-                fontWeight: '600',
+                fontSize: '16px',
+                fontWeight: 800,
                 color: '#ffffff',
-                marginBottom: '4px'
+                margin: '0 0 4px'
               }}>{selectedJob.name}</h4>
               <p style={{
                 fontSize: '12px',
                 color: '#9ca3af',
-                marginBottom: '16px'
+                margin: '0 0 16px',
+                lineHeight: 1.5
               }}>{selectedJob.description}</p>
-              
+
               {currentJob && (
                 <div style={{
-                  backgroundColor: 'rgba(251, 146, 60, 0.2)',
-                  border: '1px solid #fb923c',
-                  borderRadius: '8px',
-                  padding: '12px',
+                  backgroundColor: 'rgba(245, 158, 11, 0.15)',
+                  border: '1px solid #f59e0b',
+                  borderRadius: '10px',
+                  padding: '10px 12px',
                   marginBottom: '16px',
                   fontSize: '12px',
-                  color: '#ffffff'
+                  color: '#fbbf24',
+                  fontWeight: 600
                 }}>
-                  ⚠️ Taking this job will replace your current position
+                  ⚠️ This kicks {currentJob.name} to the curb
                 </div>
               )}
-              
+
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button
                   onClick={() => setSelectedJob(null)}
@@ -473,9 +492,9 @@ export const DayJobView: React.FC = () => {
                     backgroundColor: '#374151',
                     color: '#ffffff',
                     border: 'none',
-                    borderRadius: '8px',
+                    borderRadius: '10px',
                     fontSize: '14px',
-                    fontWeight: '600',
+                    fontWeight: 700,
                     cursor: 'pointer',
                     minHeight: '44px'
                   }}
@@ -490,9 +509,9 @@ export const DayJobView: React.FC = () => {
                     backgroundColor: '#ec4899',
                     color: '#ffffff',
                     border: 'none',
-                    borderRadius: '8px',
+                    borderRadius: '10px',
                     fontSize: '14px',
-                    fontWeight: '600',
+                    fontWeight: 700,
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
@@ -509,7 +528,7 @@ export const DayJobView: React.FC = () => {
           </div>
         )}
       </div>
-      
+
       <style>{`
         @keyframes slideUp {
           from {
