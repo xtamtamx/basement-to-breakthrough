@@ -66,3 +66,48 @@ describe('MetaProgressionManager purchases', () => {
     });
   });
 });
+
+// Each run banks its end-of-run fame at most once. Loading a mid-run save and
+// replaying the same run to conclusion must not re-credit fame.
+describe('MetaProgressionManager.bankRunOnce', () => {
+  it('credits fame the first time a run id is banked', () => {
+    const runId = `run-test-${Date.now()}-a`;
+    const fameBefore = metaProgressionManager.getProgression().currency.fame;
+
+    const banked = metaProgressionManager.bankRunOnce(runId, 150);
+
+    expect(banked).toBe(true);
+    expect(metaProgressionManager.getProgression().currency.fame).toBe(
+      fameBefore + 150,
+    );
+  });
+
+  it('is a no-op when the same run id is banked again', () => {
+    const runId = `run-test-${Date.now()}-b`;
+
+    expect(metaProgressionManager.bankRunOnce(runId, 150)).toBe(true);
+    const fameAfterFirst =
+      metaProgressionManager.getProgression().currency.fame;
+
+    // Replaying the same run's conclusion must not re-credit fame
+    const second = metaProgressionManager.bankRunOnce(runId, 150);
+
+    expect(second).toBe(false);
+    expect(metaProgressionManager.getProgression().currency.fame).toBe(
+      fameAfterFirst,
+    );
+  });
+
+  it('still banks a different run id independently', () => {
+    const runA = `run-test-${Date.now()}-c`;
+    const runB = `run-test-${Date.now()}-d`;
+
+    expect(metaProgressionManager.bankRunOnce(runA, 100)).toBe(true);
+    const fameAfterA = metaProgressionManager.getProgression().currency.fame;
+
+    expect(metaProgressionManager.bankRunOnce(runB, 200)).toBe(true);
+    expect(metaProgressionManager.getProgression().currency.fame).toBe(
+      fameAfterA + 200,
+    );
+  });
+});

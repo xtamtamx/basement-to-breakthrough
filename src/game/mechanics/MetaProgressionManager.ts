@@ -13,6 +13,10 @@ export interface MetaProgression {
   };
   stats: MetaStats;
   upgrades: MetaUpgrade[];
+  // Run ids whose end-of-run fame has already been banked. Persisted so that
+  // loading a mid-run save and replaying to conclusion can't re-credit fame
+  // for a run that already paid out.
+  bankedRunIds: string[];
 }
 
 export interface MetaStats {
@@ -82,7 +86,8 @@ class MetaProgressionManager {
         perfectRuns: 0,
         bestScores: {}
       },
-      upgrades: []
+      upgrades: [],
+      bankedRunIds: []
     };
 
     const stored = safeStorage.getItem('btb-meta-progression');
@@ -102,6 +107,7 @@ class MetaProgressionManager {
         achievements: parsed.achievements ?? defaults.achievements,
         unlocks: parsed.unlocks ?? defaults.unlocks,
         upgrades: parsed.upgrades ?? defaults.upgrades,
+        bankedRunIds: parsed.bankedRunIds ?? defaults.bankedRunIds,
       };
     } catch (e) {
       devLog.warn('Corrupt meta-progression blob; resetting to defaults', e);
@@ -323,6 +329,20 @@ class MetaProgressionManager {
     this.progression.currency.fame += fame;
     this.progression.currency.legacy += legacy;
     this.saveProgression();
+  }
+
+  // Bank a run's end-of-run fame exactly once per run id. Returns false (and
+  // does nothing) if this run already paid out — so loading a mid-run save and
+  // replaying the same run to conclusion can't double-credit fame. Returns true
+  // on the first (real) bank.
+  bankRunOnce(runId: string, fame: number): boolean {
+    if (this.progression.bankedRunIds.includes(runId)) {
+      return false;
+    }
+    this.progression.currency.fame += fame;
+    this.progression.bankedRunIds.push(runId);
+    this.saveProgression();
+    return true;
   }
   
   // Purchase an upgrade
