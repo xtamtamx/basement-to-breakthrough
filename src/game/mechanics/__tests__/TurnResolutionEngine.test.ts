@@ -449,6 +449,39 @@ describe('TurnResolutionEngine', () => {
       expect(result.runEnd?.turn).toBe(35);
     });
 
+    it("honors the active run's per-config turn cap (Speed = 20)", async () => {
+      const speedRun = {
+        config: { id: 'speed', maxTurns: 20 },
+        stats: { totalShows: 0, totalRevenue: 0, totalFans: 0, bandsManaged: 0, disasters: 0 },
+      };
+      vi.mocked(runManager).getCurrentRun = vi.fn().mockReturnValue(speedRun);
+      vi.mocked(runManager).checkWinConditions = vi.fn().mockReturnValue(false);
+      // runEnd fires → concludeRun runs, so endRun must return a real result
+      vi.mocked(runManager).endRun = vi.fn().mockReturnValue({
+        success: false, score: 0, achievements: [], unlocks: [],
+        stats: speedRun.stats, newHighScore: false,
+      });
+      state = makeState({ currentRound: 20 });
+
+      const result = await turnResolutionEngine.executeFullTurn();
+
+      // Fades out at the config cap (20), not the global 35
+      expect(result.runEnd?.reason).toBe('FADE_OUT_LOSS');
+    });
+
+    it('opens escalation in the last 5 turns relative to the cap', async () => {
+      vi.mocked(runManager).getCurrentRun = vi.fn().mockReturnValue({
+        config: { id: 'speed', maxTurns: 20 },
+        stats: { totalShows: 0, totalRevenue: 0, totalFans: 0, disasters: 0 },
+      });
+      vi.mocked(runManager).checkWinConditions = vi.fn().mockReturnValue(false);
+      state = makeState({ currentRound: 16 }); // 20 - 4
+
+      const result = await turnResolutionEngine.executeFullTurn();
+
+      expect(result.isEscalation).toBe(true);
+    });
+
     it('evicts after three consecutive broke turns, with warnings first', async () => {
       state = makeState({ money: 0 });
 

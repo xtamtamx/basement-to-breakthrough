@@ -101,10 +101,20 @@ export interface TurnResult {
 }
 
 export class TurnResolutionEngine {
+  // The active run's turn cap and the turn its escalation window opens. Modes
+  // differ in length (Speed 20 ... Hardcore 100); escalation is always the
+  // last (MAX_TURNS - ESCALATION_START_TURN + 1) turns of whatever the cap is.
+  private getRunBounds(): { maxTurns: number; escalationStart: number } {
+    const maxTurns = runManager.getCurrentRun()?.config.maxTurns ?? MAX_TURNS;
+    const escalationStart = maxTurns - (MAX_TURNS - ESCALATION_START_TURN);
+    return { maxTurns, escalationStart };
+  }
+
   async executeFullTurn(): Promise<TurnResult> {
     const store = useGameStore.getState();
     const turn = store.currentRound;
-    const isEscalation = turn >= ESCALATION_START_TURN;
+    const { maxTurns, escalationStart } = this.getRunBounds();
+    const isEscalation = turn >= escalationStart;
 
     // The run is over — refuse to re-resolve (guards a same-tick double-tap on
     // the run-ending turn, which would double-charge upkeep and re-run events).
@@ -254,7 +264,7 @@ export class TurnResolutionEngine {
     const warnings: string[] = [];
     if (isEscalation) {
       warnings.push(
-        `ESCALATION: Turn ${turn}/${MAX_TURNS} - Costs +50%, incidents +100%`,
+        `ESCALATION: Turn ${turn}/${maxTurns} - Costs +50%, incidents +100%`,
       );
     }
     if (brokeTurns > 0) {
@@ -768,8 +778,8 @@ export class TurnResolutionEngine {
       return { reason: 'EVICTION_LOSS', turn, finalStats };
     }
 
-    // LOSS: Fade Out (turn 35 without win)
-    if (turn >= MAX_TURNS) {
+    // LOSS: Fade Out (reached the run's turn cap without winning)
+    if (turn >= this.getRunBounds().maxTurns) {
       return { reason: 'FADE_OUT_LOSS', turn, finalStats };
     }
 
@@ -785,10 +795,11 @@ export class TurnResolutionEngine {
     costMultiplier: number;
     incidentMultiplier: number;
   } {
-    const isEscalation = turn >= ESCALATION_START_TURN;
+    const { maxTurns, escalationStart } = this.getRunBounds();
+    const isEscalation = turn >= escalationStart;
     return {
       isEscalation,
-      turnsRemaining: Math.max(0, MAX_TURNS - turn),
+      turnsRemaining: Math.max(0, maxTurns - turn),
       costMultiplier: isEscalation ? ESCALATION_COST_MULTIPLIER : 1,
       incidentMultiplier: isEscalation ? ESCALATION_INCIDENT_MULTIPLIER : 1,
     };

@@ -3,6 +3,7 @@ import { MainGameView } from "@components/game/MainGameView";
 import { PixelArtMainMenu } from "@components/game/PixelArtMainMenu";
 import { MetaProgressionShop } from "@components/game/MetaProgressionShop";
 import { useGameStore } from "@stores/gameStore";
+import { GamePhase } from "@game/types";
 import { SettingsModal } from "@components/ui/SettingsModal";
 import { TutorialOverlay } from "@components/tutorial/TutorialOverlay";
 import { RunConfig } from "@game/mechanics/RunManager";
@@ -85,8 +86,12 @@ function App() {
   }
 
   if (showMainMenu) {
+    // Offer Continue only for an IN-PROGRESS run: a finished (GAME_OVER) run
+    // must not be resumable, or Continue drops the player onto a dead board
+    // with no end screen.
     const hasSavedGame =
-      safeStorage.getItem("diy-indie-empire-storage") !== null;
+      safeStorage.getItem("diy-indie-empire-storage") !== null &&
+      useGameStore.getState().phase !== GamePhase.GAME_OVER;
     return (
       <ColorblindProvider initialMode={savedColorblindMode}>
         <AppErrorBoundary>
@@ -96,7 +101,13 @@ function App() {
               hasSavedGame
                 ? async () => {
                     const store = useGameStore.getState();
-                    await store.loadInitialGameData();
+                    // The persisted store already holds the run's bands/venues/
+                    // roster (rehydrated by zustand persist). Only seed defaults
+                    // if nothing was restored — otherwise we'd clobber the
+                    // resumed roster with a fresh one.
+                    if (store.venues.length === 0) {
+                      await store.loadInitialGameData();
+                    }
                     setShowMainMenu(false);
                     setGameStarted(true);
                     haptics.success();
