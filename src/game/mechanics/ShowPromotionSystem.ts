@@ -314,6 +314,26 @@ export class ShowPromotionSystem {
     );
   }
   
+  /**
+   * Drop scheduled shows whose band or venue no longer exists in the current
+   * data set. After a data-file patch (a band/venue removed or its id renamed)
+   * a persisted save can reference ids that no longer resolve; left in the Map
+   * they resolve as unfair "failed shows" (-rep). This silently cancels them.
+   *
+   * Defensive: a no-op when every show resolves. Returns the ids that were
+   * pruned so callers can keep the store's display list in sync.
+   */
+  pruneDangling(validBandIds: Set<string>, validVenueIds: Set<string>): string[] {
+    const pruned: string[] = [];
+    this.scheduledShows.forEach((show, id) => {
+      if (!validBandIds.has(show.bandId) || !validVenueIds.has(show.venueId)) {
+        this.scheduledShows.delete(id);
+        pruned.push(id);
+      }
+    });
+    return pruned;
+  }
+
   // Check if a promotion creates synergy
   checkPromotionSynergy(
     show: ScheduledShow,

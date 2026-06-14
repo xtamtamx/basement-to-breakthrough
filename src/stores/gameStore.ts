@@ -45,6 +45,43 @@ const loadInitialData = async () => {
   return initialDataPromise;
 };
 
+/**
+ * Prune dangling band/venue references from a restored run.
+ *
+ * After a data-file patch (a band/venue removed or its id renamed), a persisted
+ * save's scheduledShows / rosterBandIds — and the ShowPromotionSystem's
+ * in-memory Map — can reference ids that no longer resolve against the current
+ * allBands/venues. Left in place, executeShow treats a dangling show as a
+ * failed show and docks reputation, which is unfair to the player. This runs
+ * once after the run state is restored (loadGame + onRehydrateStorage) and
+ * treats anything unresolved as silently cancelled.
+ *
+ * Defensive: a no-op (returns the same data unchanged) when everything
+ * resolves. Mutates `showPromotionSystem` and returns the cleaned store slices.
+ */
+function pruneDanglingReferences(opts: {
+  allBands: Band[];
+  venues: Venue[];
+  scheduledShows: Show[];
+  rosterBandIds: string[];
+}): { scheduledShows: Show[]; rosterBandIds: string[] } {
+  const validBandIds = new Set((opts.allBands ?? []).map((b) => b.id));
+  const validVenueIds = new Set((opts.venues ?? []).map((v) => v.id));
+
+  // Drop dangling shows from the in-memory promotion Map so they never reach
+  // executeShow as "failed" shows.
+  showPromotionSystem.pruneDangling(validBandIds, validVenueIds);
+
+  const scheduledShows = (opts.scheduledShows ?? []).filter(
+    (s) => validBandIds.has(s.bandId) && validVenueIds.has(s.venueId),
+  );
+  const rosterBandIds = (opts.rosterBandIds ?? []).filter((id) =>
+    validBandIds.has(id),
+  );
+
+  return { scheduledShows, rosterBandIds };
+}
+
 interface GameStore {
   // Game state
   money: number;
@@ -747,6 +784,20 @@ export const useGameStore = create<GameStore>()(
           );
           restoreRuntimeSnapshot(get().runtimeSnapshot);
 
+          // One-time prune of dangling band/venue references that a data-file
+          // patch may have orphaned in the loaded save. Treats anything that no
+          // longer resolves as silently cancelled (no rep loss in executeShow).
+          {
+            const s = get();
+            const cleaned = pruneDanglingReferences({
+              allBands: s.allBands,
+              venues: s.venues,
+              scheduledShows: s.scheduledShows,
+              rosterBandIds: s.rosterBandIds,
+            });
+            set(cleaned);
+          }
+
           console.log('Game loaded successfully:', saveId);
           return true;
         } catch (error) {
@@ -1044,10 +1095,37 @@ export const useGameStore = create<GameStore>()(
       // persisted snapshot so a resumed run keeps its win conditions, banked
       // fame, booked shows, and loss state instead of silently resetting.
       onRehydrateStorage: () => (state) => {
-        if (!state?.runtimeSnapshot) return;
+        if (!state) return;
+
+        // One-time prune of dangling band/venue references orphaned by a
+        // data-file patch since this save was written. Runs on every refresh
+        // but is a no-op when everything resolves.
+        const prune = () => {
+          // Mutate the rehydrated state in place — at this point it isn't
+          // committed to the live store yet, so set()/get() aren't usable here.
+          const cleaned = pruneDanglingReferences({
+            allBands: state.allBands,
+            venues: state.venues,
+            scheduledShows: state.scheduledShows,
+            rosterBandIds: state.rosterBandIds,
+          });
+          state.scheduledShows = cleaned.scheduledShows;
+          state.rosterBandIds = cleaned.rosterBandIds;
+        };
+
+        if (!state.runtimeSnapshot) {
+          // No snapshot to restore; the promotion Map is empty, so only the
+          // store slices need pruning.
+          prune();
+          return;
+        }
         import('@game/persistence/runtimeSnapshot').then(
           ({ restoreRuntimeSnapshot }) => {
             restoreRuntimeSnapshot(state.runtimeSnapshot);
+            // Prune AFTER the snapshot repopulates the promotion Map, so
+            // dangling shows are dropped from the live Map too (not just the
+            // store's display list).
+            prune();
           },
         );
       },

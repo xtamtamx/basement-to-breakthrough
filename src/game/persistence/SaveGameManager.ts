@@ -150,14 +150,15 @@ export class SaveGameManager {
         console.error(`Save game not found: ${saveId}`);
         return null;
       }
-      
+
       // Check version compatibility
       if (!this.isVersionCompatible(saveGame.version)) {
         console.warn(`Save game version mismatch: ${saveGame.version} vs ${CURRENT_SAVE_VERSION}`);
-        // Could implement migration here
       }
-      
-      return saveGame.gameState;
+
+      // Run any version-keyed migrations so older saves are brought up to the
+      // current shape before they reach the store.
+      return this.migrateGameState(saveGame.gameState, saveGame.version);
     } catch (error) {
       console.error('Failed to load game:', error);
       throw error;
@@ -234,13 +235,36 @@ export class SaveGameManager {
     
     try {
       const text = await file.text();
-      const saveGame = JSON.parse(text) as SaveGame;
-      
-      // Generate new ID to avoid conflicts
-      saveGame.id = `save_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      saveGame.name = `${saveGame.name} (Imported)`;
-      saveGame.timestamp = new Date();
-      
+
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(text);
+      } catch {
+        throw new Error('Invalid save file: not valid JSON');
+      }
+
+      // Untrusted input: the imported blob could be hand-edited, truncated, or
+      // from an entirely different app. Validate the SaveGame shape before we
+      // accept it instead of writing arbitrary data straight to IndexedDB.
+      if (!this.isValidSaveGame(parsed)) {
+        throw new Error('Invalid save file: not a recognized save game');
+      }
+
+      const imported = parsed;
+
+      const saveGame: SaveGame = {
+        ...imported,
+        // Generate new ID to avoid conflicts
+        id: `save_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        name: `${imported.name ?? 'Imported Save'} (Imported)`,
+        timestamp: new Date(),
+        // Strip any non-serializable values (and apply version migrations) so an
+        // imported save goes through the same hardening as a freshly written one.
+        gameState: this.sanitizeGameState(
+          this.migrateGameState(imported.gameState, imported.version),
+        ),
+      };
+
       await this.db!.put('saves', saveGame);
       console.log(`Save imported successfully: ${saveGame.id}`);
       return saveGame.id;
@@ -303,6 +327,55 @@ export class SaveGameManager {
   }
   
   // Helper methods
+
+  /**
+   * Runtime shape check for an imported/parsed SaveGame. We only require the
+   * load-bearing fields the rest of the pipeline relies on — `id` (string),
+   * `version` (string), and a `gameState` object — so a malformed or foreign
+   * JSON blob is rejected before it ever reaches IndexedDB. `name` and
+   * `timestamp` are intentionally not required: importSave regenerates them.
+   */
+  private isValidSaveGame(value: unknown): value is SaveGame {
+    if (typeof value !== 'object' || value === null) return false;
+    const candidate = value as Record<string, unknown>;
+    if (typeof candidate.id !== 'string') return false;
+    if (typeof candidate.version !== 'string') return false;
+    if (
+      typeof candidate.gameState !== 'object' ||
+      candidate.gameState === null ||
+      Array.isArray(candidate.gameState)
+    ) {
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * Version-keyed migration home. Today CURRENT_SAVE_VERSION ('1.0.0') is the
+   * only shipped version, so this is a documented pass-through — but every
+   * future save-format change should add a `case` here that transforms the
+   * older blob into the current shape, falling through to the next version so
+   * migrations chain. Keep the happy path (current version) a no-op.
+   */
+  private migrateGameState(
+    gameState: Partial<GameState>,
+    version: string,
+  ): Partial<GameState> {
+    switch (version) {
+      // case '0.9.0': // TODO: migrate 0.9.0 -> 1.0.0 when a new format ships
+      //   gameState = migrateFrom090(gameState);
+      //   /* falls through */
+      case CURRENT_SAVE_VERSION:
+        // Current version — nothing to migrate.
+        return gameState;
+      default:
+        // Unknown/older version with no registered migration. Pass through
+        // unchanged (isVersionCompatible already warned) rather than dropping
+        // the player's save outright.
+        return gameState;
+    }
+  }
+
   private sanitizeGameState(gameState: Partial<GameState>): Partial<GameState> {
     // Zustand mixes its action functions into the store state. IndexedDB's
     // structured-clone algorithm cannot serialize functions, so strip every
