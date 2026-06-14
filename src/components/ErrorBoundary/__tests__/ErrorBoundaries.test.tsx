@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { GameErrorBoundary } from '../GameErrorBoundary';
 import { NetworkErrorBoundary } from '../NetworkErrorBoundary';
 import { ChunkLoadErrorBoundary } from '../ChunkLoadErrorBoundary';
@@ -41,7 +41,7 @@ describe('Error Boundaries', () => {
       expect(screen.getByText('Test error')).toBeInTheDocument();
     });
 
-    it('should provide retry functionality', () => {
+    it('should provide retry functionality', async () => {
       const ChildComponent = ({ shouldError }: { shouldError: boolean }) => {
         if (shouldError) throw new Error('Test error');
         return <div>Success!</div>;
@@ -65,10 +65,12 @@ describe('Error Boundaries', () => {
         </GameErrorBoundary>
       );
 
-      // Should show success after retry
-      setTimeout(() => {
-        expect(screen.getByText('Success!')).toBeInTheDocument();
-      }, 150);
+      // Should show success after retry — await it within the test instead of
+      // a fire-and-forget setTimeout that asserts after teardown (that stray
+      // post-teardown rejection was making the whole suite exit non-zero).
+      await waitFor(() =>
+        expect(screen.getByText('Success!')).toBeInTheDocument(),
+      );
     });
 
     it('should use custom fallback if provided', () => {
