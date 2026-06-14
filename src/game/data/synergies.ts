@@ -156,6 +156,73 @@ export const SYNERGIES: Synergy[] = [
       authenticityMultiplier: 1.4,
       fansMultiplier: 1.2
     }
+  },
+  {
+    id: 'shared_trauma_discount',
+    name: 'Shared Trauma Discount',
+    description: 'Emotional bands in tiny rooms turn shows into group therapy',
+    requirements: {
+      bandGenre: ['EMO'],
+      venueTraits: ['INTIMATE_SETTING']
+    },
+    effects: {
+      authenticityMultiplier: 1.5,
+      fansMultiplier: 1.3
+    }
+  },
+  {
+    id: 'working_as_intended',
+    name: 'Working As Intended',
+    description: 'Harsh noise through blown speakers achieves an unmeasurable purity',
+    requirements: {
+      bandGenre: ['NOISE'],
+      venueTraits: ['BLOWN_SPEAKERS']
+    },
+    effects: {
+      authenticityMultiplier: 1.7,
+      popularityMultiplier: 1.1
+    }
+  },
+  {
+    id: 'mic_grab_apocalypse',
+    name: 'Mic Grab Apocalypse',
+    description: 'Hardcore at a scene hangout means everyone already knows the words',
+    requirements: {
+      bandGenre: ['HARDCORE'],
+      venueTraits: ['SCENE_HANGOUT'],
+      minPopularity: 30
+    },
+    effects: {
+      fansMultiplier: 1.4,
+      popularityMultiplier: 1.2,
+      stressReduction: 5
+    }
+  },
+  {
+    id: 'suburban_necromancy',
+    name: 'Suburban Necromancy',
+    description: 'Corpse paint meets a genuinely cursed stage',
+    requirements: {
+      bandTraits: ['Corpse Paint'],
+      venueTraits: ['CURSED_STAGE']
+    },
+    effects: {
+      authenticityMultiplier: 1.8,
+      popularityMultiplier: 1.2
+    }
+  },
+  {
+    id: 'time_is_a_suggestion',
+    name: 'Time Becomes a Suggestion',
+    description: 'Doom in a smoke-filled room stretches one riff across eternity',
+    requirements: {
+      bandGenre: ['DOOM', 'SLUDGE'],
+      venueTraits: ['SMOKE_MACHINE']
+    },
+    effects: {
+      authenticityMultiplier: 1.5,
+      moneyMultiplier: 1.2
+    }
   }
 ];
 
