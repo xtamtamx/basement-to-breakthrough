@@ -89,7 +89,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   return (
     <>
       {/* Main Bottom Navigation */}
-      <nav style={{
+      <nav className="mobile-bottom-nav" style={{
         position: 'fixed',
         bottom: 0,
         left: 0,
@@ -99,7 +99,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         zIndex: 40,
         paddingBottom: 'env(safe-area-inset-bottom)'
       }}>
-        <div style={{
+        <div className="mobile-bottom-nav__row" style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-around',
@@ -108,6 +108,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           {primaryViews.map(view => (
             <button
               key={view.id}
+              className="mobile-bottom-nav__btn"
               onClick={() => handleViewChange(view.id)}
               style={{
                 display: 'flex',
@@ -129,7 +130,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
               <div style={{ position: 'relative' }}>
                 {React.cloneElement(view.icon, { size: 18 })}
                 {view.badge !== undefined && view.badge > 0 && (
-                  <span style={{
+                  <span className="mobile-bottom-nav__badge" style={{
                     position: 'absolute',
                     top: '-2px',
                     right: '-2px',
@@ -149,7 +150,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
                   </span>
                 )}
               </div>
-              <span style={{
+              <span className="mobile-bottom-nav__label" style={{
                 fontSize: '9px',
                 fontWeight: '600',
                 letterSpacing: '-0.01em'
@@ -159,6 +160,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           
           {/* More Menu */}
           <button
+            className="mobile-bottom-nav__btn"
             onClick={() => {
               setShowMoreMenu(!showMoreMenu);
               haptics.light();
@@ -171,17 +173,18 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
               gap: '2px',
               padding: '4px',
               flex: 1,
+              minHeight: '44px',
               background: 'none',
               border: 'none',
-              color: showMoreMenu || secondaryViews.some(v => v.id === currentView) 
-                ? '#ec4899' 
+              color: showMoreMenu || secondaryViews.some(v => v.id === currentView)
+                ? '#ec4899'
                 : '#9ca3af',
               cursor: 'pointer',
               transition: 'color 0.2s'
             }}
           >
             <Grid3X3 size={20} />
-            <span style={{
+            <span className="mobile-bottom-nav__label" style={{
               fontSize: '10px',
               fontWeight: '500'
             }}>More</span>
@@ -200,7 +203,8 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           }}
           onClick={() => setShowMoreMenu(false)}
         >
-          <div 
+          <div
+            className="mobile-bottom-nav__more-panel"
             style={{
               position: 'fixed',
               bottom: '56px',
@@ -275,6 +279,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
 
       {/* Floating Next Turn Button */}
       <button
+        className="mobile-bottom-nav__next-turn"
         onClick={() => {
           onNextTurn();
           haptics.medium();
@@ -306,7 +311,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
       </button>
 
       {/* Turn Indicator */}
-      <div style={{
+      <div className="mobile-bottom-nav__turn-indicator" style={{
         position: 'fixed',
         left: '12px',
         backgroundColor: 'rgba(17, 24, 39, 0.9)',

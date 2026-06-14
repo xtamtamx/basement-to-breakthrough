@@ -597,3 +597,68 @@ code, pre {
     line-height: 2;
   }
 }
+
+/* ============================================
+   MobileBottomNav — compact landscape layout
+   ============================================
+   In short/wide landscape (the game's primary mobile orientation) the
+   default 48px bottom bar plus its safe-area inset eats far too much of a
+   ~375px-tall viewport. Here we slim the bar to a 30px row of icon+label
+   buttons and re-anchor the floating Next Turn button, Turn indicator, and
+   "More" panel to track the shorter bar. Portrait is untouched: these rules
+   only apply when actually held in landscape. `!important` is required to
+   beat the component's inline styles. Tap targets stay full-width and ~30px
+   tall — a bit shorter than 44px but comfortably tappable in landscape. */
+@media (orientation: landscape) and (max-height: 500px) {
+  .mobile-bottom-nav__row {
+    height: 30px !important;
+  }
+
+  .mobile-bottom-nav__btn {
+    min-height: 30px !important;
+    gap: 1px !important;
+    padding: 1px 6px !important;
+  }
+
+  /* Shrink the lucide icons (rendered as inline SVG) to match the slim row. */
+  .mobile-bottom-nav__btn svg {
+    width: 16px !important;
+    height: 16px !important;
+  }
+
+  .mobile-bottom-nav__label {
+    font-size: 8px !important;
+    line-height: 1 !important;
+  }
+
+  .mobile-bottom-nav__badge {
+    font-size: 8px !important;
+    min-width: 12px !important;
+    height: 12px !important;
+    padding: 0 2px !important;
+  }
+
+  /* Floating Next Turn button: smaller and re-anchored above the slim bar. */
+  .mobile-bottom-nav__next-turn {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 20px !important;
+    bottom: calc(30px + env(safe-area-inset-bottom) + 6px) !important;
+  }
+
+  .mobile-bottom-nav__next-turn svg {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  /* Turn indicator: tighter padding, re-anchored above the slim bar. */
+  .mobile-bottom-nav__turn-indicator {
+    padding: 3px 8px !important;
+    bottom: calc(30px + env(safe-area-inset-bottom) + 6px) !important;
+  }
+
+  /* "More" panel sits flush on top of the slimmer bar (30px + 1px border). */
+  .mobile-bottom-nav__more-panel {
+    bottom: calc(30px + 1px + env(safe-area-inset-bottom)) !important;
+  }
+}
