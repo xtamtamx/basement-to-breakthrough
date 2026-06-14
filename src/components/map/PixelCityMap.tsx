@@ -222,7 +222,7 @@ function planTown(districts: District[], venues: Venue[]): TownPlan {
 
       if (!venue) {
         const roll = hash2(seed + i, seed);
-        if (roll < 0.12) {
+        if (roll < 0.08) {
           // pocket park with a tree
           trees.push({
             sprite: hash2(seed, i) < 0.5 ? PROPS.tree : PROPS.treeB,
@@ -231,7 +231,7 @@ function planTown(districts: District[], venues: Venue[]): TownPlan {
           });
           return;
         }
-        if (roll < 0.28) {
+        if (roll < 0.2) {
           // flower garden plot
           gardens.push({
             tx: plot.tx + 1,
@@ -298,6 +298,76 @@ function inPlaza(tx: number, ty: number): boolean {
 // True for the dirt main roads (the two-wide cross), excluding the plaza.
 function isRoad(tx: number, ty: number): boolean {
   return tx === ROAD_X || tx === ROAD_X + 1 || ty === ROAD_Y || ty === ROAD_Y + 1;
+}
+
+// --- Wandering townsfolk ----------------------------------------------------
+const WALKER_HAIR = ['#f72585', '#4cc9f0', '#7cf06a', '#ffd23f', '#b072e0', '#ff7a4d'];
+const WALKER_SHIRT = ['#1f2430', '#2a2a35', '#3a2a3f', '#26303a', '#33283a'];
+const WALKER_SKIN = ['#e0b58a', '#c98a5a', '#8a5a3a', '#f0c9a0'];
+
+interface Walker {
+  x: number; // world px (feet)
+  y: number;
+  tx: number; // current tile
+  ty: number;
+  ptx: number; // previous tile (avoid immediate backtrack)
+  pty: number;
+  ntx: number; // next-tile target
+  nty: number;
+  hair: string;
+  shirt: string;
+  skin: string;
+  speed: number;
+  phase: number;
+}
+
+// Pick the next walkable tile, preferring not to immediately turn back.
+function pickNextTile(w: Walker, walkable: Set<string>): void {
+  const cands = [
+    [1, 0],
+    [-1, 0],
+    [0, 1],
+    [0, -1],
+  ]
+    .map(([dx, dy]) => ({ tx: w.tx + dx, ty: w.ty + dy }))
+    .filter((c) => walkable.has(`${c.tx},${c.ty}`));
+  if (cands.length === 0) return;
+  const forward = cands.filter((c) => !(c.tx === w.ptx && c.ty === w.pty));
+  const pool = forward.length ? forward : cands;
+  const next = pool[Math.floor(Math.random() * pool.length)];
+  w.ptx = w.tx;
+  w.pty = w.ty;
+  w.ntx = next.tx;
+  w.nty = next.ty;
+}
+
+// Tiny punk townsperson with a 2-frame walk bob (drawn in world space).
+function drawPerson(ctx: CanvasRenderingContext2D, w: Walker): void {
+  const x = Math.round(w.x);
+  const y = Math.round(w.y);
+  const walk = Math.sin(w.phase);
+  const bob = walk > 0 ? -1 : 0;
+  const headTop = y - 9 + bob;
+
+  ctx.fillStyle = 'rgba(0,0,0,0.22)';
+  ctx.beginPath();
+  ctx.ellipse(x, y + 1, 3.2, 1.4, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // legs (alternating stride)
+  ctx.fillStyle = '#2a2330';
+  ctx.fillRect(x - 2 + (walk > 0 ? 1 : 0), y - 3, 1, 3);
+  ctx.fillRect(x + 1 - (walk > 0 ? 1 : 0), y - 3, 1, 3);
+  // shirt
+  ctx.fillStyle = w.shirt;
+  ctx.fillRect(x - 2, headTop + 3, 4, 4);
+  // head
+  ctx.fillStyle = w.skin;
+  ctx.fillRect(x - 1, headTop, 3, 3);
+  // mohawk
+  ctx.fillStyle = w.hair;
+  ctx.fillRect(x - 1, headTop - 1, 3, 1);
+  ctx.fillRect(x, headTop - 2, 1, 1);
 }
 
 // --- Static world bake -------------------------------------------------------
@@ -448,6 +518,67 @@ function buildStaticWorld(
     }
   });
 
+  // 4b. Street furniture + greenery on open grass so the town feels lived-in
+  const occupied = new Set<string>();
+  const mark = (tx0: number, ty0: number, w: number, h: number) => {
+    for (let yy = ty0 - 1; yy < ty0 + h + 1; yy++)
+      for (let xx = tx0 - 1; xx < tx0 + w + 1; xx++) occupied.add(`${xx},${yy}`);
+  };
+  plan.buildings.forEach((b) => mark(b.tx, b.ty, b.tw, b.th));
+  plan.gardens.forEach((g) => mark(g.tx, g.ty, g.tw, g.th));
+  plan.trees.forEach((t) => mark(t.tx, t.ty, 2, 3));
+  plan.paving.forEach((p) => occupied.add(`${p.tx},${p.ty}`));
+
+  const ell = (cx: number, cy: number, rx: number, ry: number, c: string) => {
+    ctx.fillStyle = c;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+    ctx.fill();
+  };
+  const bush = (cx: number, cy: number) => {
+    ell(cx, cy + 3, 7, 2.4, 'rgba(28,44,26,0.20)');
+    ell(cx, cy, 7, 5, GRASS[0]);
+    ell(cx - 3, cy - 1, 4, 3, GRASS[1]);
+    ell(cx + 3, cy - 1, 4, 3, GRASS[1]);
+    ell(cx, cy - 2, 3, 2, GRASS[3]);
+  };
+  const lamp = (x: number, y: number) => {
+    ell(x + 1, y + 1, 3, 1.4, 'rgba(20,30,18,0.25)');
+    ctx.fillStyle = '#2f271e';
+    ctx.fillRect(x, y - 12, 2, 12); // post
+    ctx.fillStyle = '#5a4a36';
+    ctx.fillRect(x - 1, y - 1, 4, 2); // base
+    ell(x + 1, y - 13, 6, 6, 'rgba(255,227,154,0.22)'); // glow
+    ctx.fillStyle = '#ffe39a';
+    ctx.fillRect(x - 1, y - 15, 4, 4); // lantern
+  };
+
+  for (const q of plan.quarters) {
+    for (let ty = q.ty; ty < q.ty + q.th; ty++) {
+      for (let tx = q.tx; tx < q.tx + q.tw; tx++) {
+        if (isRoad(tx, ty) || inPlaza(tx, ty) || occupied.has(`${tx},${ty}`))
+          continue;
+        if (hash2(tx * 5 + 1, ty * 5 + 3) > 0.91) {
+          bush(tx * TILE + 8, ty * TILE + 10);
+          occupied.add(`${tx},${ty}`);
+        }
+      }
+    }
+  }
+  // lamp posts on the grass shoulder along the main roads
+  for (let ty = 5; ty < WORLD_H - 4; ty += 9) {
+    if (Math.abs(ty - ROAD_Y) > PLAZA_R + 1) {
+      lamp((ROAD_X - 1) * TILE + 5, ty * TILE + 14);
+      lamp((ROAD_X + 2) * TILE + 9, ty * TILE + 14);
+    }
+  }
+  for (let tx = 5; tx < WORLD_W - 4; tx += 9) {
+    if (Math.abs(tx - ROAD_X) > PLAZA_R + 1) {
+      lamp(tx * TILE + 6, (ROAD_Y - 1) * TILE + 5);
+      lamp(tx * TILE + 6, (ROAD_Y + 2) * TILE + 14);
+    }
+  }
+
   // 5. Buildings + trees, depth-sorted by foot Y, with grounding shadows
   const depthSorted: Array<PlacedBuilding | (PlacedProp & { th: number })> = [
     ...plan.buildings,
@@ -524,6 +655,24 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({
     return ids;
   }, [scheduledShows]);
 
+  // Tiles the townsfolk may stroll: roads, plaza and house walkways
+  const walkable = useMemo(() => {
+    const set = new Set<string>();
+    const list: { tx: number; ty: number }[] = [];
+    const add = (tx: number, ty: number) => {
+      const k = `${tx},${ty}`;
+      if (!set.has(k)) {
+        set.add(k);
+        list.push({ tx, ty });
+      }
+    };
+    for (let ty = 1; ty < WORLD_H - 1; ty++)
+      for (let tx = 1; tx < WORLD_W - 1; tx++)
+        if (isRoad(tx, ty) || inPlaza(tx, ty)) add(tx, ty);
+    plan.paving.forEach((p) => add(p.tx, p.ty));
+    return { set, list };
+  }, [plan]);
+
   // Camera in world pixels (top-left of viewport)
   const cameraRef = useRef({
     x: (WORLD_W * TILE * SCALE) / 2,
@@ -538,9 +687,42 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({
     moved: boolean;
   } | null>(null);
 
+  const walkersRef = useRef<Walker[]>([]);
+  const lastTimeRef = useRef(0);
+
   useEffect(() => {
     loadAllSheets().then(setSheets).catch(console.error);
   }, []);
+
+  // Spawn townsfolk on the walkable network (re-seeded when the layout changes)
+  useEffect(() => {
+    const { list } = walkable;
+    if (list.length === 0) {
+      walkersRef.current = [];
+      return;
+    }
+    const count = Math.max(8, Math.min(18, Math.floor(list.length / 12)));
+    const ws: Walker[] = [];
+    for (let i = 0; i < count; i++) {
+      const t = list[Math.floor(Math.random() * list.length)];
+      ws.push({
+        x: (t.tx + 0.5) * TILE,
+        y: (t.ty + 0.9) * TILE,
+        tx: t.tx,
+        ty: t.ty,
+        ptx: t.tx,
+        pty: t.ty,
+        ntx: t.tx,
+        nty: t.ty,
+        hair: WALKER_HAIR[i % WALKER_HAIR.length],
+        shirt: WALKER_SHIRT[i % WALKER_SHIRT.length],
+        skin: WALKER_SKIN[i % WALKER_SKIN.length],
+        speed: 11 + Math.random() * 9,
+        phase: Math.random() * 6.28,
+      });
+    }
+    walkersRef.current = ws;
+  }, [walkable]);
 
   // Dev-only inspection hook
   useEffect(() => {
@@ -692,6 +874,34 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({
       // 1. Baked static world (ground, paths, plaza, gardens, buildings, trees)
       ctx.drawImage(staticWorld, 0, 0);
 
+      // 1b. Wandering townsfolk strolling the paths
+      {
+        const dt = Math.min(
+          0.05,
+          lastTimeRef.current ? (time - lastTimeRef.current) / 1000 : 0,
+        );
+        lastTimeRef.current = time;
+        const wset = walkable.set;
+        walkersRef.current.forEach((w) => {
+          const tgx = (w.ntx + 0.5) * TILE;
+          const tgy = (w.nty + 0.9) * TILE;
+          const dx = tgx - w.x;
+          const dy = tgy - w.y;
+          const d = Math.hypot(dx, dy);
+          if (d < 0.7) {
+            w.tx = w.ntx;
+            w.ty = w.nty;
+            pickNextTile(w, wset);
+          } else {
+            const v = w.speed * dt;
+            w.x += (dx / d) * v;
+            w.y += (dy / d) * v;
+            w.phase += v * 0.6;
+          }
+          drawPerson(ctx, w);
+        });
+      }
+
       // 2. Live venue indicators (pulse + bobbing music-note badge)
       plan.buildings.forEach((b) => {
         if (!b.venue) return;
@@ -752,7 +962,7 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({
       ctx.fillStyle = vg;
       ctx.fillRect(0, 0, size.w, size.h);
     },
-    [staticWorld, size.w, size.h, plan, venuesWithShows],
+    [staticWorld, size.w, size.h, plan, venuesWithShows, walkable],
   );
 
   useEffect(() => {
