@@ -53,9 +53,9 @@ const c = (x: number, y: number): AtlasSprite => ({
 // use the real city-tileset road/sidewalk tiles (proper paved look + crosswalks).
 export const TERRAIN = {
   grass: [v(32, 0), v(96, 0), v(16, 16)], // seamless village grass variants
-  road: c(64, 64), // grey concrete street tile
-  stone: c(0, 48), // cream sidewalk/pavement (sidewalk / plaza / paths)
-  crosswalk: c(80, 96), // zebra crossing (horizontal stripes)
+  road: c(0, 64), // plain grey concrete road (opaque — verified)
+  stone: c(80, 64), // tan brick sidewalk (sidewalk / plaza / paths)
+  crosswalk: c(16, 64), // zebra crossing
   dirt: v(320, 16), // village dirt (seaside beach / sand)
   water: v(192, 48), // water
 } as const;

@@ -372,9 +372,29 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
     ctx.drawImage(sheets[s.sheet], s.rect.x, s.rect.y, s.rect.w, s.rect.h, Math.round(footCx - w / 2), Math.round(footY - h), Math.round(w), Math.round(h));
   };
 
+  // The brick sidewalk tile is a beveled slab with TRANSPARENT bottom corners —
+  // blitted straight onto grass it leaks green triangles. Pre-bake it over an
+  // opaque slab-body fill once so the corners read as paving, not grass.
+  const swTile = document.createElement('canvas');
+  swTile.width = TILE;
+  swTile.height = TILE;
+  {
+    const sc = swTile.getContext('2d')!;
+    sc.imageSmoothingEnabled = false;
+    sc.fillStyle = '#968a76'; // slab body colour (~rgb 150,138,118)
+    sc.fillRect(0, 0, TILE, TILE);
+    const s = TERRAIN.stone;
+    sc.drawImage(sheets[s.sheet], s.rect.x, s.rect.y, 16, 16, 0, 0, TILE, TILE);
+  }
+
   // 16px village tile → 16px world tile, 1:1 (crisp, no scaling)
-  const tile = (s: AtlasSprite, tx: number, ty: number) =>
+  const tile = (s: AtlasSprite, tx: number, ty: number) => {
+    if (s === TERRAIN.stone) {
+      ctx.drawImage(swTile, tx * TILE, ty * TILE);
+      return;
+    }
     ctx.drawImage(sheets[s.sheet], s.rect.x, s.rect.y, 16, 16, tx * TILE, ty * TILE, TILE, TILE);
+  };
 
   // 1. Grass ground — real seamless village grass tiles (variant by value-noise)
   for (let ty = 0; ty < WORLD_H; ty++)
