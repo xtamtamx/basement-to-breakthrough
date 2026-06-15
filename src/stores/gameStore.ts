@@ -5,6 +5,7 @@ import {
   GamePhase,
   Difficulty,
   FactionEvent,
+  City,
   District,
   Venue,
   Walker,
@@ -25,6 +26,7 @@ import { gameAudio } from "@utils/gameAudio";
 import { clamp, CONSTRAINTS } from "@utils/validation";
 import { performanceMetrics } from "@utils/performanceMetrics";
 import { ALL_DISTRICTS } from "../data/districts";
+import { CITIES, HOME_CITY_ID } from "../data/cities";
 
 // Lazy load initial data
 let initialDataPromise: Promise<{ bands: Band[], venues: Venue[] }> | null = null;
@@ -96,6 +98,9 @@ interface GameStore {
   // City state
   districts: District[];
   venues: Venue[];
+  /** Tour roster; the active city's districts/venues mirror into the fields above. */
+  cities: City[];
+  currentCityId: string;
   walkers: Walker[];
 
   // Band state
@@ -147,6 +152,8 @@ interface GameStore {
   updateVenue: (venue: Venue) => void;
   updateWalkers: (walkers: Walker[]) => void;
   addVenue: (venue: Venue) => void;
+  /** Travel to another city: swaps the active districts/venues (state persists per-city). */
+  switchCity: (cityId: string) => void;
 
   // Band actions
   addBandToRoster: (bandId: string) => void;
@@ -654,6 +661,8 @@ const getInitialState = () => ({
   currentFactionEvent: null,
   districts: initialDistricts,
   venues: [], // Will be loaded lazily
+  cities: CITIES,
+  currentCityId: HOME_CITY_ID,
   walkers: [],
   allBands: [], // Will be loaded lazily
   rosterBandIds: [], // Will be populated after bands load
@@ -739,11 +748,16 @@ export const useGameStore = create<GameStore>()(
 
       loadInitialGameData: async () => {
         const { bands, venues } = await loadInitialData();
-        set({
+        const homeVenues = venues.slice(0, 3); // Start with first 3 of the home scene
+        set((state) => ({
           allBands: bands.slice(0, 5), // Start with first 5 bands
-          venues: venues.slice(0, 3), // Start with first 3 venues
-          rosterBandIds: bands.slice(0, 3).map(b => b.id), // First 3 bands in roster
-        });
+          venues: homeVenues,
+          rosterBandIds: bands.slice(0, 3).map((b) => b.id), // First 3 bands in roster
+          // Backfill the home city's lazily-loaded venues so travelling back restores them
+          cities: state.cities.map((c) =>
+            c.id === HOME_CITY_ID ? { ...c, venues: homeVenues } : c,
+          ),
+        }));
       },
       
       // Save/Load
@@ -809,6 +823,24 @@ export const useGameStore = create<GameStore>()(
       // City actions
       updateDistricts: (districts) => set({ districts }),
       updateVenues: (venues) => set({ venues }),
+      switchCity: (cityId) =>
+        set((state) => {
+          const target = state.cities.find((c) => c.id === cityId);
+          if (!target || cityId === state.currentCityId) return {};
+          // Write the active scene's live districts/venues back into its city so
+          // per-city gentrification / venue state survives the round trip.
+          const cities = state.cities.map((c) =>
+            c.id === state.currentCityId
+              ? { ...c, districts: state.districts, venues: state.venues }
+              : c,
+          );
+          return {
+            cities,
+            currentCityId: cityId,
+            districts: target.districts,
+            venues: target.venues,
+          };
+        }),
       updateVenue: (venue) =>
         set((state) => ({
           venues: state.venues.map(v => v.id === venue.id ? venue : v)
@@ -1077,6 +1109,8 @@ export const useGameStore = create<GameStore>()(
         difficulty: state.difficulty,
         districts: state.districts,
         venues: state.venues,
+        cities: state.cities,
+        currentCityId: state.currentCityId,
         allBands: state.allBands,
         rosterBandIds: state.rosterBandIds,
         scheduledShows: state.scheduledShows,

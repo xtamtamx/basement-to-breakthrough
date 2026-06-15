@@ -22,7 +22,7 @@ import React, {
 import { useGameStore } from '@stores/gameStore';
 import { haptics } from '@utils/mobile';
 import { soundManager } from '@/game/audio/SoundManager';
-import { District, Venue, VenueType } from '@game/types';
+import { CityThemeKey, District, Venue, VenueType } from '@game/types';
 import {
   AtlasSprite,
   BUILDINGS,
@@ -48,22 +48,109 @@ const PLAZA_R = 3; // cobble town-square radius around the crossroads (tiles)
 
 const QUARTER_MARGIN = 2; // tiles of breathing room inside each quarter
 
-// --- Cozy palette (one source of truth → no cross-pack clash) ---------------
-const GRASS = ['#4d7838', '#578741', '#65984a', '#74a957']; // dark → light
-const GRASS_BLADE = '#83bb64';
-const GRASS_SHADE = '#3f6630';
-const PATH = '#bd9159';
-const PATH_LIGHT = '#cda66c';
-const PATH_DARK = '#9c7341';
-const PATH_SPECK = '#8a6236';
-const COBBLE = '#b3a892';
-const COBBLE_LIGHT = '#c4baa6';
-const COBBLE_DARK = '#9a8e78';
-const COBBLE_GROUT = '#6f6552';
-const SOIL = '#73492c';
-const SOIL_DARK = '#5d3a23';
-const GARDEN_FLOWERS = ['#ef5a8a', '#f4cf4f', '#ffffff', '#b072e0', '#ff8c4d'];
-const WILD_FLOWERS = ['#f4d04f', '#ffffff', '#ef6f9c', '#9c7be0'];
+// --- Per-city map themes (one controlled palette each → no cross-pack clash) -
+interface MapTheme {
+  grass: string[]; // 4 shades, dark → light
+  grassBlade: string;
+  grassShade: string;
+  path: string;
+  pathLight: string;
+  pathDark: string;
+  pathSpeck: string;
+  cobble: string;
+  cobbleLight: string;
+  cobbleDark: string;
+  cobbleGrout: string;
+  soil: string;
+  soilDark: string;
+  gardenFlowers: string[];
+  wildFlowers: string[];
+  void: string; // backdrop behind the world
+  roofMix: BuildingKey[]; // filler-house roof bias for this city
+}
+
+const THEMES: Record<CityThemeKey, MapTheme> = {
+  // Basement City — cozy hometown green
+  home: {
+    grass: ['#4d7838', '#578741', '#65984a', '#74a957'],
+    grassBlade: '#83bb64',
+    grassShade: '#3f6630',
+    path: '#bd9159',
+    pathLight: '#cda66c',
+    pathDark: '#9c7341',
+    pathSpeck: '#8a6236',
+    cobble: '#b3a892',
+    cobbleLight: '#c4baa6',
+    cobbleDark: '#9a8e78',
+    cobbleGrout: '#6f6552',
+    soil: '#73492c',
+    soilDark: '#5d3a23',
+    gardenFlowers: ['#ef5a8a', '#f4cf4f', '#ffffff', '#b072e0', '#ff8c4d'],
+    wildFlowers: ['#f4d04f', '#ffffff', '#ef6f9c', '#9c7be0'],
+    void: '#1a2a1e',
+    roofMix: ['houseRed', 'houseBlue', 'houseDark'],
+  },
+  // Rust Belt — sooty olive + grey, industrial
+  rust: {
+    grass: ['#4f5a33', '#5d6a3a', '#6b7745', '#7a8552'],
+    grassBlade: '#8a9560',
+    grassShade: '#3d4628',
+    path: '#9a7a4e',
+    pathLight: '#ad8c5d',
+    pathDark: '#7c5f3a',
+    pathSpeck: '#6a4f30',
+    cobble: '#928d84',
+    cobbleLight: '#a6a199',
+    cobbleDark: '#76726b',
+    cobbleGrout: '#4f4b45',
+    soil: '#5e4427',
+    soilDark: '#49351e',
+    gardenFlowers: ['#d8783a', '#c9a13a', '#b0b0b0', '#8a6e4a', '#e0913a'],
+    wildFlowers: ['#c9a13a', '#9a9a9a', '#d8783a', '#7a8552'],
+    void: '#241c16',
+    roofMix: ['houseDark', 'houseDark', 'houseRed'],
+  },
+  // Seaside — bright spring green, sandy paths, sea backdrop
+  seaside: {
+    grass: ['#56904a', '#65a352', '#74b85c', '#86c869'],
+    grassBlade: '#97d67a',
+    grassShade: '#447a3c',
+    path: '#d8c187',
+    pathLight: '#e6d29a',
+    pathDark: '#bfa86a',
+    pathSpeck: '#a8915a',
+    cobble: '#c9bfa2',
+    cobbleLight: '#dbd2b6',
+    cobbleDark: '#aea58a',
+    cobbleGrout: '#8a8268',
+    soil: '#8a6a3e',
+    soilDark: '#6e5430',
+    gardenFlowers: ['#ff8cb0', '#ffe066', '#ffffff', '#7ad0e6', '#ff9e6b'],
+    wildFlowers: ['#ffe066', '#ffffff', '#ff8cb0', '#7ad0e6'],
+    void: '#143038',
+    roofMix: ['houseBlue', 'houseBlue', 'houseRed'],
+  },
+  // The Capital — cool, clean, manicured grey-green
+  capital: {
+    grass: ['#496a4e', '#56785a', '#658868', '#779a7b'],
+    grassBlade: '#88ab8c',
+    grassShade: '#3a5640',
+    path: '#b8b2a4',
+    pathLight: '#cac4b6',
+    pathDark: '#999488',
+    pathSpeck: '#86826f',
+    cobble: '#aeb0b8',
+    cobbleLight: '#c4c6cd',
+    cobbleDark: '#909298',
+    cobbleGrout: '#5a5c64',
+    soil: '#6a5a48',
+    soilDark: '#534639',
+    gardenFlowers: ['#c98ad0', '#8ab0e0', '#ffffff', '#e0a0c0', '#9ad0c0'],
+    wildFlowers: ['#c98ad0', '#ffffff', '#8ab0e0', '#9ad0c0'],
+    void: '#171a22',
+    roofMix: ['houseBlue', 'houseDark', 'houseBlue'],
+  },
+};
 
 // House palette per district flavor (roof colors carry the district identity)
 const FILLER_BUILDINGS: Record<string, BuildingKey[]> = {
@@ -163,7 +250,11 @@ interface TownPlan {
 
 // Lay out districts into the four path-divided quarters; venues claim the plots
 // nearest the crossroads, the rest get filler houses, pocket parks and gardens.
-function planTown(districts: District[], venues: Venue[]): TownPlan {
+function planTown(
+  districts: District[],
+  venues: Venue[],
+  roofMix?: BuildingKey[],
+): TownPlan {
   const quarters: Quarter[] = districts.slice(0, 4).map((district) => {
     const east = district.bounds.x >= 4;
     const south = district.bounds.y >= 4;
@@ -214,7 +305,8 @@ function planTown(districts: District[], venues: Venue[]): TownPlan {
     const districtVenues = venues.filter(
       (v) => v.location?.id === quarter.district.id,
     );
-    const fillers = FILLER_BUILDINGS[quarter.district.id] ?? DEFAULT_FILLERS;
+    const fillers =
+      roofMix ?? FILLER_BUILDINGS[quarter.district.id] ?? DEFAULT_FILLERS;
 
     plots.forEach((plot, i) => {
       const venue = districtVenues[i];
@@ -375,12 +467,30 @@ function drawPerson(ctx: CanvasRenderingContext2D, w: Walker): void {
 function buildStaticWorld(
   plan: TownPlan,
   sheets: Record<SheetName, HTMLImageElement>,
+  theme: MapTheme,
 ): HTMLCanvasElement {
   const cv = document.createElement('canvas');
   cv.width = WORLD_W * TILE;
   cv.height = WORLD_H * TILE;
   const ctx = cv.getContext('2d')!;
   ctx.imageSmoothingEnabled = false;
+
+  // Bind the active theme to the names the bake body uses (keeps the rest unchanged)
+  const GRASS = theme.grass;
+  const GRASS_BLADE = theme.grassBlade;
+  const GRASS_SHADE = theme.grassShade;
+  const PATH = theme.path;
+  const PATH_LIGHT = theme.pathLight;
+  const PATH_DARK = theme.pathDark;
+  const PATH_SPECK = theme.pathSpeck;
+  const COBBLE = theme.cobble;
+  const COBBLE_LIGHT = theme.cobbleLight;
+  const COBBLE_DARK = theme.cobbleDark;
+  const COBBLE_GROUT = theme.cobbleGrout;
+  const SOIL = theme.soil;
+  const SOIL_DARK = theme.soilDark;
+  const GARDEN_FLOWERS = theme.gardenFlowers;
+  const WILD_FLOWERS = theme.wildFlowers;
 
   const px = (x: number, y: number, w: number, h: number, color: string) => {
     ctx.fillStyle = color;
@@ -638,13 +748,20 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({
   const districts = useGameStore((s) => s.districts);
   const venues = useGameStore((s) => s.venues);
   const scheduledShows = useGameStore((s) => s.scheduledShows);
+  const themeKey = useGameStore(
+    (s) => s.cities.find((c) => c.id === s.currentCityId)?.theme ?? 'home',
+  );
+  const theme = THEMES[themeKey];
 
-  const plan = useMemo(() => planTown(districts, venues), [districts, venues]);
+  const plan = useMemo(
+    () => planTown(districts, venues, theme.roofMix),
+    [districts, venues, theme],
+  );
 
-  // Bake the static world once per plan/sheet change
+  // Bake the static world once per plan/sheet/theme change
   const staticWorld = useMemo(
-    () => (sheets ? buildStaticWorld(plan, sheets) : null),
-    [plan, sheets],
+    () => (sheets ? buildStaticWorld(plan, sheets, theme) : null),
+    [plan, sheets, theme],
   );
 
   const venuesWithShows = useMemo(() => {
@@ -861,7 +978,7 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({
       ctx.imageSmoothingEnabled = false;
 
       // sky/void behind the world
-      ctx.fillStyle = '#1a2a1e';
+      ctx.fillStyle = theme.void;
       ctx.fillRect(0, 0, size.w, size.h);
 
       ctx.save();
@@ -962,7 +1079,7 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({
       ctx.fillStyle = vg;
       ctx.fillRect(0, 0, size.w, size.h);
     },
-    [staticWorld, size.w, size.h, plan, venuesWithShows, walkable],
+    [staticWorld, size.w, size.h, plan, venuesWithShows, walkable, theme],
   );
 
   useEffect(() => {

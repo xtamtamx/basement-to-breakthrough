@@ -297,6 +297,36 @@ export interface District {
   type?: DistrictType;
 }
 
+// ============= Cities (tour destinations) =============
+
+/** Visual palette key consumed by the map renderer. */
+export type CityThemeKey = "home" | "rust" | "seaside" | "capital";
+
+/**
+ * A tour destination: its own districts, venues, scene vibe and look. One run
+ * spans cities; the active city's districts/venues are mirrored into the store.
+ */
+export interface City {
+  id: string;
+  name: string;
+  /** One-line satirical descriptor for the Tour roster. */
+  blurb: string;
+  /** Scene flavor shown in the UI (e.g. "sludge metal", "pop-punk"). */
+  vibe: string;
+  /** Bands of this genre get a scene bonus here (wired with synergies). */
+  primaryGenre?: Genre;
+  /** Drives the map palette. */
+  theme: CityThemeKey;
+  districts: District[];
+  venues: Venue[];
+  /** How the city becomes available (meta progression, across runs). */
+  unlock: {
+    type: "default" | "fame" | "reputation" | "achievement";
+    value?: number;
+    label: string;
+  };
+}
+
 export interface Equipment {
   id: string;
   name: string;
