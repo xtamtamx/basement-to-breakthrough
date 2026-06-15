@@ -47,6 +47,7 @@ export const DayJobView: React.FC = () => {
       case JobCategory.VENUE: return '🏠';
       case JobCategory.CORPORATE: return '👔';
       case JobCategory.COMMUNITY: return '🎸';
+      case JobCategory.SHOP: return '🛍️';
       default: return '💼';
     }
   };

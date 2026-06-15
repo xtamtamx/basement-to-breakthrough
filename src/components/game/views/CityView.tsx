@@ -9,6 +9,8 @@ import { ZoomOut, Building2, TrendingUp, MapPin, X } from 'lucide-react';
 import { MapTile, VenueData, WorkplaceData } from '@/components/map/MapTypes';
 import { DistrictType as CoreDistrictType } from '@/game/types/core';
 import { Venue } from '@game/types';
+import { CityShop, SHOP_DEFS } from '@game/world/cityShops';
+import { dayJobSystem } from '@game/mechanics/DayJobSystem';
 
 // Maps store district ids onto the core DistrictType used by DistrictInfo.
 const STORE_DISTRICT_TYPE: Record<string, CoreDistrictType> = {
@@ -47,6 +49,8 @@ export const CityView: React.FC = () => {
   const [selectedDistrictInfo, setSelectedDistrictInfo] = useState<DistrictInfo | null>(null);
   const [selectedTileData, setSelectedTileData] = useState<{ tile: MapTile; venue?: Venue } | null>(null);
   const [showVenueUpgrade, setShowVenueUpgrade] = useState(false);
+  const [selectedShop, setSelectedShop] = useState<CityShop | null>(null);
+  const [jobRefresh, setJobRefresh] = useState(0);
 
   // Ensure initial data is loaded (run once on mount via getState to avoid
   // depending on the ever-changing store snapshot)
@@ -202,6 +206,7 @@ export const CityView: React.FC = () => {
                     venue,
                   });
                 }}
+                onShopClick={(shop) => { setSelectedShop(shop); haptics.light(); }}
               />
             </div>
             
@@ -845,6 +850,62 @@ export const CityView: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Shop Jobs Modal — commerce buildings are the city's day-job sources */}
+      {selectedShop && (() => {
+        const jobs = dayJobSystem.getAvailableJobs().filter((j) => j.location?.shopId === selectedShop.id);
+        const currentJob = dayJobSystem.getCurrentJob();
+        const chip = (label: string, color: string) => (
+          <span style={{ fontSize: '11px', color, backgroundColor: '#111827', border: '1px solid #1f2937', borderRadius: '6px', padding: '2px 7px', whiteSpace: 'nowrap' }}>{label}</span>
+        );
+        return (
+          <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'fadeIn 0.2s ease-out', padding: '20px' }} onClick={() => setSelectedShop(null)}>
+            <div style={{ backgroundColor: '#0a0a0a', borderTop: '2px solid #06b6d4', borderLeft: '1px solid #374151', borderRight: '1px solid #374151', borderRadius: '16px', padding: '16px', paddingBottom: 'calc(16px + env(safe-area-inset-bottom))', width: '100%', maxWidth: '440px', maxHeight: '80vh', overflowY: 'auto', animation: 'slideUp 0.3s ease-out' }} onClick={(e) => e.stopPropagation()}>
+              <div style={{ width: '36px', height: '3px', backgroundColor: '#374151', borderRadius: '2px', margin: '0 auto 12px' }} />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
+                <div style={{ flex: 1 }}>
+                  <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#ffffff', margin: '0 0 4px' }}>{selectedShop.name}</h2>
+                  <p style={{ fontSize: '12px', color: '#06b6d4', margin: 0, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <MapPin size={12} color="#06b6d4" /><span>{SHOP_DEFS[selectedShop.kind].label} · Day Jobs</span>
+                  </p>
+                </div>
+                <button onClick={() => setSelectedShop(null)} style={{ width: '32px', height: '32px', borderRadius: '16px', backgroundColor: 'transparent', border: '1px solid #374151', color: '#9ca3af', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><X size={18} /></button>
+              </div>
+              {currentJob && (
+                <div style={{ backgroundColor: '#062c33', border: '1px solid #06b6d4', borderRadius: '10px', padding: '8px 12px', marginBottom: '12px', fontSize: '12px', color: '#67e8f9' }}>
+                  Currently working: <span style={{ fontWeight: 700, color: '#ffffff' }}>{currentJob.name}</span>
+                </div>
+              )}
+              <div key={jobRefresh} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {jobs.length === 0 && (
+                  <div style={{ backgroundColor: '#111827', borderRadius: '10px', padding: '16px', textAlign: 'center', fontSize: '13px', color: '#6b7280' }}>No openings here right now.</div>
+                )}
+                {jobs.map((job) => {
+                  const isCurrent = currentJob?.id === job.id || (!!currentJob && currentJob.name === job.name);
+                  return (
+                    <div key={job.id} style={{ backgroundColor: '#111827', border: '1px solid #1f2937', borderRadius: '12px', padding: '12px' }}>
+                      <div style={{ fontSize: '14px', fontWeight: 700, color: '#ffffff', marginBottom: '4px' }}>{job.name}</div>
+                      <div style={{ fontSize: '11px', color: '#9ca3af', fontStyle: 'italic', marginBottom: '8px', lineHeight: 1.4 }}>{job.satiricalFlavor}</div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '10px' }}>
+                        {chip(`+$${job.moneyPerTurn}/turn`, '#10b981')}
+                        {job.reputationChange !== 0 && chip(`${job.reputationChange > 0 ? '+' : ''}${job.reputationChange} rep`, job.reputationChange > 0 ? '#10b981' : '#ef4444')}
+                        {job.fanChange !== 0 && chip(`${job.fanChange > 0 ? '+' : ''}${job.fanChange} fans`, job.fanChange > 0 ? '#10b981' : '#ef4444')}
+                        {chip(`+${job.stressGain} stress`, '#f59e0b')}
+                        {!!job.connectionGain && chip(`+${job.connectionGain} conn`, '#06b6d4')}
+                      </div>
+                      <button
+                        disabled={isCurrent}
+                        onClick={() => { if (dayJobSystem.setJob(job)) haptics.light(); setJobRefresh((n) => n + 1); }}
+                        style={{ width: '100%', padding: '10px', borderRadius: '10px', border: 'none', cursor: isCurrent ? 'default' : 'pointer', fontSize: '13px', fontWeight: 600, color: isCurrent ? '#06b6d4' : '#ffffff', backgroundImage: isCurrent ? 'none' : 'linear-gradient(135deg, #0891b2, #06b6d4)', backgroundColor: isCurrent ? '#062c33' : 'transparent', minHeight: '40px' }}
+                      >{isCurrent ? '✓ Current job' : 'Take this job'}</button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Venue Upgrade Modal */}
       {selectedTileData?.venue && showVenueUpgrade && (

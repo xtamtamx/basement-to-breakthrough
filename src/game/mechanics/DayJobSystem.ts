@@ -1,5 +1,6 @@
 import { useGameStore } from '@stores/gameStore';
 import { Venue, District } from '@game/types';
+import { getCityShops, SHOP_DEFS, CityShop } from '@game/world/cityShops';
 
 export enum DayJobType {
   NONE = 'NONE',
@@ -14,13 +15,16 @@ export enum DayJobType {
   // Community jobs
   NON_PROFIT = 'NON_PROFIT',
   VOLUNTEER = 'VOLUNTEER',
-  COLLECTIVE = 'COLLECTIVE'
+  COLLECTIVE = 'COLLECTIVE',
+  // Shop jobs (per-shop retail work; details come from the shop)
+  SHOP_WORK = 'SHOP_WORK'
 }
 
 export enum JobCategory {
   VENUE = 'VENUE',
   CORPORATE = 'CORPORATE',
-  COMMUNITY = 'COMMUNITY'
+  COMMUNITY = 'COMMUNITY',
+  SHOP = 'SHOP'
 }
 
 export interface DayJob {
@@ -37,6 +41,7 @@ export interface DayJob {
   location?: {
     venueId?: string;
     districtId?: string;
+    shopId?: string;
   };
   requirements?: {
     minReputation?: number;
@@ -223,6 +228,23 @@ const JOB_EVENTS_BY_CATEGORY: Record<JobCategory, Array<{
       message: "Organized a benefit show through work connections.",
       effects: { connections: 3, reputation: 3 }
     }
+  ],
+  [JobCategory.SHOP]: [
+    {
+      chance: 0.14,
+      message: "A regular turned out to book shows. New contact!",
+      effects: { connections: 3 }
+    },
+    {
+      chance: 0.1,
+      message: "You stickered the counter with your band's flyer. A few bites.",
+      effects: { fans: 3, reputation: 1 }
+    },
+    {
+      chance: 0.08,
+      message: "Inventory day ran long. You missed practice.",
+      effects: { stress: 10 }
+    }
   ]
 };
 
@@ -318,9 +340,32 @@ export class DayJobSystem {
         break; // Only one collective job
       }
     }
-    
+
+    // Generate shop jobs — every commerce building offers its own retail work
+    getCityShops(districts).forEach(shop => {
+      jobs.push(...this.buildShopJobs(shop));
+    });
+
     this.availableJobs = jobs;
     return jobs;
+  }
+
+  private buildShopJobs(shop: CityShop): DayJob[] {
+    return SHOP_DEFS[shop.kind].jobs.map((def, i) => ({
+      id: `SHOP_${shop.id}_${i}_${Math.random().toString(36).substr(2, 6)}`,
+      type: DayJobType.SHOP_WORK,
+      category: JobCategory.SHOP,
+      name: `${def.title} at ${shop.name}`,
+      description: def.flavor,
+      moneyPerTurn: def.moneyPerTurn,
+      reputationChange: def.reputationChange,
+      fanChange: def.fanChange,
+      stressGain: def.stressGain,
+      connectionGain: def.connectionGain,
+      location: { shopId: shop.id, districtId: shop.districtId },
+      requirements: def.minReputation ? { minReputation: def.minReputation } : undefined,
+      satiricalFlavor: def.flavor,
+    }));
   }
   
   private createJobFromTemplate(
@@ -493,10 +538,12 @@ export class DayJobSystem {
     // Get a message based on turns worked and job category
     const messages = [
       job.satiricalFlavor,
-      job.category === JobCategory.VENUE ? 
+      job.category === JobCategory.VENUE ?
         `Another night at ${job.name}. At least you're in the scene.` :
         job.category === JobCategory.CORPORATE ?
         `${this.turnsWorked} turns selling your soul. The money barely helps.` :
+        job.category === JobCategory.SHOP ?
+        `Another shift at ${job.name}. Retail purgatory, but the regulars are scene.` :
         `Building community, one unpaid hour at a time.`,
       `Day ${this.turnsWorked} at ${job.name}. Is this sustainable?`
     ];

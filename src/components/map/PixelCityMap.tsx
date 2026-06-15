@@ -30,10 +30,12 @@ import {
   TILE,
   loadAllSheets,
 } from './townAtlas';
+import { getCityShops, CityShop, ShopKind } from '@game/world/cityShops';
 
 interface PixelCityMapProps {
   onDistrictClick?: (district: District) => void;
   onVenueClick?: (venue: Venue) => void;
+  onShopClick?: (shop: CityShop) => void;
 }
 
 // --- World layout (in 16px tiles) -------------------------------------------
@@ -137,6 +139,12 @@ const VENUE_BUILDINGS: Partial<Record<VenueType, BuildingKey>> = {
   [VenueType.FESTIVAL_GROUNDS]: 'rotunda',
 };
 
+// Commerce buildings use the storefront sprites (distinct from the houses).
+const SHOP_BUILDINGS: Record<ShopKind, BuildingKey> = {
+  [ShopKind.RECORD_STORE]: 'teal', [ShopKind.COFFEE_SHOP]: 'shopAwning', [ShopKind.BOOKSTORE]: 'greyShop',
+  [ShopKind.THRIFT_STORE]: 'shopAwning', [ShopKind.CORNER_STORE]: 'greyShop', [ShopKind.INSTRUMENT_SHOP]: 'teal',
+};
+
 const fpW = (s: AtlasSprite) => Math.max(1, Math.round((s.rect.w * SPR) / TILE));
 const fpH = (s: AtlasSprite) => Math.max(1, Math.round((s.rect.h * SPR) / TILE));
 
@@ -204,7 +212,7 @@ function dgContour(ctx: CanvasRenderingContext2D, key: number, ox: number, oy: n
 }
 
 interface Quarter { district: District; tx: number; ty: number; tw: number; th: number }
-interface PlacedBuilding { sprite: AtlasSprite; tx: number; ty: number; tw: number; th: number; venue?: Venue; district?: District }
+interface PlacedBuilding { sprite: AtlasSprite; tx: number; ty: number; tw: number; th: number; venue?: Venue; shop?: CityShop; district?: District }
 interface PlacedTree { sprite: AtlasSprite; tx: number; ty: number; th: number }
 interface TownPlan {
   quarters: Quarter[];
@@ -291,6 +299,21 @@ function planTown(districts: District[], venues: Venue[], roofMix: BuildingKey[]
     b.sprite = BUILDINGS[VENUE_BUILDINGS[v.type] ?? 'cottage'];
     const nw = fpW(b.sprite);
     const nh = fpH(b.sprite);
+    b.ty = b.ty + b.th - nh; // keep the same foot row
+    b.tw = nw;
+    b.th = nh;
+  }
+
+  // Assign shops (commerce / day-job sources) to the next-nearest buildings in
+  // each district, re-spriting them as storefronts so they read as commerce.
+  for (const shop of getCityShops(districts)) {
+    const b = buildings
+      .filter((bd) => !bd.venue && !bd.shop && bd.district?.id === shop.districtId)
+      .sort((a, z) => Math.hypot(a.tx - cx, a.ty - cy) - Math.hypot(z.tx - cx, z.ty - cy))[0];
+    if (!b) continue;
+    b.shop = shop;
+    b.sprite = BUILDINGS[SHOP_BUILDINGS[shop.kind]];
+    const nw = fpW(b.sprite), nh = fpH(b.sprite);
     b.ty = b.ty + b.th - nh; // keep the same foot row
     b.tw = nw;
     b.th = nh;
@@ -420,43 +443,33 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
     ctx.drawImage(sheets[s.sheet], s.rect.x, s.rect.y, s.rect.w, s.rect.h, Math.round(footCx - w / 2), Math.round(footY - h), Math.round(w), Math.round(h));
   };
 
-  // The brick sidewalk tile is a beveled slab with TRANSPARENT bottom corners —
-  // blitted straight onto grass it leaks green triangles. Pre-bake it over an
-  // opaque slab-body fill once so the corners read as paving, not grass.
-  const swTile = document.createElement('canvas');
-  swTile.width = TILE;
-  swTile.height = TILE;
-  {
-    const sc = swTile.getContext('2d')!;
-    sc.imageSmoothingEnabled = false;
-    sc.fillStyle = '#968a76'; // slab body colour (~rgb 150,138,118)
-    sc.fillRect(0, 0, TILE, TILE);
-    const s = TERRAIN.stone;
-    sc.drawImage(sheets[s.sheet], s.rect.x, s.rect.y, 16, 16, 0, 0, TILE, TILE);
-  }
-
-  // 16px village tile → 16px world tile, 1:1 (crisp, no scaling)
-  const tile = (s: AtlasSprite, tx: number, ty: number) => {
-    if (s === TERRAIN.stone) {
-      ctx.drawImage(swTile, tx * TILE, ty * TILE);
-      return;
-    }
+  // 16px tile → 16px world tile, 1:1 (crisp, no scaling)
+  const tile = (s: AtlasSprite, tx: number, ty: number) =>
     ctx.drawImage(sheets[s.sheet], s.rect.x, s.rect.y, 16, 16, tx * TILE, ty * TILE, TILE, TILE);
-  };
 
   // 1. Grass ground — real seamless village grass tiles (variant by value-noise)
   for (let ty = 0; ty < WORLD_H; ty++)
     for (let tx = 0; tx < WORLD_W; tx++) {
       const n = valueNoise(tx / 5, ty / 5);
       tile(TERRAIN.grass[n < 0.42 ? 0 : n < 0.74 ? 1 : 2], tx, ty);
-      // subtle blade texture so the near-flat grass tiles read as a surface
-      const x = tx * TILE, y = ty * TILE, hb = hash2(tx * 3 + 7, ty * 3 + 1);
-      if (hb > 0.5) px(x + (Math.floor(hb * 97) % 13), y + (Math.floor(hb * 61) % 12), 1, 2, theme.grassShade);
-      if (hb < 0.34) px(x + (Math.floor(hb * 131) % 13), y + (Math.floor(hb * 173) % 13), 1, 1, theme.grassBlade);
-      const hb2 = hash2(tx * 5 + 2, ty * 7 + 5);
-      if (hb2 > 0.74) px(x + (Math.floor(hb2 * 53) % 12), y + (Math.floor(hb2 * 89) % 12), 1, 1, theme.grassShade);
+      const x = tx * TILE, y = ty * TILE;
+      // low-frequency tonal patches (soft shade / sun) break the flat tile repeat
+      const patch = valueNoise(tx / 8 + 3, ty / 8 + 5);
+      if (patch < 0.36) { ctx.fillStyle = 'rgba(28,52,24,0.12)'; ctx.fillRect(x, y, TILE, TILE); }
+      else if (patch > 0.72) { ctx.fillStyle = 'rgba(206,234,158,0.07)'; ctx.fillRect(x, y, TILE, TILE); }
+      // 0-3 short blade tufts per tile at hashed positions (irregular density)
+      for (let k = 0; k < 3; k++) {
+        const hk = hash2(tx * 7 + k * 31 + 5, ty * 11 + k * 17 + 3);
+        if (hk > 0.6) px(x + (Math.floor(hk * 211) % 13) + 1, y + (Math.floor(hk * 307) % 11) + 2, 1, hk > 0.85 ? 3 : 2, hk > 0.93 ? theme.grassBlade : theme.grassShade);
+      }
       const h = hash2(tx, ty);
-      if (h > 0.972) px(tx * TILE + 5, ty * TILE + 6, 2, 2, theme.wildFlowers[Math.floor(h * 1000) % theme.wildFlowers.length]);
+      // occasional 3-blade clump for a bit of relief
+      if (h > 0.9 && h <= 0.965) {
+        const cx0 = x + 4 + (Math.floor(h * 90) % 7), cy0 = y + 9 + (Math.floor(h * 50) % 4);
+        px(cx0, cy0, 1, 3, theme.grassShade); px(cx0 + 2, cy0 - 1, 1, 4, theme.grassShade); px(cx0 + 4, cy0, 1, 3, theme.grassShade); px(cx0 + 2, cy0 - 2, 1, 1, theme.grassBlade);
+      }
+      // wildflowers (small two-tone dots)
+      if (h > 0.965) { const fc = theme.wildFlowers[Math.floor(h * 1000) % theme.wildFlowers.length]; px(x + 5, y + 7, 2, 2, fc); px(x + 5, y + 6, 1, 1, '#ffffff'); }
     }
 
   // 2. Logical terrain grid — the truth the dual-grid samples. Streets become a
@@ -494,7 +507,7 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
   // 2a. Dual-grid paint: each material drawn over the lower terrain with rounded
   // edges + a bevelled raised kerb (lit top, shadowed front face, cast shadow).
   const blit4 = (s: AtlasSprite, tx: number, ty: number) => { tile(s, tx, ty); tile(s, tx + 1, ty); tile(s, tx, ty + 1); tile(s, tx + 1, ty + 1); };
-  interface LayerCfg { field: (tx: number, ty: number) => boolean; matTile: AtlasSprite; rim: string; frontShadow: string; highSide?: 'material' | 'lower'; tint?: string; kerb?: boolean; varies?: boolean }
+  interface LayerCfg { field: (tx: number, ty: number) => boolean; matTile?: AtlasSprite; fill?: string; rim: string; frontShadow: string; highSide?: 'material' | 'lower'; tint?: string; kerb?: boolean; varies?: boolean }
   const paintLayer = (cfg: LayerCfg) => {
     const f = cfg.field;
     for (let ty = -1; ty < WORLD_H; ty++)
@@ -504,7 +517,15 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
         const ox = tx * TILE + HT, oy = ty * TILE + HT;
         ctx.save();
         ctx.beginPath(); dgPath(ctx, key, ox, oy); ctx.clip('evenodd');
-        blit4(cfg.matTile, tx, ty);
+        if (cfg.fill) {
+          // flat palette fill (clips cleanly to rounded edges — no cut-up tile grid)
+          ctx.fillStyle = cfg.fill; ctx.fillRect(ox, oy, TILE, TILE);
+          const hsp = hash2(tx * 9 + 1, ty * 9 + 4);
+          ctx.fillStyle = 'rgba(0,0,0,0.05)'; ctx.fillRect(ox + (Math.floor(hsp * 53) % 13), oy + (Math.floor(hsp * 97) % 13), 2, 1);
+          if (hsp > 0.6) { ctx.fillStyle = 'rgba(255,255,255,0.05)'; ctx.fillRect(ox + (Math.floor(hsp * 131) % 14), oy + (Math.floor(hsp * 173) % 14), 1, 1); }
+        } else if (cfg.matTile) {
+          blit4(cfg.matTile, tx, ty);
+        }
         if (cfg.varies !== false) {
           const vs = valueNoise(tx / 3.5, ty / 3.5);
           if (vs > 0.72) { ctx.fillStyle = 'rgba(0,0,0,0.07)'; ctx.fillRect(ox, oy, TILE, TILE); }
@@ -531,9 +552,15 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
       }
   };
   const isMat = (tx: number, ty: number, ...ms: number[]) => ms.includes(matAt(tx, ty));
+  // The roundabout footprint is drawn separately as smooth circles — exclude it
+  // from the dual-grid so the straight corridors don't fight the circular rings.
+  const inRound = (tx: number, ty: number) => {
+    const dx = tx + 0.5 - (ROAD_X + 1), dy = ty + 0.5 - (ROAD_Y + 1);
+    return dx * dx + dy * dy <= 3.5 * 3.5;
+  };
   // sidewalk first (whole paved corridor over grass), then road over sidewalk
-  paintLayer({ field: (tx, ty) => isMat(tx, ty, M_SIDEWALK, M_ROAD), matTile: TERRAIN.stone, kerb: true, highSide: 'material', rim: theme.cobbleLight, frontShadow: theme.cobbleDark, tint: 'rgba(150,120,80,0.05)' });
-  paintLayer({ field: (tx, ty) => isMat(tx, ty, M_ROAD), matTile: TERRAIN.road, kerb: true, highSide: 'lower', rim: theme.cobbleLight, frontShadow: 'rgba(0,0,0,0.28)', tint: 'rgba(140,110,70,0.06)' });
+  paintLayer({ field: (tx, ty) => !inRound(tx, ty) && isMat(tx, ty, M_SIDEWALK, M_ROAD), fill: theme.cobble, kerb: true, highSide: 'material', rim: theme.cobbleLight, frontShadow: theme.cobbleDark });
+  paintLayer({ field: (tx, ty) => !inRound(tx, ty) && isMat(tx, ty, M_ROAD), matTile: TERRAIN.road, kerb: true, highSide: 'lower', rim: theme.cobbleLight, frontShadow: 'rgba(0,0,0,0.28)', tint: 'rgba(140,110,70,0.06)' });
   if (theme.waterfront) {
     paintLayer({ field: (tx, ty) => isMat(tx, ty, M_SAND, M_WATER), matTile: TERRAIN.dirt, kerb: true, highSide: 'material', rim: theme.sand, frontShadow: theme.soilDark });
     paintLayer({ field: (tx, ty) => isMat(tx, ty, M_WATER), matTile: TERRAIN.water, kerb: true, highSide: 'material', rim: theme.waterLight, frontShadow: theme.waterDark, varies: false });
@@ -580,42 +607,66 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
       }
     }
 
-  // 3. Roundabout — grass island ← ring road ← sidewalk ring, approach roads cut in
+  // 3. Roundabout — concentric grass island ← ring road ← sidewalk ring, with the
+  // SAME slab tile + bevelled kerbs as the street sidewalks, approach roads cut in.
   {
     const cxp = (ROAD_X + 1) * TILE, cyp = (ROAD_Y + 1) * TILE;
-    const islandR = 30, roadOuter = 52, swOuter = 62;
+    const islandR = 28, roadOuter = 48, swOuter = 64;
     const clipFill = (sprite: AtlasSprite, outerR: number, innerR: number) => {
       ctx.save();
       ctx.beginPath();
-      ctx.arc(cxp, cyp, outerR, 0, Math.PI * 2);
-      if (innerR > 0) ctx.arc(cxp, cyp, innerR, 0, Math.PI * 2, true);
+      ctx.arc(cxp, cyp, outerR, 0, PI * 2);
+      if (innerR > 0) ctx.arc(cxp, cyp, innerR, 0, PI * 2, true);
       ctx.clip('evenodd');
       const a = Math.floor((cxp - outerR) / TILE), b = Math.ceil((cxp + outerR) / TILE);
       const c = Math.floor((cyp - outerR) / TILE), e = Math.ceil((cyp + outerR) / TILE);
       for (let ty = c; ty <= e; ty++) for (let tx = a; tx <= b; tx++) tile(sprite, tx, ty);
       ctx.restore();
     };
-    clipFill(TERRAIN.stone, swOuter, roadOuter); // outer sidewalk ring
+    const annulusTint = (outerR: number, innerR: number, col: string) => {
+      ctx.save(); ctx.beginPath(); ctx.arc(cxp, cyp, outerR, 0, PI * 2); ctx.arc(cxp, cyp, innerR, 0, PI * 2, true); ctx.clip('evenodd');
+      ctx.fillStyle = col; ctx.fillRect(cxp - outerR, cyp - outerR, outerR * 2, outerR * 2); ctx.restore();
+    };
+    const annulusFill = (outerR: number, innerR: number, col: string) => {
+      ctx.save(); ctx.beginPath(); ctx.arc(cxp, cyp, outerR, 0, PI * 2); ctx.arc(cxp, cyp, innerR, 0, PI * 2, true); ctx.clip('evenodd');
+      ctx.fillStyle = col; ctx.fillRect(cxp - outerR, cyp - outerR, outerR * 2, outerR * 2);
+      for (let i = 0; i < 80; i++) { const a = i * 2.39917, rr = innerR + (i * 5 % Math.max(1, outerR - innerR)); ctx.fillStyle = i % 3 ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)'; ctx.fillRect(Math.round(cxp + Math.cos(a) * rr), Math.round(cyp + Math.sin(a) * rr), 1, 1); }
+      ctx.restore();
+    };
+    annulusFill(swOuter, roadOuter, theme.cobble); // sidewalk ring (flat palette fill — matches the street sidewalks, clips cleanly)
     clipFill(TERRAIN.road, roadOuter, islandR); // ring road
+    annulusTint(roadOuter, islandR, 'rgba(140,110,70,0.06)'); // match street road tint
+    // bevelled circular kerbs (lit rim + dark face + cast shadow), matching the
+    // street kerbs. Drawn BEFORE the approach roads so the four entrances break them.
+    const ringKerb = (r: number, highInside: boolean) => {
+      const s = highInside ? 1 : -1;
+      ctx.strokeStyle = 'rgba(0,0,0,0.20)'; ctx.lineWidth = 2.4; ctx.beginPath(); ctx.arc(cxp, cyp, r + 1.3 * s, 0, PI * 2); ctx.stroke();
+      ctx.strokeStyle = theme.cobbleDark; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(cxp, cyp, r + 0.4 * s, 0, PI * 2); ctx.stroke();
+      ctx.strokeStyle = theme.cobbleLight; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.arc(cxp, cyp, r - 1.2 * s, 0, PI * 2); ctx.stroke();
+    };
+    ringKerb(swOuter, true);    // sidewalk (high, inside) meets grass
+    ringKerb(roadOuter, false); // sidewalk (high, outside) steps down to ring road
     // approach roads cut through the sidewalk ring at the four entrances
     for (let ty = 0; ty < WORLD_H; ty++)
       for (let tx = 0; tx < WORLD_W; tx++)
         if (inPlaza(tx, ty) && isRoad(tx, ty)) tile(TERRAIN.road, tx, ty);
     clipFill(TERRAIN.grass[0], islandR, 0); // central grass island (clears the cross-stubs)
-    // kerbs + a dashed lane line so it reads as a roundabout
-    ctx.strokeStyle = 'rgba(20,28,18,0.5)'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.arc(cxp, cyp, islandR, 0, Math.PI * 2); ctx.stroke();
-    ctx.strokeStyle = 'rgba(20,28,18,0.3)'; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.arc(cxp, cyp, swOuter, 0, Math.PI * 2); ctx.stroke();
-    ctx.strokeStyle = 'rgba(245,245,235,0.45)'; ctx.lineWidth = 1; ctx.setLineDash([4, 5]);
-    ctx.beginPath(); ctx.arc(cxp, cyp, (islandR + roadOuter) / 2, 0, Math.PI * 2); ctx.stroke();
+    // light blade texture on the island so it matches the lawns
+    ctx.save(); ctx.beginPath(); ctx.arc(cxp, cyp, islandR, 0, PI * 2); ctx.clip();
+    for (let a = 0; a < 26; a++) { const ang = a * 2.399, rr = (a % 5) * 5; px(Math.round(cxp + Math.cos(ang) * rr), Math.round(cyp + Math.sin(ang) * rr), 1, 2, a % 2 ? theme.grassShade : theme.grassBlade); }
+    ctx.restore();
+    // island kerb (grass edge against ring road) + dashed lane line
+    ctx.strokeStyle = 'rgba(0,0,0,0.22)'; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(cxp, cyp, islandR + 0.6, 0, PI * 2); ctx.stroke();
+    ctx.strokeStyle = theme.grassShade; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(cxp, cyp, islandR - 1, 0, PI * 2); ctx.stroke();
+    ctx.strokeStyle = 'rgba(245,245,235,0.4)'; ctx.lineWidth = 1; ctx.setLineDash([4, 5]);
+    ctx.beginPath(); ctx.arc(cxp, cyp, (islandR + roadOuter) / 2, 0, PI * 2); ctx.stroke();
     ctx.setLineDash([]);
     // flowers + centre tree on the island
-    for (let a = 0; a < 14; a++) {
-      const ang = a * 2.399, rr = 7 + (a % 3) * 6;
+    for (let a = 0; a < 12; a++) {
+      const ang = a * 2.399, rr = 6 + (a % 3) * 5;
       px(Math.round(cxp + Math.cos(ang) * rr), Math.round(cyp + Math.sin(ang) * rr * 0.9), 2, 2, theme.gardenFlowers[a % theme.gardenFlowers.length]);
     }
-    ell(cxp, cyp + 6, 14, 5, 'rgba(20,35,20,0.25)');
+    ell(cxp, cyp + 6, 13, 5, 'rgba(20,35,20,0.25)');
     blitFoot(PROPS.tree, cxp, cyp + 9, SPR * 1.5);
   }
 
@@ -660,7 +711,7 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
   return cv;
 }
 
-export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onVenueClick }) => {
+export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onVenueClick, onShopClick }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [sheets, setSheets] = useState<Record<SheetName, HTMLImageElement> | null>(null);
@@ -833,12 +884,15 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
       if (!tap || !pan || pan.moved || pinchRef.current) return;
       const pos = screenToTile(e.clientX, e.clientY);
       if (!pos) return;
-      const hit = plan.buildings.find((b) => b.venue && pos.tx >= b.tx && pos.tx <= b.tx + b.tw && pos.ty >= b.ty - 1.5 && pos.ty <= b.ty + b.th);
+      const inBldg = (b: PlacedBuilding) => pos.tx >= b.tx && pos.tx <= b.tx + b.tw && pos.ty >= b.ty - 1.5 && pos.ty <= b.ty + b.th;
+      const hit = plan.buildings.find((b) => b.venue && inBldg(b));
       if (hit?.venue && onVenueClick) { haptics.light(); soundManager.playClick(); onVenueClick(hit.venue); return; }
+      const shopHit = plan.buildings.find((b) => b.shop && inBldg(b));
+      if (shopHit?.shop && onShopClick) { haptics.light(); soundManager.playClick(); onShopClick(shopHit.shop); return; }
       const q = plan.quarters.find((qu) => pos.tx >= qu.tx - 1 && pos.tx <= qu.tx + qu.tw + 1 && pos.ty >= qu.ty - 1 && pos.ty <= qu.ty + qu.th + 1);
       if (q && onDistrictClick) { haptics.light(); soundManager.playClick(); onDistrictClick(q.district); }
     },
-    [plan, onDistrictClick, onVenueClick, screenToTile],
+    [plan, onDistrictClick, onVenueClick, onShopClick, screenToTile],
   );
 
   const handleWheel = useCallback(
@@ -941,6 +995,26 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
         ctx.fillRect(cx - 2, my - 5, 2, 8);
         ctx.fillRect(cx - 5, my + 1, 4, 3);
         ctx.fillRect(cx, my - 5, 5, 2);
+      });
+
+      // shop sign markers (cyan shopping bag) — tap to browse the shop's day jobs
+      plan.buildings.forEach((b) => {
+        if (!b.shop) return;
+        const cx = (b.tx + b.tw / 2) * TILE;
+        const my = (b.ty - 0.5) * TILE + Math.sin(time / 300 + b.tx) * 2;
+        ctx.fillStyle = 'rgba(10, 10, 14, 0.85)';
+        ctx.fillRect(cx - 7, my - 7, 14, 14);
+        ctx.strokeStyle = '#06b6d4';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(cx - 7.5, my - 7.5, 15, 15);
+        // little shopping bag
+        ctx.fillStyle = '#06b6d4';
+        ctx.fillRect(cx - 4, my - 2, 8, 7);
+        ctx.fillRect(cx - 3, my - 5, 1, 3);
+        ctx.fillRect(cx + 2, my - 5, 1, 3);
+        ctx.fillRect(cx - 3, my - 5, 6, 1);
+        ctx.fillStyle = 'rgba(0,0,0,0.3)';
+        ctx.fillRect(cx - 4, my - 2, 8, 1);
       });
 
       ctx.font = '7px "Press Start 2P", monospace';
