@@ -41,7 +41,7 @@ const WORLD_W = 60;
 const WORLD_H = 46;
 const ROAD_X = 30; // main vertical road (road 30,31; sidewalks 29,32)
 const ROAD_Y = 27; // main horizontal road (road 27,28; sidewalks 26,29)
-const PLAZA_R = 3;
+const PLAZA_R = 4; // roundabout footprint radius (tiles) around the crossroads
 
 // Each street is a paved CORRIDOR: 1-tile flagstone sidewalk | 2-tile dirt road
 // | 1-tile sidewalk. Townsfolk walk the sidewalks; the road centre is for looks.
@@ -346,7 +346,11 @@ function drawBuildingObj(ctx: CanvasRenderingContext2D, sheets: Sheets, b: Place
     ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(fx, fy, 3, 1);
   }
   if (b.venue) {
-    drawVanM(ctx, footCx - 3, footY + 9, VAN_COLORS[(b.tx * 31 + b.ty * 17) % VAN_COLORS.length]);
+    // park the tour van on the nearest ROAD below the venue (never the sidewalk)
+    const cxr = b.tx + (b.tw >> 1);
+    let vy = -1;
+    for (let r = b.ty + b.th; r <= b.ty + b.th + 3 && vy < 0; r++) if (isRoad(cxr, r)) vy = r;
+    if (vy >= 0) drawVanM(ctx, footCx - 3, vy * TILE + 13, VAN_COLORS[(b.tx * 31 + b.ty * 17) % VAN_COLORS.length]);
     drawAmpM(ctx, footCx + (b.tw / 2) * TILE - 1, footY - 1);
   }
 }
@@ -361,7 +365,6 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
   cv.height = WORLD_H * TILE;
   const ctx = cv.getContext('2d')!;
   ctx.imageSmoothingEnabled = false;
-  const GRASS = theme.grass;
   const px = (x: number, y: number, w: number, h: number, c: string) => { ctx.fillStyle = c; ctx.fillRect(x, y, w, h); };
   const ell = (cx: number, cy: number, rx: number, ry: number, c: string) => { ctx.fillStyle = c; ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2); ctx.fill(); };
   const blitFoot = (s: AtlasSprite, footCx: number, footY: number, scale = SPR) => {
@@ -408,67 +411,43 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
     for (let tx = 0; tx < WORLD_W; tx++)
       if (isStreet(tx, ty)) drawCorridor(tx, ty);
 
-  // 3. Town square — real flagstone
-  for (let ty = 0; ty < WORLD_H; ty++)
-    for (let tx = 0; tx < WORLD_W; tx++)
-      if (inPlaza(tx, ty)) tile(TERRAIN.stone, tx, ty);
-  // roundabout + central tree
+  // 3. Roundabout — grass island ← ring road ← sidewalk ring, approach roads cut in
   {
     const cxp = (ROAD_X + 1) * TILE, cyp = (ROAD_Y + 1) * TILE;
-    ell(cxp, cyp, 30, 27, theme.cobbleDark);
-    ell(cxp, cyp, 26, 23, theme.cobbleGrout);
-    ell(cxp, cyp, 23, 20, GRASS[2]);
-    for (let a = 0; a < 12; a++) {
-      const ang = a * 2.399, rr = 6 + (a % 3) * 5;
+    const islandR = 30, roadOuter = 52, swOuter = 62;
+    const clipFill = (sprite: AtlasSprite, outerR: number, innerR: number) => {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cxp, cyp, outerR, 0, Math.PI * 2);
+      if (innerR > 0) ctx.arc(cxp, cyp, innerR, 0, Math.PI * 2, true);
+      ctx.clip('evenodd');
+      const a = Math.floor((cxp - outerR) / TILE), b = Math.ceil((cxp + outerR) / TILE);
+      const c = Math.floor((cyp - outerR) / TILE), e = Math.ceil((cyp + outerR) / TILE);
+      for (let ty = c; ty <= e; ty++) for (let tx = a; tx <= b; tx++) tile(sprite, tx, ty);
+      ctx.restore();
+    };
+    clipFill(TERRAIN.stone, swOuter, roadOuter); // outer sidewalk ring
+    clipFill(TERRAIN.dirt, roadOuter, islandR); // ring road
+    // approach roads cut through the sidewalk ring at the four entrances
+    for (let ty = 0; ty < WORLD_H; ty++)
+      for (let tx = 0; tx < WORLD_W; tx++)
+        if (inPlaza(tx, ty) && isRoad(tx, ty)) tile(TERRAIN.dirt, tx, ty);
+    clipFill(TERRAIN.grass[0], islandR, 0); // central grass island (clears the cross-stubs)
+    // kerbs + a dashed lane line so it reads as a roundabout
+    ctx.strokeStyle = 'rgba(20,28,18,0.5)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(cxp, cyp, islandR, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = 'rgba(20,28,18,0.3)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(cxp, cyp, swOuter, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = 'rgba(245,245,235,0.45)'; ctx.lineWidth = 1; ctx.setLineDash([4, 5]);
+    ctx.beginPath(); ctx.arc(cxp, cyp, (islandR + roadOuter) / 2, 0, Math.PI * 2); ctx.stroke();
+    ctx.setLineDash([]);
+    // flowers + centre tree on the island
+    for (let a = 0; a < 14; a++) {
+      const ang = a * 2.399, rr = 7 + (a % 3) * 6;
       px(Math.round(cxp + Math.cos(ang) * rr), Math.round(cyp + Math.sin(ang) * rr * 0.9), 2, 2, theme.gardenFlowers[a % theme.gardenFlowers.length]);
     }
-    ell(cxp, cyp + 6, 14, 5, 'rgba(20,35,20,0.22)');
+    ell(cxp, cyp + 6, 14, 5, 'rgba(20,35,20,0.25)');
     blitFoot(PROPS.tree, cxp, cyp + 9, SPR * 1.5);
-
-    // a little gig stage in front of the town tree (the scene's beating heart)
-    const sx = cxp;
-    const sy = cyp + 28;
-    px(sx - 14, sy + 1, 28, 2, 'rgba(20,35,20,0.25)'); // shadow
-    px(sx - 16, sy - 5, 32, 6, '#7a5230'); // deck
-    px(sx - 16, sy - 5, 32, 2, '#9a6e40'); // deck highlight
-    px(sx - 16, sy + 1, 32, 1, '#553418');
-    px(sx - 15, sy + 2, 2, 3, '#4a2f15');
-    px(sx + 13, sy + 2, 2, 3, '#4a2f15');
-    // banner on poles
-    px(sx - 15, sy - 19, 1, 14, '#6e4a2c');
-    px(sx + 14, sy - 19, 1, 14, '#6e4a2c');
-    px(sx - 14, sy - 19, 28, 5, '#f72585');
-    px(sx - 14, sy - 19, 28, 1, '#ff9ecb');
-    // amp stacks
-    const stageAmp = (ax: number) => {
-      px(ax - 3, sy - 9, 7, 9, '#15151a');
-      px(ax - 2, sy - 8, 5, 4, '#2a2a32');
-      ctx.fillStyle = '#3a3a44';
-      ctx.beginPath();
-      ctx.ellipse(ax, sy - 6, 1.6, 1.6, 0, 0, Math.PI * 2);
-      ctx.fill();
-    };
-    stageAmp(sx - 11);
-    stageAmp(sx + 11);
-    // mic stand
-    px(sx, sy - 9, 1, 8, '#9a9aa0');
-    ctx.fillStyle = '#c0c0c8';
-    ctx.beginPath();
-    ctx.ellipse(sx, sy - 10, 1.5, 1.5, 0, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  // 3c. Crosswalks on the main streets at the four approaches to the square
-  {
-    const CW = 'rgba(240,240,230,0.8)';
-    [ROAD_Y - 3, ROAD_Y + 4].forEach((ty) => {
-      if (ty < 1 || ty >= WORLD_H) return;
-      for (let i = 0; i < 5; i++) px(ROAD_X * TILE + i * 7 + 1, ty * TILE + 4, 3, 9, CW);
-    });
-    [ROAD_X - 3, ROAD_X + 4].forEach((tx) => {
-      if (tx < 1 || tx >= WORLD_W) return;
-      for (let i = 0; i < 5; i++) px(tx * TILE + 4, ROAD_Y * TILE + i * 7 + 1, 9, 3, CW);
-    });
   }
 
   // 4. Bushes on leftover grass + lamps along the streets

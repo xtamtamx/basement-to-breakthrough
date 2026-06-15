@@ -49,7 +49,7 @@ const v = (x: number, y: number): AtlasSprite => ({
 export const TERRAIN = {
   grass: [v(32, 0), v(96, 0), v(16, 16)], // seamless grass variants
   dirt: v(320, 16), // tan dirt/gravel road
-  stone: v(176, 448), // light flagstone (sidewalk / plaza)
+  stone: v(304, 16), // clean smooth flagstone (sidewalk / plaza) — not the dotted one
   water: v(192, 48), // water
 } as const;
 
