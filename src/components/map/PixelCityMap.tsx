@@ -392,13 +392,19 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
       for (let tx = 0; tx < WORLD_W; tx++) tile(TERRAIN.water, tx, ty);
   }
 
-  // 2. Paved corridors — real flagstone SIDEWALKS flank a dirt ROAD centre
+  // 2. Paved corridors — real flagstone SIDEWALKS flank a dirt ROAD centre.
+  // per-tile wear breaks the "one tile repeated" look.
+  const vary = (tx: number, ty: number) => {
+    const x = tx * TILE, y = ty * TILE, h = hash2(tx * 13 + 5, ty * 7 + 3);
+    if (h > 0.78) px(x + (Math.floor(h * 53) % 12), y + (Math.floor(h * 97) % 12), 3, 2, 'rgba(0,0,0,0.09)');
+    if (h < 0.24) px(x + (Math.floor(h * 131) % 12), y + (Math.floor(h * 173) % 12), 2, 2, 'rgba(255,255,255,0.06)');
+    if (h > 0.91) px(x + (Math.floor(h * 211) % 13), y + (Math.floor(h * 251) % 12), 1, 3, 'rgba(0,0,0,0.11)');
+  };
   const drawCorridor = (tx: number, ty: number) => {
     if (inPlaza(tx, ty)) return;
     if (isSidewalk(tx, ty)) {
       tile(TERRAIN.stone, tx, ty);
       const x = tx * TILE, y = ty * TILE;
-      // subtle curb line where the sidewalk meets grass or the road
       if (!isStreet(tx, ty - 1) || isRoad(tx, ty - 1)) px(x, y, TILE, 1, 'rgba(0,0,0,0.20)');
       if (!isStreet(tx, ty + 1) || isRoad(tx, ty + 1)) px(x, y + TILE - 1, TILE, 1, 'rgba(0,0,0,0.20)');
       if (!isStreet(tx - 1, ty) || isRoad(tx - 1, ty)) px(x, y, 1, TILE, 'rgba(0,0,0,0.20)');
@@ -406,10 +412,52 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
     } else {
       tile(theme.streetPaved ? TERRAIN.stone : TERRAIN.dirt, tx, ty);
     }
+    vary(tx, ty);
   };
   for (let ty = 0; ty < WORLD_H; ty++)
     for (let tx = 0; tx < WORLD_W; tx++)
       if (isStreet(tx, ty)) drawCorridor(tx, ty);
+
+  // 2b. Dashed lane lines down the centre of every road (skip intersections/plaza)
+  ctx.fillStyle = 'rgba(244,244,230,0.5)';
+  for (const s of STREET_H) {
+    const y = (s + 1) * TILE - 1;
+    for (let x = 6; x < WORLD_W * TILE; x += 13) {
+      const tx = Math.floor(x / TILE);
+      if (roadColSet.has(tx) || inPlaza(tx, s)) continue;
+      ctx.fillRect(x, y, 6, 2);
+    }
+  }
+  for (const s of STREET_V) {
+    const x = (s + 1) * TILE - 1;
+    for (let y = 6; y < WORLD_H * TILE; y += 13) {
+      const ty = Math.floor(y / TILE);
+      if (roadRowSet.has(ty) || inPlaza(s, ty)) continue;
+      ctx.fillRect(x, y, 2, 6);
+    }
+  }
+
+  // 2c. Building front paths to the sidewalk (matching) + venue driveways/parking
+  plan.buildings.forEach((b) => {
+    const cxr = b.tx + (b.tw >> 1);
+    const grassPath: number[] = [];
+    let reached = false, roadR = -1;
+    for (let r = b.ty + b.th; r <= b.ty + b.th + 3; r++) {
+      if (inPlaza(cxr, r)) break;
+      if (isRoad(cxr, r)) { reached = true; roadR = r; break; }
+      if (isSidewalk(cxr, r)) { reached = true; break; }
+      grassPath.push(r);
+    }
+    if (!reached) return;
+    grassPath.forEach((r) => tile(TERRAIN.stone, cxr, r)); // front path across the yard
+    if (b.venue) {
+      if (roadR < 0) for (let r = b.ty + b.th; r <= b.ty + b.th + 3; r++) { if (isRoad(cxr, r)) { roadR = r; break; } }
+      if (roadR >= 0) {
+        for (let r = b.ty + b.th; r < roadR; r++) if (!inPlaza(cxr, r)) tile(TERRAIN.stone, cxr, r); // driveway through sidewalk
+        tile(TERRAIN.stone, cxr, roadR); // parking pad on the road
+      }
+    }
+  });
 
   // 3. Roundabout — grass island ← ring road ← sidewalk ring, approach roads cut in
   {
