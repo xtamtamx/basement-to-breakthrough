@@ -38,26 +38,31 @@ interface PixelCityMapProps {
 // --- World layout (in 16px tiles) -------------------------------------------
 const WORLD_W = 60;
 const WORLD_H = 46;
-const ROAD_X = 29; // main vertical street (2-wide: 29,30)
-const ROAD_Y = 23; // main horizontal street (2-wide: 23,24)
+const ROAD_X = 30; // main vertical road (road 30,31; sidewalks 29,32)
+const ROAD_Y = 27; // main horizontal road (road 27,28; sidewalks 26,29)
 const PLAZA_R = 3;
 
-// Street grid — every street is 2 tiles wide (s, s+1). The mains are in here.
-const STREET_V = [7, 18, ROAD_X, 40, 51];
-const STREET_H = [6, 14, ROAD_Y, 32, 40];
+// Each street is a paved CORRIDOR: 1-tile flagstone sidewalk | 2-tile dirt road
+// | 1-tile sidewalk. Townsfolk walk the sidewalks; the road centre is for looks.
+const STREET_V = [6, 18, ROAD_X, 42];
+const STREET_H = [5, 16, ROAD_Y, 38];
 
 const ZOOM_MIN = 1.3;
 const ZOOM_MAX = 5;
 const ZOOM_DEFAULT = 2.4;
 const SPR = 0.6; // sprite draw-scale into the world
 
-const streetColSet = new Set<number>();
-STREET_V.forEach((s) => { streetColSet.add(s); streetColSet.add(s + 1); });
-const streetRowSet = new Set<number>();
-STREET_H.forEach((s) => { streetRowSet.add(s); streetRowSet.add(s + 1); });
-const isStreetCol = (tx: number) => streetColSet.has(tx);
-const isStreetRow = (ty: number) => streetRowSet.has(ty);
-const isStreet = (tx: number, ty: number) => isStreetCol(tx) || isStreetRow(ty);
+const roadColSet = new Set<number>();
+STREET_V.forEach((s) => { roadColSet.add(s); roadColSet.add(s + 1); });
+const roadRowSet = new Set<number>();
+STREET_H.forEach((s) => { roadRowSet.add(s); roadRowSet.add(s + 1); });
+const swColSet = new Set<number>();
+STREET_V.forEach((s) => { swColSet.add(s - 1); swColSet.add(s + 2); });
+const swRowSet = new Set<number>();
+STREET_H.forEach((s) => { swRowSet.add(s - 1); swRowSet.add(s + 2); });
+const isRoad = (tx: number, ty: number) => roadColSet.has(tx) || roadRowSet.has(ty);
+const isSidewalk = (tx: number, ty: number) => !isRoad(tx, ty) && (swColSet.has(tx) || swRowSet.has(ty));
+const isStreet = (tx: number, ty: number) => isRoad(tx, ty) || isSidewalk(tx, ty); // whole corridor
 
 function inPlaza(tx: number, ty: number): boolean {
   return Math.abs(tx - (ROAD_X + 0.5)) <= PLAZA_R && Math.abs(ty - (ROAD_Y + 0.5)) <= PLAZA_R;
@@ -215,8 +220,8 @@ function planTown(districts: District[], venues: Venue[], roofMix: BuildingKey[]
     }
   };
   for (const sy of STREET_H) {
-    if (sy >= 5) placeRow(sy - 1, 'bottom');
-    if (sy + 2 < WORLD_H - 5) placeRow(sy + 2, 'top');
+    if (sy - 2 >= 2) placeRow(sy - 2, 'bottom'); // north row, behind the north sidewalk
+    if (sy + 3 < WORLD_H - 4) placeRow(sy + 3, 'top'); // south row, behind the south sidewalk
   }
 
   // Assign venues to the buildings nearest the town square in their district.
@@ -270,7 +275,10 @@ function pickNextTile(w: Walker, walkable: Set<string>): void {
   if (cands.length === 0) return;
   const fwd = cands.filter((c) => !(c.tx === w.ptx && c.ty === w.pty));
   const pool = fwd.length ? fwd : cands;
-  const next = pool[Math.floor(Math.random() * pool.length)];
+  // strongly prefer the sidewalk; only step onto the road to cross
+  const sw = pool.filter((c) => isSidewalk(c.tx, c.ty));
+  const finalPool = sw.length ? sw : pool;
+  const next = finalPool[Math.floor(Math.random() * finalPool.length)];
   w.ptx = w.tx; w.pty = w.ty; w.ntx = next.tx; w.nty = next.ty;
 }
 function drawPerson(ctx: CanvasRenderingContext2D, w: Walker): void {
@@ -381,39 +389,44 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
       }
   }
 
-  // 2. Street grid (dirt or cobble per city) + doorstep paving
-  const pavingSet = new Set(plan.paving.map((p) => `${p.tx},${p.ty}`));
-  const isPaved = (tx: number, ty: number) => isStreet(tx, ty) || pavingSet.has(`${tx},${ty}`);
-  const drawStreet = (tx: number, ty: number) => {
+  // 2. Paved corridors — flagstone SIDEWALKS flank a dirt/cobble ROAD centre
+  const drawCorridor = (tx: number, ty: number) => {
     if (inPlaza(tx, ty)) return;
     const x = tx * TILE, y = ty * TILE;
-    if (theme.streetPaved) {
+    if (isSidewalk(tx, ty)) {
+      // flagstone sidewalk: light stone with subtle joints
+      px(x, y, TILE, TILE, theme.cobble);
+      const h = hash2(tx * 7, ty * 13);
+      px(x + 1, y + 1, 6, 6, h > 0.5 ? theme.cobbleLight : theme.cobble);
+      px(x + 9, y + 9, 6, 6, h < 0.5 ? theme.cobbleLight : theme.cobble);
+      px(x, y, TILE, 1, theme.cobbleGrout);
+      px(x, y, 1, TILE, theme.cobbleGrout);
+      // raised curb on the outer (road-facing) and grass-facing edges
+      if (!isStreet(tx, ty - 1)) px(x, y, TILE, 1, theme.cobbleDark);
+      if (!isStreet(tx, ty + 1)) px(x, y + TILE - 1, TILE, 1, theme.cobbleDark);
+      if (!isStreet(tx - 1, ty)) px(x, y, 1, TILE, theme.cobbleDark);
+      if (!isStreet(tx + 1, ty)) px(x + TILE - 1, y, 1, TILE, theme.cobbleDark);
+      if (isRoad(tx, ty - 1)) px(x, y, TILE, 1, theme.cobbleDark);
+      if (isRoad(tx, ty + 1)) px(x, y + TILE - 1, TILE, 1, theme.cobbleDark);
+      if (isRoad(tx - 1, ty)) px(x, y, 1, TILE, theme.cobbleDark);
+      if (isRoad(tx + 1, ty)) px(x + TILE - 1, y, 1, TILE, theme.cobbleDark);
+    } else if (theme.streetPaved) {
       px(x, y, TILE, TILE, theme.cobbleGrout);
       for (let sy = 0; sy < 2; sy++)
         for (let sx = 0; sx < 2; sx++) {
           const h = hash2(tx * 2 + sx + 99, ty * 2 + sy + 99);
           px(x + sx * 8 + 1, y + sy * 8 + 1, 6, 6, h < 0.22 ? theme.cobbleDark : h > 0.86 ? theme.cobbleLight : theme.cobble);
         }
-      if (!isPaved(tx, ty - 1)) px(x, y, TILE, 1, theme.cobbleDark);
-      if (!isPaved(tx, ty + 1)) px(x, y + TILE - 1, TILE, 1, theme.cobbleDark);
-      if (!isPaved(tx - 1, ty)) px(x, y, 1, TILE, theme.cobbleDark);
-      if (!isPaved(tx + 1, ty)) px(x + TILE - 1, y, 1, TILE, theme.cobbleDark);
     } else {
       px(x, y, TILE, TILE, theme.path);
       const h = hash2(tx * 7, ty * 13);
       if (h > 0.5) px(x + ((h * 73) % 11), y + ((h * 131) % 11), 3, 2, theme.pathLight);
       if (h < 0.42) px(x + ((h * 251) % 12), y + ((h * 313) % 12), 2, 2, theme.pathSpeck);
-      // stone sidewalk curb where the street meets grass
-      if (!isPaved(tx, ty - 1)) { px(x, y, TILE, 3, theme.cobble); px(x, y, TILE, 1, theme.cobbleDark); }
-      if (!isPaved(tx, ty + 1)) { px(x, y + TILE - 3, TILE, 3, theme.cobble); px(x, y + TILE - 1, TILE, 1, theme.cobbleDark); }
-      if (!isPaved(tx - 1, ty)) { px(x, y, 3, TILE, theme.cobble); px(x, y, 1, TILE, theme.cobbleDark); }
-      if (!isPaved(tx + 1, ty)) { px(x + TILE - 3, y, 3, TILE, theme.cobble); px(x + TILE - 1, y, 1, TILE, theme.cobbleDark); }
     }
   };
   for (let ty = 0; ty < WORLD_H; ty++)
     for (let tx = 0; tx < WORLD_W; tx++)
-      if (isStreet(tx, ty)) drawStreet(tx, ty);
-  plan.paving.forEach((p) => drawStreet(p.tx, p.ty));
+      if (isStreet(tx, ty)) drawCorridor(tx, ty);
 
   // 3. Cobblestone town square
   for (let ty = 0; ty < WORLD_H; ty++)
@@ -515,11 +528,11 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
       if (hv > 0.93) { bush(tx * TILE + 8, ty * TILE + 10); occupied.add(`${tx},${ty}`); }
       else if (hv > 0.84) { px(tx * TILE + 4, ty * TILE + 6, 3, 3, theme.gardenFlowers[Math.floor(hv * 311) % theme.gardenFlowers.length]); px(tx * TILE + 9, ty * TILE + 9, 2, 2, theme.gardenFlowers[Math.floor(hv * 733) % theme.gardenFlowers.length]); }
     }
-  // street-corner lamps
+  // lamp posts on the sidewalk corners of each intersection
   for (const sy of STREET_H)
     for (const sx of STREET_V)
-      if (!(Math.abs(sx - ROAD_X) <= 1 && Math.abs(sy - ROAD_Y) <= 1))
-        lamp(sx * TILE - 3, sy * TILE - 2);
+      if (!(Math.abs(sx - ROAD_X) <= 2 && Math.abs(sy - ROAD_Y) <= 2))
+        lamp((sx - 1) * TILE + 8, (sy - 1) * TILE + 13);
 
   // (Buildings, trees and their props are drawn PER-FRAME, depth-sorted with the
   // walkers, so townsfolk are correctly occluded by anything in front of them.)
@@ -582,11 +595,13 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
 
   useEffect(() => {
     const { list } = walkable;
-    if (list.length === 0) { walkersRef.current = []; return; }
-    const count = Math.max(14, Math.min(30, Math.floor(list.length / 9)));
+    const swList = list.filter((t) => isSidewalk(t.tx, t.ty));
+    const spawn = swList.length ? swList : list;
+    if (spawn.length === 0) { walkersRef.current = []; return; }
+    const count = Math.max(14, Math.min(32, Math.floor(spawn.length / 6)));
     const ws: Walker[] = [];
     for (let i = 0; i < count; i++) {
-      const t = list[Math.floor(Math.random() * list.length)];
+      const t = spawn[Math.floor(Math.random() * spawn.length)];
       ws.push({
         x: (t.tx + 0.5) * TILE, y: (t.ty + 0.9) * TILE, tx: t.tx, ty: t.ty, ptx: t.tx, pty: t.ty, ntx: t.tx, nty: t.ty,
         hair: WALKER_HAIR[i % WALKER_HAIR.length], shirt: WALKER_SHIRT[i % WALKER_SHIRT.length], skin: WALKER_SKIN[i % WALKER_SKIN.length],
