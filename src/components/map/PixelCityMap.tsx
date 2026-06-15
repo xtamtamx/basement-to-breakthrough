@@ -80,7 +80,7 @@ const THEMES: Record<CityThemeKey, MapTheme> = {
     soil: '#7a4d2d', soilDark: '#5f3c23',
     gardenFlowers: ['#ef5a8a', '#f4cf4f', '#ffffff', '#b072e0', '#ff8c4d'], wildFlowers: ['#f4d04f', '#ffffff', '#ef6f9c', '#9c7be0'],
     tree: { bark: '#6e4a2c', barkDark: '#4f3419', leafDark: '#2f7a38', leaf: '#46974c', leafLight: '#69bb60' },
-    roofMix: ['tudor', 'cottage', 'townhouse', 'stone'], void: '#21331f',
+    roofMix: ['tudor', 'cottage', 'townhouse', 'stone', 'manor', 'shopAwning', 'tudor', 'cottage'], void: '#21331f',
   },
   rust: {
     grass: ['#5c6535', '#6b743e', '#7a8349', '#8a9255'], grassBlade: '#9aa564', grassShade: '#474f29',
@@ -89,7 +89,7 @@ const THEMES: Record<CityThemeKey, MapTheme> = {
     soil: '#5e4427', soilDark: '#49351e',
     gardenFlowers: ['#d8783a', '#c9a13a', '#d0d0d0', '#a06a3a', '#e0913a'], wildFlowers: ['#c9a13a', '#cacaca', '#d8783a', '#a8b06a'],
     tree: { bark: '#5e4023', barkDark: '#422c16', leafDark: '#5e6b2c', leaf: '#8a7a30', leafLight: '#bb9a3a' },
-    roofMix: ['darkHall', 'greyShop', 'manor', 'townhouse'], void: '#26211a',
+    roofMix: ['darkHall', 'greyShop', 'manor', 'townhouse', 'stone', 'tudor', 'greyShop'], void: '#26211a',
   },
   seaside: {
     grass: ['#5ea24e', '#6fb35a', '#80c468', '#93d577'], grassBlade: '#a6e188', grassShade: '#4a8440',
@@ -98,7 +98,7 @@ const THEMES: Record<CityThemeKey, MapTheme> = {
     soil: '#8a6a3e', soilDark: '#6e5430',
     gardenFlowers: ['#ff8cb0', '#ffe066', '#ffffff', '#7ad0e6', '#ff9e6b'], wildFlowers: ['#ffe066', '#ffffff', '#ff8cb0', '#7ad0e6'],
     tree: { bark: '#7a5530', barkDark: '#583c20', leafDark: '#2f8a48', leaf: '#46a85e', leafLight: '#6fcf7e' },
-    roofMix: ['teal', 'shopAwning', 'cottage', 'stone'], void: '#16363f',
+    roofMix: ['teal', 'shopAwning', 'cottage', 'stone', 'townhouse', 'tudor', 'teal'], void: '#16363f',
   },
   capital: {
     grass: ['#54795a', '#638967', '#739a77', '#86ab8a'], grassBlade: '#97bb9a', grassShade: '#43614a',
@@ -107,7 +107,7 @@ const THEMES: Record<CityThemeKey, MapTheme> = {
     soil: '#6a5a48', soilDark: '#534639',
     gardenFlowers: ['#c98ad0', '#8ab0e0', '#ffffff', '#e0a0c0', '#9ad0c0'], wildFlowers: ['#c98ad0', '#ffffff', '#8ab0e0', '#9ad0c0'],
     tree: { bark: '#6a513a', barkDark: '#4d3a28', leafDark: '#3a7a52', leaf: '#52975f', leafLight: '#79b884' },
-    roofMix: ['stone', 'arch', 'greyShop', 'townhouse'], void: '#191c24',
+    roofMix: ['stone', 'arch', 'greyShop', 'townhouse', 'glassHall', 'civic', 'stone'], void: '#191c24',
   },
 };
 
@@ -222,6 +222,18 @@ function planTown(districts: District[], venues: Venue[], roofMix: BuildingKey[]
     b.th = nh;
   }
 
+  // Street trees: a tidy row on the grass shoulder just south of each street.
+  const overlapsBuilding = (tx: number, ty: number) =>
+    buildings.some((b) => tx >= b.tx - 1 && tx <= b.tx + b.tw && ty >= b.ty && ty <= b.ty + b.th);
+  for (const sy of STREET_H) {
+    const row = sy + 2;
+    if (row >= WORLD_H - 3) continue;
+    for (let tx = 4; tx < WORLD_W - 3; tx += 5) {
+      if (isStreet(tx, row) || inPlaza(tx, row) || overlapsBuilding(tx, row)) continue;
+      trees.push({ sprite: PROPS.treeB, tx, ty: row, th: fpH(PROPS.treeB) });
+    }
+  }
+
   // Periphery greenery — a leafy frame outside the street grid.
   for (let tx = 1; tx < WORLD_W - 2; tx += 3) {
     trees.push({ sprite: hash2(tx, 0) < 0.5 ? PROPS.tree : PROPS.treeB, tx, ty: 0, th: fpH(PROPS.tree) });
@@ -308,10 +320,11 @@ function buildStaticWorld(plan: TownPlan, sheets: Record<SheetName, HTMLImageEle
     const h = hash2(tx * 7, ty * 13);
     if (h > 0.5) px(x + ((h * 73) % 11), y + ((h * 131) % 11), 3, 2, theme.pathLight);
     if (h < 0.42) px(x + ((h * 251) % 12), y + ((h * 313) % 12), 2, 2, theme.pathSpeck);
-    if (!isPaved(tx, ty - 1)) px(x, y, TILE, 2, theme.pathDark);
-    if (!isPaved(tx, ty + 1)) px(x, y + TILE - 2, TILE, 2, theme.pathDark);
-    if (!isPaved(tx - 1, ty)) px(x, y, 2, TILE, theme.pathDark);
-    if (!isPaved(tx + 1, ty)) px(x + TILE - 2, y, 2, TILE, theme.pathDark);
+    // stone sidewalk curb wherever the street meets grass
+    if (!isPaved(tx, ty - 1)) { px(x, y, TILE, 3, theme.cobble); px(x, y, TILE, 1, theme.cobbleDark); }
+    if (!isPaved(tx, ty + 1)) { px(x, y + TILE - 3, TILE, 3, theme.cobble); px(x, y + TILE - 1, TILE, 1, theme.cobbleDark); }
+    if (!isPaved(tx - 1, ty)) { px(x, y, 3, TILE, theme.cobble); px(x, y, 1, TILE, theme.cobbleDark); }
+    if (!isPaved(tx + 1, ty)) { px(x + TILE - 3, y, 3, TILE, theme.cobble); px(x + TILE - 1, y, 1, TILE, theme.cobbleDark); }
   };
   for (let ty = 0; ty < WORLD_H; ty++)
     for (let tx = 0; tx < WORLD_W; tx++)
@@ -342,6 +355,19 @@ function buildStaticWorld(plan: TownPlan, sheets: Record<SheetName, HTMLImageEle
     }
     ell(cxp, cyp + 6, 14, 5, 'rgba(20,35,20,0.22)');
     blitFoot(PROPS.tree, cxp, cyp + 9, SPR * 1.5);
+  }
+
+  // 3c. Crosswalks on the main streets at the four approaches to the square
+  {
+    const CW = 'rgba(240,240,230,0.8)';
+    [ROAD_Y - 3, ROAD_Y + 4].forEach((ty) => {
+      if (ty < 1 || ty >= WORLD_H) return;
+      for (let i = 0; i < 5; i++) px(ROAD_X * TILE + i * 7 + 1, ty * TILE + 4, 3, 9, CW);
+    });
+    [ROAD_X - 3, ROAD_X + 4].forEach((tx) => {
+      if (tx < 1 || tx >= WORLD_W) return;
+      for (let i = 0; i < 5; i++) px(tx * TILE + 4, ROAD_Y * TILE + i * 7 + 1, 9, 3, CW);
+    });
   }
 
   // 4. Bushes on leftover grass + lamps along the streets
