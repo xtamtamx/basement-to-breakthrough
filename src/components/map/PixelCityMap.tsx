@@ -1,15 +1,16 @@
 /**
  * PixelCityMap - cozy top-down town renderer for the city overview.
  *
- * Stardew / Earthbound feel: the ground, dirt paths, cobblestone town square,
- * flower gardens and flora texture are drawn PROCEDURALLY in one controlled
- * warm palette (so nothing clashes), and the genuinely-matching sprite art —
- * pitched-roof houses + round trees — is composited on top. The whole static
- * world is baked once into an offscreen canvas; only the live bits (venue show
- * markers, district signposts) redraw each frame.
+ * Stardew / Earthbound feel, drawn ENTIRELY PROCEDURALLY in one controlled
+ * palette per city — grass, dirt paths, a cobblestone town square, flower
+ * gardens, cottages (walls + pitched roof + door + windows), round trees,
+ * bushes and lamps. No imported tilesets (they read as unfinished/clashing),
+ * so everything is consistent and "finished". The whole static world is baked
+ * once into an offscreen canvas; only the live bits (wandering townsfolk, venue
+ * show markers, district signposts) redraw each frame.
  *
  * Driven by real game data: one quarter per district, the player's venues as
- * marked houses near the crossroads, pulsing indicators for venues with shows.
+ * marked cottages near the crossroads, pulsing indicators for venues with shows.
  */
 
 import React, {
@@ -23,15 +24,6 @@ import { useGameStore } from '@stores/gameStore';
 import { haptics } from '@utils/mobile';
 import { soundManager } from '@/game/audio/SoundManager';
 import { CityThemeKey, District, Venue, VenueType } from '@game/types';
-import {
-  AtlasSprite,
-  BUILDINGS,
-  BuildingKey,
-  PROPS,
-  SheetName,
-  TILE,
-  loadAllSheets,
-} from './townAtlas';
 
 interface PixelCityMapProps {
   onDistrictClick?: (district: District) => void;
@@ -39,24 +31,53 @@ interface PixelCityMapProps {
 }
 
 // --- World layout (in 16px tiles) -------------------------------------------
+const TILE = 16;
 const WORLD_W = 64;
 const WORLD_H = 52;
 const ROAD_X = 31; // vertical path tiles: ROAD_X, ROAD_X + 1
 const ROAD_Y = 25; // horizontal path tiles: ROAD_Y, ROAD_Y + 1
 const SCALE = 2;
 const PLAZA_R = 3; // cobble town-square radius around the crossroads (tiles)
+const QUARTER_MARGIN = 2;
+const BW = 5; // building footprint width (tiles)
+const BH = 5; // building footprint height (tiles)
 
-const QUARTER_MARGIN = 2; // tiles of breathing room inside each quarter
+// --- Cottage palettes (roof keys carry the district/venue identity) ---------
+interface HousePalette {
+  roof: string;
+  roofDark: string;
+  wall: string;
+  wallDark: string;
+  door: string;
+  doorDark: string;
+  outline: string;
+}
+type RoofKey = 'red' | 'blue' | 'dark' | 'green';
+const HOUSES: Record<RoofKey, HousePalette> = {
+  red: { roof: '#c95040', roofDark: '#9c3a2e', wall: '#ecdcb6', wallDark: '#ccba8e', door: '#6e4a2c', doorDark: '#4f3419', outline: '#37291f' },
+  blue: { roof: '#4a78b4', roofDark: '#345e92', wall: '#ecdcb6', wallDark: '#ccba8e', door: '#6e4a2c', doorDark: '#4f3419', outline: '#262833' },
+  dark: { roof: '#565a66', roofDark: '#3a3d48', wall: '#dccfb2', wallDark: '#bcae8c', door: '#5b4326', doorDark: '#3e2c18', outline: '#22232b' },
+  green: { roof: '#4f9457', roofDark: '#387641', wall: '#ecdcb6', wallDark: '#ccba8e', door: '#6e4a2c', doorDark: '#4f3419', outline: '#26331f' },
+};
 
-// --- Per-city map themes (one controlled palette each → no cross-pack clash) -
+// --- Tree palettes -----------------------------------------------------------
+interface TreePalette {
+  bark: string;
+  barkDark: string;
+  leafDark: string;
+  leaf: string;
+  leafLight: string;
+}
+
+// --- Per-city map themes (one controlled palette each) ----------------------
 interface MapTheme {
   grass: string[]; // 4 shades, dark → light
   grassBlade: string;
   grassShade: string;
   path: string;
   pathLight: string;
-  pathDark: string;
   pathSpeck: string;
+  pathDark: string;
   cobble: string;
   cobbleLight: string;
   cobbleDark: string;
@@ -65,114 +86,117 @@ interface MapTheme {
   soilDark: string;
   gardenFlowers: string[];
   wildFlowers: string[];
-  void: string; // backdrop behind the world
-  roofMix: BuildingKey[]; // filler-house roof bias for this city
+  tree: TreePalette;
+  roofMix: RoofKey[];
+  void: string;
 }
 
 const THEMES: Record<CityThemeKey, MapTheme> = {
-  // Basement City — cozy hometown green
+  // Basement City — bright cozy hometown green
   home: {
-    grass: ['#4d7838', '#578741', '#65984a', '#74a957'],
-    grassBlade: '#83bb64',
-    grassShade: '#3f6630',
-    path: '#bd9159',
-    pathLight: '#cda66c',
-    pathDark: '#9c7341',
-    pathSpeck: '#8a6236',
-    cobble: '#b3a892',
-    cobbleLight: '#c4baa6',
-    cobbleDark: '#9a8e78',
-    cobbleGrout: '#6f6552',
-    soil: '#73492c',
-    soilDark: '#5d3a23',
+    grass: ['#57933f', '#66a54c', '#77b65a', '#8ac66a'],
+    grassBlade: '#9ad277',
+    grassShade: '#3f7232',
+    path: '#c79a5e',
+    pathLight: '#d8ac6e',
+    pathSpeck: '#a8814c',
+    pathDark: '#a07843',
+    cobble: '#bcae90',
+    cobbleLight: '#ccc0a4',
+    cobbleDark: '#a3957a',
+    cobbleGrout: '#7a6f58',
+    soil: '#7a4d2d',
+    soilDark: '#5f3c23',
     gardenFlowers: ['#ef5a8a', '#f4cf4f', '#ffffff', '#b072e0', '#ff8c4d'],
     wildFlowers: ['#f4d04f', '#ffffff', '#ef6f9c', '#9c7be0'],
-    void: '#1a2a1e',
-    roofMix: ['houseRed', 'houseBlue', 'houseDark'],
+    tree: { bark: '#6e4a2c', barkDark: '#4f3419', leafDark: '#2f7a38', leaf: '#46974c', leafLight: '#69bb60' },
+    roofMix: ['red', 'blue', 'green'],
+    void: '#21331f',
   },
-  // Rust Belt — sooty olive + grey, industrial
+  // Rust Belt — olive grass, autumnal foliage, sooty roofs
   rust: {
-    grass: ['#4f5a33', '#5d6a3a', '#6b7745', '#7a8552'],
-    grassBlade: '#8a9560',
-    grassShade: '#3d4628',
-    path: '#9a7a4e',
-    pathLight: '#ad8c5d',
-    pathDark: '#7c5f3a',
-    pathSpeck: '#6a4f30',
-    cobble: '#928d84',
-    cobbleLight: '#a6a199',
-    cobbleDark: '#76726b',
-    cobbleGrout: '#4f4b45',
+    grass: ['#5c6535', '#6b743e', '#7a8349', '#8a9255'],
+    grassBlade: '#9aa564',
+    grassShade: '#474f29',
+    path: '#a6824e',
+    pathLight: '#b8945d',
+    pathSpeck: '#7c5f37',
+    pathDark: '#86663a',
+    cobble: '#9a958c',
+    cobbleLight: '#aea99f',
+    cobbleDark: '#7d7970',
+    cobbleGrout: '#544f48',
     soil: '#5e4427',
     soilDark: '#49351e',
-    gardenFlowers: ['#d8783a', '#c9a13a', '#b0b0b0', '#8a6e4a', '#e0913a'],
-    wildFlowers: ['#c9a13a', '#9a9a9a', '#d8783a', '#7a8552'],
-    void: '#241c16',
-    roofMix: ['houseDark', 'houseDark', 'houseRed'],
+    gardenFlowers: ['#d8783a', '#c9a13a', '#d0d0d0', '#a06a3a', '#e0913a'],
+    wildFlowers: ['#c9a13a', '#cacaca', '#d8783a', '#a8b06a'],
+    tree: { bark: '#5e4023', barkDark: '#422c16', leafDark: '#5e6b2c', leaf: '#8a7a30', leafLight: '#bb9a3a' },
+    roofMix: ['dark', 'dark', 'red'],
+    void: '#26211a',
   },
-  // Seaside — bright spring green, sandy paths, sea backdrop
+  // Seaside — vivid spring green, sandy paths, sea backdrop
   seaside: {
-    grass: ['#56904a', '#65a352', '#74b85c', '#86c869'],
-    grassBlade: '#97d67a',
-    grassShade: '#447a3c',
-    path: '#d8c187',
-    pathLight: '#e6d29a',
-    pathDark: '#bfa86a',
-    pathSpeck: '#a8915a',
-    cobble: '#c9bfa2',
-    cobbleLight: '#dbd2b6',
-    cobbleDark: '#aea58a',
-    cobbleGrout: '#8a8268',
+    grass: ['#5ea24e', '#6fb35a', '#80c468', '#93d577'],
+    grassBlade: '#a6e188',
+    grassShade: '#4a8440',
+    path: '#e0c98e',
+    pathLight: '#eed8a1',
+    pathSpeck: '#c0a96a',
+    pathDark: '#c6af74',
+    cobble: '#cdc3a4',
+    cobbleLight: '#ddd4b8',
+    cobbleDark: '#b1a888',
+    cobbleGrout: '#8c8468',
     soil: '#8a6a3e',
     soilDark: '#6e5430',
     gardenFlowers: ['#ff8cb0', '#ffe066', '#ffffff', '#7ad0e6', '#ff9e6b'],
     wildFlowers: ['#ffe066', '#ffffff', '#ff8cb0', '#7ad0e6'],
-    void: '#143038',
-    roofMix: ['houseBlue', 'houseBlue', 'houseRed'],
+    tree: { bark: '#7a5530', barkDark: '#583c20', leafDark: '#2f8a48', leaf: '#46a85e', leafLight: '#6fcf7e' },
+    roofMix: ['blue', 'red', 'blue'],
+    void: '#16363f',
   },
   // The Capital — cool, clean, manicured grey-green
   capital: {
-    grass: ['#496a4e', '#56785a', '#658868', '#779a7b'],
-    grassBlade: '#88ab8c',
-    grassShade: '#3a5640',
-    path: '#b8b2a4',
-    pathLight: '#cac4b6',
-    pathDark: '#999488',
-    pathSpeck: '#86826f',
-    cobble: '#aeb0b8',
-    cobbleLight: '#c4c6cd',
-    cobbleDark: '#909298',
-    cobbleGrout: '#5a5c64',
+    grass: ['#54795a', '#638967', '#739a77', '#86ab8a'],
+    grassBlade: '#97bb9a',
+    grassShade: '#43614a',
+    path: '#bdb7a8',
+    pathLight: '#cfc9ba',
+    pathSpeck: '#8e8a76',
+    pathDark: '#9d988b',
+    cobble: '#b2b4bc',
+    cobbleLight: '#c8cad0',
+    cobbleDark: '#94969c',
+    cobbleGrout: '#5e6068',
     soil: '#6a5a48',
     soilDark: '#534639',
     gardenFlowers: ['#c98ad0', '#8ab0e0', '#ffffff', '#e0a0c0', '#9ad0c0'],
     wildFlowers: ['#c98ad0', '#ffffff', '#8ab0e0', '#9ad0c0'],
-    void: '#171a22',
-    roofMix: ['houseBlue', 'houseDark', 'houseBlue'],
+    tree: { bark: '#6a513a', barkDark: '#4d3a28', leafDark: '#3a7a52', leaf: '#52975f', leafLight: '#79b884' },
+    roofMix: ['blue', 'dark', 'blue'],
+    void: '#191c24',
   },
 };
 
-// House palette per district flavor (roof colors carry the district identity)
-const FILLER_BUILDINGS: Record<string, BuildingKey[]> = {
-  eastside: ['houseRed', 'houseRed', 'houseBlue'],
-  downtown: ['houseBlue', 'houseDark', 'houseBlue'],
-  industrial: ['houseDark', 'houseRed', 'houseDark'],
-  university: ['houseBlue', 'houseBlue', 'houseRed'],
+const FILLER_BUILDINGS: Record<string, RoofKey[]> = {
+  eastside: ['red', 'red', 'blue'],
+  downtown: ['blue', 'dark', 'blue'],
+  industrial: ['dark', 'red', 'dark'],
+  university: ['green', 'blue', 'red'],
 };
-const DEFAULT_FILLERS: BuildingKey[] = ['houseRed', 'houseBlue', 'houseDark'];
 
-const VENUE_BUILDINGS: Partial<Record<VenueType, BuildingKey>> = {
-  [VenueType.BASEMENT]: 'houseRed',
-  [VenueType.HOUSE_SHOW]: 'houseRed',
-  [VenueType.GARAGE]: 'houseRed',
-  [VenueType.DIY_SPACE]: 'houseBlue',
-  [VenueType.DIVE_BAR]: 'houseBlue',
-  [VenueType.PUNK_CLUB]: 'houseBlue',
-  [VenueType.METAL_VENUE]: 'houseDark',
-  [VenueType.WAREHOUSE]: 'houseDark',
-  [VenueType.UNDERGROUND]: 'houseDark',
-  [VenueType.THEATER]: 'houseBlue',
-  [VenueType.CONCERT_HALL]: 'houseDark',
+const VENUE_ROOFS: Partial<Record<VenueType, RoofKey>> = {
+  [VenueType.BASEMENT]: 'red',
+  [VenueType.HOUSE_SHOW]: 'red',
+  [VenueType.GARAGE]: 'red',
+  [VenueType.DIY_SPACE]: 'green',
+  [VenueType.DIVE_BAR]: 'blue',
+  [VenueType.PUNK_CLUB]: 'blue',
+  [VenueType.METAL_VENUE]: 'dark',
+  [VenueType.WAREHOUSE]: 'dark',
+  [VenueType.UNDERGROUND]: 'dark',
+  [VenueType.THEATER]: 'blue',
+  [VenueType.CONCERT_HALL]: 'dark',
 };
 
 // Deterministic tiny hash for stable per-tile variation
@@ -191,8 +215,7 @@ function hashString(s: string): number {
   return h >>> 0;
 }
 
-// Smooth value noise (bilinear-interpolated hash) → blobby grass regions
-// instead of a per-tile checkerboard.
+// Smooth value noise (bilinear-interpolated hash) → soft blobby regions.
 function valueNoise(x: number, y: number): number {
   const x0 = Math.floor(x);
   const y0 = Math.floor(y);
@@ -216,22 +239,19 @@ interface Quarter {
   tw: number;
   th: number;
 }
-
 interface PlacedBuilding {
-  sprite: AtlasSprite;
+  roof: RoofKey;
   tx: number;
   ty: number;
   tw: number;
   th: number;
   venue?: Venue;
 }
-
-interface PlacedProp {
-  sprite: AtlasSprite;
+interface PlacedTree {
   tx: number;
   ty: number;
+  big: boolean;
 }
-
 interface Garden {
   tx: number;
   ty: number;
@@ -239,21 +259,20 @@ interface Garden {
   th: number;
   seed: number;
 }
-
 interface TownPlan {
   quarters: Quarter[];
   buildings: PlacedBuilding[];
-  trees: PlacedProp[];
+  trees: PlacedTree[];
   gardens: Garden[];
   paving: { tx: number; ty: number }[];
 }
 
 // Lay out districts into the four path-divided quarters; venues claim the plots
-// nearest the crossroads, the rest get filler houses, pocket parks and gardens.
+// nearest the crossroads, the rest get cottages, pocket parks and gardens.
 function planTown(
   districts: District[],
   venues: Venue[],
-  roofMix?: BuildingKey[],
+  roofMix: RoofKey[],
 ): TownPlan {
   const quarters: Quarter[] = districts.slice(0, 4).map((district) => {
     const east = district.bounds.x >= 4;
@@ -268,7 +287,7 @@ function planTown(
   });
 
   const buildings: PlacedBuilding[] = [];
-  const trees: PlacedProp[] = [];
+  const trees: PlacedTree[] = [];
   const gardens: Garden[] = [];
   const paving: { tx: number; ty: number }[] = [];
 
@@ -276,8 +295,8 @@ function planTown(
     const seed = hashString(quarter.district.id);
     const south = quarter.district.bounds.y >= 4;
 
-    const plotW = 9;
-    const plotH = 10;
+    const plotW = 7;
+    const plotH = 7;
     const cols = Math.max(1, Math.floor(quarter.tw / plotW));
     const rows = Math.max(1, Math.floor(quarter.th / plotH));
 
@@ -292,69 +311,44 @@ function planTown(
       }
     }
 
-    // Venues claim the plots nearest the crossroads so they sit front and
-    // center in the default view
     const cx = ROAD_X + 1;
     const cy = ROAD_Y + 1;
     plots.sort(
       (a, b) =>
-        Math.hypot(a.tx + 3.5 - cx, a.ty + 4 - cy) -
-        Math.hypot(b.tx + 3.5 - cx, b.ty + 4 - cy),
+        Math.hypot(a.tx + BW / 2 - cx, a.ty + BH / 2 - cy) -
+        Math.hypot(b.tx + BW / 2 - cx, b.ty + BH / 2 - cy),
     );
 
     const districtVenues = venues.filter(
       (v) => v.location?.id === quarter.district.id,
     );
-    const fillers =
-      roofMix ?? FILLER_BUILDINGS[quarter.district.id] ?? DEFAULT_FILLERS;
+    const fillers = roofMix ?? FILLER_BUILDINGS[quarter.district.id];
 
     plots.forEach((plot, i) => {
       const venue = districtVenues[i];
-      let key: BuildingKey | null = null;
 
       if (!venue) {
         const roll = hash2(seed + i, seed);
-        if (roll < 0.08) {
-          // pocket park with a tree
-          trees.push({
-            sprite: hash2(seed, i) < 0.5 ? PROPS.tree : PROPS.treeB,
-            tx: plot.tx + 2,
-            ty: plot.ty + 3,
-          });
+        if (roll < 0.1) {
+          trees.push({ tx: plot.tx + 2, ty: plot.ty + 2, big: hash2(seed, i) < 0.4 });
           return;
         }
-        if (roll < 0.2) {
-          // flower garden plot
-          gardens.push({
-            tx: plot.tx + 1,
-            ty: plot.ty + 2,
-            tw: 5,
-            th: 4,
-            seed: seed + i * 31,
-          });
-          // a tree tucked beside the garden for variety
-          if (hash2(i, seed) < 0.5) {
-            trees.push({ sprite: PROPS.treeB, tx: plot.tx + 6, ty: plot.ty + 1 });
-          }
+        if (roll < 0.24) {
+          gardens.push({ tx: plot.tx, ty: plot.ty + 1, tw: 5, th: 4, seed: seed + i * 31 });
+          if (hash2(i, seed) < 0.5) trees.push({ tx: plot.tx + 5, ty: plot.ty, big: false });
           return;
         }
       }
 
-      key = venue
-        ? VENUE_BUILDINGS[venue.type] ?? 'houseBlue'
+      const roof: RoofKey = venue
+        ? VENUE_ROOFS[venue.type] ?? 'blue'
         : fillers[(seed + i) % fillers.length];
+      buildings.push({ roof, tx: plot.tx, ty: plot.ty, tw: BW, th: BH, venue });
 
-      const sprite = BUILDINGS[key];
-      const tw = sprite.rect.w / TILE;
-      const th = sprite.rect.h / TILE;
-      buildings.push({ sprite, tx: plot.tx, ty: plot.ty, tw, th, venue });
-
-      // Walkway: apron under the house + a stub from the door toward the road
-      const footY = plot.ty + th;
-      for (let i2 = 1; i2 < tw - 1; i2++) {
-        paving.push({ tx: plot.tx + i2, ty: footY });
-      }
-      const doorTx = plot.tx + Math.floor(tw / 2);
+      // Walkway: apron under the cottage + a stub toward the road
+      const footY = plot.ty + BH;
+      for (let i2 = 1; i2 < BW - 1; i2++) paving.push({ tx: plot.tx + i2, ty: footY });
+      const doorTx = plot.tx + Math.floor(BW / 2);
       const isRoadRow = !south && plot.row === rows - 1;
       const stubEnd = isRoadRow ? ROAD_Y - 1 : footY + 2;
       for (let py = footY + 1; py <= Math.min(stubEnd, WORLD_H - 2); py++) {
@@ -366,45 +360,160 @@ function planTown(
   // World-border greenery — a leafy frame around the town
   for (let tx = 0; tx < WORLD_W - 2; tx += 3) {
     if (Math.abs(tx - ROAD_X) > 2) {
-      trees.push({ sprite: PROPS.tree, tx, ty: -2 });
-      trees.push({ sprite: PROPS.tree, tx: tx + 1, ty: WORLD_H - 4 });
+      trees.push({ tx, ty: -1, big: false });
+      trees.push({ tx: tx + 1, ty: WORLD_H - 3, big: false });
     }
   }
   for (let ty = 1; ty < WORLD_H - 4; ty += 4) {
     if (Math.abs(ty - ROAD_Y) > 2) {
-      trees.push({ sprite: PROPS.treeB, tx: 0, ty: ty - 1 });
-      trees.push({ sprite: PROPS.treeB, tx: WORLD_W - 2, ty: ty - 1 });
+      trees.push({ tx: 0, ty, big: false });
+      trees.push({ tx: WORLD_W - 2, ty, big: false });
     }
   }
 
   return { quarters, buildings, trees, gardens, paving };
 }
 
-// True for the cobblestone town-square footprint at the crossroads.
 function inPlaza(tx: number, ty: number): boolean {
   const dx = tx - (ROAD_X + 0.5);
   const dy = ty - (ROAD_Y + 0.5);
   return Math.abs(dx) <= PLAZA_R && Math.abs(dy) <= PLAZA_R;
 }
-
-// True for the dirt main roads (the two-wide cross), excluding the plaza.
 function isRoad(tx: number, ty: number): boolean {
   return tx === ROAD_X || tx === ROAD_X + 1 || ty === ROAD_Y || ty === ROAD_Y + 1;
 }
 
-// --- Wandering townsfolk ----------------------------------------------------
+// --- Procedural cottage ------------------------------------------------------
+// (x,y) = top-left of the BW×BH box in world px.
+function drawHouse(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  pal: HousePalette,
+): void {
+  const W = BW * TILE;
+  const H = BH * TILE;
+  const wallX = x + 10;
+  const wallW = W - 20;
+  const roofBaseY = y + 36;
+  const apexY = y + 4;
+  const wallTopY = roofBaseY - 2;
+  const wallBotY = y + H - 6;
+  const wallH = wallBotY - wallTopY;
+
+  // grounding shadow
+  ctx.fillStyle = 'rgba(20,35,20,0.22)';
+  ctx.beginPath();
+  ctx.ellipse(x + W / 2, wallBotY + 2, wallW / 2 + 5, 5, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // walls
+  ctx.fillStyle = pal.wall;
+  ctx.fillRect(wallX, wallTopY, wallW, wallH);
+  ctx.fillStyle = pal.wallDark;
+  ctx.fillRect(wallX + wallW - 4, wallTopY, 4, wallH);
+  ctx.fillRect(wallX, wallBotY - 3, wallW, 3);
+  ctx.fillStyle = pal.outline;
+  ctx.fillRect(wallX - 1, wallTopY, 1, wallH);
+  ctx.fillRect(wallX + wallW, wallTopY, 1, wallH);
+
+  // pitched roof (gable) with shaded right slope + eaves
+  ctx.fillStyle = pal.roof;
+  ctx.beginPath();
+  ctx.moveTo(x + 2, roofBaseY);
+  ctx.lineTo(x + W / 2, apexY);
+  ctx.lineTo(x + W - 2, roofBaseY);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = pal.roofDark;
+  ctx.beginPath();
+  ctx.moveTo(x + W / 2, apexY);
+  ctx.lineTo(x + W - 2, roofBaseY);
+  ctx.lineTo(x + W / 2, roofBaseY);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = pal.roofDark;
+  ctx.fillRect(x + 2, roofBaseY - 2, W - 4, 2); // eave shadow
+
+  // door
+  const doorW = 14;
+  const doorH = 18;
+  const doorX = x + W / 2 - doorW / 2;
+  ctx.fillStyle = pal.door;
+  ctx.fillRect(doorX, wallBotY - doorH, doorW, doorH);
+  ctx.fillStyle = pal.doorDark;
+  ctx.fillRect(doorX, wallBotY - doorH, 2, doorH);
+  ctx.fillStyle = '#ffd23f';
+  ctx.fillRect(doorX + doorW - 4, wallBotY - doorH / 2, 2, 2); // knob
+
+  // windows (warm-lit)
+  const winY = wallTopY + 7;
+  for (const wx of [wallX + 6, wallX + wallW - 16]) {
+    ctx.fillStyle = pal.outline;
+    ctx.fillRect(wx - 1, winY - 1, 12, 12);
+    ctx.fillStyle = '#ffe9a8';
+    ctx.fillRect(wx, winY, 10, 10);
+    ctx.fillStyle = '#e6c878';
+    ctx.fillRect(wx, winY + 5, 10, 5);
+    ctx.fillStyle = pal.outline;
+    ctx.fillRect(wx + 4, winY, 2, 10);
+    ctx.fillRect(wx, winY + 4, 10, 2);
+  }
+}
+
+// --- Procedural tree ---------------------------------------------------------
+// (cx, footY) = centre/base in world px.
+function drawTree(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  footY: number,
+  pal: TreePalette,
+  big: boolean,
+): void {
+  const s = big ? 1.2 : 1;
+  const trunkW = Math.round(5 * s);
+  const trunkH = Math.round(11 * s);
+
+  ctx.fillStyle = 'rgba(20,35,20,0.22)';
+  ctx.beginPath();
+  ctx.ellipse(cx, footY, 11 * s, 4 * s, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = pal.bark;
+  ctx.fillRect(cx - trunkW / 2, footY - trunkH, trunkW, trunkH);
+  ctx.fillStyle = pal.barkDark;
+  ctx.fillRect(cx - trunkW / 2, footY - trunkH, 2, trunkH);
+
+  const cyc = footY - trunkH - 11 * s;
+  const blob = (dx: number, dy: number, r: number, c: string) => {
+    ctx.fillStyle = c;
+    ctx.beginPath();
+    ctx.ellipse(cx + dx, cyc + dy, r, r * 0.92, 0, 0, Math.PI * 2);
+    ctx.fill();
+  };
+  blob(0, 4 * s, 16 * s, pal.leafDark);
+  blob(-9 * s, 2 * s, 10 * s, pal.leafDark);
+  blob(9 * s, 2 * s, 10 * s, pal.leafDark);
+  blob(0, -1 * s, 14 * s, pal.leaf);
+  blob(-6 * s, -3 * s, 8 * s, pal.leaf);
+  blob(6 * s, -3 * s, 8 * s, pal.leaf);
+  blob(-3 * s, -8 * s, 7 * s, pal.leafLight);
+  blob(4 * s, -6 * s, 5 * s, pal.leafLight);
+}
+
+// --- Wandering townsfolk -----------------------------------------------------
 const WALKER_HAIR = ['#f72585', '#4cc9f0', '#7cf06a', '#ffd23f', '#b072e0', '#ff7a4d'];
 const WALKER_SHIRT = ['#1f2430', '#2a2a35', '#3a2a3f', '#26303a', '#33283a'];
 const WALKER_SKIN = ['#e0b58a', '#c98a5a', '#8a5a3a', '#f0c9a0'];
 
 interface Walker {
-  x: number; // world px (feet)
+  x: number;
   y: number;
-  tx: number; // current tile
+  tx: number;
   ty: number;
-  ptx: number; // previous tile (avoid immediate backtrack)
+  ptx: number;
   pty: number;
-  ntx: number; // next-tile target
+  ntx: number;
   nty: number;
   hair: string;
   shirt: string;
@@ -413,7 +522,6 @@ interface Walker {
   phase: number;
 }
 
-// Pick the next walkable tile, preferring not to immediately turn back.
 function pickNextTile(w: Walker, walkable: Set<string>): void {
   const cands = [
     [1, 0],
@@ -433,7 +541,6 @@ function pickNextTile(w: Walker, walkable: Set<string>): void {
   w.nty = next.ty;
 }
 
-// Tiny punk townsperson with a 2-frame walk bob (drawn in world space).
 function drawPerson(ctx: CanvasRenderingContext2D, w: Walker): void {
   const x = Math.round(w.x);
   const y = Math.round(w.y);
@@ -446,99 +553,78 @@ function drawPerson(ctx: CanvasRenderingContext2D, w: Walker): void {
   ctx.ellipse(x, y + 1, 3.2, 1.4, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // legs (alternating stride)
   ctx.fillStyle = '#2a2330';
   ctx.fillRect(x - 2 + (walk > 0 ? 1 : 0), y - 3, 1, 3);
   ctx.fillRect(x + 1 - (walk > 0 ? 1 : 0), y - 3, 1, 3);
-  // shirt
   ctx.fillStyle = w.shirt;
   ctx.fillRect(x - 2, headTop + 3, 4, 4);
-  // head
   ctx.fillStyle = w.skin;
   ctx.fillRect(x - 1, headTop, 3, 3);
-  // mohawk
   ctx.fillStyle = w.hair;
   ctx.fillRect(x - 1, headTop - 1, 3, 1);
   ctx.fillRect(x, headTop - 2, 1, 1);
 }
 
 // --- Static world bake -------------------------------------------------------
-// Draws the entire non-animated town into an offscreen canvas at 1x world px.
-function buildStaticWorld(
-  plan: TownPlan,
-  sheets: Record<SheetName, HTMLImageElement>,
-  theme: MapTheme,
-): HTMLCanvasElement {
+function buildStaticWorld(plan: TownPlan, theme: MapTheme): HTMLCanvasElement {
   const cv = document.createElement('canvas');
   cv.width = WORLD_W * TILE;
   cv.height = WORLD_H * TILE;
   const ctx = cv.getContext('2d')!;
   ctx.imageSmoothingEnabled = false;
 
-  // Bind the active theme to the names the bake body uses (keeps the rest unchanged)
   const GRASS = theme.grass;
-  const GRASS_BLADE = theme.grassBlade;
-  const GRASS_SHADE = theme.grassShade;
-  const PATH = theme.path;
-  const PATH_LIGHT = theme.pathLight;
-  const PATH_DARK = theme.pathDark;
-  const PATH_SPECK = theme.pathSpeck;
-  const COBBLE = theme.cobble;
-  const COBBLE_LIGHT = theme.cobbleLight;
-  const COBBLE_DARK = theme.cobbleDark;
-  const COBBLE_GROUT = theme.cobbleGrout;
-  const SOIL = theme.soil;
-  const SOIL_DARK = theme.soilDark;
-  const GARDEN_FLOWERS = theme.gardenFlowers;
-  const WILD_FLOWERS = theme.wildFlowers;
-
   const px = (x: number, y: number, w: number, h: number, color: string) => {
     ctx.fillStyle = color;
     ctx.fillRect(x, y, w, h);
   };
+  const ell = (cx: number, cy: number, rx: number, ry: number, c: string) => {
+    ctx.fillStyle = c;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+    ctx.fill();
+  };
 
-  const pavingSet = new Set(plan.paving.map((p) => `${p.tx},${p.ty}`));
-
-  // 1. Ground — grass blobs (value noise) with blade/shade speckle + wildflowers
+  // 1. Ground — grass sampled at 8px sub-cells (smoother than per-tile blocks),
+  //    two noise octaves, with sparse blades/wildflowers.
+  for (let y = 0; y < WORLD_H * TILE; y += 8) {
+    for (let x = 0; x < WORLD_W * TILE; x += 8) {
+      const n =
+        valueNoise(x / 88, y / 88) * 0.7 + valueNoise(x / 26 + 9, y / 26 + 9) * 0.3;
+      const shade =
+        n < 0.36 ? GRASS[0] : n < 0.58 ? GRASS[1] : n < 0.8 ? GRASS[2] : GRASS[3];
+      px(x, y, 8, 8, shade);
+    }
+  }
   for (let ty = 0; ty < WORLD_H; ty++) {
     for (let tx = 0; tx < WORLD_W; tx++) {
-      const n = valueNoise(tx / 5.5, ty / 5.5);
-      const shade =
-        n < 0.34 ? GRASS[0] : n < 0.6 ? GRASS[1] : n < 0.84 ? GRASS[2] : GRASS[3];
-      px(tx * TILE, ty * TILE, TILE, TILE, shade);
-
       const h = hash2(tx, ty);
       const ox = (h * 11) % (TILE - 3);
       const oy = (h * 27) % (TILE - 3);
-      if (h > 0.62) px(tx * TILE + ox, ty * TILE + oy + 2, 2, 3, GRASS_BLADE);
-      if (h < 0.16) px(tx * TILE + oy, ty * TILE + ox + 1, 2, 2, GRASS_SHADE);
-      if (h > 0.965) {
-        const c = WILD_FLOWERS[Math.floor(h * 1000) % WILD_FLOWERS.length];
+      if (h > 0.74) px(tx * TILE + ox, ty * TILE + oy + 2, 2, 2, theme.grassBlade);
+      else if (h < 0.1) px(tx * TILE + oy, ty * TILE + ox + 1, 2, 2, theme.grassShade);
+      if (h > 0.975) {
+        const c = theme.wildFlowers[Math.floor(h * 1000) % theme.wildFlowers.length];
         px(tx * TILE + ox, ty * TILE + oy, 2, 2, c);
-        px(tx * TILE + ox, ty * TILE + oy + 2, 1, 1, GRASS_SHADE);
       }
     }
   }
 
-  // 2. Dirt roads + walkways (skip plaza tiles — those get cobbled)
+  // 2. Dirt roads + walkways — flat fill + soft mottle, dark only at grass edge
+  //    (no per-tile inset → no grid look).
+  const pavingSet = new Set(plan.paving.map((p) => `${p.tx},${p.ty}`));
   const drawDirt = (tx: number, ty: number) => {
     if (inPlaza(tx, ty)) return;
     const x = tx * TILE;
     const y = ty * TILE;
-    px(x, y, TILE, TILE, PATH);
-    // lighter worn center, darker edges where dirt meets grass
-    px(x + 2, y + 2, TILE - 4, TILE - 4, PATH_LIGHT);
-    const edgeUp = !isRoad(tx, ty - 1) && !pavingSet.has(`${tx},${ty - 1}`);
-    const edgeDn = !isRoad(tx, ty + 1) && !pavingSet.has(`${tx},${ty + 1}`);
-    const edgeL = !isRoad(tx - 1, ty) && !pavingSet.has(`${tx - 1},${ty}`);
-    const edgeR = !isRoad(tx + 1, ty) && !pavingSet.has(`${tx + 1},${ty}`);
-    if (edgeUp) px(x, y, TILE, 2, PATH_DARK);
-    if (edgeDn) px(x, y + TILE - 2, TILE, 2, PATH_DARK);
-    if (edgeL) px(x, y, 2, TILE, PATH_DARK);
-    if (edgeR) px(x + TILE - 2, y, 2, TILE, PATH_DARK);
-    // pebble speckle
+    px(x, y, TILE, TILE, theme.path);
     const h = hash2(tx * 7, ty * 13);
-    px(x + ((h * 12) % (TILE - 2)), y + ((h * 30) % (TILE - 2)), 2, 2, PATH_SPECK);
+    if (h > 0.5) px(x + ((h * 73) % 11), y + ((h * 131) % 11), 3, 2, theme.pathLight);
+    if (h < 0.42) px(x + ((h * 251) % 12), y + ((h * 313) % 12), 2, 2, theme.pathSpeck);
+    if (!isRoad(tx, ty - 1) && !pavingSet.has(`${tx},${ty - 1}`)) px(x, y, TILE, 2, theme.pathDark);
+    if (!isRoad(tx, ty + 1) && !pavingSet.has(`${tx},${ty + 1}`)) px(x, y + TILE - 2, TILE, 2, theme.pathDark);
+    if (!isRoad(tx - 1, ty) && !pavingSet.has(`${tx - 1},${ty}`)) px(x, y, 2, TILE, theme.pathDark);
+    if (!isRoad(tx + 1, ty) && !pavingSet.has(`${tx + 1},${ty}`)) px(x + TILE - 2, y, 2, TILE, theme.pathDark);
   };
   for (let tx = 0; tx < WORLD_W; tx++) {
     drawDirt(tx, ROAD_Y);
@@ -556,12 +642,11 @@ function buildStaticWorld(
       if (!inPlaza(tx, ty)) continue;
       const x = tx * TILE;
       const y = ty * TILE;
-      px(x, y, TILE, TILE, COBBLE_GROUT);
-      // 2x2 grid of stones per tile with gentle tonal variation
+      px(x, y, TILE, TILE, theme.cobbleGrout);
       for (let sy = 0; sy < 2; sy++) {
         for (let sx = 0; sx < 2; sx++) {
           const h = hash2(tx * 2 + sx, ty * 2 + sy);
-          const tone = h < 0.22 ? COBBLE_DARK : h > 0.86 ? COBBLE_LIGHT : COBBLE;
+          const tone = h < 0.22 ? theme.cobbleDark : h > 0.86 ? theme.cobbleLight : theme.cobble;
           px(x + sx * 8 + 1, y + sy * 8 + 1, 6, 6, tone);
         }
       }
@@ -572,63 +657,47 @@ function buildStaticWorld(
   {
     const cxp = (ROAD_X + 1) * TILE;
     const cyp = (ROAD_Y + 1) * TILE;
-    const ellipse = (rx: number, ry: number, color: string) => {
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.ellipse(cxp, cyp, rx, ry, 0, 0, Math.PI * 2);
-      ctx.fill();
-    };
-    ellipse(30, 27, COBBLE_DARK);
-    ellipse(26, 23, COBBLE_GROUT);
-    ellipse(23, 20, GRASS[2]);
+    ell(cxp, cyp, 30, 27, theme.cobbleDark);
+    ell(cxp, cyp, 26, 23, theme.cobbleGrout);
+    ell(cxp, cyp, 23, 20, GRASS[2]);
     for (let a = 0; a < 12; a++) {
       const ang = a * 2.399;
-      const rr = 5 + (a % 3) * 5;
-      const fx = cxp + Math.cos(ang) * rr;
-      const fy = cyp + Math.sin(ang) * rr * 0.9;
-      px(Math.round(fx), Math.round(fy), 2, 2, GARDEN_FLOWERS[a % GARDEN_FLOWERS.length]);
+      const rr = 6 + (a % 3) * 5;
+      px(
+        Math.round(cxp + Math.cos(ang) * rr),
+        Math.round(cyp + Math.sin(ang) * rr * 0.9),
+        2,
+        2,
+        theme.gardenFlowers[a % theme.gardenFlowers.length],
+      );
     }
-    ctx.fillStyle = 'rgba(28, 44, 26, 0.25)';
-    ctx.beginPath();
-    ctx.ellipse(cxp, cyp + 4, 16, 6, 0, 0, Math.PI * 2);
-    ctx.fill();
-    const tree = PROPS.tree;
-    ctx.drawImage(
-      sheets[tree.sheet],
-      tree.rect.x,
-      tree.rect.y,
-      tree.rect.w,
-      tree.rect.h,
-      cxp - tree.rect.w / 2,
-      cyp + 6 - tree.rect.h,
-      tree.rect.w,
-      tree.rect.h,
-    );
+    drawTree(ctx, cxp, cyp + 9, theme.tree, true);
   }
 
-  // 4. Flower gardens (tilled soil + bright blooms, framed by a low border)
+  // 4. Flower gardens (tilled soil + bright blooms, framed border)
   plan.gardens.forEach((g) => {
     const x = g.tx * TILE;
     const y = g.ty * TILE;
     const w = g.tw * TILE;
     const h = g.th * TILE;
-    px(x, y, w, h, SOIL);
-    px(x, y, w, 2, SOIL_DARK);
-    px(x, y + h - 2, w, 2, SOIL_DARK);
-    px(x, y, 2, h, SOIL_DARK);
-    px(x + w - 2, y, 2, h, SOIL_DARK);
-    for (let fy = 3; fy < h - 3; fy += 5) {
-      for (let fx = 3; fx < w - 3; fx += 5) {
-        const r = hash2(g.seed + fx, g.seed + fy);
-        if (r < 0.25) continue;
-        const c = GARDEN_FLOWERS[(g.seed + fx + fy) % GARDEN_FLOWERS.length];
-        px(x + fx, y + fy, 3, 3, c);
-        px(x + fx + 1, y + fy + 3, 1, 2, GRASS[0]); // tiny stem
+    px(x, y, w, h, theme.soil);
+    px(x, y, w, 2, theme.soilDark);
+    px(x, y + h - 2, w, 2, theme.soilDark);
+    px(x, y, 2, h, theme.soilDark);
+    px(x + w - 2, y, 2, h, theme.soilDark);
+    for (let fy = 5; fy < h - 4; fy += 7) {
+      for (let fx = 5; fx < w - 4; fx += 7) {
+        const r = hash2(g.seed + fx * 3, g.seed + fy * 3);
+        if (r < 0.38) continue;
+        px(x + fx, y + fy + 3, 3, 2, theme.tree.leafDark); // foliage
+        const c = theme.gardenFlowers[Math.floor(r * 97) % theme.gardenFlowers.length];
+        px(x + fx, y + fy, 3, 3, c); // bloom
+        px(x + fx + 1, y + fy + 1, 1, 1, '#ffffff'); // highlight
       }
     }
   });
 
-  // 4b. Street furniture + greenery on open grass so the town feels lived-in
+  // 4b. Bushes on open grass + lamp posts along the roads
   const occupied = new Set<string>();
   const mark = (tx0: number, ty0: number, w: number, h: number) => {
     for (let yy = ty0 - 1; yy < ty0 + h + 1; yy++)
@@ -636,98 +705,61 @@ function buildStaticWorld(
   };
   plan.buildings.forEach((b) => mark(b.tx, b.ty, b.tw, b.th));
   plan.gardens.forEach((g) => mark(g.tx, g.ty, g.tw, g.th));
-  plan.trees.forEach((t) => mark(t.tx, t.ty, 2, 3));
+  plan.trees.forEach((t) => mark(t.tx, t.ty, 2, 2));
   plan.paving.forEach((p) => occupied.add(`${p.tx},${p.ty}`));
 
-  const ell = (cx: number, cy: number, rx: number, ry: number, c: string) => {
-    ctx.fillStyle = c;
-    ctx.beginPath();
-    ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
-    ctx.fill();
-  };
   const bush = (cx: number, cy: number) => {
     ell(cx, cy + 3, 7, 2.4, 'rgba(28,44,26,0.20)');
-    ell(cx, cy, 7, 5, GRASS[0]);
-    ell(cx - 3, cy - 1, 4, 3, GRASS[1]);
-    ell(cx + 3, cy - 1, 4, 3, GRASS[1]);
-    ell(cx, cy - 2, 3, 2, GRASS[3]);
+    ell(cx, cy, 7, 5, theme.tree.leafDark);
+    ell(cx - 3, cy - 1, 4, 3, theme.tree.leaf);
+    ell(cx + 3, cy - 1, 4, 3, theme.tree.leaf);
+    ell(cx, cy - 2, 3, 2, theme.tree.leafLight);
   };
   const lamp = (x: number, y: number) => {
     ell(x + 1, y + 1, 3, 1.4, 'rgba(20,30,18,0.25)');
-    ctx.fillStyle = '#2f271e';
-    ctx.fillRect(x, y - 12, 2, 12); // post
-    ctx.fillStyle = '#5a4a36';
-    ctx.fillRect(x - 1, y - 1, 4, 2); // base
-    ell(x + 1, y - 13, 6, 6, 'rgba(255,227,154,0.22)'); // glow
-    ctx.fillStyle = '#ffe39a';
-    ctx.fillRect(x - 1, y - 15, 4, 4); // lantern
+    px(x, y - 12, 2, 12, '#2f271e');
+    px(x - 1, y - 1, 4, 2, '#5a4a36');
+    ell(x + 1, y - 13, 6, 6, 'rgba(255,227,154,0.22)');
+    px(x - 1, y - 15, 4, 4, '#ffe39a');
   };
 
   for (const q of plan.quarters) {
     for (let ty = q.ty; ty < q.ty + q.th; ty++) {
       for (let tx = q.tx; tx < q.tx + q.tw; tx++) {
-        if (isRoad(tx, ty) || inPlaza(tx, ty) || occupied.has(`${tx},${ty}`))
-          continue;
-        if (hash2(tx * 5 + 1, ty * 5 + 3) > 0.91) {
+        if (isRoad(tx, ty) || inPlaza(tx, ty) || occupied.has(`${tx},${ty}`)) continue;
+        if (hash2(tx * 5 + 1, ty * 5 + 3) > 0.9) {
           bush(tx * TILE + 8, ty * TILE + 10);
           occupied.add(`${tx},${ty}`);
         }
       }
     }
   }
-  // lamp posts on the grass shoulder along the main roads
   for (let ty = 5; ty < WORLD_H - 4; ty += 9) {
     if (Math.abs(ty - ROAD_Y) > PLAZA_R + 1) {
-      lamp((ROAD_X - 1) * TILE + 5, ty * TILE + 14);
-      lamp((ROAD_X + 2) * TILE + 9, ty * TILE + 14);
+      lamp((ROAD_X - 1) * TILE + 6, ty * TILE + 14);
+      lamp((ROAD_X + 2) * TILE + 10, ty * TILE + 14);
     }
   }
   for (let tx = 5; tx < WORLD_W - 4; tx += 9) {
     if (Math.abs(tx - ROAD_X) > PLAZA_R + 1) {
-      lamp(tx * TILE + 6, (ROAD_Y - 1) * TILE + 5);
-      lamp(tx * TILE + 6, (ROAD_Y + 2) * TILE + 14);
+      lamp(tx * TILE + 8, (ROAD_Y - 1) * TILE + 6);
+      lamp(tx * TILE + 8, (ROAD_Y + 2) * TILE + 14);
     }
   }
 
-  // 5. Buildings + trees, depth-sorted by foot Y, with grounding shadows
-  const depthSorted: Array<PlacedBuilding | (PlacedProp & { th: number })> = [
-    ...plan.buildings,
-    ...plan.trees.map((t) => ({ ...t, th: t.sprite.rect.h / TILE })),
-  ].sort((a, b) => a.ty + a.th - (b.ty + b.th));
+  // 5. Cottages + trees, depth-sorted by foot Y
+  type Drawable = { foot: number; kind: 'house'; b: PlacedBuilding } | { foot: number; kind: 'tree'; t: PlacedTree };
+  const drawables: Drawable[] = [
+    ...plan.buildings.map((b) => ({ foot: b.ty + b.th, kind: 'house' as const, b })),
+    ...plan.trees.map((t) => ({ foot: t.ty + 2, kind: 'tree' as const, t })),
+  ].sort((a, b) => a.foot - b.foot);
 
-  depthSorted.forEach((b) => {
-    const isBuilding = 'venue' in b;
-    const sprite = b.sprite;
-    const sw = sprite.rect.w;
-    const sh = sprite.rect.h;
-    const w = sw / TILE;
-
-    // soft elliptical shadow under the footprint
-    ctx.fillStyle = 'rgba(28, 44, 26, 0.22)';
-    ctx.beginPath();
-    ctx.ellipse(
-      (b.tx + w / 2) * TILE,
-      (b.ty + b.th - 0.3) * TILE,
-      (w / 2) * TILE * 0.82,
-      0.7 * TILE,
-      0,
-      0,
-      Math.PI * 2,
-    );
-    ctx.fill();
-
-    ctx.drawImage(
-      sheets[sprite.sheet],
-      sprite.rect.x,
-      sprite.rect.y,
-      sw,
-      sh,
-      b.tx * TILE,
-      b.ty * TILE,
-      sw,
-      sh,
-    );
-    void isBuilding;
+  drawables.forEach((d) => {
+    if (d.kind === 'house') {
+      drawHouse(ctx, d.b.tx * TILE, d.b.ty * TILE, HOUSES[d.b.roof]);
+    } else {
+      drawTree(ctx, (d.t.tx + 1) * TILE, (d.t.ty + 2) * TILE, theme.tree, d.t.big);
+    }
   });
 
   return cv;
@@ -739,10 +771,6 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [sheets, setSheets] = useState<Record<
-    SheetName,
-    HTMLImageElement
-  > | null>(null);
   const [size, setSize] = useState({ w: 0, h: 0 });
 
   const districts = useGameStore((s) => s.districts);
@@ -758,10 +786,9 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({
     [districts, venues, theme],
   );
 
-  // Bake the static world once per plan/sheet/theme change
   const staticWorld = useMemo(
-    () => (sheets ? buildStaticWorld(plan, sheets, theme) : null),
-    [plan, sheets, theme],
+    () => buildStaticWorld(plan, theme),
+    [plan, theme],
   );
 
   const venuesWithShows = useMemo(() => {
@@ -772,7 +799,6 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({
     return ids;
   }, [scheduledShows]);
 
-  // Tiles the townsfolk may stroll: roads, plaza and house walkways
   const walkable = useMemo(() => {
     const set = new Set<string>();
     const list: { tx: number; ty: number }[] = [];
@@ -790,7 +816,6 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({
     return { set, list };
   }, [plan]);
 
-  // Camera in world pixels (top-left of viewport)
   const cameraRef = useRef({
     x: (WORLD_W * TILE * SCALE) / 2,
     y: (WORLD_H * TILE * SCALE) / 2,
@@ -803,13 +828,8 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({
     camY: number;
     moved: boolean;
   } | null>(null);
-
   const walkersRef = useRef<Walker[]>([]);
   const lastTimeRef = useRef(0);
-
-  useEffect(() => {
-    loadAllSheets().then(setSheets).catch(console.error);
-  }, []);
 
   // Spawn townsfolk on the walkable network (re-seeded when the layout changes)
   useEffect(() => {
@@ -841,7 +861,6 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({
     walkersRef.current = ws;
   }, [walkable]);
 
-  // Dev-only inspection hook
   useEffect(() => {
     if (import.meta.env.DEV) {
       (window as Window & { __pixelCityDebug?: unknown }).__pixelCityDebug = {
@@ -854,15 +873,12 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({
     }
   }, [plan, size]);
 
-  // Track container size
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
     const observer = new ResizeObserver((entries) => {
       const entry = entries[0];
-      if (entry) {
-        setSize({ w: entry.contentRect.width, h: entry.contentRect.height });
-      }
+      if (entry) setSize({ w: entry.contentRect.width, h: entry.contentRect.height });
     });
     observer.observe(el);
     return () => observer.disconnect();
@@ -880,7 +896,6 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({
     [size.w, size.h],
   );
 
-  // Center on the town square so the plaza + the nearest venues are in frame
   useEffect(() => {
     if (size.w === 0) return;
     cameraRef.current = clampCamera(
@@ -929,7 +944,7 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({
     (e: React.PointerEvent) => {
       const drag = dragRef.current;
       dragRef.current = null;
-      if (!drag || drag.moved) return; // it was a pan, not a tap
+      if (!drag || drag.moved) return;
 
       const pos = screenToTile(e.clientX, e.clientY);
       if (!pos) return;
@@ -965,7 +980,6 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({
     [plan, onDistrictClick, onVenueClick, screenToTile],
   );
 
-  // --- Rendering -------------------------------------------------------------
   const render = useCallback(
     (time: number) => {
       const canvas = canvasRef.current;
@@ -977,26 +991,18 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.imageSmoothingEnabled = false;
 
-      // sky/void behind the world
       ctx.fillStyle = theme.void;
       ctx.fillRect(0, 0, size.w, size.h);
 
       ctx.save();
-      ctx.translate(
-        -Math.round(cameraRef.current.x),
-        -Math.round(cameraRef.current.y),
-      );
+      ctx.translate(-Math.round(cameraRef.current.x), -Math.round(cameraRef.current.y));
       ctx.scale(SCALE, SCALE);
 
-      // 1. Baked static world (ground, paths, plaza, gardens, buildings, trees)
       ctx.drawImage(staticWorld, 0, 0);
 
-      // 1b. Wandering townsfolk strolling the paths
+      // Wandering townsfolk
       {
-        const dt = Math.min(
-          0.05,
-          lastTimeRef.current ? (time - lastTimeRef.current) / 1000 : 0,
-        );
+        const dt = Math.min(0.05, lastTimeRef.current ? (time - lastTimeRef.current) / 1000 : 0);
         lastTimeRef.current = time;
         const wset = walkable.set;
         walkersRef.current.forEach((w) => {
@@ -1019,7 +1025,7 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({
         });
       }
 
-      // 2. Live venue indicators (pulse + bobbing music-note badge)
+      // Live venue indicators (pulse + bobbing music-note badge)
       plan.buildings.forEach((b) => {
         if (!b.venue) return;
         const venue = b.venue;
@@ -1044,7 +1050,7 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({
         ctx.fillRect(cx, my - 5, 5, 2);
       });
 
-      // 3. District signposts
+      // District signposts
       ctx.font = '7px "Press Start 2P", monospace';
       ctx.textBaseline = 'middle';
       plan.quarters.forEach((q) => {
@@ -1063,19 +1069,19 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({
 
       ctx.restore();
 
-      // 4. Cohesion grade: warm wash + soft vignette (the cozy "framed" feel)
-      ctx.fillStyle = 'rgba(255, 214, 150, 0.05)';
+      // Gentle cohesion grade: light warm wash + soft vignette
+      ctx.fillStyle = 'rgba(255, 220, 160, 0.04)';
       ctx.fillRect(0, 0, size.w, size.h);
       const vg = ctx.createRadialGradient(
         size.w / 2,
         size.h / 2,
-        Math.min(size.w, size.h) * 0.35,
+        Math.min(size.w, size.h) * 0.42,
         size.w / 2,
         size.h / 2,
-        Math.max(size.w, size.h) * 0.72,
+        Math.max(size.w, size.h) * 0.78,
       );
       vg.addColorStop(0, 'rgba(0, 0, 0, 0)');
-      vg.addColorStop(1, 'rgba(8, 10, 16, 0.42)');
+      vg.addColorStop(1, 'rgba(10, 14, 20, 0.22)');
       ctx.fillStyle = vg;
       ctx.fillRect(0, 0, size.w, size.h);
     },
@@ -1095,10 +1101,7 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({
   const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
 
   return (
-    <div
-      ref={containerRef}
-      style={{ width: '100%', height: '100%', overflow: 'hidden' }}
-    >
+    <div ref={containerRef} style={{ width: '100%', height: '100%', overflow: 'hidden' }}>
       <canvas
         ref={canvasRef}
         width={Math.max(1, Math.round(size.w * dpr))}
