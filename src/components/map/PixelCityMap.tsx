@@ -149,9 +149,13 @@ const fpW = (s: AtlasSprite) => Math.max(1, Math.round((s.rect.w * SPR) / TILE))
 const fpH = (s: AtlasSprite) => Math.max(1, Math.round((s.rect.h * SPR) / TILE));
 
 function hash2(x: number, y: number): number {
-  let h = x * 374761393 + y * 668265263;
-  h = (h ^ (h >> 13)) * 1274126177;
-  return ((h ^ (h >> 16)) >>> 0) / 4294967295;
+  // Math.imul keeps the multiplies in 32-bit; the old plain `*` overflowed JS
+  // float precision for larger inputs and biased the output into [0, 0.5],
+  // which silently disabled every hash gate above ~0.5 (bushes, flowers, props).
+  let h = (Math.imul(x | 0, 374761393) + Math.imul(y | 0, 668265263)) | 0;
+  h = Math.imul(h ^ (h >>> 13), 1274126177);
+  h ^= h >>> 16;
+  return (h >>> 0) / 4294967295;
 }
 function valueNoise(x: number, y: number): number {
   const x0 = Math.floor(x), y0 = Math.floor(y);
@@ -214,11 +218,13 @@ function dgContour(ctx: CanvasRenderingContext2D, key: number, ox: number, oy: n
 interface Quarter { district: District; tx: number; ty: number; tw: number; th: number }
 interface PlacedBuilding { sprite: AtlasSprite; tx: number; ty: number; tw: number; th: number; venue?: Venue; shop?: CityShop; district?: District }
 interface PlacedTree { sprite: AtlasSprite; tx: number; ty: number; th: number }
+interface ParkingLot { tx: number; ty: number; tw: number; th: number }
 interface TownPlan {
   quarters: Quarter[];
   buildings: PlacedBuilding[];
   trees: PlacedTree[];
   paving: { tx: number; ty: number }[];
+  parkingLots: ParkingLot[];
 }
 
 function planTown(districts: District[], venues: Venue[], roofMix: BuildingKey[]): TownPlan {
@@ -281,6 +287,25 @@ function planTown(districts: District[], venues: Venue[], roofMix: BuildingKey[]
       tx += tw + 1;
     }
   };
+  // Reserve a parking lot fronting a central street in each quarter BEFORE
+  // packing buildings, so they flow around it (open-area scans never fit a lot).
+  const parkingLots: ParkingLot[] = [];
+  quarters.forEach((q) => {
+    const cyTile = q.ty + q.th / 2;
+    const sy = STREET_H.filter((s) => s > q.ty + 2 && s < q.ty + q.th - 2)
+      .sort((a, b) => Math.abs(a - cyTile) - Math.abs(b - cyTile))[0] ?? STREET_H[0];
+    const lw = 5, lh = 3, ty0 = Math.max(1, sy - 2 - lh + 1);
+    const clashes = (x: number) => {
+      for (let c = x; c < x + lw; c++) for (let r = ty0; r < ty0 + lh; r++) if (isStreet(c, r) || inPlaza(c, r) || bocc.has(`${c},${r}`)) return true;
+      return false;
+    };
+    let tx0 = q.tx + 2;
+    while (tx0 < q.tx + q.tw - lw - 1 && clashes(tx0)) tx0++;
+    if (clashes(tx0)) return;
+    for (let r = ty0; r < ty0 + lh; r++) for (let c = tx0; c < tx0 + lw; c++) bocc.add(`${c},${r}`);
+    parkingLots.push({ tx: tx0, ty: ty0, tw: lw, th: lh });
+  });
+
   for (const sy of STREET_H) {
     if (sy - 2 >= 2) placeRow(sy - 2, 'bottom'); // north row, behind the north sidewalk
     if (sy + 3 < WORLD_H - 4) placeRow(sy + 3, 'top'); // south row, behind the south sidewalk
@@ -337,7 +362,7 @@ function planTown(districts: District[], venues: Venue[], roofMix: BuildingKey[]
     trees.push({ sprite: hash2(tx, 9) < 0.5 ? PROPS.tree : PROPS.treeB, tx, ty: WORLD_H - 4, th: fpH(PROPS.tree) });
   }
 
-  return { quarters, buildings, trees, paving };
+  return { quarters, buildings, trees, paving, parkingLots };
 }
 
 // --- Wandering townsfolk -----------------------------------------------------
@@ -678,6 +703,30 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
   };
   plan.buildings.forEach((bd) => mark(bd.tx, bd.ty, bd.tw, bd.th));
   plan.trees.forEach((t) => mark(t.tx, t.ty, 2, 2));
+
+  // 4a. Parking lots (reserved per quarter in planTown) — asphalt + painted
+  // stalls + a few parked cars; marked occupied so bushes/props avoid them.
+  const drawCarStatic = (cx: number, foot: number, color: string) => {
+    cx = Math.round(cx); foot = Math.round(foot);
+    ell(cx, foot, 6, 1.5, 'rgba(0,0,0,0.22)');
+    px(cx - 5, foot - 12, 10, 12, color);
+    px(cx - 5, foot - 12, 10, 2, 'rgba(255,255,255,0.18)');
+    px(cx - 4, foot - 10, 8, 3, '#bfe6f0');
+    px(cx - 4, foot - 4, 8, 2, '#9fc8d8');
+    px(cx - 5, foot - 6, 10, 1, 'rgba(0,0,0,0.25)');
+    px(cx - 6, foot - 9, 1, 3, '#15151a'); px(cx + 5, foot - 9, 1, 3, '#15151a');
+    px(cx - 6, foot - 4, 1, 3, '#15151a'); px(cx + 5, foot - 4, 1, 3, '#15151a');
+  };
+  plan.parkingLots.forEach((lot, qi) => {
+    const lx = lot.tx * TILE, ly = lot.ty * TILE, lw = lot.tw * TILE, lh = lot.th * TILE;
+    for (let r = lot.ty; r < lot.ty + lot.th; r++) for (let c = lot.tx; c < lot.tx + lot.tw; c++) { tile(TERRAIN.road, c, r); occupied.add(`${c},${r}`); }
+    px(lx, ly, lw, lh, 'rgba(140,110,70,0.06)');
+    ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 1.5; ctx.strokeRect(lx + 0.5, ly + 0.5, lw - 1, lh - 1);
+    ctx.fillStyle = 'rgba(244,244,230,0.45)';
+    for (let s = 1; s < lot.tw; s++) ctx.fillRect(lx + s * TILE, ly + 2, 1, lh - 4);
+    for (let s = 0; s < lot.tw; s++) { const hh = hash2(lot.tx * 9 + s * 5, lot.ty * 7 + qi * 3); if (hh > 0.4) drawCarStatic(lx + s * TILE + TILE / 2, ly + lh - 3, VAN_COLORS[Math.floor(hh * 97) % VAN_COLORS.length]); }
+  });
+
   const bush = (cx: number, cy: number) => {
     ell(cx, cy + 3, 7, 2.4, 'rgba(28,44,26,0.20)');
     ell(cx, cy, 7, 5, theme.tree.leafDark);
@@ -692,6 +741,35 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
     ell(x + 1, y - 13, 6, 6, 'rgba(255,227,154,0.22)');
     px(x - 1, y - 15, 4, 4, '#ffe39a');
   };
+  const trashCan = (x: number, y: number) => {
+    ell(x, y + 1, 3, 1.2, 'rgba(0,0,0,0.2)');
+    px(x - 3, y - 7, 6, 7, '#3a4a3a');
+    px(x - 3, y - 8, 6, 2, '#2a352a');
+    px(x - 1, y - 9, 2, 1, '#2a352a');
+    px(x - 3, y - 7, 6, 1, '#586a55');
+    px(x - 2, y - 5, 1, 4, 'rgba(255,255,255,0.08)');
+  };
+  const hydrant = (x: number, y: number) => {
+    ell(x, y + 1, 2.4, 1, 'rgba(0,0,0,0.2)');
+    px(x - 2, y - 6, 4, 6, '#c0392b');
+    px(x - 2, y - 7, 4, 1, '#e05545');
+    px(x - 3, y - 4, 1, 2, '#9a2b20'); px(x + 2, y - 4, 1, 2, '#9a2b20');
+    px(x - 2, y - 6, 4, 1, 'rgba(255,255,255,0.18)');
+  };
+  const bench = (x: number, y: number) => {
+    ell(x, y + 1, 7, 1.4, 'rgba(0,0,0,0.18)');
+    px(x - 7, y - 7, 14, 3, '#7a5530');
+    px(x - 7, y - 4, 14, 3, '#6e4a2c');
+    px(x - 7, y - 1, 1, 2, '#4f3419'); px(x + 6, y - 1, 1, 2, '#4f3419');
+    px(x - 7, y - 4, 14, 1, 'rgba(255,255,255,0.12)');
+  };
+  const mailbox = (x: number, y: number) => {
+    ell(x, y + 1, 2.4, 1, 'rgba(0,0,0,0.2)');
+    px(x - 1, y - 6, 2, 6, '#2f271e');
+    px(x - 3, y - 10, 6, 4, '#2a6ad0');
+    px(x - 3, y - 10, 6, 1, '#4a8ae0');
+    px(x + 3, y - 9, 1, 2, '#c0392b');
+  };
   for (let ty = 1; ty < WORLD_H - 1; ty++)
     for (let tx = 1; tx < WORLD_W - 1; tx++) {
       if (isStreet(tx, ty) || inPlaza(tx, ty) || occupied.has(`${tx},${ty}`)) continue;
@@ -704,6 +782,32 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
     for (const sx of STREET_V)
       if (!(Math.abs(sx - ROAD_X) <= 2 && Math.abs(sy - ROAD_Y) <= 2))
         lamp((sx - 1) * TILE + 8, (sy - 1) * TILE + 13);
+
+  // 4b. Street furniture scattered along the sidewalks — lamps, trash cans,
+  // hydrants, benches, mailboxes. Spaced out (>=2 tiles apart) so it reads as
+  // tidy town clutter, not a junkyard.
+  const propAt = new Set<string>();
+  const nearProp = (tx: number, ty: number) => {
+    for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) if (propAt.has(`${tx + dx},${ty + dy}`)) return true;
+    return false;
+  };
+  for (let ty = 1; ty < WORLD_H - 1; ty++)
+    for (let tx = 1; tx < WORLD_W - 1; tx++) {
+      // sidewalk tiles are never building/lot footprints (those sit at sy-2 and
+      // above), so don't gate on `occupied` — its building padding covers the
+      // sidewalk in front of every building and would block almost all furniture.
+      if (!isSidewalk(tx, ty) || inPlaza(tx, ty) || inRound(tx, ty)) continue;
+      const h = hash2(tx * 11 + 2, ty * 13 + 7);
+      if (h < 0.62 || nearProp(tx, ty)) continue;
+      const x = tx * TILE + 8, base = ty * TILE + 13;
+      const pick = Math.floor(h * 1000) % 5;
+      if (pick === 0) lamp(x, base);
+      else if (pick === 1) trashCan(x, base);
+      else if (pick === 2) hydrant(x, base);
+      else if (pick === 3) bench(x, base);
+      else mailbox(x, base);
+      propAt.add(`${tx},${ty}`);
+    }
 
   // (Buildings, trees and their props are drawn PER-FRAME, depth-sorted with the
   // walkers, so townsfolk are correctly occluded by anything in front of them.)
