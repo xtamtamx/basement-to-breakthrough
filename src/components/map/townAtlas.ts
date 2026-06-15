@@ -20,6 +20,7 @@ export const TILE = 16;
 export const SHEETS = {
   buildings: '/assets/sprites/town/houses-sprite-sheet.png',
   grass: '/assets/sprites/town/grasslands-tileset.png',
+  village: '/assets/sprites/town/village-tileset.png',
 } as const;
 
 export type SheetName = keyof typeof SHEETS;
@@ -37,6 +38,20 @@ const g = (x: number, y: number, w: number, h: number): AtlasSprite => ({
   sheet: 'grass',
   rect: { x, y, w, h },
 });
+const v = (x: number, y: number): AtlasSprite => ({
+  sheet: 'village',
+  rect: { x, y, w: 16, h: 16 },
+});
+
+// --- Terrain fill tiles (village-tileset; seamless, detected by edge-wrap) ----
+// Real textured ground that matches the detailed building art, replacing the
+// old flat procedural fills.
+export const TERRAIN = {
+  grass: [v(32, 0), v(96, 0), v(16, 16)], // seamless grass variants
+  dirt: v(320, 16), // tan dirt/gravel road
+  stone: v(176, 448), // light flagstone (sidewalk / plaza)
+  water: v(192, 48), // water
+} as const;
 
 // --- Complete buildings (detected col-0 variants of houses-sprite-sheet) -----
 export const BUILDINGS = {

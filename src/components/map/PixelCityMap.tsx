@@ -26,6 +26,7 @@ import {
   BuildingKey,
   PROPS,
   SheetName,
+  TERRAIN,
   TILE,
   loadAllSheets,
 } from './townAtlas';
@@ -78,6 +79,7 @@ interface MapTheme {
   streetPaved: boolean; // cobblestone streets (urban) vs dirt
   waterfront: boolean; // draw water along the south edge
   water: string; waterLight: string; waterDark: string; sand: string;
+  tint: string; // per-city wash over the real terrain tiles (rgba)
 }
 
 const THEMES: Record<CityThemeKey, MapTheme> = {
@@ -90,6 +92,7 @@ const THEMES: Record<CityThemeKey, MapTheme> = {
     tree: { bark: '#6e4a2c', barkDark: '#4f3419', leafDark: '#2f7a38', leaf: '#46974c', leafLight: '#69bb60' },
     roofMix: ['tudor', 'cottage', 'townhouse', 'stone', 'manor', 'shopAwning', 'tudor', 'cottage'], void: '#21331f',
     streetPaved: false, waterfront: false, water: '#3f9bd6', waterLight: '#62b6e6', waterDark: '#2a7cb4', sand: '#e6d3a0',
+    tint: 'rgba(255,236,182,0.05)',
   },
   rust: {
     grass: ['#5c6535', '#6b743e', '#7a8349', '#8a9255'], grassBlade: '#9aa564', grassShade: '#474f29',
@@ -100,6 +103,7 @@ const THEMES: Record<CityThemeKey, MapTheme> = {
     tree: { bark: '#5e4023', barkDark: '#422c16', leafDark: '#5e6b2c', leaf: '#8a7a30', leafLight: '#bb9a3a' },
     roofMix: ['darkHall', 'greyShop', 'manor', 'townhouse', 'stone', 'tudor', 'greyShop'], void: '#26211a',
     streetPaved: false, waterfront: false, water: '#4a7a86', waterLight: '#6a9aa4', waterDark: '#35606a', sand: '#b0a07a',
+    tint: 'rgba(150,112,56,0.17)',
   },
   seaside: {
     grass: ['#5ea24e', '#6fb35a', '#80c468', '#93d577'], grassBlade: '#a6e188', grassShade: '#4a8440',
@@ -110,6 +114,7 @@ const THEMES: Record<CityThemeKey, MapTheme> = {
     tree: { bark: '#7a5530', barkDark: '#583c20', leafDark: '#2f8a48', leaf: '#46a85e', leafLight: '#6fcf7e' },
     roofMix: ['teal', 'shopAwning', 'cottage', 'stone', 'townhouse', 'tudor', 'teal'], void: '#16363f',
     streetPaved: false, waterfront: true, water: '#2bb0c0', waterLight: '#5fcdd8', waterDark: '#1d8a99', sand: '#e8d7a8',
+    tint: 'rgba(96,202,206,0.07)',
   },
   capital: {
     grass: ['#54795a', '#638967', '#739a77', '#86ab8a'], grassBlade: '#97bb9a', grassShade: '#43614a',
@@ -120,6 +125,7 @@ const THEMES: Record<CityThemeKey, MapTheme> = {
     tree: { bark: '#6a513a', barkDark: '#4d3a28', leafDark: '#3a7a52', leaf: '#52975f', leafLight: '#79b884' },
     roofMix: ['stone', 'arch', 'greyShop', 'townhouse', 'glassHall', 'civic', 'stone'], void: '#191c24',
     streetPaved: true, waterfront: false, water: '#3f9bd6', waterLight: '#62b6e6', waterDark: '#2a7cb4', sand: '#cfc9ba',
+    tint: 'rgba(120,124,152,0.14)',
   },
 };
 
@@ -363,83 +369,49 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
     ctx.drawImage(sheets[s.sheet], s.rect.x, s.rect.y, s.rect.w, s.rect.h, Math.round(footCx - w / 2), Math.round(footY - h), Math.round(w), Math.round(h));
   };
 
-  // 1. Grass ground (8px sub-cells, two-octave noise)
-  for (let y = 0; y < WORLD_H * TILE; y += 8)
-    for (let x = 0; x < WORLD_W * TILE; x += 8) {
-      const n = valueNoise(x / 88, y / 88) * 0.7 + valueNoise(x / 26 + 9, y / 26 + 9) * 0.3;
-      px(x, y, 8, 8, n < 0.36 ? GRASS[0] : n < 0.58 ? GRASS[1] : n < 0.8 ? GRASS[2] : GRASS[3]);
-    }
+  // 16px village tile → 16px world tile, 1:1 (crisp, no scaling)
+  const tile = (s: AtlasSprite, tx: number, ty: number) =>
+    ctx.drawImage(sheets[s.sheet], s.rect.x, s.rect.y, 16, 16, tx * TILE, ty * TILE, TILE, TILE);
+
+  // 1. Grass ground — real seamless village grass tiles (variant by value-noise)
   for (let ty = 0; ty < WORLD_H; ty++)
     for (let tx = 0; tx < WORLD_W; tx++) {
+      const n = valueNoise(tx / 5, ty / 5);
+      tile(TERRAIN.grass[n < 0.42 ? 0 : n < 0.74 ? 1 : 2], tx, ty);
       const h = hash2(tx, ty);
-      const ox = (h * 11) % (TILE - 3), oy = (h * 27) % (TILE - 3);
-      if (h > 0.74) px(tx * TILE + ox, ty * TILE + oy + 2, 2, 2, theme.grassBlade);
-      else if (h < 0.1) px(tx * TILE + oy, ty * TILE + ox + 1, 2, 2, theme.grassShade);
-      if (h > 0.975) px(tx * TILE + ox, ty * TILE + oy, 2, 2, theme.wildFlowers[Math.floor(h * 1000) % theme.wildFlowers.length]);
+      if (h > 0.972) px(tx * TILE + 5, ty * TILE + 6, 2, 2, theme.wildFlowers[Math.floor(h * 1000) % theme.wildFlowers.length]);
     }
 
-  // 1b. Seaside waterfront along the south edge (sand transition + water)
+  // 1b. Seaside waterfront — sandy beach row + real water tiles along the south
   if (theme.waterfront) {
-    const wy0 = (WORLD_H - 3) * TILE;
-    px(0, wy0 - 6, WORLD_W * TILE, 6, theme.sand);
-    for (let y = wy0; y < WORLD_H * TILE; y += 4)
-      for (let x = 0; x < WORLD_W * TILE; x += 4) {
-        const h = hash2(x + 7, y + 3);
-        px(x, y, 4, 4, h < 0.3 ? theme.waterDark : h > 0.82 ? theme.waterLight : theme.water);
-      }
+    for (let tx = 0; tx < WORLD_W; tx++) tile(TERRAIN.dirt, tx, WORLD_H - 4);
+    for (let ty = WORLD_H - 3; ty < WORLD_H; ty++)
+      for (let tx = 0; tx < WORLD_W; tx++) tile(TERRAIN.water, tx, ty);
   }
 
-  // 2. Paved corridors — flagstone SIDEWALKS flank a dirt/cobble ROAD centre
+  // 2. Paved corridors — real flagstone SIDEWALKS flank a dirt ROAD centre
   const drawCorridor = (tx: number, ty: number) => {
     if (inPlaza(tx, ty)) return;
-    const x = tx * TILE, y = ty * TILE;
     if (isSidewalk(tx, ty)) {
-      // flagstone sidewalk: light stone with subtle joints
-      px(x, y, TILE, TILE, theme.cobble);
-      const h = hash2(tx * 7, ty * 13);
-      px(x + 1, y + 1, 6, 6, h > 0.5 ? theme.cobbleLight : theme.cobble);
-      px(x + 9, y + 9, 6, 6, h < 0.5 ? theme.cobbleLight : theme.cobble);
-      px(x, y, TILE, 1, theme.cobbleGrout);
-      px(x, y, 1, TILE, theme.cobbleGrout);
-      // raised curb on the outer (road-facing) and grass-facing edges
-      if (!isStreet(tx, ty - 1)) px(x, y, TILE, 1, theme.cobbleDark);
-      if (!isStreet(tx, ty + 1)) px(x, y + TILE - 1, TILE, 1, theme.cobbleDark);
-      if (!isStreet(tx - 1, ty)) px(x, y, 1, TILE, theme.cobbleDark);
-      if (!isStreet(tx + 1, ty)) px(x + TILE - 1, y, 1, TILE, theme.cobbleDark);
-      if (isRoad(tx, ty - 1)) px(x, y, TILE, 1, theme.cobbleDark);
-      if (isRoad(tx, ty + 1)) px(x, y + TILE - 1, TILE, 1, theme.cobbleDark);
-      if (isRoad(tx - 1, ty)) px(x, y, 1, TILE, theme.cobbleDark);
-      if (isRoad(tx + 1, ty)) px(x + TILE - 1, y, 1, TILE, theme.cobbleDark);
-    } else if (theme.streetPaved) {
-      px(x, y, TILE, TILE, theme.cobbleGrout);
-      for (let sy = 0; sy < 2; sy++)
-        for (let sx = 0; sx < 2; sx++) {
-          const h = hash2(tx * 2 + sx + 99, ty * 2 + sy + 99);
-          px(x + sx * 8 + 1, y + sy * 8 + 1, 6, 6, h < 0.22 ? theme.cobbleDark : h > 0.86 ? theme.cobbleLight : theme.cobble);
-        }
+      tile(TERRAIN.stone, tx, ty);
+      const x = tx * TILE, y = ty * TILE;
+      // subtle curb line where the sidewalk meets grass or the road
+      if (!isStreet(tx, ty - 1) || isRoad(tx, ty - 1)) px(x, y, TILE, 1, 'rgba(0,0,0,0.20)');
+      if (!isStreet(tx, ty + 1) || isRoad(tx, ty + 1)) px(x, y + TILE - 1, TILE, 1, 'rgba(0,0,0,0.20)');
+      if (!isStreet(tx - 1, ty) || isRoad(tx - 1, ty)) px(x, y, 1, TILE, 'rgba(0,0,0,0.20)');
+      if (!isStreet(tx + 1, ty) || isRoad(tx + 1, ty)) px(x + TILE - 1, y, 1, TILE, 'rgba(0,0,0,0.20)');
     } else {
-      px(x, y, TILE, TILE, theme.path);
-      const h = hash2(tx * 7, ty * 13);
-      if (h > 0.5) px(x + ((h * 73) % 11), y + ((h * 131) % 11), 3, 2, theme.pathLight);
-      if (h < 0.42) px(x + ((h * 251) % 12), y + ((h * 313) % 12), 2, 2, theme.pathSpeck);
+      tile(theme.streetPaved ? TERRAIN.stone : TERRAIN.dirt, tx, ty);
     }
   };
   for (let ty = 0; ty < WORLD_H; ty++)
     for (let tx = 0; tx < WORLD_W; tx++)
       if (isStreet(tx, ty)) drawCorridor(tx, ty);
 
-  // 3. Cobblestone town square
+  // 3. Town square — real flagstone
   for (let ty = 0; ty < WORLD_H; ty++)
-    for (let tx = 0; tx < WORLD_W; tx++) {
-      if (!inPlaza(tx, ty)) continue;
-      const x = tx * TILE, y = ty * TILE;
-      px(x, y, TILE, TILE, theme.cobbleGrout);
-      for (let sy = 0; sy < 2; sy++)
-        for (let sx = 0; sx < 2; sx++) {
-          const h = hash2(tx * 2 + sx, ty * 2 + sy);
-          px(x + sx * 8 + 1, y + sy * 8 + 1, 6, 6, h < 0.22 ? theme.cobbleDark : h > 0.86 ? theme.cobbleLight : theme.cobble);
-        }
-    }
+    for (let tx = 0; tx < WORLD_W; tx++)
+      if (inPlaza(tx, ty)) tile(TERRAIN.stone, tx, ty);
   // roundabout + central tree
   {
     const cxp = (ROAD_X + 1) * TILE, cyp = (ROAD_Y + 1) * TILE;
@@ -840,6 +812,10 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
       });
 
       ctx.restore();
+
+      // per-city colour wash (ties the whole scene to the city's palette)
+      ctx.fillStyle = theme.tint;
+      ctx.fillRect(0, 0, size.w, size.h);
 
       // golden-hour grade: warm top light → cooler base, plus soft vignette
       const grade = ctx.createLinearGradient(0, 0, 0, size.h);
