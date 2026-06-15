@@ -70,6 +70,9 @@ interface MapTheme {
   cobble: string; cobbleLight: string; cobbleDark: string; cobbleGrout: string;
   soil: string; soilDark: string; gardenFlowers: string[]; wildFlowers: string[];
   tree: TreePalette; roofMix: BuildingKey[]; void: string;
+  streetPaved: boolean; // cobblestone streets (urban) vs dirt
+  waterfront: boolean; // draw water along the south edge
+  water: string; waterLight: string; waterDark: string; sand: string;
 }
 
 const THEMES: Record<CityThemeKey, MapTheme> = {
@@ -81,6 +84,7 @@ const THEMES: Record<CityThemeKey, MapTheme> = {
     gardenFlowers: ['#ef5a8a', '#f4cf4f', '#ffffff', '#b072e0', '#ff8c4d'], wildFlowers: ['#f4d04f', '#ffffff', '#ef6f9c', '#9c7be0'],
     tree: { bark: '#6e4a2c', barkDark: '#4f3419', leafDark: '#2f7a38', leaf: '#46974c', leafLight: '#69bb60' },
     roofMix: ['tudor', 'cottage', 'townhouse', 'stone', 'manor', 'shopAwning', 'tudor', 'cottage'], void: '#21331f',
+    streetPaved: false, waterfront: false, water: '#3f9bd6', waterLight: '#62b6e6', waterDark: '#2a7cb4', sand: '#e6d3a0',
   },
   rust: {
     grass: ['#5c6535', '#6b743e', '#7a8349', '#8a9255'], grassBlade: '#9aa564', grassShade: '#474f29',
@@ -90,6 +94,7 @@ const THEMES: Record<CityThemeKey, MapTheme> = {
     gardenFlowers: ['#d8783a', '#c9a13a', '#d0d0d0', '#a06a3a', '#e0913a'], wildFlowers: ['#c9a13a', '#cacaca', '#d8783a', '#a8b06a'],
     tree: { bark: '#5e4023', barkDark: '#422c16', leafDark: '#5e6b2c', leaf: '#8a7a30', leafLight: '#bb9a3a' },
     roofMix: ['darkHall', 'greyShop', 'manor', 'townhouse', 'stone', 'tudor', 'greyShop'], void: '#26211a',
+    streetPaved: false, waterfront: false, water: '#4a7a86', waterLight: '#6a9aa4', waterDark: '#35606a', sand: '#b0a07a',
   },
   seaside: {
     grass: ['#5ea24e', '#6fb35a', '#80c468', '#93d577'], grassBlade: '#a6e188', grassShade: '#4a8440',
@@ -99,6 +104,7 @@ const THEMES: Record<CityThemeKey, MapTheme> = {
     gardenFlowers: ['#ff8cb0', '#ffe066', '#ffffff', '#7ad0e6', '#ff9e6b'], wildFlowers: ['#ffe066', '#ffffff', '#ff8cb0', '#7ad0e6'],
     tree: { bark: '#7a5530', barkDark: '#583c20', leafDark: '#2f8a48', leaf: '#46a85e', leafLight: '#6fcf7e' },
     roofMix: ['teal', 'shopAwning', 'cottage', 'stone', 'townhouse', 'tudor', 'teal'], void: '#16363f',
+    streetPaved: false, waterfront: true, water: '#2bb0c0', waterLight: '#5fcdd8', waterDark: '#1d8a99', sand: '#e8d7a8',
   },
   capital: {
     grass: ['#54795a', '#638967', '#739a77', '#86ab8a'], grassBlade: '#97bb9a', grassShade: '#43614a',
@@ -108,6 +114,7 @@ const THEMES: Record<CityThemeKey, MapTheme> = {
     gardenFlowers: ['#c98ad0', '#8ab0e0', '#ffffff', '#e0a0c0', '#9ad0c0'], wildFlowers: ['#c98ad0', '#ffffff', '#8ab0e0', '#9ad0c0'],
     tree: { bark: '#6a513a', barkDark: '#4d3a28', leafDark: '#3a7a52', leaf: '#52975f', leafLight: '#79b884' },
     roofMix: ['stone', 'arch', 'greyShop', 'townhouse', 'glassHall', 'civic', 'stone'], void: '#191c24',
+    streetPaved: true, waterfront: false, water: '#3f9bd6', waterLight: '#62b6e6', waterDark: '#2a7cb4', sand: '#cfc9ba',
   },
 };
 
@@ -173,35 +180,43 @@ function planTown(districts: District[], venues: Venue[], roofMix: BuildingKey[]
   const trees: PlacedTree[] = [];
   const paving: { tx: number; ty: number }[] = [];
   const occ = (tx: number, ty: number) => isStreet(tx, ty) || inPlaza(tx, ty);
+  const bocc = new Set<string>();
+  const markB = (b: PlacedBuilding) => {
+    for (let r = b.ty; r < b.ty + b.th; r++) for (let c = b.tx; c < b.tx + b.tw; c++) bocc.add(`${c},${r}`);
+  };
+  const fits = (tx: number, ty: number, tw: number, th: number) => {
+    if (tx < 2 || tx + tw > WORLD_W - 2 || ty < 1 || ty + th > WORLD_H - 1) return false;
+    for (let r = ty; r < ty + th; r++) for (let c = tx; c < tx + tw; c++) if (occ(c, r) || bocc.has(`${c},${r}`)) return false;
+    return true;
+  };
 
-  // Pack a row of buildings just NORTH of each horizontal street (facing it).
-  for (const sy of STREET_H) {
-    const feet = sy - 1;
-    if (feet < 4) continue;
+  // Pack a row of buildings along a street. mode 'bottom' = north side (feet at
+  // the street, fronts facing it); 'top' = south side (roofs toward the street)
+  // so both sides of every street are lined → dense blocks.
+  const placeRow = (anchor: number, mode: 'bottom' | 'top') => {
     let tx = 3;
     while (tx < WORLD_W - 4) {
-      if (occ(tx, feet) || occ(tx, feet - 1)) { tx++; continue; }
-      const roll = hash2(tx * 13, feet * 31);
-      const key = roofMix[Math.floor(hash2(tx * 7, feet * 17) * 997) % roofMix.length];
+      const key = roofMix[Math.floor(hash2(tx * 7, anchor * 17) * 997) % roofMix.length];
       const sprite = BUILDINGS[key];
       const tw = fpW(sprite);
       const th = fpH(sprite);
-      // footprint must be clear of streets/plaza and on-map
-      let ok = tx + tw < WORLD_W - 2;
-      for (let k = 0; ok && k < tw; k++) {
-        for (let r = feet - th + 1; r <= feet; r++) if (occ(tx + k, r)) { ok = false; break; }
-      }
-      if (!ok) { tx++; continue; }
-      if (roll < 0.12) {
-        // pocket tree instead of a building (a gap in the street wall)
-        trees.push({ sprite: PROPS.tree, tx, ty: feet - 2, th: fpH(PROPS.tree) });
+      const ty = mode === 'bottom' ? anchor - th + 1 : anchor;
+      if (!fits(tx, ty, tw, th)) { tx++; continue; }
+      if (hash2(tx * 13, anchor * 31) < 0.1) {
+        trees.push({ sprite: PROPS.tree, tx, ty: Math.max(0, ty), th: fpH(PROPS.tree) });
         tx += 3;
         continue;
       }
-      buildings.push({ sprite, tx, ty: feet - th + 1, tw, th, district: districtAt(tx + (tw >> 1), feet) });
-      paving.push({ tx: tx + Math.floor(tw / 2), ty: feet + 1 }); // doorstep onto the street
+      const b: PlacedBuilding = { sprite, tx, ty, tw, th, district: districtAt(tx + (tw >> 1), ty + th) };
+      buildings.push(b);
+      markB(b);
+      if (mode === 'bottom') paving.push({ tx: tx + Math.floor(tw / 2), ty: anchor + 1 });
       tx += tw + 1;
     }
+  };
+  for (const sy of STREET_H) {
+    if (sy >= 5) placeRow(sy - 1, 'bottom');
+    if (sy + 2 < WORLD_H - 5) placeRow(sy + 2, 'top');
   }
 
   // Assign venues to the buildings nearest the town square in their district.
@@ -310,26 +325,50 @@ function buildStaticWorld(plan: TownPlan, sheets: Record<SheetName, HTMLImageEle
       if (h > 0.975) px(tx * TILE + ox, ty * TILE + oy, 2, 2, theme.wildFlowers[Math.floor(h * 1000) % theme.wildFlowers.length]);
     }
 
-  // 2. Street grid (dirt) + doorstep paving, dark only at grass edges
+  // 1b. Seaside waterfront along the south edge (sand transition + water)
+  if (theme.waterfront) {
+    const wy0 = (WORLD_H - 3) * TILE;
+    px(0, wy0 - 6, WORLD_W * TILE, 6, theme.sand);
+    for (let y = wy0; y < WORLD_H * TILE; y += 4)
+      for (let x = 0; x < WORLD_W * TILE; x += 4) {
+        const h = hash2(x + 7, y + 3);
+        px(x, y, 4, 4, h < 0.3 ? theme.waterDark : h > 0.82 ? theme.waterLight : theme.water);
+      }
+  }
+
+  // 2. Street grid (dirt or cobble per city) + doorstep paving
   const pavingSet = new Set(plan.paving.map((p) => `${p.tx},${p.ty}`));
   const isPaved = (tx: number, ty: number) => isStreet(tx, ty) || pavingSet.has(`${tx},${ty}`);
-  const drawDirt = (tx: number, ty: number) => {
+  const drawStreet = (tx: number, ty: number) => {
     if (inPlaza(tx, ty)) return;
     const x = tx * TILE, y = ty * TILE;
-    px(x, y, TILE, TILE, theme.path);
-    const h = hash2(tx * 7, ty * 13);
-    if (h > 0.5) px(x + ((h * 73) % 11), y + ((h * 131) % 11), 3, 2, theme.pathLight);
-    if (h < 0.42) px(x + ((h * 251) % 12), y + ((h * 313) % 12), 2, 2, theme.pathSpeck);
-    // stone sidewalk curb wherever the street meets grass
-    if (!isPaved(tx, ty - 1)) { px(x, y, TILE, 3, theme.cobble); px(x, y, TILE, 1, theme.cobbleDark); }
-    if (!isPaved(tx, ty + 1)) { px(x, y + TILE - 3, TILE, 3, theme.cobble); px(x, y + TILE - 1, TILE, 1, theme.cobbleDark); }
-    if (!isPaved(tx - 1, ty)) { px(x, y, 3, TILE, theme.cobble); px(x, y, 1, TILE, theme.cobbleDark); }
-    if (!isPaved(tx + 1, ty)) { px(x + TILE - 3, y, 3, TILE, theme.cobble); px(x + TILE - 1, y, 1, TILE, theme.cobbleDark); }
+    if (theme.streetPaved) {
+      px(x, y, TILE, TILE, theme.cobbleGrout);
+      for (let sy = 0; sy < 2; sy++)
+        for (let sx = 0; sx < 2; sx++) {
+          const h = hash2(tx * 2 + sx + 99, ty * 2 + sy + 99);
+          px(x + sx * 8 + 1, y + sy * 8 + 1, 6, 6, h < 0.22 ? theme.cobbleDark : h > 0.86 ? theme.cobbleLight : theme.cobble);
+        }
+      if (!isPaved(tx, ty - 1)) px(x, y, TILE, 1, theme.cobbleDark);
+      if (!isPaved(tx, ty + 1)) px(x, y + TILE - 1, TILE, 1, theme.cobbleDark);
+      if (!isPaved(tx - 1, ty)) px(x, y, 1, TILE, theme.cobbleDark);
+      if (!isPaved(tx + 1, ty)) px(x + TILE - 1, y, 1, TILE, theme.cobbleDark);
+    } else {
+      px(x, y, TILE, TILE, theme.path);
+      const h = hash2(tx * 7, ty * 13);
+      if (h > 0.5) px(x + ((h * 73) % 11), y + ((h * 131) % 11), 3, 2, theme.pathLight);
+      if (h < 0.42) px(x + ((h * 251) % 12), y + ((h * 313) % 12), 2, 2, theme.pathSpeck);
+      // stone sidewalk curb where the street meets grass
+      if (!isPaved(tx, ty - 1)) { px(x, y, TILE, 3, theme.cobble); px(x, y, TILE, 1, theme.cobbleDark); }
+      if (!isPaved(tx, ty + 1)) { px(x, y + TILE - 3, TILE, 3, theme.cobble); px(x, y + TILE - 1, TILE, 1, theme.cobbleDark); }
+      if (!isPaved(tx - 1, ty)) { px(x, y, 3, TILE, theme.cobble); px(x, y, 1, TILE, theme.cobbleDark); }
+      if (!isPaved(tx + 1, ty)) { px(x + TILE - 3, y, 3, TILE, theme.cobble); px(x + TILE - 1, y, 1, TILE, theme.cobbleDark); }
+    }
   };
   for (let ty = 0; ty < WORLD_H; ty++)
     for (let tx = 0; tx < WORLD_W; tx++)
-      if (isStreet(tx, ty)) drawDirt(tx, ty);
-  plan.paving.forEach((p) => drawDirt(p.tx, p.ty));
+      if (isStreet(tx, ty)) drawStreet(tx, ty);
+  plan.paving.forEach((p) => drawStreet(p.tx, p.ty));
 
   // 3. Cobblestone town square
   for (let ty = 0; ty < WORLD_H; ty++)
@@ -355,6 +394,38 @@ function buildStaticWorld(plan: TownPlan, sheets: Record<SheetName, HTMLImageEle
     }
     ell(cxp, cyp + 6, 14, 5, 'rgba(20,35,20,0.22)');
     blitFoot(PROPS.tree, cxp, cyp + 9, SPR * 1.5);
+
+    // a little gig stage in front of the town tree (the scene's beating heart)
+    const sx = cxp;
+    const sy = cyp + 28;
+    px(sx - 14, sy + 1, 28, 2, 'rgba(20,35,20,0.25)'); // shadow
+    px(sx - 16, sy - 5, 32, 6, '#7a5230'); // deck
+    px(sx - 16, sy - 5, 32, 2, '#9a6e40'); // deck highlight
+    px(sx - 16, sy + 1, 32, 1, '#553418');
+    px(sx - 15, sy + 2, 2, 3, '#4a2f15');
+    px(sx + 13, sy + 2, 2, 3, '#4a2f15');
+    // banner on poles
+    px(sx - 15, sy - 19, 1, 14, '#6e4a2c');
+    px(sx + 14, sy - 19, 1, 14, '#6e4a2c');
+    px(sx - 14, sy - 19, 28, 5, '#f72585');
+    px(sx - 14, sy - 19, 28, 1, '#ff9ecb');
+    // amp stacks
+    const stageAmp = (ax: number) => {
+      px(ax - 3, sy - 9, 7, 9, '#15151a');
+      px(ax - 2, sy - 8, 5, 4, '#2a2a32');
+      ctx.fillStyle = '#3a3a44';
+      ctx.beginPath();
+      ctx.ellipse(ax, sy - 6, 1.6, 1.6, 0, 0, Math.PI * 2);
+      ctx.fill();
+    };
+    stageAmp(sx - 11);
+    stageAmp(sx + 11);
+    // mic stand
+    px(sx, sy - 9, 1, 8, '#9a9aa0');
+    ctx.fillStyle = '#c0c0c8';
+    ctx.beginPath();
+    ctx.ellipse(sx, sy - 10, 1.5, 1.5, 0, 0, Math.PI * 2);
+    ctx.fill();
   }
 
   // 3c. Crosswalks on the main streets at the four approaches to the square
@@ -422,6 +493,49 @@ function buildStaticWorld(plan: TownPlan, sheets: Record<SheetName, HTMLImageEle
     }
   });
 
+  // 6. Music-scene props: flyers on walls everywhere, a tour van + amp at venues
+  const VAN_COLORS = ['#b34a3a', '#3a6ab0', '#4a9a52', '#c9a13a', '#7a4ab0'];
+  const FLYER = ['#f4d04f', '#ef5a8a', '#4cc9f0', '#ffffff'];
+  const drawVan = (cx: number, foot: number, color: string) => {
+    cx = Math.round(cx); foot = Math.round(foot);
+    ell(cx, foot, 9, 1.6, 'rgba(0,0,0,0.2)');
+    px(cx - 9, foot - 8, 18, 7, color);
+    px(cx - 9, foot - 8, 18, 2, 'rgba(255,255,255,0.18)');
+    px(cx - 9, foot - 2, 18, 1, '#2a2a2a');
+    px(cx + 3, foot - 7, 5, 3, '#bfe6f0');
+    px(cx - 6, foot - 7, 8, 3, '#9fc8d8');
+    ctx.fillStyle = '#15151a';
+    ctx.beginPath();
+    ctx.ellipse(cx - 6, foot - 1, 2, 2, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx + 5, foot - 1, 2, 2, 0, 0, Math.PI * 2);
+    ctx.fill();
+  };
+  const drawAmp = (x: number, foot: number) => {
+    x = Math.round(x); foot = Math.round(foot);
+    ell(x, foot, 4, 1.4, 'rgba(0,0,0,0.22)');
+    px(x - 3, foot - 9, 7, 9, '#15151a');
+    px(x - 2, foot - 8, 5, 4, '#2a2a32');
+    ctx.fillStyle = '#3a3a44';
+    ctx.beginPath();
+    ctx.ellipse(x, foot - 6, 1.6, 1.6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    px(x - 2, foot - 3, 5, 2, '#222');
+  };
+  plan.buildings.forEach((b) => {
+    if (hash2(b.tx * 9, b.ty * 7) > 0.66) {
+      const side = hash2(b.tx, b.ty) > 0.5 ? 6 : -9;
+      const fx = (b.tx + b.tw / 2) * TILE + side;
+      const fy = (b.ty + b.th) * TILE - 9;
+      px(fx, fy, 3, 4, FLYER[(b.tx + b.ty) % FLYER.length]);
+      px(fx, fy, 3, 1, 'rgba(0,0,0,0.3)');
+    }
+    if (!b.venue) return;
+    const cx = (b.tx + b.tw / 2) * TILE;
+    const foot = (b.ty + b.th) * TILE;
+    drawVan(cx - 3, foot + 9, VAN_COLORS[(b.tx * 31 + b.ty * 17) % VAN_COLORS.length]);
+    drawAmp(cx + (b.tw / 2) * TILE - 1, foot - 1);
+  });
+
   return cv;
 }
 
@@ -470,7 +584,7 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
   useEffect(() => {
     const { list } = walkable;
     if (list.length === 0) { walkersRef.current = []; return; }
-    const count = Math.max(10, Math.min(22, Math.floor(list.length / 12)));
+    const count = Math.max(14, Math.min(30, Math.floor(list.length / 9)));
     const ws: Walker[] = [];
     for (let i = 0; i < count; i++) {
       const t = list[Math.floor(Math.random() * list.length)];
@@ -619,6 +733,20 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
       ctx.scale(z, z);
       ctx.drawImage(staticWorld, 0, 0);
 
+      // warm glow around venues (gigs spilling onto the street)
+      plan.buildings.forEach((b) => {
+        if (!b.venue) return;
+        const gx = (b.tx + b.tw / 2) * TILE;
+        const gy = (b.ty + b.th / 2) * TILE;
+        const pulse = 0.55 + Math.sin(time / 520 + b.tx) * 0.2;
+        const rad = Math.max(b.tw, b.th) * TILE * 0.95;
+        const g = ctx.createRadialGradient(gx, gy, 3, gx, gy, rad);
+        g.addColorStop(0, `rgba(255, 176, 92, ${(0.2 * pulse).toFixed(2)})`);
+        g.addColorStop(1, 'rgba(255, 176, 92, 0)');
+        ctx.fillStyle = g;
+        ctx.fillRect(gx - rad, gy - rad, rad * 2, rad * 2);
+      });
+
       {
         const dt = Math.min(0.05, lastTimeRef.current ? (time - lastTimeRef.current) / 1000 : 0);
         lastTimeRef.current = time;
@@ -632,6 +760,23 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
           drawPerson(ctx, w);
         });
       }
+
+      // chimney smoke drifting up from some houses
+      plan.buildings.forEach((b) => {
+        if (hash2(b.tx + 1, b.ty + 1) < 0.78) return;
+        const cxs = (b.tx + b.tw * 0.72) * TILE;
+        const top = b.ty * TILE + 2;
+        for (let i = 0; i < 3; i++) {
+          const t = ((time / 1100 + i * 0.34) % 1);
+          const syp = top - t * 22;
+          const sxp = cxs + Math.sin(time / 620 + i + b.tx) * (2 + t * 5);
+          const r = 1.4 + t * 2.6;
+          ctx.fillStyle = `rgba(208, 208, 214, ${(0.32 * (1 - t)).toFixed(2)})`;
+          ctx.beginPath();
+          ctx.ellipse(sxp, syp, r, r, 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      });
 
       plan.buildings.forEach((b) => {
         if (!b.venue) return;
@@ -671,11 +816,16 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
 
       ctx.restore();
 
-      ctx.fillStyle = 'rgba(255, 220, 160, 0.04)';
+      // golden-hour grade: warm top light → cooler base, plus soft vignette
+      const grade = ctx.createLinearGradient(0, 0, 0, size.h);
+      grade.addColorStop(0, 'rgba(255, 212, 148, 0.10)');
+      grade.addColorStop(0.55, 'rgba(255, 208, 150, 0.035)');
+      grade.addColorStop(1, 'rgba(70, 46, 92, 0.07)');
+      ctx.fillStyle = grade;
       ctx.fillRect(0, 0, size.w, size.h);
       const vg = ctx.createRadialGradient(size.w / 2, size.h / 2, Math.min(size.w, size.h) * 0.45, size.w / 2, size.h / 2, Math.max(size.w, size.h) * 0.8);
       vg.addColorStop(0, 'rgba(0, 0, 0, 0)');
-      vg.addColorStop(1, 'rgba(10, 14, 20, 0.2)');
+      vg.addColorStop(1, 'rgba(12, 10, 22, 0.24)');
       ctx.fillStyle = vg;
       ctx.fillRect(0, 0, size.w, size.h);
     },
