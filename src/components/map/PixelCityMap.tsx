@@ -155,6 +155,54 @@ function valueNoise(x: number, y: number): number {
   return a + (b - a) * sy;
 }
 
+// --- Dual-grid terrain transitions (rounded SNES-style seams) ---------------
+// Materials, low→high priority. Each higher material is painted over the lower
+// with rounded edges so two terrains never meet on a straight grid line.
+const M_SIDEWALK = 1, M_ROAD = 2, M_SAND = 3, M_WATER = 4;
+
+// The display grid is offset half a tile from the logical grid; each display
+// tile reads the 4 logical cell-centres at its corners (bits TL=1 TR=2 BL=4
+// BR=8 → 16 cases). Corner cases use a quarter-disc (radius = TILE/2) so the
+// boundary curves through tile interiors. dgPath = the filled material shape;
+// dgContour = just the grass-facing boundary curve (for the bevelled kerb).
+const HT = TILE / 2;
+const PI = Math.PI;
+function dgPath(ctx: CanvasRenderingContext2D, key: number, ox: number, oy: number): void {
+  const pie = (cx: number, cy: number, a0: number, a1: number) => { ctx.moveTo(ox + cx, oy + cy); ctx.arc(ox + cx, oy + cy, HT, a0, a1); ctx.closePath(); };
+  const rect = (x: number, y: number, w: number, h: number) => ctx.rect(ox + x, oy + y, w, h);
+  switch (key) {
+    case 1: pie(0, 0, 0, PI / 2); break;
+    case 2: pie(TILE, 0, PI / 2, PI); break;
+    case 4: pie(0, TILE, -PI / 2, 0); break;
+    case 8: pie(TILE, TILE, PI, 1.5 * PI); break;
+    case 3: rect(0, 0, TILE, HT); break;
+    case 12: rect(0, HT, TILE, HT); break;
+    case 5: rect(0, 0, HT, TILE); break;
+    case 10: rect(HT, 0, HT, TILE); break;
+    case 6: pie(TILE, 0, PI / 2, PI); pie(0, TILE, -PI / 2, 0); break;
+    case 9: pie(0, 0, 0, PI / 2); pie(TILE, TILE, PI, 1.5 * PI); break;
+    case 7: rect(0, 0, TILE, TILE); pie(TILE, TILE, PI, 1.5 * PI); break;
+    case 11: rect(0, 0, TILE, TILE); pie(0, TILE, -PI / 2, 0); break;
+    case 13: rect(0, 0, TILE, TILE); pie(TILE, 0, PI / 2, PI); break;
+    case 14: rect(0, 0, TILE, TILE); pie(0, 0, 0, PI / 2); break;
+    case 15: rect(0, 0, TILE, TILE); break;
+  }
+}
+function dgContour(ctx: CanvasRenderingContext2D, key: number, ox: number, oy: number): void {
+  const arc = (cx: number, cy: number, a0: number, a1: number) => { ctx.moveTo(ox + cx + HT * Math.cos(a0), oy + cy + HT * Math.sin(a0)); ctx.arc(ox + cx, oy + cy, HT, a0, a1); };
+  const line = (x0: number, y0: number, x1: number, y1: number) => { ctx.moveTo(ox + x0, oy + y0); ctx.lineTo(ox + x1, oy + y1); };
+  switch (key) {
+    case 1: case 14: arc(0, 0, 0, PI / 2); break;
+    case 2: case 13: arc(TILE, 0, PI / 2, PI); break;
+    case 4: case 11: arc(0, TILE, -PI / 2, 0); break;
+    case 8: case 7: arc(TILE, TILE, PI, 1.5 * PI); break;
+    case 3: case 12: line(0, HT, TILE, HT); break;
+    case 5: case 10: line(HT, 0, HT, TILE); break;
+    case 6: arc(TILE, 0, PI / 2, PI); arc(0, TILE, -PI / 2, 0); break;
+    case 9: arc(0, 0, 0, PI / 2); arc(TILE, TILE, PI, 1.5 * PI); break;
+  }
+}
+
 interface Quarter { district: District; tx: number; ty: number; tw: number; th: number }
 interface PlacedBuilding { sprite: AtlasSprite; tx: number; ty: number; tw: number; th: number; venue?: Venue; district?: District }
 interface PlacedTree { sprite: AtlasSprite; tx: number; ty: number; th: number }
@@ -401,45 +449,98 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
     for (let tx = 0; tx < WORLD_W; tx++) {
       const n = valueNoise(tx / 5, ty / 5);
       tile(TERRAIN.grass[n < 0.42 ? 0 : n < 0.74 ? 1 : 2], tx, ty);
+      // subtle blade texture so the near-flat grass tiles read as a surface
+      const x = tx * TILE, y = ty * TILE, hb = hash2(tx * 3 + 7, ty * 3 + 1);
+      if (hb > 0.5) px(x + (Math.floor(hb * 97) % 13), y + (Math.floor(hb * 61) % 12), 1, 2, theme.grassShade);
+      if (hb < 0.34) px(x + (Math.floor(hb * 131) % 13), y + (Math.floor(hb * 173) % 13), 1, 1, theme.grassBlade);
+      const hb2 = hash2(tx * 5 + 2, ty * 7 + 5);
+      if (hb2 > 0.74) px(x + (Math.floor(hb2 * 53) % 12), y + (Math.floor(hb2 * 89) % 12), 1, 1, theme.grassShade);
       const h = hash2(tx, ty);
       if (h > 0.972) px(tx * TILE + 5, ty * TILE + 6, 2, 2, theme.wildFlowers[Math.floor(h * 1000) % theme.wildFlowers.length]);
     }
 
-  // 1b. Seaside waterfront — sandy beach row + real water tiles along the south
+  // 2. Logical terrain grid — the truth the dual-grid samples. Streets become a
+  // SIDEWALK | ROAD | SIDEWALK corridor; the seaside south edge is SAND→WATER.
+  const mat = new Uint8Array(WORLD_W * WORLD_H);
+  const matAt = (tx: number, ty: number) => (tx >= 0 && ty >= 0 && tx < WORLD_W && ty < WORLD_H ? mat[ty * WORLD_W + tx] : 0);
+  const setMat = (tx: number, ty: number, v: number) => { if (tx >= 0 && ty >= 0 && tx < WORLD_W && ty < WORLD_H) mat[ty * WORLD_W + tx] = v; };
+  for (let ty = 0; ty < WORLD_H; ty++)
+    for (let tx = 0; tx < WORLD_W; tx++) {
+      if (isRoad(tx, ty)) setMat(tx, ty, M_ROAD);
+      else if (isSidewalk(tx, ty)) setMat(tx, ty, M_SIDEWALK);
+    }
   if (theme.waterfront) {
-    for (let tx = 0; tx < WORLD_W; tx++) tile(TERRAIN.dirt, tx, WORLD_H - 4);
+    for (let tx = 0; tx < WORLD_W; tx++) setMat(tx, WORLD_H - 4, M_SAND);
     for (let ty = WORLD_H - 3; ty < WORLD_H; ty++)
-      for (let tx = 0; tx < WORLD_W; tx++) tile(TERRAIN.water, tx, ty);
+      for (let tx = 0; tx < WORLD_W; tx++) setMat(tx, ty, M_WATER);
+  }
+  // Building front walks + venue driveways become sidewalk so they round & bevel
+  // along with the corridor instead of being stamped squares.
+  plan.buildings.forEach((b) => {
+    const cxr = b.tx + (b.tw >> 1);
+    const walk: number[] = [];
+    let reached = false, roadR = -1;
+    for (let r = b.ty + b.th; r <= b.ty + b.th + 3; r++) {
+      if (inPlaza(cxr, r)) break;
+      if (isRoad(cxr, r)) { reached = true; roadR = r; break; }
+      if (isSidewalk(cxr, r)) { reached = true; break; }
+      walk.push(r);
+    }
+    if (!reached) return;
+    walk.forEach((r) => setMat(cxr, r, M_SIDEWALK));
+    if (b.venue && roadR >= 0) for (let r = b.ty + b.th; r < roadR; r++) if (!inPlaza(cxr, r)) setMat(cxr, r, M_SIDEWALK);
+  });
+
+  // 2a. Dual-grid paint: each material drawn over the lower terrain with rounded
+  // edges + a bevelled raised kerb (lit top, shadowed front face, cast shadow).
+  const blit4 = (s: AtlasSprite, tx: number, ty: number) => { tile(s, tx, ty); tile(s, tx + 1, ty); tile(s, tx, ty + 1); tile(s, tx + 1, ty + 1); };
+  interface LayerCfg { field: (tx: number, ty: number) => boolean; matTile: AtlasSprite; rim: string; frontShadow: string; highSide?: 'material' | 'lower'; tint?: string; kerb?: boolean; varies?: boolean }
+  const paintLayer = (cfg: LayerCfg) => {
+    const f = cfg.field;
+    for (let ty = -1; ty < WORLD_H; ty++)
+      for (let tx = -1; tx < WORLD_W; tx++) {
+        const key = (f(tx, ty) ? 1 : 0) | (f(tx + 1, ty) ? 2 : 0) | (f(tx, ty + 1) ? 4 : 0) | (f(tx + 1, ty + 1) ? 8 : 0);
+        if (key === 0) continue;
+        const ox = tx * TILE + HT, oy = ty * TILE + HT;
+        ctx.save();
+        ctx.beginPath(); dgPath(ctx, key, ox, oy); ctx.clip('evenodd');
+        blit4(cfg.matTile, tx, ty);
+        if (cfg.varies !== false) {
+          const vs = valueNoise(tx / 3.5, ty / 3.5);
+          if (vs > 0.72) { ctx.fillStyle = 'rgba(0,0,0,0.07)'; ctx.fillRect(ox, oy, TILE, TILE); }
+          else if (vs < 0.3) { ctx.fillStyle = 'rgba(255,255,255,0.05)'; ctx.fillRect(ox, oy, TILE, TILE); }
+        }
+        if (cfg.tint) { ctx.fillStyle = cfg.tint; ctx.fillRect(ox, oy, TILE, TILE); }
+        ctx.restore();
+        if (key !== 15 && cfg.kerb) {
+          const hiInside = cfg.highSide !== 'lower';
+          // highlight along the high-side rim
+          ctx.save(); ctx.beginPath();
+          if (hiInside) dgPath(ctx, key, ox, oy); else { ctx.rect(ox, oy, TILE, TILE); dgPath(ctx, key, ox, oy); }
+          ctx.clip('evenodd');
+          ctx.beginPath(); dgContour(ctx, key, ox, oy); ctx.lineWidth = 2; ctx.strokeStyle = cfg.rim; ctx.stroke();
+          ctx.restore();
+          // cast shadow + dark front face on the low side
+          ctx.save(); ctx.beginPath();
+          if (hiInside) { ctx.rect(ox, oy, TILE, TILE); dgPath(ctx, key, ox, oy); } else dgPath(ctx, key, ox, oy);
+          ctx.clip('evenodd');
+          ctx.beginPath(); dgContour(ctx, key, ox, oy); ctx.lineWidth = 2.6; ctx.strokeStyle = 'rgba(0,0,0,0.2)'; ctx.stroke();
+          ctx.beginPath(); dgContour(ctx, key, ox, oy); ctx.lineWidth = 1; ctx.strokeStyle = cfg.frontShadow; ctx.stroke();
+          ctx.restore();
+        }
+      }
+  };
+  const isMat = (tx: number, ty: number, ...ms: number[]) => ms.includes(matAt(tx, ty));
+  // sidewalk first (whole paved corridor over grass), then road over sidewalk
+  paintLayer({ field: (tx, ty) => isMat(tx, ty, M_SIDEWALK, M_ROAD), matTile: TERRAIN.stone, kerb: true, highSide: 'material', rim: theme.cobbleLight, frontShadow: theme.cobbleDark, tint: 'rgba(150,120,80,0.05)' });
+  paintLayer({ field: (tx, ty) => isMat(tx, ty, M_ROAD), matTile: TERRAIN.road, kerb: true, highSide: 'lower', rim: theme.cobbleLight, frontShadow: 'rgba(0,0,0,0.28)', tint: 'rgba(140,110,70,0.06)' });
+  if (theme.waterfront) {
+    paintLayer({ field: (tx, ty) => isMat(tx, ty, M_SAND, M_WATER), matTile: TERRAIN.dirt, kerb: true, highSide: 'material', rim: theme.sand, frontShadow: theme.soilDark });
+    paintLayer({ field: (tx, ty) => isMat(tx, ty, M_WATER), matTile: TERRAIN.water, kerb: true, highSide: 'material', rim: theme.waterLight, frontShadow: theme.waterDark, varies: false });
   }
 
-  // 2. Paved corridors — real flagstone SIDEWALKS flank a dirt ROAD centre.
-  // per-tile wear breaks the "one tile repeated" look.
-  const vary = (tx: number, ty: number) => {
-    const x = tx * TILE, y = ty * TILE, h = hash2(tx * 13 + 5, ty * 7 + 3);
-    if (h > 0.78) px(x + (Math.floor(h * 53) % 12), y + (Math.floor(h * 97) % 12), 3, 2, 'rgba(0,0,0,0.09)');
-    if (h < 0.24) px(x + (Math.floor(h * 131) % 12), y + (Math.floor(h * 173) % 12), 2, 2, 'rgba(255,255,255,0.06)');
-    if (h > 0.91) px(x + (Math.floor(h * 211) % 13), y + (Math.floor(h * 251) % 12), 1, 3, 'rgba(0,0,0,0.11)');
-  };
-  const drawCorridor = (tx: number, ty: number) => {
-    if (inPlaza(tx, ty)) return;
-    if (isSidewalk(tx, ty)) {
-      tile(TERRAIN.stone, tx, ty);
-      const x = tx * TILE, y = ty * TILE;
-      if (!isStreet(tx, ty - 1) || isRoad(tx, ty - 1)) px(x, y, TILE, 1, 'rgba(0,0,0,0.20)');
-      if (!isStreet(tx, ty + 1) || isRoad(tx, ty + 1)) px(x, y + TILE - 1, TILE, 1, 'rgba(0,0,0,0.20)');
-      if (!isStreet(tx - 1, ty) || isRoad(tx - 1, ty)) px(x, y, 1, TILE, 'rgba(0,0,0,0.20)');
-      if (!isStreet(tx + 1, ty) || isRoad(tx + 1, ty)) px(x + TILE - 1, y, 1, TILE, 'rgba(0,0,0,0.20)');
-    } else {
-      tile(TERRAIN.road, tx, ty);
-    }
-    vary(tx, ty);
-  };
-  for (let ty = 0; ty < WORLD_H; ty++)
-    for (let tx = 0; tx < WORLD_W; tx++)
-      if (isStreet(tx, ty)) drawCorridor(tx, ty);
-
   // 2b. Dashed lane lines down the centre of every road (skip intersections/plaza)
-  ctx.fillStyle = 'rgba(244,244,230,0.5)';
+  ctx.fillStyle = 'rgba(244,244,230,0.42)';
   for (const s of STREET_H) {
     const y = (s + 1) * TILE - 1;
     for (let x = 6; x < WORLD_W * TILE; x += 13) {
@@ -457,27 +558,27 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
     }
   }
 
-  // 2c. Building front paths to the sidewalk (matching) + venue driveways/parking
-  plan.buildings.forEach((b) => {
-    const cxr = b.tx + (b.tw >> 1);
-    const grassPath: number[] = [];
-    let reached = false, roadR = -1;
-    for (let r = b.ty + b.th; r <= b.ty + b.th + 3; r++) {
-      if (inPlaza(cxr, r)) break;
-      if (isRoad(cxr, r)) { reached = true; roadR = r; break; }
-      if (isSidewalk(cxr, r)) { reached = true; break; }
-      grassPath.push(r);
-    }
-    if (!reached) return;
-    grassPath.forEach((r) => tile(TERRAIN.stone, cxr, r)); // front path across the yard
-    if (b.venue) {
-      if (roadR < 0) for (let r = b.ty + b.th; r <= b.ty + b.th + 3; r++) { if (isRoad(cxr, r)) { roadR = r; break; } }
-      if (roadR >= 0) {
-        for (let r = b.ty + b.th; r < roadR; r++) if (!inPlaza(cxr, r)) tile(TERRAIN.stone, cxr, r); // driveway through sidewalk
-        tile(TERRAIN.stone, cxr, roadR); // parking pad on the road
+  // 2c. Surface decals on paved interiors — manholes / cracks / patches that
+  // straddle tile borders, so a big paved area reads as a worn surface not a grid.
+  const paved = (tx: number, ty: number) => matAt(tx, ty) === M_ROAD || matAt(tx, ty) === M_SIDEWALK;
+  for (let ty = 1; ty < WORLD_H - 1; ty++)
+    for (let tx = 1; tx < WORLD_W - 1; tx++) {
+      if (!paved(tx, ty) || !(paved(tx - 1, ty) && paved(tx + 1, ty) && paved(tx, ty - 1) && paved(tx, ty + 1))) continue;
+      if (inPlaza(tx, ty)) continue;
+      const h = hash2(tx * 7 + 1, ty * 5 + 9);
+      const x = tx * TILE, y = ty * TILE;
+      if (h > 0.93) {
+        const mx = x + 5 + (Math.floor(h * 40) % 6), my = y + 5 + (Math.floor(h * 70) % 6);
+        ctx.fillStyle = 'rgba(0,0,0,0.26)'; ctx.beginPath(); ctx.ellipse(mx, my, 3.2, 3.2, 0, 0, PI * 2); ctx.fill();
+        ctx.fillStyle = 'rgba(122,118,110,0.85)'; ctx.beginPath(); ctx.ellipse(mx, my, 2.1, 2.1, 0, 0, PI * 2); ctx.fill();
+        ctx.strokeStyle = 'rgba(0,0,0,0.22)'; ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(mx - 2, my); ctx.lineTo(mx + 2, my); ctx.stroke();
+      } else if (h > 0.86) {
+        ctx.strokeStyle = 'rgba(0,0,0,0.20)'; ctx.lineWidth = 1;
+        const cx = x + 4, cy = y + 3; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + 4, cy + 3); ctx.lineTo(cx + 2, cy + 7); ctx.lineTo(cx + 6, cy + 10); ctx.stroke();
+      } else if (h > 0.79) {
+        ctx.fillStyle = 'rgba(0,0,0,0.07)'; ctx.fillRect(x + 3 + (Math.floor(h * 30) % 4), y + 4 + (Math.floor(h * 50) % 4), 8, 6);
       }
     }
-  });
 
   // 3. Roundabout — grass island ← ring road ← sidewalk ring, approach roads cut in
   {

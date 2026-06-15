@@ -52,7 +52,7 @@ const c = (x: number, y: number): AtlasSprite => ({
 // Ground = village grass/water (textured, matches buildings); STREETS + SIDEWALK
 // use the real city-tileset road/sidewalk tiles (proper paved look + crosswalks).
 export const TERRAIN = {
-  grass: [v(32, 0), v(96, 0), v(16, 16)], // seamless village grass variants
+  grass: [v(96, 0), v(112, 0), v(80, 16)], // tonally-matched seamless grass (2 saturated + 1 yellow-green; avoids patchy clashing shades)
   road: c(0, 64), // plain grey concrete road (opaque — verified)
   stone: c(80, 64), // tan brick sidewalk (sidewalk / plaza / paths)
   crosswalk: c(16, 64), // zebra crossing
