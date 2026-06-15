@@ -295,8 +295,53 @@ function drawPerson(ctx: CanvasRenderingContext2D, w: Walker): void {
   ctx.fillRect(x, headTop - 2, 1, 1);
 }
 
-// --- Static world bake -------------------------------------------------------
-function buildStaticWorld(plan: TownPlan, sheets: Record<SheetName, HTMLImageElement>, theme: MapTheme): HTMLCanvasElement {
+// --- Per-frame object drawing (depth-sorted with walkers) -------------------
+const VAN_COLORS = ['#b34a3a', '#3a6ab0', '#4a9a52', '#c9a13a', '#7a4ab0'];
+const FLYER = ['#f4d04f', '#ef5a8a', '#4cc9f0', '#ffffff'];
+type Sheets = Record<SheetName, HTMLImageElement>;
+function spriteBlit(ctx: CanvasRenderingContext2D, sheets: Sheets, s: AtlasSprite, footCx: number, footY: number, scale: number) {
+  const w = s.rect.w * scale, h = s.rect.h * scale;
+  ctx.drawImage(sheets[s.sheet], s.rect.x, s.rect.y, s.rect.w, s.rect.h, Math.round(footCx - w / 2), Math.round(footY - h), Math.round(w), Math.round(h));
+}
+function drawVanM(ctx: CanvasRenderingContext2D, cx: number, foot: number, color: string) {
+  cx = Math.round(cx); foot = Math.round(foot);
+  ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.beginPath(); ctx.ellipse(cx, foot, 9, 1.6, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = color; ctx.fillRect(cx - 9, foot - 8, 18, 7);
+  ctx.fillStyle = 'rgba(255,255,255,0.18)'; ctx.fillRect(cx - 9, foot - 8, 18, 2);
+  ctx.fillStyle = '#2a2a2a'; ctx.fillRect(cx - 9, foot - 2, 18, 1);
+  ctx.fillStyle = '#bfe6f0'; ctx.fillRect(cx + 3, foot - 7, 5, 3);
+  ctx.fillStyle = '#9fc8d8'; ctx.fillRect(cx - 6, foot - 7, 8, 3);
+  ctx.fillStyle = '#15151a'; ctx.beginPath(); ctx.ellipse(cx - 6, foot - 1, 2, 2, 0, 0, Math.PI * 2); ctx.ellipse(cx + 5, foot - 1, 2, 2, 0, 0, Math.PI * 2); ctx.fill();
+}
+function drawAmpM(ctx: CanvasRenderingContext2D, x: number, foot: number) {
+  x = Math.round(x); foot = Math.round(foot);
+  ctx.fillStyle = 'rgba(0,0,0,0.22)'; ctx.beginPath(); ctx.ellipse(x, foot, 4, 1.4, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#15151a'; ctx.fillRect(x - 3, foot - 9, 7, 9);
+  ctx.fillStyle = '#2a2a32'; ctx.fillRect(x - 2, foot - 8, 5, 4);
+  ctx.fillStyle = '#3a3a44'; ctx.beginPath(); ctx.ellipse(x, foot - 6, 1.6, 1.6, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#222'; ctx.fillRect(x - 2, foot - 3, 5, 2);
+}
+function drawBuildingObj(ctx: CanvasRenderingContext2D, sheets: Sheets, b: PlacedBuilding) {
+  const footCx = (b.tx + b.tw / 2) * TILE, footY = (b.ty + b.th) * TILE;
+  ctx.fillStyle = 'rgba(20,35,20,0.24)'; ctx.beginPath(); ctx.ellipse(footCx, footY - 2, (b.tw / 2) * TILE * 0.85, 4, 0, 0, Math.PI * 2); ctx.fill();
+  spriteBlit(ctx, sheets, b.sprite, footCx, footY, SPR);
+  if (hash2(b.tx * 9, b.ty * 7) > 0.66) {
+    const side = hash2(b.tx, b.ty) > 0.5 ? 6 : -9;
+    const fx = footCx + side, fy = footY - 9;
+    ctx.fillStyle = FLYER[(b.tx + b.ty) % FLYER.length]; ctx.fillRect(fx, fy, 3, 4);
+    ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(fx, fy, 3, 1);
+  }
+  if (b.venue) {
+    drawVanM(ctx, footCx - 3, footY + 9, VAN_COLORS[(b.tx * 31 + b.ty * 17) % VAN_COLORS.length]);
+    drawAmpM(ctx, footCx + (b.tw / 2) * TILE - 1, footY - 1);
+  }
+}
+function drawTreeObj(ctx: CanvasRenderingContext2D, sheets: Sheets, t: PlacedTree) {
+  spriteBlit(ctx, sheets, t.sprite, (t.tx + 1) * TILE, (t.ty + t.th) * TILE, SPR);
+}
+
+// --- Ground bake (terrain + streets + plaza + low props; NO buildings/trees) -
+function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanvasElement {
   const cv = document.createElement('canvas');
   cv.width = WORLD_W * TILE;
   cv.height = WORLD_H * TILE;
@@ -476,65 +521,8 @@ function buildStaticWorld(plan: TownPlan, sheets: Record<SheetName, HTMLImageEle
       if (!(Math.abs(sx - ROAD_X) <= 1 && Math.abs(sy - ROAD_Y) <= 1))
         lamp(sx * TILE - 3, sy * TILE - 2);
 
-  // 5. Buildings + trees, depth-sorted, with grounding shadows
-  type D = { foot: number; b?: PlacedBuilding; t?: PlacedTree };
-  const draws: D[] = [
-    ...plan.buildings.map((b) => ({ foot: b.ty + b.th, b })),
-    ...plan.trees.map((t) => ({ foot: t.ty + t.th, t })),
-  ].sort((a, z) => a.foot - z.foot);
-  draws.forEach((d) => {
-    if (d.b) {
-      const footCx = (d.b.tx + d.b.tw / 2) * TILE;
-      const footY = (d.b.ty + d.b.th) * TILE;
-      ell(footCx, footY - 2, (d.b.tw / 2) * TILE * 0.85, 4, 'rgba(20,35,20,0.24)');
-      blitFoot(d.b.sprite, footCx, footY);
-    } else if (d.t) {
-      blitFoot(d.t.sprite, (d.t.tx + 1) * TILE, (d.t.ty + d.t.th) * TILE);
-    }
-  });
-
-  // 6. Music-scene props: flyers on walls everywhere, a tour van + amp at venues
-  const VAN_COLORS = ['#b34a3a', '#3a6ab0', '#4a9a52', '#c9a13a', '#7a4ab0'];
-  const FLYER = ['#f4d04f', '#ef5a8a', '#4cc9f0', '#ffffff'];
-  const drawVan = (cx: number, foot: number, color: string) => {
-    cx = Math.round(cx); foot = Math.round(foot);
-    ell(cx, foot, 9, 1.6, 'rgba(0,0,0,0.2)');
-    px(cx - 9, foot - 8, 18, 7, color);
-    px(cx - 9, foot - 8, 18, 2, 'rgba(255,255,255,0.18)');
-    px(cx - 9, foot - 2, 18, 1, '#2a2a2a');
-    px(cx + 3, foot - 7, 5, 3, '#bfe6f0');
-    px(cx - 6, foot - 7, 8, 3, '#9fc8d8');
-    ctx.fillStyle = '#15151a';
-    ctx.beginPath();
-    ctx.ellipse(cx - 6, foot - 1, 2, 2, 0, 0, Math.PI * 2);
-    ctx.ellipse(cx + 5, foot - 1, 2, 2, 0, 0, Math.PI * 2);
-    ctx.fill();
-  };
-  const drawAmp = (x: number, foot: number) => {
-    x = Math.round(x); foot = Math.round(foot);
-    ell(x, foot, 4, 1.4, 'rgba(0,0,0,0.22)');
-    px(x - 3, foot - 9, 7, 9, '#15151a');
-    px(x - 2, foot - 8, 5, 4, '#2a2a32');
-    ctx.fillStyle = '#3a3a44';
-    ctx.beginPath();
-    ctx.ellipse(x, foot - 6, 1.6, 1.6, 0, 0, Math.PI * 2);
-    ctx.fill();
-    px(x - 2, foot - 3, 5, 2, '#222');
-  };
-  plan.buildings.forEach((b) => {
-    if (hash2(b.tx * 9, b.ty * 7) > 0.66) {
-      const side = hash2(b.tx, b.ty) > 0.5 ? 6 : -9;
-      const fx = (b.tx + b.tw / 2) * TILE + side;
-      const fy = (b.ty + b.th) * TILE - 9;
-      px(fx, fy, 3, 4, FLYER[(b.tx + b.ty) % FLYER.length]);
-      px(fx, fy, 3, 1, 'rgba(0,0,0,0.3)');
-    }
-    if (!b.venue) return;
-    const cx = (b.tx + b.tw / 2) * TILE;
-    const foot = (b.ty + b.th) * TILE;
-    drawVan(cx - 3, foot + 9, VAN_COLORS[(b.tx * 31 + b.ty * 17) % VAN_COLORS.length]);
-    drawAmp(cx + (b.tw / 2) * TILE - 1, foot - 1);
-  });
+  // (Buildings, trees and their props are drawn PER-FRAME, depth-sorted with the
+  // walkers, so townsfolk are correctly occluded by anything in front of them.)
 
   return cv;
 }
@@ -552,7 +540,18 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
   const theme = THEMES[themeKey];
 
   const plan = useMemo(() => planTown(districts, venues, theme.roofMix), [districts, venues, theme]);
-  const staticWorld = useMemo(() => (sheets ? buildStaticWorld(plan, sheets, theme) : null), [plan, sheets, theme]);
+  const ground = useMemo(() => (sheets ? buildGround(plan, sheets, theme) : null), [plan, sheets, theme]);
+
+  // Static depth-sortable objects (buildings + trees); walkers merge in per-frame.
+  type DepthObj =
+    | { footY: number; kind: 'building'; b: PlacedBuilding }
+    | { footY: number; kind: 'tree'; t: PlacedTree };
+  const objects = useMemo<DepthObj[]>(() => {
+    const list: DepthObj[] = [];
+    plan.buildings.forEach((b) => list.push({ footY: (b.ty + b.th) * TILE, kind: 'building', b }));
+    plan.trees.forEach((t) => list.push({ footY: (t.ty + t.th) * TILE, kind: 'tree', t }));
+    return list;
+  }, [plan]);
 
   const venuesWithShows = useMemo(() => {
     const ids = new Set<string>();
@@ -564,12 +563,12 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
     const set = new Set<string>();
     const list: { tx: number; ty: number }[] = [];
     const add = (tx: number, ty: number) => { const k = `${tx},${ty}`; if (!set.has(k)) { set.add(k); list.push({ tx, ty }); } };
+    // Streets + plaza only — one connected network, no dead-end doorstep spurs.
     for (let ty = 1; ty < WORLD_H - 1; ty++)
       for (let tx = 1; tx < WORLD_W - 1; tx++)
         if (isStreet(tx, ty) || inPlaza(tx, ty)) add(tx, ty);
-    plan.paving.forEach((p) => add(p.tx, p.ty));
     return { set, list };
-  }, [plan]);
+  }, []);
 
   const zoomRef = useRef(ZOOM_DEFAULT);
   const cameraRef = useRef({ x: 0, y: 0 });
@@ -718,7 +717,7 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
   const render = useCallback(
     (time: number) => {
       const canvas = canvasRef.current;
-      if (!canvas || !staticWorld || size.w === 0) return;
+      if (!canvas || !ground || !sheets || size.w === 0) return;
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
       const z = zoomRef.current;
@@ -731,7 +730,7 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
       ctx.save();
       ctx.translate(-Math.round(cameraRef.current.x), -Math.round(cameraRef.current.y));
       ctx.scale(z, z);
-      ctx.drawImage(staticWorld, 0, 0);
+      ctx.drawImage(ground, 0, 0);
 
       // warm glow around venues (gigs spilling onto the street)
       plan.buildings.forEach((b) => {
@@ -747,6 +746,7 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
         ctx.fillRect(gx - rad, gy - rad, rad * 2, rad * 2);
       });
 
+      // advance the townsfolk (movement only; drawing is depth-sorted below)
       {
         const dt = Math.min(0.05, lastTimeRef.current ? (time - lastTimeRef.current) / 1000 : 0);
         lastTimeRef.current = time;
@@ -757,9 +757,19 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
           const d = Math.hypot(dx, dy);
           if (d < 0.7) { w.tx = w.ntx; w.ty = w.nty; pickNextTile(w, wset); }
           else { const v = w.speed * dt; w.x += (dx / d) * v; w.y += (dy / d) * v; w.phase += v * 0.6; }
-          drawPerson(ctx, w);
         });
       }
+
+      // depth-sorted draw: buildings, trees and townsfolk by foot Y so walkers
+      // are correctly occluded by anything standing in front of them.
+      const depth: Array<{ y: number; o?: DepthObj; w?: Walker }> = objects.map((o) => ({ y: o.footY, o }));
+      walkersRef.current.forEach((w) => depth.push({ y: w.y, w }));
+      depth.sort((a, b) => a.y - b.y);
+      depth.forEach((d) => {
+        if (d.w) drawPerson(ctx, d.w);
+        else if (d.o!.kind === 'building') drawBuildingObj(ctx, sheets, d.o!.b);
+        else drawTreeObj(ctx, sheets, d.o!.t);
+      });
 
       // chimney smoke drifting up from some houses
       plan.buildings.forEach((b) => {
@@ -829,7 +839,7 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
       ctx.fillStyle = vg;
       ctx.fillRect(0, 0, size.w, size.h);
     },
-    [staticWorld, size.w, size.h, plan, venuesWithShows, walkable, theme],
+    [ground, sheets, objects, size.w, size.h, plan, venuesWithShows, walkable, theme],
   );
 
   useEffect(() => {
