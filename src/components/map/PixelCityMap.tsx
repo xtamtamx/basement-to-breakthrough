@@ -410,7 +410,7 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
       if (!isStreet(tx - 1, ty) || isRoad(tx - 1, ty)) px(x, y, 1, TILE, 'rgba(0,0,0,0.20)');
       if (!isStreet(tx + 1, ty) || isRoad(tx + 1, ty)) px(x + TILE - 1, y, 1, TILE, 'rgba(0,0,0,0.20)');
     } else {
-      tile(theme.streetPaved ? TERRAIN.stone : TERRAIN.dirt, tx, ty);
+      tile(TERRAIN.road, tx, ty);
     }
     vary(tx, ty);
   };
@@ -475,11 +475,11 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
       ctx.restore();
     };
     clipFill(TERRAIN.stone, swOuter, roadOuter); // outer sidewalk ring
-    clipFill(TERRAIN.dirt, roadOuter, islandR); // ring road
+    clipFill(TERRAIN.road, roadOuter, islandR); // ring road
     // approach roads cut through the sidewalk ring at the four entrances
     for (let ty = 0; ty < WORLD_H; ty++)
       for (let tx = 0; tx < WORLD_W; tx++)
-        if (inPlaza(tx, ty) && isRoad(tx, ty)) tile(TERRAIN.dirt, tx, ty);
+        if (inPlaza(tx, ty) && isRoad(tx, ty)) tile(TERRAIN.road, tx, ty);
     clipFill(TERRAIN.grass[0], islandR, 0); // central grass island (clears the cross-stubs)
     // kerbs + a dashed lane line so it reads as a roundabout
     ctx.strokeStyle = 'rgba(20,28,18,0.5)'; ctx.lineWidth = 2;

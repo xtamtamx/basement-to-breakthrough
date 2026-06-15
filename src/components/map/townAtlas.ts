@@ -21,6 +21,7 @@ export const SHEETS = {
   buildings: '/assets/sprites/town/houses-sprite-sheet.png',
   grass: '/assets/sprites/town/grasslands-tileset.png',
   village: '/assets/sprites/town/village-tileset.png',
+  city: '/assets/sprites/town/city-tileset.png',
 } as const;
 
 export type SheetName = keyof typeof SHEETS;
@@ -42,14 +43,20 @@ const v = (x: number, y: number): AtlasSprite => ({
   sheet: 'village',
   rect: { x, y, w: 16, h: 16 },
 });
+const c = (x: number, y: number): AtlasSprite => ({
+  sheet: 'city',
+  rect: { x, y, w: 16, h: 16 },
+});
 
-// --- Terrain fill tiles (village-tileset; seamless, detected by edge-wrap) ----
-// Real textured ground that matches the detailed building art, replacing the
-// old flat procedural fills.
+// --- Terrain fill tiles --------------------------------------------------------
+// Ground = village grass/water (textured, matches buildings); STREETS + SIDEWALK
+// use the real city-tileset road/sidewalk tiles (proper paved look + crosswalks).
 export const TERRAIN = {
-  grass: [v(32, 0), v(96, 0), v(16, 16)], // seamless grass variants
-  dirt: v(320, 16), // tan dirt/gravel road
-  stone: v(304, 16), // clean smooth flagstone (sidewalk / plaza) — not the dotted one
+  grass: [v(32, 0), v(96, 0), v(16, 16)], // seamless village grass variants
+  road: c(64, 64), // grey concrete street tile
+  stone: c(0, 48), // cream sidewalk/pavement (sidewalk / plaza / paths)
+  crosswalk: c(80, 96), // zebra crossing (horizontal stripes)
+  dirt: v(320, 16), // village dirt (seaside beach / sand)
   water: v(192, 48), // water
 } as const;
 
