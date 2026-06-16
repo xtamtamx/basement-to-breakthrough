@@ -48,6 +48,7 @@ export const DayJobView: React.FC = () => {
       case JobCategory.CORPORATE: return '👔';
       case JobCategory.COMMUNITY: return '🎸';
       case JobCategory.SHOP: return '🛍️';
+      case JobCategory.CIVIC: return '🏛️';
       default: return '💼';
     }
   };

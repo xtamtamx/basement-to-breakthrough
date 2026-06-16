@@ -858,15 +858,16 @@ export const CityView: React.FC = () => {
         const chip = (label: string, color: string) => (
           <span style={{ fontSize: '11px', color, backgroundColor: '#111827', border: '1px solid #1f2937', borderRadius: '6px', padding: '2px 7px', whiteSpace: 'nowrap' }}>{label}</span>
         );
+        const accent = selectedShop.category === 'civic' ? '#f0c040' : '#06b6d4';
         return (
           <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'fadeIn 0.2s ease-out', padding: '20px' }} onClick={() => setSelectedShop(null)}>
-            <div style={{ backgroundColor: '#0a0a0a', borderTop: '2px solid #06b6d4', borderLeft: '1px solid #374151', borderRight: '1px solid #374151', borderRadius: '16px', padding: '16px', paddingBottom: 'calc(16px + env(safe-area-inset-bottom))', width: '100%', maxWidth: '440px', maxHeight: '80vh', overflowY: 'auto', animation: 'slideUp 0.3s ease-out' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ backgroundColor: '#0a0a0a', borderTop: `2px solid ${accent}`, borderLeft: '1px solid #374151', borderRight: '1px solid #374151', borderRadius: '16px', padding: '16px', paddingBottom: 'calc(16px + env(safe-area-inset-bottom))', width: '100%', maxWidth: '440px', maxHeight: '80vh', overflowY: 'auto', animation: 'slideUp 0.3s ease-out' }} onClick={(e) => e.stopPropagation()}>
               <div style={{ width: '36px', height: '3px', backgroundColor: '#374151', borderRadius: '2px', margin: '0 auto 12px' }} />
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
                 <div style={{ flex: 1 }}>
                   <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#ffffff', margin: '0 0 4px' }}>{selectedShop.name}</h2>
-                  <p style={{ fontSize: '12px', color: '#06b6d4', margin: 0, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <MapPin size={12} color="#06b6d4" /><span>{SHOP_DEFS[selectedShop.kind].label} · Day Jobs</span>
+                  <p style={{ fontSize: '12px', color: accent, margin: 0, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <MapPin size={12} color={accent} /><span>{SHOP_DEFS[selectedShop.kind].label} · Day Jobs</span>
                   </p>
                 </div>
                 <button onClick={() => setSelectedShop(null)} style={{ width: '32px', height: '32px', borderRadius: '16px', backgroundColor: 'transparent', border: '1px solid #374151', color: '#9ca3af', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><X size={18} /></button>

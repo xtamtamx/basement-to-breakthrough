@@ -24,7 +24,8 @@ export enum JobCategory {
   VENUE = 'VENUE',
   CORPORATE = 'CORPORATE',
   COMMUNITY = 'COMMUNITY',
-  SHOP = 'SHOP'
+  SHOP = 'SHOP',
+  CIVIC = 'CIVIC'
 }
 
 export interface DayJob {
@@ -245,6 +246,23 @@ const JOB_EVENTS_BY_CATEGORY: Record<JobCategory, Array<{
       message: "Inventory day ran long. You missed practice.",
       effects: { stress: 10 }
     }
+  ],
+  [JobCategory.CIVIC]: [
+    {
+      chance: 0.12,
+      message: "Slipped a flyer onto the community board. Civic duty, technically.",
+      effects: { fans: 2, reputation: 1 }
+    },
+    {
+      chance: 0.1,
+      message: "A coworker's kid is starting a band. You're now their mentor.",
+      effects: { connections: 3 }
+    },
+    {
+      chance: 0.08,
+      message: "Mandatory overtime. The institution does not care about your set.",
+      effects: { stress: 12 }
+    }
   ]
 };
 
@@ -341,7 +359,7 @@ export class DayJobSystem {
       }
     }
 
-    // Generate shop jobs — every commerce building offers its own retail work
+    // Generate establishment jobs — every shop & civic building offers its own work
     getCityShops(districts).forEach(shop => {
       jobs.push(...this.buildShopJobs(shop));
     });
@@ -351,10 +369,11 @@ export class DayJobSystem {
   }
 
   private buildShopJobs(shop: CityShop): DayJob[] {
+    const category = shop.category === 'civic' ? JobCategory.CIVIC : JobCategory.SHOP;
     return SHOP_DEFS[shop.kind].jobs.map((def, i) => ({
       id: `SHOP_${shop.id}_${i}_${Math.random().toString(36).substr(2, 6)}`,
       type: DayJobType.SHOP_WORK,
-      category: JobCategory.SHOP,
+      category,
       name: `${def.title} at ${shop.name}`,
       description: def.flavor,
       moneyPerTurn: def.moneyPerTurn,
@@ -544,6 +563,8 @@ export class DayJobSystem {
         `${this.turnsWorked} turns selling your soul. The money barely helps.` :
         job.category === JobCategory.SHOP ?
         `Another shift at ${job.name}. Retail purgatory, but the regulars are scene.` :
+        job.category === JobCategory.CIVIC ?
+        `Another day at ${job.name}. Steady pay, soul on layaway.` :
         `Building community, one unpaid hour at a time.`,
       `Day ${this.turnsWorked} at ${job.name}. Is this sustainable?`
     ];

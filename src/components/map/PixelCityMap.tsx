@@ -139,10 +139,14 @@ const VENUE_BUILDINGS: Partial<Record<VenueType, BuildingKey>> = {
   [VenueType.FESTIVAL_GROUNDS]: 'rotunda',
 };
 
-// Commerce buildings use the storefront sprites (distinct from the houses).
+// Commerce uses the storefront sprites; civic buildings use the grander civic
+// sprites (columned hall, glass market, rotunda) so they read as institutions.
 const SHOP_BUILDINGS: Record<ShopKind, BuildingKey> = {
-  [ShopKind.RECORD_STORE]: 'teal', [ShopKind.COFFEE_SHOP]: 'shopAwning', [ShopKind.BOOKSTORE]: 'greyShop',
-  [ShopKind.THRIFT_STORE]: 'shopAwning', [ShopKind.CORNER_STORE]: 'greyShop', [ShopKind.INSTRUMENT_SHOP]: 'teal',
+  [ShopKind.RECORD_STORE]: 'teal', [ShopKind.MUSIC_STORE]: 'teal', [ShopKind.INSTRUMENT_SHOP]: 'teal',
+  [ShopKind.COFFEE_SHOP]: 'shopAwning', [ShopKind.THRIFT_STORE]: 'shopAwning',
+  [ShopKind.BOOKSTORE]: 'greyShop', [ShopKind.CORNER_STORE]: 'greyShop',
+  [ShopKind.POLICE_STATION]: 'stone', [ShopKind.FIRE_STATION]: 'redClub', [ShopKind.HOSPITAL]: 'glassHall',
+  [ShopKind.POST_OFFICE]: 'civic', [ShopKind.SCHOOL]: 'arch', [ShopKind.LIBRARY]: 'rotunda',
 };
 
 // CEIL (not round): the footprint must fully contain the drawn sprite, else the
@@ -1032,24 +1036,42 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
         ctx.fillRect(cx, my - 5, 5, 2);
       });
 
-      // shop sign markers (cyan shopping bag) — tap to browse the shop's day jobs
+      // establishment markers — tap to browse that place's day jobs.
+      // Commerce = cyan shopping bag; civic = gold classical-building badge.
       plan.buildings.forEach((b) => {
         if (!b.shop) return;
+        const civic = b.shop.category === 'civic';
+        const accent = civic ? '#f0c040' : '#06b6d4';
         const cx = (b.tx + b.tw / 2) * TILE;
         const my = (b.ty - 0.5) * TILE + Math.sin(time / 300 + b.tx) * 2;
         ctx.fillStyle = 'rgba(10, 10, 14, 0.85)';
         ctx.fillRect(cx - 7, my - 7, 14, 14);
-        ctx.strokeStyle = '#06b6d4';
+        ctx.strokeStyle = accent;
         ctx.lineWidth = 1;
         ctx.strokeRect(cx - 7.5, my - 7.5, 15, 15);
-        // little shopping bag
-        ctx.fillStyle = '#06b6d4';
-        ctx.fillRect(cx - 4, my - 2, 8, 7);
-        ctx.fillRect(cx - 3, my - 5, 1, 3);
-        ctx.fillRect(cx + 2, my - 5, 1, 3);
-        ctx.fillRect(cx - 3, my - 5, 6, 1);
-        ctx.fillStyle = 'rgba(0,0,0,0.3)';
-        ctx.fillRect(cx - 4, my - 2, 8, 1);
+        ctx.fillStyle = accent;
+        if (civic) {
+          // classical institution: pediment + columns + steps
+          ctx.beginPath();
+          ctx.moveTo(cx - 5, my - 1);
+          ctx.lineTo(cx, my - 5);
+          ctx.lineTo(cx + 5, my - 1);
+          ctx.closePath();
+          ctx.fill();
+          ctx.fillRect(cx - 5, my - 1, 10, 1);
+          ctx.fillRect(cx - 4, my, 1, 4);
+          ctx.fillRect(cx - 1, my, 1, 4);
+          ctx.fillRect(cx + 2, my, 1, 4);
+          ctx.fillRect(cx - 5, my + 4, 10, 1);
+        } else {
+          // little shopping bag
+          ctx.fillRect(cx - 4, my - 2, 8, 7);
+          ctx.fillRect(cx - 3, my - 5, 1, 3);
+          ctx.fillRect(cx + 2, my - 5, 1, 3);
+          ctx.fillRect(cx - 3, my - 5, 6, 1);
+          ctx.fillStyle = 'rgba(0,0,0,0.3)';
+          ctx.fillRect(cx - 4, my - 2, 8, 1);
+        }
       });
 
       ctx.font = '7px "Press Start 2P", monospace';
