@@ -358,12 +358,6 @@ function planTown(districts: District[], venues: Venue[], roofMix: BuildingKey[]
     }
   }
 
-  // Periphery greenery — a leafy frame outside the street grid.
-  for (let tx = 1; tx < WORLD_W - 2; tx += 3) {
-    trees.push({ sprite: hash2(tx, 0) < 0.5 ? PROPS.tree : PROPS.treeB, tx, ty: 0, th: fpH(PROPS.tree) });
-    trees.push({ sprite: hash2(tx, 9) < 0.5 ? PROPS.tree : PROPS.treeB, tx, ty: WORLD_H - 4, th: fpH(PROPS.tree) });
-  }
-
   return { quarters, buildings, trees, paving, parkingLots };
 }
 
@@ -796,11 +790,12 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
       const h = hash2(tx * 11 + 2, ty * 13 + 7);
       if (h < 0.62 || nearProp(tx, ty)) continue;
       const x = tx * TILE + 8, base = ty * TILE + 13;
-      const pick = Math.floor(h * 1000) % 5;
-      if (pick === 0) lamp(x, base);
-      else if (pick === 1) trashCan(x, base);
-      else if (pick === 2) hydrant(x, base);
-      else if (pick === 3) bench(x, base);
+      // weighted mix — mostly lamps/cans/hydrants, benches & mailboxes are rare
+      const t = Math.floor(hash2(tx * 17 + 9, ty * 5 + 1) * 100);
+      if (t < 34) lamp(x, base);
+      else if (t < 64) trashCan(x, base);
+      else if (t < 87) hydrant(x, base);
+      else if (t < 96) bench(x, base);
       else mailbox(x, base);
       propAt.add(`${tx},${ty}`);
     }
@@ -1058,23 +1053,6 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
         if (d.w) drawPerson(ctx, d.w);
         else if (d.o!.kind === 'building') drawBuildingObj(ctx, sheets, d.o!.b);
         else drawTreeObj(ctx, sheets, d.o!.t);
-      });
-
-      // chimney smoke drifting up from some houses
-      plan.buildings.forEach((b) => {
-        if (hash2(b.tx + 1, b.ty + 1) < 0.78) return;
-        const cxs = (b.tx + b.tw * 0.72) * TILE;
-        const top = b.ty * TILE + 2;
-        for (let i = 0; i < 3; i++) {
-          const t = ((time / 1100 + i * 0.34) % 1);
-          const syp = top - t * 22;
-          const sxp = cxs + Math.sin(time / 620 + i + b.tx) * (2 + t * 5);
-          const r = 1.4 + t * 2.6;
-          ctx.fillStyle = `rgba(208, 208, 214, ${(0.32 * (1 - t)).toFixed(2)})`;
-          ctx.beginPath();
-          ctx.ellipse(sxp, syp, r, r, 0, 0, Math.PI * 2);
-          ctx.fill();
-        }
       });
 
       plan.buildings.forEach((b) => {
