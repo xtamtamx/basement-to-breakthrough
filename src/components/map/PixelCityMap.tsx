@@ -1061,6 +1061,28 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
         const cx = (b.tx + b.tw / 2) * TILE;
         const my = (b.ty - 0.5) * TILE + Math.sin(time / 280) * 2;
         if (venuesWithShows.has(b.venue.id)) {
+          // Show tonight: warm light spills onto the street + a crowd gathers.
+          const footX = (b.tx + b.tw / 2) * TILE;
+          const footY = (b.ty + b.th) * TILE;
+          const glow = ctx.createRadialGradient(footX, footY + 4, 2, footX, footY + 4, b.tw * TILE * 0.95);
+          glow.addColorStop(0, 'rgba(255, 196, 130, 0.34)');
+          glow.addColorStop(1, 'rgba(255, 196, 130, 0)');
+          ctx.fillStyle = glow;
+          ctx.fillRect(footX - b.tw * TILE, footY - 6, b.tw * TILE * 2, b.th * TILE * 0.7 + 12);
+          const n = 5;
+          for (let i = 0; i < n; i++) {
+            const hx = footX + (i - (n - 1) / 2) * 5 + Math.sin(time / 420 + i * 2.1) * 1.3;
+            const hy = footY + 4 + (i % 2) * 2;
+            const bob = Math.sin(time / 190 + i * 1.7) * 0.8;
+            ctx.fillStyle = 'rgba(0,0,0,0.22)';
+            ctx.beginPath();
+            ctx.ellipse(hx, hy + 1, 2.2, 1, 0, 0, PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#2a2330';
+            ctx.fillRect(hx - 1, hy - 3 + bob, 3, 3);
+            ctx.fillStyle = WALKER_HAIR[(b.tx + i) % WALKER_HAIR.length];
+            ctx.fillRect(hx - 1, hy - 5 + bob, 3, 2);
+          }
           const pulse = 0.5 + Math.sin(time / 180) * 0.35;
           ctx.fillStyle = `rgba(247, 37, 133, ${pulse.toFixed(2)})`;
           ctx.fillRect(b.tx * TILE, (b.ty + b.th) * TILE + 1, b.tw * TILE, 2);
@@ -1186,6 +1208,12 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
       vg.addColorStop(0, 'rgba(0, 0, 0, 0)');
       vg.addColorStop(1, 'rgba(12, 10, 22, 0.24)');
       ctx.fillStyle = vg;
+      ctx.fillRect(0, 0, size.w, size.h);
+
+      // gentle day↔dusk breathing — a very slow cool wash drifts in and out
+      // (~2 min cycle, capped low so the scene never actually goes dark).
+      const dusk = 0.5 + Math.sin(time / 19000) * 0.5;
+      ctx.fillStyle = `rgba(58, 46, 98, ${(dusk * 0.1).toFixed(3)})`;
       ctx.fillRect(0, 0, size.w, size.h);
     },
     [ground, sheets, objects, size.w, size.h, plan, venuesWithShows, walkable, theme],
