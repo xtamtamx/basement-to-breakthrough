@@ -541,6 +541,16 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
     if (b.venue && roadR >= 0) for (let r = b.ty + b.th; r < roadR; r++) if (!inPlaza(cxr, r)) setMat(cxr, r, M_SIDEWALK);
   });
 
+  // The town square = one paved SIDEWALK surface with a central grass garden
+  // island, set in the mat grid so the dual-grid rounds + bevels its edges
+  // seamlessly with the corridors (no hard plaza seam).
+  for (let ty = ROAD_Y - 3; ty <= ROAD_Y + 4; ty++)
+    for (let tx = ROAD_X - 3; tx <= ROAD_X + 4; tx++) {
+      if (!inPlaza(tx, ty)) continue;
+      const island = tx >= 29 && tx < 33 && ty >= 26 && ty < 30;
+      setMat(tx, ty, island ? 0 : M_SIDEWALK);
+    }
+
   // 2a. Dual-grid paint: each material drawn over the lower terrain with rounded
   // edges + a bevelled raised kerb (lit top, shadowed front face, cast shadow).
   const blit4 = (s: AtlasSprite, tx: number, ty: number) => { tile(s, tx, ty); tile(s, tx + 1, ty); tile(s, tx, ty + 1); tile(s, tx + 1, ty + 1); };
@@ -557,16 +567,8 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
         if (cfg.fill) {
           // flat palette fill (clips cleanly to rounded edges — no cut-up tile grid)
           ctx.fillStyle = cfg.fill; ctx.fillRect(ox, oy, TILE, TILE);
-          const hsp = hash2(tx * 9 + 1, ty * 9 + 4);
-          ctx.fillStyle = 'rgba(0,0,0,0.05)'; ctx.fillRect(ox + (Math.floor(hsp * 53) % 13), oy + (Math.floor(hsp * 97) % 13), 2, 1);
-          if (hsp > 0.6) { ctx.fillStyle = 'rgba(255,255,255,0.05)'; ctx.fillRect(ox + (Math.floor(hsp * 131) % 14), oy + (Math.floor(hsp * 173) % 14), 1, 1); }
         } else if (cfg.matTile) {
           blit4(cfg.matTile, tx, ty);
-        }
-        if (cfg.varies !== false) {
-          const vs = valueNoise(tx / 3.5, ty / 3.5);
-          if (vs > 0.72) { ctx.fillStyle = 'rgba(0,0,0,0.07)'; ctx.fillRect(ox, oy, TILE, TILE); }
-          else if (vs < 0.3) { ctx.fillStyle = 'rgba(255,255,255,0.05)'; ctx.fillRect(ox, oy, TILE, TILE); }
         }
         if (cfg.tint) { ctx.fillStyle = cfg.tint; ctx.fillRect(ox, oy, TILE, TILE); }
         ctx.restore();
@@ -589,11 +591,11 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
       }
   };
   const isMat = (tx: number, ty: number, ...ms: number[]) => ms.includes(matAt(tx, ty));
-  // The town square is drawn separately (grid-aligned paved plaza) — exclude its
-  // footprint from the dual-grid so the corridors stop cleanly at the square.
-  // sidewalk first (whole paved corridor over grass), then road over sidewalk
-  paintLayer({ field: (tx, ty) => !inPlaza(tx, ty) && isMat(tx, ty, M_SIDEWALK, M_ROAD), fill: theme.cobble, kerb: true, highSide: 'material', rim: theme.cobbleLight, frontShadow: theme.cobbleDark });
-  paintLayer({ field: (tx, ty) => !inPlaza(tx, ty) && isMat(tx, ty, M_ROAD), matTile: TERRAIN.road, kerb: true, highSide: 'lower', rim: theme.cobbleLight, frontShadow: 'rgba(0,0,0,0.28)', tint: 'rgba(140,110,70,0.06)' });
+  // sidewalk first (whole paved corridor + town square over grass), then road.
+  // The plaza is part of the SIDEWALK field now, so its edges round + bevel like
+  // the corridors and the garden island gets a rounded sidewalk surround.
+  paintLayer({ field: (tx, ty) => isMat(tx, ty, M_SIDEWALK, M_ROAD), fill: theme.cobble, kerb: true, highSide: 'material', rim: theme.cobbleLight, frontShadow: theme.cobbleDark });
+  paintLayer({ field: (tx, ty) => isMat(tx, ty, M_ROAD), matTile: TERRAIN.road, kerb: true, highSide: 'lower', rim: theme.cobbleLight, frontShadow: 'rgba(0,0,0,0.28)', tint: 'rgba(140,110,70,0.06)' });
   if (theme.waterfront) {
     paintLayer({ field: (tx, ty) => isMat(tx, ty, M_SAND, M_WATER), matTile: TERRAIN.dirt, kerb: true, highSide: 'material', rim: theme.sand, frontShadow: theme.soilDark });
     paintLayer({ field: (tx, ty) => isMat(tx, ty, M_WATER), matTile: TERRAIN.water, kerb: true, highSide: 'material', rim: theme.waterLight, frontShadow: theme.waterDark, varies: false });
@@ -618,52 +620,10 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
     }
   }
 
-  // 2c. Surface decals on paved interiors — manholes / cracks / patches that
-  // straddle tile borders, so a big paved area reads as a worn surface not a grid.
-  const paved = (tx: number, ty: number) => matAt(tx, ty) === M_ROAD || matAt(tx, ty) === M_SIDEWALK;
-  for (let ty = 1; ty < WORLD_H - 1; ty++)
-    for (let tx = 1; tx < WORLD_W - 1; tx++) {
-      if (!paved(tx, ty) || !(paved(tx - 1, ty) && paved(tx + 1, ty) && paved(tx, ty - 1) && paved(tx, ty + 1))) continue;
-      if (inPlaza(tx, ty)) continue;
-      const h = hash2(tx * 7 + 1, ty * 5 + 9);
-      const x = tx * TILE, y = ty * TILE;
-      if (h > 0.93) {
-        const mx = x + 5 + (Math.floor(h * 40) % 6), my = y + 5 + (Math.floor(h * 70) % 6);
-        ctx.fillStyle = 'rgba(0,0,0,0.26)'; ctx.beginPath(); ctx.ellipse(mx, my, 3.2, 3.2, 0, 0, PI * 2); ctx.fill();
-        ctx.fillStyle = 'rgba(122,118,110,0.85)'; ctx.beginPath(); ctx.ellipse(mx, my, 2.1, 2.1, 0, 0, PI * 2); ctx.fill();
-        ctx.strokeStyle = 'rgba(0,0,0,0.22)'; ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(mx - 2, my); ctx.lineTo(mx + 2, my); ctx.stroke();
-      } else if (h > 0.86) {
-        ctx.strokeStyle = 'rgba(0,0,0,0.20)'; ctx.lineWidth = 1;
-        const cx = x + 4, cy = y + 3; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + 4, cy + 3); ctx.lineTo(cx + 2, cy + 7); ctx.lineTo(cx + 6, cy + 10); ctx.stroke();
-      } else if (h > 0.79) {
-        ctx.fillStyle = 'rgba(0,0,0,0.07)'; ctx.fillRect(x + 3 + (Math.floor(h * 30) % 4), y + 4 + (Math.floor(h * 50) % 4), 8, 6);
-      }
-    }
-
-  // 3. Town square — a grid-aligned paved plaza with a central garden island and
-  //    crosswalks where the four streets meet it (no roundabout circle).
+  // 3. Town square garden — the cobble plaza + the rounded island surround are
+  //    painted by the dual-grid (mat). Here we only dress the central grass island.
   {
-    const PX0 = 27, PY0 = 24, PWN = 8, PHN = 8;       // plaza tile bounds (== inPlaza)
     const ISx0 = 29, ISy0 = 26, ISw = 4, ISh = 4;     // central garden island
-    const inIsland = (tx: number, ty: number) => tx >= ISx0 && tx < ISx0 + ISw && ty >= ISy0 && ty < ISy0 + ISh;
-    // base: cobble plaza everywhere, grass on the central garden island
-    for (let ty = PY0; ty < PY0 + PHN; ty++) for (let tx = PX0; tx < PX0 + PWN; tx++) {
-      const x = tx * TILE, y = ty * TILE;
-      if (inIsland(tx, ty)) { tile(TERRAIN.grass[0], tx, ty); continue; }
-      px(x, y, TILE, TILE, theme.cobble);
-      const hs = hash2(tx * 9 + 1, ty * 9 + 4);
-      px(x + (Math.floor(hs * 53) % 13), y + (Math.floor(hs * 97) % 13), 2, 1, 'rgba(0,0,0,0.05)');
-      if (hs > 0.6) px(x + (Math.floor(hs * 131) % 14), y + (Math.floor(hs * 173) % 14), 1, 1, 'rgba(255,255,255,0.05)');
-    }
-    // plaza edge kerb (cobble meets grass) + a square paving inlay so it reads designed
-    ctx.strokeStyle = 'rgba(0,0,0,0.2)'; ctx.lineWidth = 2; ctx.strokeRect(PX0 * TILE + 1, PY0 * TILE + 1, PWN * TILE - 2, PHN * TILE - 2);
-    ctx.strokeStyle = theme.cobbleLight; ctx.lineWidth = 1; ctx.strokeRect(PX0 * TILE + 2.5, PY0 * TILE + 2.5, PWN * TILE - 5, PHN * TILE - 5);
-    ctx.strokeStyle = theme.cobbleDark; ctx.globalAlpha = 0.5; ctx.lineWidth = 1; ctx.strokeRect((PX0 + 1) * TILE + 2, (PY0 + 1) * TILE + 2, (PWN - 2) * TILE - 4, (PHN - 2) * TILE - 4); ctx.globalAlpha = 1;
-    // bevelled kerb around the garden island (cobble high → grass low)
-    const islX = ISx0 * TILE, islY = ISy0 * TILE, islW = ISw * TILE, islH = ISh * TILE;
-    ctx.strokeStyle = 'rgba(0,0,0,0.22)'; ctx.lineWidth = 2; ctx.strokeRect(islX + 1, islY + 1, islW - 2, islH - 2);
-    ctx.strokeStyle = theme.cobbleLight; ctx.lineWidth = 1; ctx.strokeRect(islX - 0.5, islY - 0.5, islW + 1, islH + 1);
-    // garden: blade texture + flowers + furniture + centre tree
     const cgx = (ISx0 + ISw / 2) * TILE, cgy = (ISy0 + ISh / 2) * TILE;
     for (let ty = ISy0; ty < ISy0 + ISh; ty++) for (let tx = ISx0; tx < ISx0 + ISw; tx++) {
       const hk = hash2(tx * 7 + 3, ty * 11 + 5);
