@@ -659,9 +659,6 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
     ctx.strokeStyle = 'rgba(0,0,0,0.2)'; ctx.lineWidth = 2; ctx.strokeRect(PX0 * TILE + 1, PY0 * TILE + 1, PWN * TILE - 2, PHN * TILE - 2);
     ctx.strokeStyle = theme.cobbleLight; ctx.lineWidth = 1; ctx.strokeRect(PX0 * TILE + 2.5, PY0 * TILE + 2.5, PWN * TILE - 5, PHN * TILE - 5);
     ctx.strokeStyle = theme.cobbleDark; ctx.globalAlpha = 0.5; ctx.lineWidth = 1; ctx.strokeRect((PX0 + 1) * TILE + 2, (PY0 + 1) * TILE + 2, (PWN - 2) * TILE - 4, (PHN - 2) * TILE - 4); ctx.globalAlpha = 1;
-    // crosswalks where the main roads meet the square
-    [PY0, PY0 + PHN - 1].forEach((ry) => { tile(TERRAIN.crosswalk, ROAD_X, ry); tile(TERRAIN.crosswalk, ROAD_X + 1, ry); });
-    [PX0, PX0 + PWN - 1].forEach((rx) => { tile(TERRAIN.crosswalk, rx, ROAD_Y); tile(TERRAIN.crosswalk, rx, ROAD_Y + 1); });
     // bevelled kerb around the garden island (cobble high → grass low)
     const islX = ISx0 * TILE, islY = ISy0 * TILE, islW = ISw * TILE, islH = ISh * TILE;
     ctx.strokeStyle = 'rgba(0,0,0,0.22)'; ctx.lineWidth = 2; ctx.strokeRect(islX + 1, islY + 1, islW - 2, islH - 2);
