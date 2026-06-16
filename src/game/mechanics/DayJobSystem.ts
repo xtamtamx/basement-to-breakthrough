@@ -274,7 +274,7 @@ export class DayJobSystem {
   // Generate jobs based on current game state
   generateAvailableJobs(): DayJob[] {
     const state = useGameStore.getState();
-    const { venues, districts } = state;
+    const { venues, districts, diyPoints } = state;
     const jobs: DayJob[] = [];
     
     // Generate venue jobs
@@ -359,8 +359,9 @@ export class DayJobSystem {
       }
     }
 
-    // Generate establishment jobs — every shop & civic building offers its own work
-    getCityShops(districts).forEach(shop => {
+    // Generate establishment jobs — every shop & civic building offers its own work.
+    // Same evolution inputs as the map, so the two never disagree on what exists.
+    getCityShops(districts, { diyPoints }).forEach(shop => {
       jobs.push(...this.buildShopJobs(shop));
     });
 

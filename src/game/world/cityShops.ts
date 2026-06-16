@@ -20,6 +20,7 @@ export enum ShopKind {
   BOOKSTORE = 'BOOKSTORE',
   THRIFT_STORE = 'THRIFT_STORE',
   CORNER_STORE = 'CORNER_STORE',
+  CHAIN_STORE = 'CHAIN_STORE', // corporate creep — appears as a district gentrifies
   // civic
   POLICE_STATION = 'POLICE_STATION',
   FIRE_STATION = 'FIRE_STATION',
@@ -99,6 +100,13 @@ export const SHOP_DEFS: Record<ShopKind, ShopDef> = {
       { title: 'Night Clerk', moneyPerTurn: 140, reputationChange: -1, fanChange: 0, stressGain: 11, connectionGain: 1, flavor: 'The graveyard shift: just you, the hum, and questionable nachos.' },
     ],
   },
+  [ShopKind.CHAIN_STORE]: {
+    label: 'Chain Store', category: 'commerce',
+    jobs: [
+      { title: 'Shift Lead', moneyPerTurn: 175, reputationChange: -4, fanChange: 0, stressGain: 9, connectionGain: 0, flavor: 'Corporate lanyard, employee of the month, the slow death of the soul.' },
+      { title: 'Brand Ambassador', moneyPerTurn: 150, reputationChange: -3, fanChange: -1, stressGain: 7, flavor: "Handing out samples of something you'd never be caught buying." },
+    ],
+  },
   [ShopKind.POLICE_STATION]: {
     label: 'Police Station', category: 'civic',
     jobs: [
@@ -147,6 +155,7 @@ const SHOP_NAMES: Record<ShopKind, string[]> = {
   [ShopKind.BOOKSTORE]: ['Margin Notes', 'Dog-Eared Books', 'Paperback Riot'],
   [ShopKind.THRIFT_STORE]: ['Second Set', 'Hand-Me-Down', 'Thrift Riff'],
   [ShopKind.CORNER_STORE]: ['Corner Stop', 'Quick Pick', 'Nite Owl Mart'],
+  [ShopKind.CHAIN_STORE]: ['MegaMart', 'Brew Giant', 'ValueZone', 'QuickCorp'],
   [ShopKind.POLICE_STATION]: ['12th Precinct', 'Central Station', 'East Precinct'],
   [ShopKind.FIRE_STATION]: ['Engine Co. 9', 'Ladder 14', 'Station 6'],
   [ShopKind.HOSPITAL]: ['Mercy General', 'St. Vitus Hospital', 'County Medical'],
@@ -154,10 +163,6 @@ const SHOP_NAMES: Record<ShopKind, string[]> = {
   [ShopKind.SCHOOL]: ['Lincoln High', 'Eastside Middle', 'Garfield School'],
   [ShopKind.LIBRARY]: ['Public Library', 'Carnegie Branch', 'Westside Library'],
 };
-
-const ALL_KINDS = Object.values(ShopKind);
-const COMMERCE_KINDS = ALL_KINDS.filter((k) => SHOP_DEFS[k].category === 'commerce');
-const CIVIC_KINDS = ALL_KINDS.filter((k) => SHOP_DEFS[k].category === 'civic');
 
 export const categoryOf = (kind: ShopKind): ShopCategory => SHOP_DEFS[kind].category;
 
@@ -167,21 +172,67 @@ function hashStr(s: string): number {
   return h >>> 0;
 }
 
-// Each district yields 1-2 commerce shops + 1 civic building, all stable.
-export function getDistrictShops(district: District): CityShop[] {
+const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
+// Modulo-safe: tolerate any int (shifts can produce huge/negative values).
+const pick = <T,>(arr: readonly T[], h: number) => arr[((Math.trunc(h) % arr.length) + arr.length) % arr.length];
+
+// Kinds grouped by the vibe they project on the map.
+const ANCHOR_KINDS = [ShopKind.CORNER_STORE, ShopKind.COFFEE_SHOP] as const;       // the basics, always there
+const SCENE_KINDS = [ShopKind.RECORD_STORE, ShopKind.MUSIC_STORE, ShopKind.INSTRUMENT_SHOP, ShopKind.THRIFT_STORE, ShopKind.BOOKSTORE] as const; // bloom with a thriving DIY scene
+const COMMUNITY_CIVIC = [ShopKind.LIBRARY, ShopKind.SCHOOL, ShopKind.HOSPITAL, ShopKind.FIRE_STATION, ShopKind.POST_OFFICE] as const; // civic goods a developed district earns
+
+export interface EvolutionContext {
+  /** Player's DIY (+) ↔ sellout (−) alignment, −100..+100. Nudges the gates:
+   *  a genuine DIY player makes scenes bloom sooner; a sellout invites corporate. */
+  diyPoints?: number;
+}
+
+const mk = (district: District, idSuffix: string, kind: ShopKind, h: number): CityShop => ({
+  id: `${categoryOf(kind) === 'civic' ? 'civic' : 'shop'}_${district.id}_${idSuffix}`,
+  name: pick(SHOP_NAMES[kind], h >>> 4),
+  kind,
+  districtId: district.id,
+  category: categoryOf(kind),
+});
+
+/**
+ * Establishments are no longer fixed — they emerge from the district's *state*.
+ * A district starts small (just an anchor) and grows in the player's image:
+ *   - rising sceneStrength (from DIY shows) blooms record/music/instrument shops
+ *   - rising gentrification / a sellout alignment invites chains + police
+ * Pure & deterministic from (district state, diyPoints), so the map renderer and
+ * DayJobSystem always agree and it survives save/load with zero extra state.
+ */
+export function getDistrictShops(district: District, ctx: EvolutionContext = {}): CityShop[] {
+  const h = hashStr(district.id);
+  const diy = ctx.diyPoints ?? 0;
+  // A genuine DIY player coaxes scenes out sooner; selling out greases gentrification.
+  const scene = clamp(district.sceneStrength + Math.max(0, diy) * 0.15, 0, 100);
+  const gent = clamp(district.gentrificationLevel + Math.max(0, -diy) * 0.15, 0, 100);
+  const police = district.policePresence ?? 0;
+
   const out: CityShop[] = [];
-  const count = 1 + (hashStr(district.id) % 2); // 1 or 2 commerce
-  for (let i = 0; i < count; i++) {
-    const kh = hashStr(`${district.id}:${i}`);
-    const kind = COMMERCE_KINDS[kh % COMMERCE_KINDS.length];
-    out.push({ id: `shop_${district.id}_${i}`, name: SHOP_NAMES[kind][(kh >>> 4) % SHOP_NAMES[kind].length], kind, districtId: district.id, category: 'commerce' });
-  }
-  const ch = hashStr(`${district.id}:civic`);
-  const ck = CIVIC_KINDS[ch % CIVIC_KINDS.length];
-  out.push({ id: `civic_${district.id}`, name: SHOP_NAMES[ck][(ch >>> 4) % SHOP_NAMES[ck].length], kind: ck, districtId: district.id, category: 'civic' });
+
+  // Anchor — the bodega/cafe that's there from day one.
+  out.push(mk(district, 'anchor', pick(ANCHOR_KINDS, h), h));
+
+  // Scene tier — up to three indie music spots bloom as the scene strengthens.
+  // Step through SCENE_KINDS by index so the three are always distinct kinds.
+  const sceneBase = h % SCENE_KINDS.length;
+  if (scene >= 38) out.push(mk(district, 'scene0', SCENE_KINDS[sceneBase % SCENE_KINDS.length], h));
+  if (scene >= 60) out.push(mk(district, 'scene1', SCENE_KINDS[(sceneBase + 1) % SCENE_KINDS.length], h >>> 3));
+  if (scene >= 80) out.push(mk(district, 'scene2', SCENE_KINDS[(sceneBase + 2) % SCENE_KINDS.length], h >>> 6));
+
+  // Corporate tier — the sellout creep.
+  if (gent >= 46) out.push(mk(district, 'chain', ShopKind.CHAIN_STORE, h >>> 9));
+  if (gent >= 60 || police >= 55) out.push(mk(district, 'police', ShopKind.POLICE_STATION, h >>> 12));
+
+  // Community civic — public infrastructure a district earns once it's developed.
+  if (scene >= 50 || gent >= 42) out.push(mk(district, 'civic', pick(COMMUNITY_CIVIC, h >>> 15), h >>> 15));
+
   return out;
 }
 
-export function getCityShops(districts: District[]): CityShop[] {
-  return districts.flatMap(getDistrictShops);
+export function getCityShops(districts: District[], ctx: EvolutionContext = {}): CityShop[] {
+  return districts.flatMap((d) => getDistrictShops(d, ctx));
 }

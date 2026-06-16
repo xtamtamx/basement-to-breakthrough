@@ -228,10 +228,12 @@ export class TurnResolutionEngine {
       difficultyEvent.message = milestone;
     }
 
-    // Districts gentrify with the scene's success; fold any threshold-crossing
-    // notices into the turn's difficulty message.
-    const gentrification =
-      gentrificationSystem.applyTurnGentrification(activeDistrictIds);
+    // Districts gentrify with the scene's success — and a DIY scene grows where
+    // you play genuine. Fold any threshold-crossing notices into the difficulty msg.
+    const gentrification = gentrificationSystem.applyTurnGentrification(
+      activeDistrictIds,
+      useGameStore.getState().diyPoints,
+    );
     if (gentrification.notices.length > 0) {
       const notice = gentrification.notices.join(' ');
       difficultyEvent.message = difficultyEvent.message

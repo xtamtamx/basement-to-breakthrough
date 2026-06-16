@@ -18,6 +18,7 @@ const BASE_CREEP = 0.4; // every district drifts up slowly
 const ACTIVITY_CREEP = 2.5; // a show in a district accelerates it
 const SOUL_THRESHOLD = 60; // above this, scene strength decays
 const SCENE_DECAY = 1.5; // scene strength lost per turn above the threshold
+const SCENE_GROWTH = 2.2; // scene strength a DIY show builds in its district
 const REFERENCE_RATE = 0.05; // difficulty rate that maps to "normal" creep
 const MAX_RENT_CREEP = 0.6; // up to +60% rent at full gentrification
 const MAX_ATTENDANCE_PENALTY = 0.25; // up to -25% turnout at full gentrification
@@ -54,27 +55,30 @@ class GentrificationSystem {
    * fastest; desirable (high scene-strength) districts attract developers
    * faster too. Persists changes to the store and returns threshold notices.
    */
-  applyTurnGentrification(activeDistrictIds: Set<string>): GentrificationUpdate {
+  applyTurnGentrification(activeDistrictIds: Set<string>, diyPoints = 0): GentrificationUpdate {
     const store = useGameStore.getState();
     const rate = difficultySystem.getCurrentDifficulty().gentrificationRate;
     const rateScale = rate / REFERENCE_RATE;
     const notices: string[] = [];
 
     store.districts.forEach((district) => {
+      const active = activeDistrictIds.has(district.id);
       const desirability = district.sceneStrength / 100;
-      const activityBonus = activeDistrictIds.has(district.id)
-        ? ACTIVITY_CREEP
-        : 0;
+      const activityBonus = active ? ACTIVITY_CREEP : 0;
       const rise =
         (BASE_CREEP + activityBonus) * (1 + desirability) * rateScale;
 
       const newGent = Math.min(100, district.gentrificationLevel + rise);
 
-      // Past the threshold the soul leaves: scene strength erodes
-      const newScene =
-        newGent >= SOUL_THRESHOLD
-          ? Math.max(0, district.sceneStrength - SCENE_DECAY)
-          : district.sceneStrength;
+      // A DIY show *builds* the local scene (stronger the more genuine you are);
+      // selling out doesn't grow it. Past the soul threshold, gentrification
+      // erodes it regardless — you can out-gentrify your own scene.
+      let nextSceneRaw = district.sceneStrength;
+      if (active && diyPoints >= 0) {
+        nextSceneRaw += SCENE_GROWTH * (0.5 + Math.min(100, diyPoints) / 200);
+      }
+      if (newGent >= SOUL_THRESHOLD) nextSceneRaw -= SCENE_DECAY;
+      const newScene = Math.max(0, Math.min(100, nextSceneRaw));
 
       // Keep one decimal of precision — the base creep is < 1/turn, so
       // rounding to whole numbers would floor it away and gentrification

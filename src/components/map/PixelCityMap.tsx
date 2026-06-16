@@ -144,7 +144,7 @@ const VENUE_BUILDINGS: Partial<Record<VenueType, BuildingKey>> = {
 const SHOP_BUILDINGS: Record<ShopKind, BuildingKey> = {
   [ShopKind.RECORD_STORE]: 'teal', [ShopKind.MUSIC_STORE]: 'teal', [ShopKind.INSTRUMENT_SHOP]: 'teal',
   [ShopKind.COFFEE_SHOP]: 'shopAwning', [ShopKind.THRIFT_STORE]: 'shopAwning',
-  [ShopKind.BOOKSTORE]: 'greyShop', [ShopKind.CORNER_STORE]: 'greyShop',
+  [ShopKind.BOOKSTORE]: 'greyShop', [ShopKind.CORNER_STORE]: 'greyShop', [ShopKind.CHAIN_STORE]: 'modern',
   [ShopKind.POLICE_STATION]: 'stone', [ShopKind.FIRE_STATION]: 'redClub', [ShopKind.HOSPITAL]: 'glassHall',
   [ShopKind.POST_OFFICE]: 'civic', [ShopKind.SCHOOL]: 'arch', [ShopKind.LIBRARY]: 'rotunda',
 };
@@ -233,7 +233,7 @@ interface TownPlan {
   parkingLots: ParkingLot[];
 }
 
-function planTown(districts: District[], venues: Venue[], roofMix: BuildingKey[]): TownPlan {
+function planTown(districts: District[], venues: Venue[], roofMix: BuildingKey[], diyPoints: number): TownPlan {
   // Quarters (for signposts + click hit-testing) — the four grid regions.
   const quarters: Quarter[] = districts.slice(0, 4).map((district) => {
     const east = district.bounds.x >= 4;
@@ -337,7 +337,7 @@ function planTown(districts: District[], venues: Venue[], roofMix: BuildingKey[]
 
   // Assign shops (commerce / day-job sources) to the next-nearest buildings in
   // each district, re-spriting them as storefronts so they read as commerce.
-  for (const shop of getCityShops(districts)) {
+  for (const shop of getCityShops(districts, { diyPoints })) {
     const b = buildings
       .filter((bd) => !bd.venue && !bd.shop && bd.district?.id === shop.districtId)
       .sort((a, z) => Math.hypot(a.tx - cx, a.ty - cy) - Math.hypot(z.tx - cx, z.ty - cy))[0];
@@ -776,10 +776,13 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
   const districts = useGameStore((s) => s.districts);
   const venues = useGameStore((s) => s.venues);
   const scheduledShows = useGameStore((s) => s.scheduledShows);
+  const diyPoints = useGameStore((s) => s.diyPoints);
   const themeKey = useGameStore((s) => s.cities.find((c) => c.id === s.currentCityId)?.theme ?? 'home');
   const theme = THEMES[themeKey];
 
-  const plan = useMemo(() => planTown(districts, venues, theme.roofMix), [districts, venues, theme]);
+  // diyPoints + district state (scene/gentrification) drive which establishments
+  // exist, so the plan must recompute as the city evolves — keep them in deps.
+  const plan = useMemo(() => planTown(districts, venues, theme.roofMix, diyPoints), [districts, venues, theme, diyPoints]);
   const ground = useMemo(() => (sheets ? buildGround(plan, sheets, theme) : null), [plan, sheets, theme]);
 
   // Static depth-sortable objects (buildings + trees); walkers merge in per-frame.
