@@ -145,8 +145,10 @@ const SHOP_BUILDINGS: Record<ShopKind, BuildingKey> = {
   [ShopKind.THRIFT_STORE]: 'shopAwning', [ShopKind.CORNER_STORE]: 'greyShop', [ShopKind.INSTRUMENT_SHOP]: 'teal',
 };
 
-const fpW = (s: AtlasSprite) => Math.max(1, Math.round((s.rect.w * SPR) / TILE));
-const fpH = (s: AtlasSprite) => Math.max(1, Math.round((s.rect.h * SPR) / TILE));
+// CEIL (not round): the footprint must fully contain the drawn sprite, else the
+// sprite spills past its reserved tiles and overlaps the neighbouring building.
+const fpW = (s: AtlasSprite) => Math.max(1, Math.ceil((s.rect.w * SPR) / TILE));
+const fpH = (s: AtlasSprite) => Math.max(1, Math.ceil((s.rect.h * SPR) / TILE));
 
 function hash2(x: number, y: number): number {
   // Math.imul keeps the multiplies in 32-bit; the old plain `*` overflowed JS
@@ -409,9 +411,28 @@ function drawPerson(ctx: CanvasRenderingContext2D, w: Walker): void {
 const VAN_COLORS = ['#b34a3a', '#3a6ab0', '#4a9a52', '#c9a13a', '#7a4ab0'];
 const FLYER = ['#f4d04f', '#ef5a8a', '#4cc9f0', '#ffffff'];
 type Sheets = Record<SheetName, HTMLImageElement>;
+
+// Pre-downsample each sprite to its on-screen size ONCE, then blit it 1:1 so a
+// building pixel == a terrain-tile pixel (same chunkiness). Drawing the full-res
+// sprite scaled at paint time instead made buildings look higher-res than the
+// 16px terrain ("terrain zoomed out compared to the houses").
+const dsCache = new Map<string, HTMLCanvasElement>();
+function getDS(img: HTMLImageElement, s: AtlasSprite, scale: number): HTMLCanvasElement {
+  const w = Math.max(1, Math.round(s.rect.w * scale)), h = Math.max(1, Math.round(s.rect.h * scale));
+  const key = `${s.sheet}:${s.rect.x},${s.rect.y},${s.rect.w},${s.rect.h}@${w}x${h}`;
+  let cv = dsCache.get(key);
+  if (!cv) {
+    cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+    const c = cv.getContext('2d')!;
+    c.imageSmoothingEnabled = true; c.imageSmoothingQuality = 'high';
+    c.drawImage(img, s.rect.x, s.rect.y, s.rect.w, s.rect.h, 0, 0, w, h);
+    dsCache.set(key, cv);
+  }
+  return cv;
+}
 function spriteBlit(ctx: CanvasRenderingContext2D, sheets: Sheets, s: AtlasSprite, footCx: number, footY: number, scale: number) {
-  const w = s.rect.w * scale, h = s.rect.h * scale;
-  ctx.drawImage(sheets[s.sheet], s.rect.x, s.rect.y, s.rect.w, s.rect.h, Math.round(footCx - w / 2), Math.round(footY - h), Math.round(w), Math.round(h));
+  const ds = getDS(sheets[s.sheet], s, scale);
+  ctx.drawImage(ds, Math.round(footCx - ds.width / 2), Math.round(footY - ds.height));
 }
 function drawVanM(ctx: CanvasRenderingContext2D, cx: number, foot: number, color: string) {
   cx = Math.round(cx); foot = Math.round(foot);
@@ -464,8 +485,8 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
   const px = (x: number, y: number, w: number, h: number, c: string) => { ctx.fillStyle = c; ctx.fillRect(x, y, w, h); };
   const ell = (cx: number, cy: number, rx: number, ry: number, c: string) => { ctx.fillStyle = c; ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2); ctx.fill(); };
   const blitFoot = (s: AtlasSprite, footCx: number, footY: number, scale = SPR) => {
-    const w = s.rect.w * scale, h = s.rect.h * scale;
-    ctx.drawImage(sheets[s.sheet], s.rect.x, s.rect.y, s.rect.w, s.rect.h, Math.round(footCx - w / 2), Math.round(footY - h), Math.round(w), Math.round(h));
+    const ds = getDS(sheets[s.sheet], s, scale);
+    ctx.drawImage(ds, Math.round(footCx - ds.width / 2), Math.round(footY - ds.height));
   };
 
   // 16px tile → 16px world tile, 1:1 (crisp, no scaling)
@@ -476,16 +497,13 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
   for (let ty = 0; ty < WORLD_H; ty++)
     for (let tx = 0; tx < WORLD_W; tx++) {
       const n = valueNoise(tx / 5, ty / 5);
-      tile(TERRAIN.grass[n < 0.42 ? 0 : n < 0.74 ? 1 : 2], tx, ty);
+      tile(TERRAIN.grass[n < 0.5 ? 0 : 1], tx, ty);
       const x = tx * TILE, y = ty * TILE;
-      // low-frequency tonal patches (soft shade / sun) break the flat tile repeat
-      const patch = valueNoise(tx / 8 + 3, ty / 8 + 5);
-      if (patch < 0.36) { ctx.fillStyle = 'rgba(28,52,24,0.12)'; ctx.fillRect(x, y, TILE, TILE); }
-      else if (patch > 0.72) { ctx.fillStyle = 'rgba(206,234,158,0.07)'; ctx.fillRect(x, y, TILE, TILE); }
-      // 0-3 short blade tufts per tile at hashed positions (irregular density)
-      for (let k = 0; k < 3; k++) {
+      // fine blade tufts at hashed positions (the variation lives in the 3 tile
+      // variants + these blades, NOT a blocky tile-aligned tonal overlay).
+      for (let k = 0; k < 4; k++) {
         const hk = hash2(tx * 7 + k * 31 + 5, ty * 11 + k * 17 + 3);
-        if (hk > 0.6) px(x + (Math.floor(hk * 211) % 13) + 1, y + (Math.floor(hk * 307) % 11) + 2, 1, hk > 0.85 ? 3 : 2, hk > 0.93 ? theme.grassBlade : theme.grassShade);
+        if (hk > 0.62) px(x + (Math.floor(hk * 211) % 14) + 1, y + (Math.floor(hk * 307) % 13) + 1, 1, hk > 0.86 ? 2 : 1, hk > 0.93 ? theme.grassBlade : theme.grassShade);
       }
       const h = hash2(tx, ty);
       // occasional 3-blade clump for a bit of relief
@@ -577,15 +595,11 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
       }
   };
   const isMat = (tx: number, ty: number, ...ms: number[]) => ms.includes(matAt(tx, ty));
-  // The roundabout footprint is drawn separately as smooth circles — exclude it
-  // from the dual-grid so the straight corridors don't fight the circular rings.
-  const inRound = (tx: number, ty: number) => {
-    const dx = tx + 0.5 - (ROAD_X + 1), dy = ty + 0.5 - (ROAD_Y + 1);
-    return dx * dx + dy * dy <= 3.5 * 3.5;
-  };
+  // The town square is drawn separately (grid-aligned paved plaza) — exclude its
+  // footprint from the dual-grid so the corridors stop cleanly at the square.
   // sidewalk first (whole paved corridor over grass), then road over sidewalk
-  paintLayer({ field: (tx, ty) => !inRound(tx, ty) && isMat(tx, ty, M_SIDEWALK, M_ROAD), fill: theme.cobble, kerb: true, highSide: 'material', rim: theme.cobbleLight, frontShadow: theme.cobbleDark });
-  paintLayer({ field: (tx, ty) => !inRound(tx, ty) && isMat(tx, ty, M_ROAD), matTile: TERRAIN.road, kerb: true, highSide: 'lower', rim: theme.cobbleLight, frontShadow: 'rgba(0,0,0,0.28)', tint: 'rgba(140,110,70,0.06)' });
+  paintLayer({ field: (tx, ty) => !inPlaza(tx, ty) && isMat(tx, ty, M_SIDEWALK, M_ROAD), fill: theme.cobble, kerb: true, highSide: 'material', rim: theme.cobbleLight, frontShadow: theme.cobbleDark });
+  paintLayer({ field: (tx, ty) => !inPlaza(tx, ty) && isMat(tx, ty, M_ROAD), matTile: TERRAIN.road, kerb: true, highSide: 'lower', rim: theme.cobbleLight, frontShadow: 'rgba(0,0,0,0.28)', tint: 'rgba(140,110,70,0.06)' });
   if (theme.waterfront) {
     paintLayer({ field: (tx, ty) => isMat(tx, ty, M_SAND, M_WATER), matTile: TERRAIN.dirt, kerb: true, highSide: 'material', rim: theme.sand, frontShadow: theme.soilDark });
     paintLayer({ field: (tx, ty) => isMat(tx, ty, M_WATER), matTile: TERRAIN.water, kerb: true, highSide: 'material', rim: theme.waterLight, frontShadow: theme.waterDark, varies: false });
@@ -632,67 +646,49 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
       }
     }
 
-  // 3. Roundabout — concentric grass island ← ring road ← sidewalk ring, with the
-  // SAME slab tile + bevelled kerbs as the street sidewalks, approach roads cut in.
+  // 3. Town square — a grid-aligned paved plaza with a central garden island and
+  //    crosswalks where the four streets meet it (no roundabout circle).
   {
-    const cxp = (ROAD_X + 1) * TILE, cyp = (ROAD_Y + 1) * TILE;
-    const islandR = 28, roadOuter = 48, swOuter = 64;
-    const clipFill = (sprite: AtlasSprite, outerR: number, innerR: number) => {
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(cxp, cyp, outerR, 0, PI * 2);
-      if (innerR > 0) ctx.arc(cxp, cyp, innerR, 0, PI * 2, true);
-      ctx.clip('evenodd');
-      const a = Math.floor((cxp - outerR) / TILE), b = Math.ceil((cxp + outerR) / TILE);
-      const c = Math.floor((cyp - outerR) / TILE), e = Math.ceil((cyp + outerR) / TILE);
-      for (let ty = c; ty <= e; ty++) for (let tx = a; tx <= b; tx++) tile(sprite, tx, ty);
-      ctx.restore();
-    };
-    const annulusTint = (outerR: number, innerR: number, col: string) => {
-      ctx.save(); ctx.beginPath(); ctx.arc(cxp, cyp, outerR, 0, PI * 2); ctx.arc(cxp, cyp, innerR, 0, PI * 2, true); ctx.clip('evenodd');
-      ctx.fillStyle = col; ctx.fillRect(cxp - outerR, cyp - outerR, outerR * 2, outerR * 2); ctx.restore();
-    };
-    const annulusFill = (outerR: number, innerR: number, col: string) => {
-      ctx.save(); ctx.beginPath(); ctx.arc(cxp, cyp, outerR, 0, PI * 2); ctx.arc(cxp, cyp, innerR, 0, PI * 2, true); ctx.clip('evenodd');
-      ctx.fillStyle = col; ctx.fillRect(cxp - outerR, cyp - outerR, outerR * 2, outerR * 2);
-      for (let i = 0; i < 80; i++) { const a = i * 2.39917, rr = innerR + (i * 5 % Math.max(1, outerR - innerR)); ctx.fillStyle = i % 3 ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)'; ctx.fillRect(Math.round(cxp + Math.cos(a) * rr), Math.round(cyp + Math.sin(a) * rr), 1, 1); }
-      ctx.restore();
-    };
-    annulusFill(swOuter, roadOuter, theme.cobble); // sidewalk ring (flat palette fill — matches the street sidewalks, clips cleanly)
-    clipFill(TERRAIN.road, roadOuter, islandR); // ring road
-    annulusTint(roadOuter, islandR, 'rgba(140,110,70,0.06)'); // match street road tint
-    // bevelled circular kerbs (lit rim + dark face + cast shadow), matching the
-    // street kerbs. Drawn BEFORE the approach roads so the four entrances break them.
-    const ringKerb = (r: number, highInside: boolean) => {
-      const s = highInside ? 1 : -1;
-      ctx.strokeStyle = 'rgba(0,0,0,0.20)'; ctx.lineWidth = 2.4; ctx.beginPath(); ctx.arc(cxp, cyp, r + 1.3 * s, 0, PI * 2); ctx.stroke();
-      ctx.strokeStyle = theme.cobbleDark; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(cxp, cyp, r + 0.4 * s, 0, PI * 2); ctx.stroke();
-      ctx.strokeStyle = theme.cobbleLight; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.arc(cxp, cyp, r - 1.2 * s, 0, PI * 2); ctx.stroke();
-    };
-    ringKerb(swOuter, true);    // sidewalk (high, inside) meets grass
-    ringKerb(roadOuter, false); // sidewalk (high, outside) steps down to ring road
-    // approach roads cut through the sidewalk ring at the four entrances
-    for (let ty = 0; ty < WORLD_H; ty++)
-      for (let tx = 0; tx < WORLD_W; tx++)
-        if (inPlaza(tx, ty) && isRoad(tx, ty)) tile(TERRAIN.road, tx, ty);
-    clipFill(TERRAIN.grass[0], islandR, 0); // central grass island (clears the cross-stubs)
-    // light blade texture on the island so it matches the lawns
-    ctx.save(); ctx.beginPath(); ctx.arc(cxp, cyp, islandR, 0, PI * 2); ctx.clip();
-    for (let a = 0; a < 26; a++) { const ang = a * 2.399, rr = (a % 5) * 5; px(Math.round(cxp + Math.cos(ang) * rr), Math.round(cyp + Math.sin(ang) * rr), 1, 2, a % 2 ? theme.grassShade : theme.grassBlade); }
-    ctx.restore();
-    // island kerb (grass edge against ring road) + dashed lane line
-    ctx.strokeStyle = 'rgba(0,0,0,0.22)'; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(cxp, cyp, islandR + 0.6, 0, PI * 2); ctx.stroke();
-    ctx.strokeStyle = theme.grassShade; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(cxp, cyp, islandR - 1, 0, PI * 2); ctx.stroke();
-    ctx.strokeStyle = 'rgba(245,245,235,0.4)'; ctx.lineWidth = 1; ctx.setLineDash([4, 5]);
-    ctx.beginPath(); ctx.arc(cxp, cyp, (islandR + roadOuter) / 2, 0, PI * 2); ctx.stroke();
-    ctx.setLineDash([]);
-    // flowers + centre tree on the island
-    for (let a = 0; a < 12; a++) {
-      const ang = a * 2.399, rr = 6 + (a % 3) * 5;
-      px(Math.round(cxp + Math.cos(ang) * rr), Math.round(cyp + Math.sin(ang) * rr * 0.9), 2, 2, theme.gardenFlowers[a % theme.gardenFlowers.length]);
+    const PX0 = 27, PY0 = 24, PWN = 8, PHN = 8;       // plaza tile bounds (== inPlaza)
+    const ISx0 = 29, ISy0 = 26, ISw = 4, ISh = 4;     // central garden island
+    const inIsland = (tx: number, ty: number) => tx >= ISx0 && tx < ISx0 + ISw && ty >= ISy0 && ty < ISy0 + ISh;
+    // base: cobble plaza everywhere, grass on the central garden island
+    for (let ty = PY0; ty < PY0 + PHN; ty++) for (let tx = PX0; tx < PX0 + PWN; tx++) {
+      const x = tx * TILE, y = ty * TILE;
+      if (inIsland(tx, ty)) { tile(TERRAIN.grass[0], tx, ty); continue; }
+      px(x, y, TILE, TILE, theme.cobble);
+      const hs = hash2(tx * 9 + 1, ty * 9 + 4);
+      px(x + (Math.floor(hs * 53) % 13), y + (Math.floor(hs * 97) % 13), 2, 1, 'rgba(0,0,0,0.05)');
+      if (hs > 0.6) px(x + (Math.floor(hs * 131) % 14), y + (Math.floor(hs * 173) % 14), 1, 1, 'rgba(255,255,255,0.05)');
     }
-    ell(cxp, cyp + 6, 13, 5, 'rgba(20,35,20,0.25)');
-    blitFoot(PROPS.tree, cxp, cyp + 9, SPR * 1.5);
+    // plaza edge kerb (cobble meets grass) + a square paving inlay so it reads designed
+    ctx.strokeStyle = 'rgba(0,0,0,0.2)'; ctx.lineWidth = 2; ctx.strokeRect(PX0 * TILE + 1, PY0 * TILE + 1, PWN * TILE - 2, PHN * TILE - 2);
+    ctx.strokeStyle = theme.cobbleLight; ctx.lineWidth = 1; ctx.strokeRect(PX0 * TILE + 2.5, PY0 * TILE + 2.5, PWN * TILE - 5, PHN * TILE - 5);
+    ctx.strokeStyle = theme.cobbleDark; ctx.globalAlpha = 0.5; ctx.lineWidth = 1; ctx.strokeRect((PX0 + 1) * TILE + 2, (PY0 + 1) * TILE + 2, (PWN - 2) * TILE - 4, (PHN - 2) * TILE - 4); ctx.globalAlpha = 1;
+    // crosswalks where the main roads meet the square
+    [PY0, PY0 + PHN - 1].forEach((ry) => { tile(TERRAIN.crosswalk, ROAD_X, ry); tile(TERRAIN.crosswalk, ROAD_X + 1, ry); });
+    [PX0, PX0 + PWN - 1].forEach((rx) => { tile(TERRAIN.crosswalk, rx, ROAD_Y); tile(TERRAIN.crosswalk, rx, ROAD_Y + 1); });
+    // bevelled kerb around the garden island (cobble high → grass low)
+    const islX = ISx0 * TILE, islY = ISy0 * TILE, islW = ISw * TILE, islH = ISh * TILE;
+    ctx.strokeStyle = 'rgba(0,0,0,0.22)'; ctx.lineWidth = 2; ctx.strokeRect(islX + 1, islY + 1, islW - 2, islH - 2);
+    ctx.strokeStyle = theme.cobbleLight; ctx.lineWidth = 1; ctx.strokeRect(islX - 0.5, islY - 0.5, islW + 1, islH + 1);
+    // garden: blade texture + flowers + furniture + centre tree
+    const cgx = (ISx0 + ISw / 2) * TILE, cgy = (ISy0 + ISh / 2) * TILE;
+    for (let ty = ISy0; ty < ISy0 + ISh; ty++) for (let tx = ISx0; tx < ISx0 + ISw; tx++) {
+      const hk = hash2(tx * 7 + 3, ty * 11 + 5);
+      if (hk > 0.5) px(tx * TILE + (Math.floor(hk * 97) % 13) + 1, ty * TILE + (Math.floor(hk * 61) % 13) + 1, 1, hk > 0.85 ? 2 : 1, hk > 0.9 ? theme.grassBlade : theme.grassShade);
+    }
+    for (let a = 0; a < 14; a++) { const ang = a * 2.399, rr = 10 + (a % 3) * 5; px(Math.round(cgx + Math.cos(ang) * rr), Math.round(cgy + Math.sin(ang) * rr * 0.85), 2, 2, theme.gardenFlowers[a % theme.gardenFlowers.length]); }
+    const lampInline = (lx: number, ly: number) => { ell(lx + 1, ly + 1, 3, 1.4, 'rgba(20,30,18,0.25)'); px(lx, ly - 12, 2, 12, '#2f271e'); px(lx - 1, ly - 1, 4, 2, '#5a4a36'); ell(lx + 1, ly - 13, 6, 6, 'rgba(255,227,154,0.22)'); px(lx - 1, ly - 15, 4, 4, '#ffe39a'); };
+    const benchInline = (bx: number, by: number) => { ell(bx, by + 1, 7, 1.4, 'rgba(0,0,0,0.18)'); px(bx - 7, by - 7, 14, 3, '#7a5530'); px(bx - 7, by - 4, 14, 3, '#6e4a2c'); px(bx - 7, by - 1, 1, 2, '#4f3419'); px(bx + 6, by - 1, 1, 2, '#4f3419'); };
+    lampInline((ISx0 - 1) * TILE + 8, (ISy0 - 1) * TILE + 14);
+    lampInline((ISx0 + ISw) * TILE + 8, (ISy0 - 1) * TILE + 14);
+    lampInline((ISx0 - 1) * TILE + 8, (ISy0 + ISh) * TILE + 6);
+    lampInline((ISx0 + ISw) * TILE + 8, (ISy0 + ISh) * TILE + 6);
+    benchInline(cgx, (ISy0 - 1) * TILE + 12);
+    benchInline(cgx, (ISy0 + ISh) * TILE + 6);
+    ell(cgx, cgy + 6, 13, 5, 'rgba(20,35,20,0.25)');
+    blitFoot(PROPS.tree, cgx, cgy + 9, SPR * 1.4);
   }
 
   // 4. Bushes on leftover grass + lamps along the streets
@@ -796,7 +792,7 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
       // sidewalk tiles are never building/lot footprints (those sit at sy-2 and
       // above), so don't gate on `occupied` — its building padding covers the
       // sidewalk in front of every building and would block almost all furniture.
-      if (!isSidewalk(tx, ty) || inPlaza(tx, ty) || inRound(tx, ty)) continue;
+      if (!isSidewalk(tx, ty) || inPlaza(tx, ty)) continue;
       const h = hash2(tx * 11 + 2, ty * 13 + 7);
       if (h < 0.62 || nearProp(tx, ty)) continue;
       const x = tx * TILE + 8, base = ty * TILE + 13;
