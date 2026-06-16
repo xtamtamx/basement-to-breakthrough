@@ -133,5 +133,44 @@ describe('GentrificationSystem', () => {
         districts.find((d) => d.id === 'downtown')!.gentrificationLevel,
       ).toBeLessThanOrEqual(100);
     });
+
+    it('grows scene strength on a DIY-aligned show in the district', () => {
+      districts[0].gentrificationLevel = 20; // below soul threshold, no decay
+      const before = districts[0].sceneStrength; // 80
+      gentrificationSystem.applyTurnGentrification(new Set(['eastside']), 50);
+      expect(
+        districts.find((d) => d.id === 'eastside')!.sceneStrength,
+      ).toBeGreaterThan(before);
+    });
+
+    it('does not grow scene strength for a sellout (negative diyPoints)', () => {
+      districts[0].gentrificationLevel = 20;
+      gentrificationSystem.applyTurnGentrification(new Set(['eastside']), -50);
+      expect(districts.find((d) => d.id === 'eastside')!.sceneStrength).toBe(80);
+    });
+
+    it('a DIY anchor slows the gentrification creep in its district', () => {
+      districts[0].gentrificationLevel = 30;
+      const baseline = { ...districts[0] };
+      // no anchor
+      gentrificationSystem.applyTurnGentrification(new Set(['eastside']), 0);
+      const riseNoAnchor = districts[0].gentrificationLevel - 30;
+      // reset and run again WITH a halving anchor
+      districts[0] = { ...baseline };
+      const mods = new Map([['eastside', { creepMult: 0.5, sceneFloor: 0 }]]);
+      gentrificationSystem.applyTurnGentrification(new Set(['eastside']), 0, mods);
+      const riseWithAnchor = districts[0].gentrificationLevel - 30;
+      expect(riseWithAnchor).toBeLessThan(riseNoAnchor);
+      expect(riseWithAnchor).toBeCloseTo(riseNoAnchor * 0.5, 5);
+    });
+
+    it('an anchor floors scene strength against soul decay', () => {
+      districts[1].gentrificationLevel = 80; // past soul threshold → would erode
+      districts[1].sceneStrength = 56;
+      const mods = new Map([['downtown', { creepMult: 1, sceneFloor: 55 }]]);
+      gentrificationSystem.applyTurnGentrification(new Set(), 0, mods);
+      // decay would take 56 → 54.5, but the floor holds it at 55.
+      expect(districts.find((d) => d.id === 'downtown')!.sceneStrength).toBe(55);
+    });
   });
 });

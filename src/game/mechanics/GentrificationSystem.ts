@@ -55,7 +55,11 @@ class GentrificationSystem {
    * fastest; desirable (high scene-strength) districts attract developers
    * faster too. Persists changes to the store and returns threshold notices.
    */
-  applyTurnGentrification(activeDistrictIds: Set<string>, diyPoints = 0): GentrificationUpdate {
+  applyTurnGentrification(
+    activeDistrictIds: Set<string>,
+    diyPoints = 0,
+    landmarkMods?: Map<string, { creepMult: number; sceneFloor: number }>,
+  ): GentrificationUpdate {
     const store = useGameStore.getState();
     const rate = difficultySystem.getCurrentDifficulty().gentrificationRate;
     const rateScale = rate / REFERENCE_RATE;
@@ -63,10 +67,13 @@ class GentrificationSystem {
 
     store.districts.forEach((district) => {
       const active = activeDistrictIds.has(district.id);
+      const mod = landmarkMods?.get(district.id);
       const desirability = district.sceneStrength / 100;
       const activityBonus = active ? ACTIVITY_CREEP : 0;
+      // A DIY anchor (scene landmark) slows the creep here — your monuments
+      // hold the line against gentrification.
       const rise =
-        (BASE_CREEP + activityBonus) * (1 + desirability) * rateScale;
+        (BASE_CREEP + activityBonus) * (1 + desirability) * rateScale * (mod?.creepMult ?? 1);
 
       const newGent = Math.min(100, district.gentrificationLevel + rise);
 
@@ -78,7 +85,8 @@ class GentrificationSystem {
         nextSceneRaw += SCENE_GROWTH * (0.5 + Math.min(100, diyPoints) / 200);
       }
       if (newGent >= SOUL_THRESHOLD) nextSceneRaw -= SCENE_DECAY;
-      const newScene = Math.max(0, Math.min(100, nextSceneRaw));
+      // An anchor sets a floor the scene can't erode below while it stands.
+      const newScene = Math.max(mod?.sceneFloor ?? 0, Math.min(100, nextSceneRaw));
 
       // Keep one decimal of precision — the base creep is < 1/turn, so
       // rounding to whole numbers would floor it away and gentrification

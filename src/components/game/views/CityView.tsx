@@ -10,6 +10,7 @@ import { MapTile, VenueData, WorkplaceData } from '@/components/map/MapTypes';
 import { DistrictType as CoreDistrictType } from '@/game/types/core';
 import { Venue } from '@game/types';
 import { CityShop, SHOP_DEFS } from '@game/world/cityShops';
+import { CityLandmark } from '@game/world/landmarks';
 import { dayJobSystem } from '@game/mechanics/DayJobSystem';
 
 // Maps store district ids onto the core DistrictType used by DistrictInfo.
@@ -50,6 +51,7 @@ export const CityView: React.FC = () => {
   const [selectedTileData, setSelectedTileData] = useState<{ tile: MapTile; venue?: Venue } | null>(null);
   const [showVenueUpgrade, setShowVenueUpgrade] = useState(false);
   const [selectedShop, setSelectedShop] = useState<CityShop | null>(null);
+  const [selectedLandmark, setSelectedLandmark] = useState<CityLandmark | null>(null);
   const [jobRefresh, setJobRefresh] = useState(0);
 
   // Ensure initial data is loaded (run once on mount via getState to avoid
@@ -207,6 +209,7 @@ export const CityView: React.FC = () => {
                   });
                 }}
                 onShopClick={(shop) => { setSelectedShop(shop); haptics.light(); }}
+                onLandmarkClick={(lm) => { setSelectedLandmark(lm); haptics.light(); }}
               />
             </div>
             
@@ -903,6 +906,40 @@ export const CityView: React.FC = () => {
                   );
                 })}
               </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Landmark info modal (Pillar B) */}
+      {selectedLandmark && (() => {
+        const accent = selectedLandmark.alignment === 'diy' ? '#fbbf24' : selectedLandmark.alignment === 'corporate' ? '#ef4444' : '#e5e7eb';
+        const tag = selectedLandmark.alignment === 'diy' ? 'DIY Scene Anchor' : selectedLandmark.alignment === 'corporate' ? 'Sellout Monument' : 'Scene History';
+        const fx: string[] = [];
+        if (selectedLandmark.effect.creepMult != null) fx.push(`Slows gentrification here (×${selectedLandmark.effect.creepMult})`);
+        if (selectedLandmark.effect.sceneFloor != null) fx.push(`Holds scene strength ≥ ${selectedLandmark.effect.sceneFloor}`);
+        if (selectedLandmark.effect.passiveMoney != null) fx.push(`+$${selectedLandmark.effect.passiveMoney}/turn passive income`);
+        return (
+          <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'fadeIn 0.2s ease-out', padding: '20px' }} onClick={() => setSelectedLandmark(null)}>
+            <div style={{ backgroundColor: '#0a0a0a', borderTop: `2px solid ${accent}`, borderLeft: '1px solid #374151', borderRight: '1px solid #374151', borderRadius: '16px', padding: '16px', paddingBottom: 'calc(16px + env(safe-area-inset-bottom))', width: '100%', maxWidth: '440px', animation: 'slideUp 0.3s ease-out' }} onClick={(e) => e.stopPropagation()}>
+              <div style={{ width: '36px', height: '3px', backgroundColor: '#374151', borderRadius: '2px', margin: '0 auto 12px' }} />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
+                <div style={{ flex: 1 }}>
+                  <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#ffffff', margin: '0 0 4px' }}>★ {selectedLandmark.name}</h2>
+                  <p style={{ fontSize: '12px', color: accent, margin: 0 }}>{tag}</p>
+                </div>
+                <button onClick={() => setSelectedLandmark(null)} style={{ width: '32px', height: '32px', borderRadius: '16px', backgroundColor: 'transparent', border: '1px solid #374151', color: '#9ca3af', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><X size={18} /></button>
+              </div>
+              <p style={{ fontSize: '13px', color: '#d1d5db', fontStyle: 'italic', lineHeight: 1.5, margin: '0 0 12px' }}>{selectedLandmark.blurb}</p>
+              {fx.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {fx.map((f, i) => (
+                    <div key={i} style={{ fontSize: '12px', color: '#ffffff', backgroundColor: '#111827', border: `1px solid ${accent}55`, borderRadius: '8px', padding: '8px 12px' }}>{f}</div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ fontSize: '12px', color: '#6b7280', backgroundColor: '#111827', borderRadius: '8px', padding: '8px 12px' }}>A monument to how far you&apos;ve come. No mechanical effect.</div>
+              )}
             </div>
           </div>
         );

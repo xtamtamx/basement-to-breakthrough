@@ -20,6 +20,12 @@ import { venueUpgradeSystem } from './VenueUpgradeSystem';
 import { runManager } from './RunManager';
 import { metaProgressionManager } from './MetaProgressionManager';
 import { gentrificationSystem } from './GentrificationSystem';
+import {
+  getCityLandmarks,
+  districtLandmarkMods,
+  landmarkPassiveMoney,
+  metaProgressValue,
+} from '../world/landmarks';
 import { captureRuntimeSnapshot } from '../persistence/runtimeSnapshot';
 import { devLog } from '@utils/devLogger';
 import {
@@ -194,8 +200,16 @@ export class TurnResolutionEngine {
     // 4. Turn economy: living costs + equipment upkeep, day jobs, passive
     // difficulty. Venue rent is paid per show (in executeShow) — charging it
     // again per turn for every city venue double-billed the player.
+    // Landmarks your scene has earned (Pillar B). Derived once from current
+    // state + cross-run meta, then fed to the economy and gentrification below.
+    const landmarks = getCityLandmarks(store.districts, {
+      diyPoints: store.diyPoints,
+      discoveredCount: store.discoveredSynergies.length,
+      metaProgress: metaProgressValue(metaProgressionManager.getProgression()),
+    });
+
     let totalUpkeep = LIVING_COSTS_PER_TURN;
-    let passiveMoney = 0;
+    let passiveMoney = landmarkPassiveMoney(landmarks); // sellout monuments pay out
     let passiveFans = 0;
     useGameStore.getState().venues.forEach((venue) => {
       totalUpkeep += venueUpgradeSystem.calculateUpkeepCost(venue);
@@ -233,6 +247,7 @@ export class TurnResolutionEngine {
     const gentrification = gentrificationSystem.applyTurnGentrification(
       activeDistrictIds,
       useGameStore.getState().diyPoints,
+      districtLandmarkMods(landmarks), // DIY anchors slow the creep + floor the scene
     );
     if (gentrification.notices.length > 0) {
       const notice = gentrification.notices.join(' ');

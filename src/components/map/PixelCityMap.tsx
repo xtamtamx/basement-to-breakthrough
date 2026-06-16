@@ -31,11 +31,14 @@ import {
   loadAllSheets,
 } from './townAtlas';
 import { getCityShops, CityShop, ShopKind } from '@game/world/cityShops';
+import { getCityLandmarks, metaProgressValue, CityLandmark, LandmarkKind } from '@game/world/landmarks';
+import { metaProgressionManager } from '@game/mechanics/MetaProgressionManager';
 
 interface PixelCityMapProps {
   onDistrictClick?: (district: District) => void;
   onVenueClick?: (venue: Venue) => void;
   onShopClick?: (shop: CityShop) => void;
+  onLandmarkClick?: (landmark: CityLandmark) => void;
 }
 
 // --- World layout (in 16px tiles) -------------------------------------------
@@ -149,6 +152,15 @@ const SHOP_BUILDINGS: Record<ShopKind, BuildingKey> = {
   [ShopKind.POST_OFFICE]: 'civic', [ShopKind.SCHOOL]: 'arch', [ShopKind.LIBRARY]: 'rotunda',
 };
 
+// Landmarks (Pillar B) use the grandest sprites so they read as monuments.
+const LANDMARK_BUILDINGS: Record<LandmarkKind, BuildingKey> = {
+  [LandmarkKind.RECORD_SHRINE]: 'redClub', [LandmarkKind.ALLAGES_HALL]: 'darkHall', [LandmarkKind.ZINE_ARCHIVE]: 'arch',
+  [LandmarkKind.LABEL_HQ]: 'modern', [LandmarkKind.SPONSOR_ARENA]: 'glassHall', [LandmarkKind.BRAND_TOWER]: 'rotunda',
+  [LandmarkKind.FOUNDERS_PLAQUE]: 'manor', [LandmarkKind.FIRST_STAGE]: 'redClub',
+};
+// Per-alignment landmark marker colour (gold DIY anchor / red sellout / white history).
+const LANDMARK_ACCENT: Record<CityLandmark['alignment'], string> = { diy: '#fbbf24', corporate: '#ef4444', history: '#e5e7eb' };
+
 // CEIL (not round): the footprint must fully contain the drawn sprite, else the
 // sprite spills past its reserved tiles and overlaps the neighbouring building.
 const fpW = (s: AtlasSprite) => Math.max(1, Math.ceil((s.rect.w * SPR) / TILE));
@@ -222,7 +234,7 @@ function dgContour(ctx: CanvasRenderingContext2D, key: number, ox: number, oy: n
 }
 
 interface Quarter { district: District; tx: number; ty: number; tw: number; th: number }
-interface PlacedBuilding { sprite: AtlasSprite; tx: number; ty: number; tw: number; th: number; venue?: Venue; shop?: CityShop; district?: District }
+interface PlacedBuilding { sprite: AtlasSprite; tx: number; ty: number; tw: number; th: number; venue?: Venue; shop?: CityShop; landmark?: CityLandmark; district?: District }
 interface PlacedTree { sprite: AtlasSprite; tx: number; ty: number; th: number }
 interface ParkingLot { tx: number; ty: number; tw: number; th: number }
 interface TownPlan {
@@ -233,7 +245,7 @@ interface TownPlan {
   parkingLots: ParkingLot[];
 }
 
-function planTown(districts: District[], venues: Venue[], roofMix: BuildingKey[], diyPoints: number): TownPlan {
+function planTown(districts: District[], venues: Venue[], roofMix: BuildingKey[], diyPoints: number, landmarks: CityLandmark[]): TownPlan {
   // Quarters (for signposts + click hit-testing) — the four grid regions.
   const quarters: Quarter[] = districts.slice(0, 4).map((district) => {
     const east = district.bounds.x >= 4;
@@ -335,11 +347,26 @@ function planTown(districts: District[], venues: Venue[], roofMix: BuildingKey[]
     b.th = nh;
   }
 
+  // Assign landmarks (Pillar B monuments) before shops — they get a prominent
+  // building near the square and re-sprite to the grandest structures.
+  for (const lm of landmarks) {
+    const b = buildings
+      .filter((bd) => !bd.venue && !bd.shop && !bd.landmark && bd.district?.id === lm.districtId)
+      .sort((a, z) => Math.hypot(a.tx - cx, a.ty - cy) - Math.hypot(z.tx - cx, z.ty - cy))[0];
+    if (!b) continue;
+    b.landmark = lm;
+    b.sprite = BUILDINGS[LANDMARK_BUILDINGS[lm.kind]];
+    const nw = fpW(b.sprite), nh = fpH(b.sprite);
+    b.ty = b.ty + b.th - nh; // keep the same foot row
+    b.tw = nw;
+    b.th = nh;
+  }
+
   // Assign shops (commerce / day-job sources) to the next-nearest buildings in
   // each district, re-spriting them as storefronts so they read as commerce.
   for (const shop of getCityShops(districts, { diyPoints })) {
     const b = buildings
-      .filter((bd) => !bd.venue && !bd.shop && bd.district?.id === shop.districtId)
+      .filter((bd) => !bd.venue && !bd.shop && !bd.landmark && bd.district?.id === shop.districtId)
       .sort((a, z) => Math.hypot(a.tx - cx, a.ty - cy) - Math.hypot(z.tx - cx, z.ty - cy))[0];
     if (!b) continue;
     b.shop = shop;
@@ -767,7 +794,7 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
   return cv;
 }
 
-export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onVenueClick, onShopClick }) => {
+export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onVenueClick, onShopClick, onLandmarkClick }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [sheets, setSheets] = useState<Record<SheetName, HTMLImageElement> | null>(null);
@@ -777,12 +804,20 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
   const venues = useGameStore((s) => s.venues);
   const scheduledShows = useGameStore((s) => s.scheduledShows);
   const diyPoints = useGameStore((s) => s.diyPoints);
+  const discoveredCount = useGameStore((s) => s.discoveredSynergies.length);
   const themeKey = useGameStore((s) => s.cities.find((c) => c.id === s.currentCityId)?.theme ?? 'home');
   const theme = THEMES[themeKey];
 
+  // Landmarks (Pillar B) derive from alignment + in-run discoveries + cross-run
+  // meta progress; recompute when those change.
+  const landmarks = useMemo(
+    () => getCityLandmarks(districts, { diyPoints, discoveredCount, metaProgress: metaProgressValue(metaProgressionManager.getProgression()) }),
+    [districts, diyPoints, discoveredCount],
+  );
+
   // diyPoints + district state (scene/gentrification) drive which establishments
   // exist, so the plan must recompute as the city evolves — keep them in deps.
-  const plan = useMemo(() => planTown(districts, venues, theme.roofMix, diyPoints), [districts, venues, theme, diyPoints]);
+  const plan = useMemo(() => planTown(districts, venues, theme.roofMix, diyPoints, landmarks), [districts, venues, theme, diyPoints, landmarks]);
   const ground = useMemo(() => (sheets ? buildGround(plan, sheets, theme) : null), [plan, sheets, theme]);
 
   // Static depth-sortable objects (buildings + trees); walkers merge in per-frame.
@@ -946,12 +981,14 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
       const inBldg = (b: PlacedBuilding) => pos.tx >= b.tx && pos.tx <= b.tx + b.tw && pos.ty >= b.ty - 1.5 && pos.ty <= b.ty + b.th;
       const hit = plan.buildings.find((b) => b.venue && inBldg(b));
       if (hit?.venue && onVenueClick) { haptics.light(); soundManager.playClick(); onVenueClick(hit.venue); return; }
+      const lmHit = plan.buildings.find((b) => b.landmark && inBldg(b));
+      if (lmHit?.landmark && onLandmarkClick) { haptics.light(); soundManager.playClick(); onLandmarkClick(lmHit.landmark); return; }
       const shopHit = plan.buildings.find((b) => b.shop && inBldg(b));
       if (shopHit?.shop && onShopClick) { haptics.light(); soundManager.playClick(); onShopClick(shopHit.shop); return; }
       const q = plan.quarters.find((qu) => pos.tx >= qu.tx - 1 && pos.tx <= qu.tx + qu.tw + 1 && pos.ty >= qu.ty - 1 && pos.ty <= qu.ty + qu.th + 1);
       if (q && onDistrictClick) { haptics.light(); soundManager.playClick(); onDistrictClick(q.district); }
     },
-    [plan, onDistrictClick, onVenueClick, onShopClick, screenToTile],
+    [plan, onDistrictClick, onVenueClick, onShopClick, onLandmarkClick, screenToTile],
   );
 
   const handleWheel = useCallback(
@@ -1075,6 +1112,45 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
           ctx.fillStyle = 'rgba(0,0,0,0.3)';
           ctx.fillRect(cx - 4, my - 2, 8, 1);
         }
+      });
+
+      // landmark markers (Pillar B) — a star badge + name, coloured by alignment
+      // (gold DIY anchor / red sellout monument / white scene history).
+      const starPath = (sx: number, sy: number, r: number) => {
+        ctx.beginPath();
+        for (let i = 0; i < 10; i++) {
+          const ang = -PI / 2 + (i * PI) / 5;
+          const rr = i % 2 === 0 ? r : r * 0.45;
+          const px = sx + Math.cos(ang) * rr, py = sy + Math.sin(ang) * rr;
+          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+      };
+      ctx.font = '6px "Press Start 2P", monospace';
+      ctx.textBaseline = 'top';
+      plan.buildings.forEach((b) => {
+        if (!b.landmark) return;
+        const accent = LANDMARK_ACCENT[b.landmark.alignment];
+        const cx = (b.tx + b.tw / 2) * TILE;
+        const my = (b.ty - 0.5) * TILE + Math.sin(time / 300 + b.tx) * 2;
+        ctx.fillStyle = 'rgba(10, 10, 14, 0.85)';
+        ctx.fillRect(cx - 8, my - 8, 16, 16);
+        ctx.strokeStyle = accent;
+        ctx.lineWidth = 1;
+        ctx.strokeRect(cx - 8.5, my - 8.5, 17, 17);
+        starPath(cx, my, 6);
+        ctx.fillStyle = accent;
+        ctx.fill();
+        const nm = b.landmark.name.toUpperCase();
+        ctx.textAlign = 'center';
+        const lw = ctx.measureText(nm).width + 8;
+        const ly = my + 11;
+        ctx.fillStyle = 'rgba(10, 10, 14, 0.82)';
+        ctx.fillRect(cx - lw / 2, ly, lw, 11);
+        ctx.strokeRect(cx - lw / 2 + 0.5, ly + 0.5, lw - 1, 10);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(nm, cx, ly + 2.5);
+        ctx.textAlign = 'left';
       });
 
       ctx.font = '7px "Press Start 2P", monospace';
