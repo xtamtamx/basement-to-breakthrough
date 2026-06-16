@@ -77,6 +77,12 @@ export const BUILDINGS = {
   darkHall: b(41, 2737, 76, 65), // dark slate A-frame
   glassHall: b(43, 1989, 72, 64), // glass-arch market hall
   rotunda: b(37, 1844, 84, 63), // octagonal rotunda
+  // Extra shapes mined from the sheet (programmatic bbox + visual verify) for
+  // per-district variety — see [[map-renderer]] / ui regional-cohesiveness pass.
+  cottageTan: b(49, 341, 60, 67), // tan/cream cottage, brown roof
+  lodge: b(10, 1540, 134, 82), // wide tudor lodge (timber-framed, gabled)
+  grandHall: b(5, 1218, 144, 107), // grand hall, big purple pyramid roof
+  tower: b(52, 2128, 54, 87), // tall silver tower w/ rounded top
 } as const;
 
 export type BuildingKey = keyof typeof BUILDINGS;

@@ -245,6 +245,25 @@ interface TownPlan {
   parkingLots: ParkingLot[];
 }
 
+// Per-district building pools — each neighbourhood draws from a cohesive set so
+// regions read distinctly (grey/slate = industrial, bright = arts, tall/grand =
+// downtown, brick/stone = college) instead of the same houses everywhere.
+const DISTRICT_POOLS: Record<string, BuildingKey[]> = {
+  ARTS: ['redClub', 'teal', 'arch', 'shopAwning', 'manor', 'cottageTan'],
+  DOWNTOWN: ['townhouse', 'glassHall', 'rotunda', 'tower', 'grandHall', 'modern', 'civic'],
+  WAREHOUSE: ['modern', 'darkHall', 'glassHall', 'greyShop', 'tower', 'stone'],
+  COLLEGE: ['stone', 'manor', 'tudor', 'lodge', 'civic', 'arch'],
+  RESIDENTIAL: ['cottage', 'tudor', 'townhouse', 'stone', 'manor', 'cottageTan', 'lodge'],
+};
+// Quarter ids are stable across every city (eastside/downtown/industrial/university).
+const DISTRICT_KIND: Record<string, keyof typeof DISTRICT_POOLS> = {
+  eastside: 'ARTS', downtown: 'DOWNTOWN', industrial: 'WAREHOUSE', university: 'COLLEGE',
+};
+const poolFor = (d: District, fallback: BuildingKey[]): BuildingKey[] => {
+  const kind = DISTRICT_KIND[d.id] ?? (d.type as keyof typeof DISTRICT_POOLS | undefined);
+  return (kind && DISTRICT_POOLS[kind]) || fallback;
+};
+
 function planTown(districts: District[], venues: Venue[], roofMix: BuildingKey[], diyPoints: number, landmarks: CityLandmark[]): TownPlan {
   // Quarters (for signposts + click hit-testing) — the four grid regions.
   const quarters: Quarter[] = districts.slice(0, 4).map((district) => {
@@ -287,7 +306,8 @@ function planTown(districts: District[], venues: Venue[], roofMix: BuildingKey[]
   const placeRow = (anchor: number, mode: 'bottom' | 'top') => {
     let tx = 3;
     while (tx < WORLD_W - 4) {
-      const key = roofMix[Math.floor(hash2(tx * 7, anchor * 17) * 997) % roofMix.length];
+      const pool = poolFor(districtAt(tx, anchor), roofMix);
+      const key = pool[Math.floor(hash2(tx * 7, anchor * 17) * 997) % pool.length];
       const sprite = BUILDINGS[key];
       const tw = fpW(sprite);
       const th = fpH(sprite);
