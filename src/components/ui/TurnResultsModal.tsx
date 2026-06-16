@@ -97,7 +97,7 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.95)',
+          backgroundColor: 'rgba(8, 6, 18, 0.86)',
           zIndex: 9999,
           display: 'flex',
           alignItems: 'center',
@@ -113,43 +113,56 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
           exit={{ scale: 0.9, opacity: 0, y: 20 }}
           onClick={e => e.stopPropagation()}
           style={{
-            backgroundColor: '#111827',
-            borderRadius: '16px',
+            backgroundColor: '#171327',
+            borderRadius: 0,
             maxWidth: '500px',
             width: '100%',
             maxHeight: '90vh',
             overflow: 'hidden',
-            border: '2px solid #ec4899',
-            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+            border: '2px solid #0a0814',
+            borderTop: '3px solid #f72585',
+            boxShadow: 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814',
             display: 'flex',
             flexDirection: 'column'
           }}
         >
           {/* Header */}
           <div style={{
-            padding: '20px 24px',
-            borderBottom: '1px solid #374151',
+            padding: '16px 20px',
+            borderBottom: '2px solid #0a0814',
+            backgroundColor: '#0f0b1e',
             display: 'flex',
             justifyContent: 'space-between',
-            alignItems: 'center'
+            alignItems: 'center',
+            gap: '12px'
           }}>
-            <h2 style={{
-              fontSize: '24px',
-              fontWeight: 'bold',
-              color: '#ec4899',
-              margin: 0
+            <h2 className="snes-pixel" style={{
+              fontSize: '12px',
+              color: '#f72585',
+              margin: 0,
+              letterSpacing: 0,
+              lineHeight: 1.5
             }}>Post-Show Damage Report</h2>
             <button
               onClick={onClose}
               style={{
-                background: 'none',
-                border: 'none',
-                color: '#9ca3af',
+                width: '32px',
+                height: '32px',
+                minWidth: '32px',
+                flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: '#1f1a3a',
+                border: '2px solid #0a0814',
+                borderRadius: 0,
+                color: '#b9b3d6',
                 cursor: 'pointer',
-                padding: '4px'
+                padding: 0,
+                transition: 'none'
               }}
             >
-              <X size={24} />
+              <X size={18} />
             </button>
           </div>
 
@@ -161,23 +174,24 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
           }}>
             {/* Turn Summary Message */}
             <div style={{
-              backgroundColor: '#1f2937',
-              borderRadius: '12px',
+              backgroundColor: '#0f0b1e',
+              borderRadius: 0,
               padding: '16px',
               marginBottom: '20px',
-              borderLeft: '4px solid #ec4899'
+              border: '2px solid #0a0814',
+              borderLeft: '4px solid #f72585'
             }}>
               <p style={{
-                color: '#d1d5db',
-                fontSize: '14px',
+                color: '#b9b3d6',
+                fontSize: '13px',
                 lineHeight: '1.6',
                 margin: 0,
                 fontStyle: 'italic'
               }}>{getTurnResultMessage()}</p>
               {getReputationMessage() && (
                 <p style={{
-                  color: '#d1d5db',
-                  fontSize: '14px',
+                  color: '#b9b3d6',
+                  fontSize: '13px',
                   lineHeight: '1.6',
                   margin: '8px 0 0 0',
                   fontStyle: 'italic'
@@ -187,50 +201,55 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
 
             {/* Financial Summary */}
             <div style={{
-              backgroundColor: '#1f2937',
-              borderRadius: '12px',
+              backgroundColor: '#0f0b1e',
+              borderRadius: 0,
               padding: '20px',
-              marginBottom: '20px'
+              marginBottom: '20px',
+              border: '2px solid #0a0814',
+              boxShadow: 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814'
             }}>
-              <h3 style={{
-                fontSize: '16px',
-                fontWeight: '600',
+              <h3 className="snes-pixel" style={{
+                fontSize: '10px',
                 color: '#ffffff',
+                marginTop: 0,
                 marginBottom: '16px',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px'
+                gap: '8px',
+                letterSpacing: 0,
+                lineHeight: 1.4
               }}>
-                <DollarSign size={18} />
+                <DollarSign size={16} color="#3ad17e" />
                 Financial Breakdown
               </h3>
-              
+
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: '#9ca3af' }}>Revenue</span>
-                  <span style={{ color: '#10b981', fontWeight: '600' }}>+${totalRevenue}</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: '#b9b3d6', fontSize: '13px' }}>Revenue</span>
+                  <span className="snes-pixel" style={{ color: '#3ad17e', fontSize: '9px', letterSpacing: 0 }}>+${totalRevenue}</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: '#9ca3af' }}>Costs</span>
-                  <span style={{ color: '#ef4444', fontWeight: '600' }}>-${totalCosts}</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: '#b9b3d6', fontSize: '13px' }}>Costs</span>
+                  <span className="snes-pixel" style={{ color: '#ff5c57', fontSize: '9px', letterSpacing: 0 }}>-${totalCosts}</span>
                 </div>
                 {totalUpkeep > 0 && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
-                    <span style={{ color: '#6b7280' }}>└ Living Costs (rent, ramen, regret)</span>
-                    <span style={{ color: '#ef4444' }}>-${totalUpkeep}</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px' }}>
+                    <span style={{ color: '#6f6796', fontSize: '12px' }}>└ Living Costs (rent, ramen, regret)</span>
+                    <span style={{ color: '#ff5c57', fontSize: '12px' }}>-${totalUpkeep}</span>
                   </div>
                 )}
                 <div style={{
-                  borderTop: '1px solid #374151',
+                  borderTop: '2px solid #2a2350',
                   paddingTop: '12px',
                   display: 'flex',
-                  justifyContent: 'space-between'
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
                 }}>
-                  <span style={{ color: '#ffffff', fontWeight: '600' }}>Net Profit</span>
-                  <span style={{
-                    color: totalProfit >= 0 ? '#10b981' : '#ef4444',
-                    fontWeight: 'bold',
-                    fontSize: '18px'
+                  <span className="snes-pixel" style={{ color: '#ffffff', fontSize: '9px', letterSpacing: 0 }}>Net Profit</span>
+                  <span className="snes-pixel" style={{
+                    color: totalProfit >= 0 ? '#3ad17e' : '#ff5c57',
+                    fontSize: '11px',
+                    letterSpacing: 0
                   }}>
                     {totalProfit >= 0 ? '+' : ''}{totalProfit}
                   </span>
@@ -246,34 +265,36 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
               marginBottom: '20px'
             }}>
               <div style={{
-                backgroundColor: '#1f2937',
-                borderRadius: '12px',
+                backgroundColor: '#0f0b1e',
+                borderRadius: 0,
                 padding: '16px',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '12px'
+                gap: '12px',
+                border: '2px solid #c77dff'
               }}>
-                <Users size={20} color="#a78bfa" />
+                <Users size={20} color="#c77dff" />
                 <div>
-                  <div style={{ color: '#9ca3af', fontSize: '12px' }}>Fans</div>
-                  <div style={{ color: '#ffffff', fontWeight: '600' }}>
+                  <div className="snes-pixel" style={{ color: '#b9b3d6', fontSize: '7px', letterSpacing: 0, marginBottom: '6px' }}>Fans</div>
+                  <div className="snes-pixel" style={{ color: '#ffffff', fontSize: '10px', letterSpacing: 0 }}>
                     {totalFans > 0 ? '+' : ''}{totalFans}
                   </div>
                 </div>
               </div>
 
               <div style={{
-                backgroundColor: '#1f2937',
-                borderRadius: '12px',
+                backgroundColor: '#0f0b1e',
+                borderRadius: 0,
                 padding: '16px',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '12px'
+                gap: '12px',
+                border: '2px solid #ffd23f'
               }}>
-                <Star size={20} color="#fbbf24" />
+                <Star size={20} color="#ffd23f" />
                 <div>
-                  <div style={{ color: '#9ca3af', fontSize: '12px' }}>Reputation</div>
-                  <div style={{ color: '#ffffff', fontWeight: '600' }}>
+                  <div className="snes-pixel" style={{ color: '#b9b3d6', fontSize: '7px', letterSpacing: 0, marginBottom: '6px' }}>Reputation</div>
+                  <div className="snes-pixel" style={{ color: '#ffffff', fontSize: '10px', letterSpacing: 0 }}>
                     {totalRep > 0 ? '+' : ''}{totalRep}
                   </div>
                 </div>
@@ -283,37 +304,45 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
             {/* Show Results */}
             {showResults.length > 0 && (
               <div style={{ marginBottom: '20px' }}>
-                <h3 style={{
-                  fontSize: '16px',
-                  fontWeight: '600',
+                <h3 className="snes-pixel" style={{
+                  fontSize: '10px',
                   color: '#ffffff',
-                  marginBottom: '12px'
+                  marginTop: 0,
+                  marginBottom: '12px',
+                  letterSpacing: 0,
+                  lineHeight: 1.4
                 }}>Tonight's Shows</h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {showResults.map((result, index) => {
                     const details = getShowDetails(result.showId);
                     return (
                     <div key={index} style={{
-                      backgroundColor: '#1f2937',
-                      borderRadius: '8px',
+                      backgroundColor: '#0f0b1e',
+                      borderRadius: 0,
                       padding: '12px',
-                      fontSize: '14px'
+                      fontSize: '14px',
+                      border: '2px solid #0a0814',
+                      boxShadow: 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814'
                     }}>
                       <div style={{
                         display: 'flex',
                         justifyContent: 'space-between',
-                        marginBottom: '4px'
+                        alignItems: 'center',
+                        gap: '8px',
+                        marginBottom: '6px'
                       }}>
-                        <span style={{ color: '#ffffff', fontWeight: '500' }}>
+                        <span style={{ color: '#ffffff', fontWeight: '500', fontSize: '13px' }}>
                           {details.bandName} @ {details.venueName}
                         </span>
-                        <span style={{
-                          color: result.revenue - result.financials.costs > 0 ? '#10b981' : '#ef4444'
+                        <span className="snes-pixel" style={{
+                          fontSize: '9px',
+                          letterSpacing: 0,
+                          color: result.revenue - result.financials.costs > 0 ? '#3ad17e' : '#ff5c57'
                         }}>
                           ${result.revenue - result.financials.costs}
                         </span>
                       </div>
-                      <div style={{ color: '#9ca3af', fontSize: '12px' }}>
+                      <div style={{ color: '#6f6796', fontSize: '12px' }}>
                         {result.attendance}/{details.capacity} attended • +{result.fansGained} fans
                       </div>
                     </div>
@@ -326,22 +355,25 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
             {/* Day Job Result */}
             {dayJobResult && (
               <div style={{
-                backgroundColor: '#1f2937',
-                borderRadius: '12px',
+                backgroundColor: '#0f0b1e',
+                borderRadius: 0,
                 padding: '16px',
                 marginBottom: '20px',
-                borderLeft: '4px solid #f59e0b'
+                border: '2px solid #0a0814',
+                borderLeft: '4px solid #ffd23f'
               }}>
-                <h3 style={{
-                  fontSize: '16px',
-                  fontWeight: '600',
+                <h3 className="snes-pixel" style={{
+                  fontSize: '10px',
                   color: '#ffffff',
-                  marginBottom: '8px'
+                  marginTop: 0,
+                  marginBottom: '10px',
+                  letterSpacing: 0,
+                  lineHeight: 1.4
                 }}>Day Job</h3>
-                <p style={{ color: '#d1d5db', fontSize: '14px', margin: '0 0 8px 0' }}>
+                <p style={{ color: '#b9b3d6', fontSize: '13px', margin: '0 0 8px 0', lineHeight: 1.5 }}>
                   {dayJobResult.message}
                 </p>
-                <div style={{ fontSize: '14px', color: '#9ca3af' }}>
+                <div className="snes-pixel" style={{ fontSize: '8px', color: '#b9b3d6', letterSpacing: 0, lineHeight: 1.6 }}>
                   +${dayJobResult.money} • Stress +{dayJobResult.stressGain}%
                 </div>
               </div>
@@ -350,12 +382,13 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
             {/* Difficulty Event */}
             {difficultyEvent && (
               <div style={{
-                backgroundColor: '#1f2937',
-                borderRadius: '12px',
+                backgroundColor: '#0f0b1e',
+                borderRadius: 0,
                 padding: '16px',
-                borderLeft: '4px solid #ef4444'
+                border: '2px solid #ff5c57',
+                borderLeft: '4px solid #ff5c57'
               }}>
-                <p style={{ color: '#ef4444', fontSize: '14px', margin: 0 }}>
+                <p style={{ color: '#ff5c57', fontSize: '13px', margin: 0, lineHeight: 1.5 }}>
                   {difficultyEvent.message}
                 </p>
               </div>
@@ -364,25 +397,19 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
 
           {/* Footer */}
           <div style={{
-            padding: '20px 24px',
-            borderTop: '1px solid #374151'
+            padding: '16px 20px',
+            borderTop: '2px solid #0a0814',
+            backgroundColor: '#0f0b1e'
           }}>
             <button
               onClick={onClose}
+              className="snes-btn"
               style={{
                 width: '100%',
-                backgroundColor: '#ec4899',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '12px',
-                fontSize: '16px',
-                fontWeight: '600',
-                cursor: 'pointer',
-                transition: 'all 0.2s'
+                minHeight: '44px',
+                fontSize: '11px',
+                cursor: 'pointer'
               }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#db2777'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#ec4899'}
             >
               Continue
             </button>

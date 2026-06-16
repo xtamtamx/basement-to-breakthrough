@@ -38,6 +38,28 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     }
   };
 
+  // Reusable inline tokens for the SNES look
+  const sectionHeader: React.CSSProperties = {
+    fontFamily: '"Press Start 2P", monospace',
+    fontSize: '11px',
+    letterSpacing: 0,
+    color: '#f72585',
+    marginTop: 0,
+    marginBottom: '16px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    textTransform: 'uppercase',
+  };
+
+  const insetCard: React.CSSProperties = {
+    backgroundColor: '#0f0b1e',
+    border: '2px solid #0a0814',
+    boxShadow: 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814',
+    borderRadius: 0,
+    padding: '16px',
+  };
+
   return (
     <div style={{
       position: 'fixed',
@@ -45,7 +67,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
       left: 0,
       right: 0,
       bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.95)',
+      backgroundColor: 'rgba(8, 6, 18, 0.86)',
       zIndex: 9999,
       display: 'flex',
       alignItems: 'center',
@@ -54,43 +76,53 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
       overflowY: 'auto'
     }} onClick={onClose}>
       <div style={{
-        backgroundColor: '#111827',
-        borderRadius: '16px',
+        backgroundColor: '#171327',
+        borderRadius: 0,
         maxWidth: '500px',
         width: '100%',
         maxHeight: '90vh',
         overflow: 'hidden',
-        border: '2px solid #ec4899',
-        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+        border: '2px solid #0a0814',
+        borderTop: '3px solid #f72585',
+        boxShadow: 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814',
         display: 'flex',
         flexDirection: 'column'
       }} onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div style={{
           padding: '20px 24px',
-          borderBottom: '1px solid #374151',
+          borderBottom: '2px solid #2a2350',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center'
         }}>
           <h2 style={{
-            fontSize: '24px',
-            fontWeight: 'bold',
-            color: '#ec4899',
+            fontFamily: '"Press Start 2P", monospace',
+            fontSize: '14px',
+            letterSpacing: 0,
+            color: '#f72585',
             margin: 0
           }}>Settings</h2>
           <button
             onClick={onClose}
             style={{
-              background: 'none',
-              border: 'none',
-              color: '#9ca3af',
+              width: '32px',
+              height: '32px',
+              minWidth: '44px',
+              minHeight: '44px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: '#1f1a3a',
+              border: '2px solid #0a0814',
+              borderRadius: 0,
+              color: '#b9b3d6',
               cursor: 'pointer',
-              padding: '4px'
+              padding: 0
             }}
             aria-label="Close settings"
           >
-            <X size={24} />
+            <X size={20} />
           </button>
         </div>
 
@@ -102,70 +134,76 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         }}>
           {/* Audio Settings */}
           <section style={{ marginBottom: '32px' }}>
-            <h3 style={{
-              fontSize: '18px',
-              fontWeight: '600',
-              color: '#ec4899',
-              marginBottom: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}>
-              {enabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
+            <h3 style={sectionHeader}>
+              {enabled ? <Volume2 size={18} color="#f72585" /> : <VolumeX size={18} color="#f72585" />}
               Audio
             </h3>
-            
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {/* Sound Toggle */}
               <div style={{
+                ...insetCard,
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'space-between',
-                backgroundColor: '#1f2937',
-                borderRadius: '12px',
-                padding: '16px'
+                justifyContent: 'space-between'
               }}>
-                <span style={{ color: '#ffffff' }}>Sound Effects</span>
+                <span style={{
+                  fontFamily: '"Press Start 2P", monospace',
+                  fontSize: '9px',
+                  letterSpacing: 0,
+                  color: '#ffffff'
+                }}>Sound Effects</span>
                 <button
                   onClick={toggleSound}
                   style={{
-                    width: '48px',
-                    height: '24px',
-                    borderRadius: '12px',
-                    backgroundColor: enabled ? '#ec4899' : '#4b5563',
+                    width: '52px',
+                    height: '28px',
+                    minWidth: '44px',
+                    minHeight: '44px',
+                    borderRadius: 0,
+                    backgroundColor: enabled ? '#f72585' : '#0a0814',
                     position: 'relative',
-                    border: 'none',
+                    border: '2px solid #0a0814',
+                    boxShadow: 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814',
                     cursor: 'pointer',
-                    transition: 'background-color 0.2s'
+                    transition: 'none'
                   }}
                   aria-label={enabled ? 'Disable sound' : 'Enable sound'}
                 >
                   <div style={{
                     position: 'absolute',
-                    top: '2px',
-                    left: enabled ? '26px' : '2px',
-                    width: '20px',
-                    height: '20px',
-                    backgroundColor: 'white',
-                    borderRadius: '10px',
-                    transition: 'left 0.2s'
+                    top: '4px',
+                    left: enabled ? '28px' : '4px',
+                    width: '16px',
+                    height: '16px',
+                    backgroundColor: '#ffffff',
+                    borderRadius: 0,
+                    border: '2px solid #0a0814',
+                    transition: 'none'
                   }} />
                 </button>
               </div>
 
               {/* Volume Slider */}
-              <div style={{
-                backgroundColor: '#1f2937',
-                borderRadius: '12px',
-                padding: '16px'
-              }}>
+              <div style={insetCard}>
                 <div style={{
                   display: 'flex',
                   justifyContent: 'space-between',
-                  marginBottom: '8px'
+                  alignItems: 'center',
+                  marginBottom: '12px'
                 }}>
-                  <span style={{ color: '#9ca3af' }}>Volume</span>
-                  <span style={{ color: '#ffffff', fontWeight: '600' }}>{Math.round(volume * 100)}%</span>
+                  <span style={{
+                    fontFamily: '"Press Start 2P", monospace',
+                    fontSize: '9px',
+                    letterSpacing: 0,
+                    color: '#b9b3d6'
+                  }}>Volume</span>
+                  <span style={{
+                    fontFamily: '"Press Start 2P", monospace',
+                    fontSize: '9px',
+                    letterSpacing: 0,
+                    color: '#ffffff'
+                  }}>{Math.round(volume * 100)}%</span>
                 </div>
                 <input
                   type="range"
@@ -177,9 +215,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                   disabled={!enabled}
                   style={{
                     width: '100%',
-                    height: '6px',
-                    borderRadius: '3px',
-                    background: `linear-gradient(to right, #ec4899 0%, #ec4899 ${volume * 100}%, #374151 ${volume * 100}%, #374151 100%)`,
+                    height: '8px',
+                    borderRadius: 0,
+                    background: `linear-gradient(to right, #f72585 0%, #f72585 ${volume * 100}%, #0a0814 ${volume * 100}%, #0a0814 100%)`,
+                    border: '2px solid #0a0814',
                     outline: 'none',
                     opacity: enabled ? 1 : 0.5,
                     cursor: enabled ? 'pointer' : 'default'
@@ -191,23 +230,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
           {/* Accessibility */}
           <section style={{ marginBottom: '32px' }}>
-            <h3 style={{
-              fontSize: '18px',
-              fontWeight: '600',
-              color: '#ec4899',
-              marginBottom: '16px'
-            }}>Accessibility</h3>
-            
-            <div style={{
-              backgroundColor: '#1f2937',
-              borderRadius: '12px',
-              padding: '16px'
-            }}>
+            <h3 style={sectionHeader}>Accessibility</h3>
+
+            <div style={insetCard}>
               <label style={{
                 display: 'block',
-                color: '#9ca3af',
-                fontSize: '14px',
-                marginBottom: '8px'
+                fontFamily: '"Press Start 2P", monospace',
+                fontSize: '9px',
+                letterSpacing: 0,
+                color: '#b9b3d6',
+                marginBottom: '12px'
               }}>Colorblind Mode</label>
               <select
                 value={colorblindMode}
@@ -217,12 +249,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 }}
                 style={{
                   width: '100%',
+                  minHeight: '44px',
                   padding: '12px',
-                  backgroundColor: '#111827',
-                  border: '1px solid #374151',
-                  borderRadius: '8px',
+                  backgroundColor: '#0a0814',
+                  border: '2px solid #0a0814',
+                  boxShadow: 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814',
+                  borderRadius: 0,
                   color: '#ffffff',
-                  fontSize: '14px',
+                  fontSize: '13px',
                   cursor: 'pointer'
                 }}
               >
@@ -236,12 +270,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
           {/* Tutorial */}
           <section style={{ marginBottom: '32px' }}>
-            <h3 style={{
-              fontSize: '18px',
-              fontWeight: '600',
-              color: '#ec4899',
-              marginBottom: '16px'
-            }}>Tutorial</h3>
+            <h3 style={sectionHeader}>Tutorial</h3>
             <button
               onClick={() => {
                 tutorialManager.resetProgress();
@@ -251,48 +280,39 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
               }}
               style={{
                 width: '100%',
+                minHeight: '44px',
                 padding: '12px',
-                backgroundColor: '#374151',
+                backgroundColor: '#1f1a3a',
                 color: '#ffffff',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '14px',
-                fontWeight: '600',
+                border: '2px solid #0a0814',
+                boxShadow: 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814',
+                borderRadius: 0,
+                fontFamily: '"Press Start 2P", monospace',
+                fontSize: '9px',
+                letterSpacing: 0,
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '8px',
-                transition: 'background-color 0.2s'
+                transition: 'none'
               }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#4b5563'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#374151'}
             >
-              <RefreshCw size={16} />
+              <RefreshCw size={16} color="#ffffff" />
               Restart Tutorial
             </button>
           </section>
 
           {/* Game Info */}
           <section style={{ marginBottom: '32px' }}>
-            <h3 style={{
-              fontSize: '18px',
-              fontWeight: '600',
-              color: '#ec4899',
-              marginBottom: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}>
-              <Info size={20} />
+            <h3 style={sectionHeader}>
+              <Info size={18} color="#f72585" />
               About
             </h3>
             <div style={{
-              backgroundColor: '#1f2937',
-              borderRadius: '12px',
-              padding: '16px',
-              fontSize: '14px',
-              color: '#9ca3af',
+              ...insetCard,
+              fontSize: '13px',
+              color: '#b9b3d6',
               lineHeight: '1.6'
             }}>
               <p style={{ margin: '0 0 4px 0' }}>Basement to Breakthrough v0.1.0</p>
@@ -302,24 +322,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
           {/* Controls Guide */}
           <section style={{ marginBottom: '32px' }}>
-            <h3 style={{
-              fontSize: '18px',
-              fontWeight: '600',
-              color: '#ec4899',
-              marginBottom: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}>
-              <Gamepad2 size={20} />
+            <h3 style={sectionHeader}>
+              <Gamepad2 size={18} color="#f72585" />
               Controls
             </h3>
             <div style={{
-              backgroundColor: '#1f2937',
-              borderRadius: '12px',
-              padding: '16px',
-              fontSize: '14px',
-              color: '#9ca3af',
+              ...insetCard,
+              fontSize: '13px',
+              color: '#b9b3d6',
               lineHeight: '1.8'
             }}>
               <p style={{ margin: '0 0 8px 0' }}>• Tap bands and venues to select them</p>
@@ -331,37 +341,30 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
           {/* Danger Zone */}
           <section style={{
-            borderTop: '1px solid #374151',
+            borderTop: '2px solid #2a2350',
             paddingTop: '24px'
           }}>
-            <h3 style={{
-              fontSize: '18px',
-              fontWeight: '600',
-              color: '#ef4444',
-              marginBottom: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}>
-              <AlertTriangle size={20} />
+            <h3 style={{ ...sectionHeader, color: '#ff5c57' }}>
+              <AlertTriangle size={18} color="#ff5c57" />
               Danger Zone
             </h3>
             <button
               onClick={handleAbandonRun}
               style={{
                 width: '100%',
+                minHeight: '44px',
                 padding: '12px',
-                backgroundColor: '#dc2626',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '14px',
-                fontWeight: '600',
+                backgroundColor: '#ff5c57',
+                color: '#3a0a08',
+                border: '2px solid #0a0814',
+                boxShadow: 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814',
+                borderRadius: 0,
+                fontFamily: '"Press Start 2P", monospace',
+                fontSize: '9px',
+                letterSpacing: 0,
                 cursor: 'pointer',
-                transition: 'background-color 0.2s'
+                transition: 'none'
               }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#b91c1c'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#dc2626'}
             >
               Abandon Run (Round {currentRound})
             </button>

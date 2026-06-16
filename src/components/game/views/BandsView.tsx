@@ -58,14 +58,11 @@ export const BandsView: React.FC = () => {
       display: 'flex',
       flexDirection: 'column',
       height: '100%',
-      backgroundImage: 'linear-gradient(to bottom, #1a1030, #0c0a14)',
+      backgroundColor: '#0a0814',
       overflow: 'hidden'
     }}>
       {/* Header */}
-      <div style={{
-        backgroundColor: 'rgba(10, 8, 18, 0.6)',
-        backdropFilter: 'blur(8px)',
-        borderBottom: '1px solid #1f2937',
+      <div className="snes-bar snes-bar--top" style={{
         padding: 'calc(8px + env(safe-area-inset-top)) 14px 8px',
         flexShrink: 0,
         display: 'flex',
@@ -74,17 +71,16 @@ export const BandsView: React.FC = () => {
         gap: '10px'
       }}>
         <div style={{ minWidth: 0 }}>
-          <h2 style={{
-            fontSize: '17px',
-            fontWeight: 900,
+          <h2 className="snes-pixel" style={{
+            fontSize: '12px',
             color: '#ffffff',
             margin: 0,
-            letterSpacing: '-0.01em'
+            letterSpacing: 0
           }}>The Roster</h2>
           <p style={{
             fontSize: '11px',
-            color: '#9ca3af',
-            margin: '1px 0 0'
+            color: '#b9b3d6',
+            margin: '3px 0 0'
           }}>Scout the scene, sign the legends.</p>
         </div>
 
@@ -92,9 +88,10 @@ export const BandsView: React.FC = () => {
         <div style={{
           display: 'flex',
           gap: '4px',
-          backgroundColor: 'rgba(0,0,0,0.3)',
-          border: '1px solid #1f2937',
-          borderRadius: '10px',
+          backgroundColor: '#0f0b1e',
+          border: '2px solid #0a0814',
+          boxShadow: 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814',
+          borderRadius: 0,
           padding: '3px',
           flexShrink: 0
         }}>
@@ -104,16 +101,18 @@ export const BandsView: React.FC = () => {
               <button
                 key={tab.id}
                 onClick={() => setFilter(tab.id)}
+                className="snes-pixel"
                 style={{
-                  padding: '6px 10px',
-                  backgroundColor: active ? '#ec4899' : 'transparent',
-                  color: active ? '#ffffff' : '#9ca3af',
+                  padding: '8px 10px',
+                  minHeight: '44px',
+                  backgroundColor: active ? '#f72585' : 'transparent',
+                  color: active ? '#ffffff' : '#6f6796',
                   border: 'none',
-                  borderRadius: '7px',
-                  fontSize: '12px',
-                  fontWeight: 700,
+                  borderRadius: 0,
+                  fontSize: '8px',
+                  letterSpacing: 0,
                   cursor: 'pointer',
-                  transition: 'all 0.2s',
+                  transition: 'none',
                   whiteSpace: 'nowrap'
                 }}
               >
@@ -132,20 +131,19 @@ export const BandsView: React.FC = () => {
         paddingBottom: 'calc(5rem + env(safe-area-inset-bottom))'
       }}>
         {filteredBands.length === 0 ? (
-          <div style={{
+          <div className="snes-panel-inset" style={{
             textAlign: 'center',
             padding: '48px 24px',
-            backgroundColor: 'rgba(0,0,0,0.3)',
-            border: '1px solid #1f2937',
-            borderRadius: '14px',
-            color: '#9ca3af'
+            border: '2px solid #ffd23f',
+            borderRadius: 0,
+            color: '#b9b3d6'
           }}>
-            <div style={{ fontSize: '44px', marginBottom: '12px', opacity: 0.85 }}>🎸</div>
-            <h3 style={{
-              fontSize: '16px',
-              fontWeight: 700,
+            <div style={{ fontSize: '44px', marginBottom: '12px' }}>🎸</div>
+            <h3 className="snes-pixel" style={{
+              fontSize: '11px',
               color: '#ffffff',
-              margin: '0 0 6px'
+              margin: '0 0 10px',
+              letterSpacing: 0
             }}>{filter === 'roster' ? 'Empty roster' : 'No bands here'}</h3>
             <p style={{ fontSize: '13px', margin: 0, lineHeight: 1.5 }}>
               {filter === 'roster'
@@ -164,20 +162,22 @@ export const BandsView: React.FC = () => {
                   {/* Band Card */}
                   <div
                     style={{
-                      backgroundColor: '#111827',
-                      border: isSelected ? '1px solid #ec4899' : '1px solid #1f2937',
-                      boxShadow: isSelected ? '0 0 0 1px #ec4899, 0 6px 16px rgba(236,72,153,0.18)' : 'none',
-                      borderRadius: '12px',
+                      backgroundColor: '#171327',
+                      border: isSelected ? '2px solid #f72585' : '2px solid #0a0814',
+                      boxShadow: isSelected
+                        ? 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814, 0 0 0 1px #f72585'
+                        : 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814',
+                      borderRadius: 0,
                       padding: '12px',
                       cursor: 'pointer',
-                      transition: 'all 0.2s',
+                      transition: 'none',
                       minHeight: '44px'
                     }}
                     onClick={() => handleBandClick(band)}
                   >
                     <div style={{ display: 'flex', gap: '12px' }}>
                       {/* Band Icon */}
-                      <div style={{
+                      <div className="snes-panel-inset" style={{
                         fontSize: '22px',
                         flexShrink: 0,
                         display: 'flex',
@@ -185,9 +185,7 @@ export const BandsView: React.FC = () => {
                         justifyContent: 'center',
                         width: '44px',
                         height: '44px',
-                        backgroundColor: 'rgba(0,0,0,0.35)',
-                        border: '1px solid #1f2937',
-                        borderRadius: '10px'
+                        borderRadius: 0
                       }}>
                         {getGenreIcon(band.genre)}
                       </div>
@@ -202,20 +200,20 @@ export const BandsView: React.FC = () => {
                           gap: '8px'
                         }}>
                           <div style={{ minWidth: 0, flex: 1 }}>
-                            <h3 style={{
-                              fontSize: '15px',
-                              fontWeight: 700,
+                            <h3 className="snes-pixel" style={{
+                              fontSize: '10px',
                               color: '#ffffff',
                               margin: 0,
-                              letterSpacing: '-0.01em',
+                              letterSpacing: 0,
+                              lineHeight: 1.3,
                               whiteSpace: 'nowrap',
                               overflow: 'hidden',
                               textOverflow: 'ellipsis'
                             }}>{band.name}</h3>
                             <p style={{
                               fontSize: '11px',
-                              color: '#9ca3af',
-                              margin: '2px 0 0 0'
+                              color: '#b9b3d6',
+                              margin: '5px 0 0 0'
                             }}>
                               {band.genre}{band.hometown ? ` • ${band.hometown}` : ''}
                             </p>
@@ -224,29 +222,27 @@ export const BandsView: React.FC = () => {
                           {/* Badges */}
                           <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
                             {isInRoster && (
-                              <span style={{
-                                padding: '2px 8px',
-                                backgroundColor: 'rgba(16,185,129,0.15)',
-                                border: '1px solid #10b981',
-                                color: '#34d399',
-                                fontSize: '10px',
-                                fontWeight: 700,
-                                borderRadius: '999px',
+                              <span className="snes-pixel" style={{
+                                padding: '4px 8px',
+                                backgroundColor: '#0f0b1e',
+                                border: '2px solid #3ad17e',
+                                color: '#3ad17e',
+                                fontSize: '7px',
+                                borderRadius: 0,
                                 textTransform: 'uppercase',
-                                letterSpacing: '0.03em'
+                                letterSpacing: 0
                               }}>Signed</span>
                             )}
                             {band.isRealArtist && (
-                              <span style={{
-                                padding: '2px 8px',
-                                backgroundColor: 'rgba(236,72,153,0.15)',
-                                border: '1px solid #ec4899',
-                                color: '#f9a8d4',
-                                fontSize: '10px',
-                                fontWeight: 700,
-                                borderRadius: '999px',
+                              <span className="snes-pixel" style={{
+                                padding: '4px 8px',
+                                backgroundColor: '#0f0b1e',
+                                border: '2px solid #f72585',
+                                color: '#f72585',
+                                fontSize: '7px',
+                                borderRadius: 0,
                                 textTransform: 'uppercase',
-                                letterSpacing: '0.03em'
+                                letterSpacing: 0
                               }}>Real</span>
                             )}
                           </div>
@@ -264,29 +260,29 @@ export const BandsView: React.FC = () => {
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'space-between',
-                              marginBottom: '3px'
+                              marginBottom: '4px'
                             }}>
-                              <span style={{
-                                fontSize: '9px',
-                                color: '#6b7280',
+                              <span className="snes-pixel" style={{
+                                fontSize: '7px',
+                                color: '#6f6796',
                                 textTransform: 'uppercase',
-                                letterSpacing: '0.05em',
-                                fontWeight: 700
+                                letterSpacing: 0
                               }}>Pop</span>
-                              <span style={{ fontSize: '11px', fontWeight: 700, color: '#ec4899' }}>{band.popularity}</span>
+                              <span className="snes-pixel" style={{ fontSize: '8px', color: '#f72585', letterSpacing: 0 }}>{band.popularity}</span>
                             </div>
                             <div style={{
-                              height: '4px',
-                              backgroundColor: '#1f2937',
-                              borderRadius: '2px',
+                              height: '6px',
+                              backgroundColor: '#0f0b1e',
+                              border: '2px solid #0a0814',
+                              borderRadius: 0,
                               overflow: 'hidden'
                             }}>
                               <div
                                 style={{
                                   height: '100%',
-                                  backgroundColor: '#ec4899',
+                                  backgroundColor: '#f72585',
                                   width: `${band.popularity}%`,
-                                  transition: 'width 0.3s'
+                                  transition: 'none'
                                 }}
                               />
                             </div>
@@ -296,29 +292,29 @@ export const BandsView: React.FC = () => {
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'space-between',
-                              marginBottom: '3px'
+                              marginBottom: '4px'
                             }}>
-                              <span style={{
-                                fontSize: '9px',
-                                color: '#6b7280',
+                              <span className="snes-pixel" style={{
+                                fontSize: '7px',
+                                color: '#6f6796',
                                 textTransform: 'uppercase',
-                                letterSpacing: '0.05em',
-                                fontWeight: 700
+                                letterSpacing: 0
                               }}>Energy</span>
-                              <span style={{ fontSize: '11px', fontWeight: 700, color: '#f59e0b' }}>{band.energy}</span>
+                              <span className="snes-pixel" style={{ fontSize: '8px', color: '#ffd23f', letterSpacing: 0 }}>{band.energy}</span>
                             </div>
                             <div style={{
-                              height: '4px',
-                              backgroundColor: '#1f2937',
-                              borderRadius: '2px',
+                              height: '6px',
+                              backgroundColor: '#0f0b1e',
+                              border: '2px solid #0a0814',
+                              borderRadius: 0,
                               overflow: 'hidden'
                             }}>
                               <div
                                 style={{
                                   height: '100%',
-                                  backgroundColor: '#f59e0b',
+                                  backgroundColor: '#ffd23f',
                                   width: `${band.energy}%`,
-                                  transition: 'width 0.3s'
+                                  transition: 'none'
                                 }}
                               />
                             </div>
@@ -330,17 +326,14 @@ export const BandsView: React.FC = () => {
 
                   {/* Expanded Details */}
                   {isSelected && (
-                    <div style={{
-                      backgroundColor: '#111827',
-                      border: '1px solid #1f2937',
-                      borderRadius: '12px',
-                      padding: '12px',
-                      animation: 'slideDown 0.2s ease-out'
+                    <div className="snes-panel" style={{
+                      borderRadius: 0,
+                      padding: '12px'
                     }}>
                       {band.bio && (
                         <p style={{
                           fontSize: '12px',
-                          color: '#d1d5db',
+                          color: '#b9b3d6',
                           margin: '0 0 12px',
                           lineHeight: '1.5'
                         }}>{band.bio}</p>
@@ -353,64 +346,57 @@ export const BandsView: React.FC = () => {
                         gap: '8px',
                         marginBottom: '12px'
                       }}>
-                        <div style={{
-                          backgroundColor: 'rgba(0,0,0,0.3)',
-                          border: '1px solid #1f2937',
-                          borderRadius: '10px',
+                        <div className="snes-panel-inset" style={{
+                          borderRadius: 0,
                           padding: '10px'
                         }}>
                           <div style={{
                             display: 'flex',
                             alignItems: 'center',
                             gap: '6px',
-                            marginBottom: '4px'
+                            marginBottom: '8px'
                           }}>
-                            <Star size={12} color="#ec4899" />
-                            <span style={{
-                              fontSize: '10px',
-                              color: '#9ca3af',
+                            <Star size={12} color="#f72585" />
+                            <span className="snes-pixel" style={{
+                              fontSize: '7px',
+                              color: '#b9b3d6',
                               textTransform: 'uppercase',
-                              letterSpacing: '0.05em',
-                              fontWeight: 700
+                              letterSpacing: 0
                             }}>Popularity</span>
                           </div>
-                          <div style={{ fontSize: '20px', fontWeight: 800, color: '#ffffff', lineHeight: 1 }}>{band.popularity}</div>
+                          <div className="snes-pixel" style={{ fontSize: '16px', color: '#ffffff', lineHeight: 1, letterSpacing: 0 }}>{band.popularity}</div>
                         </div>
-                        <div style={{
-                          backgroundColor: 'rgba(0,0,0,0.3)',
-                          border: '1px solid #1f2937',
-                          borderRadius: '10px',
+                        <div className="snes-panel-inset" style={{
+                          borderRadius: 0,
                           padding: '10px'
                         }}>
                           <div style={{
                             display: 'flex',
                             alignItems: 'center',
                             gap: '6px',
-                            marginBottom: '4px'
+                            marginBottom: '8px'
                           }}>
-                            <Zap size={12} color="#f59e0b" />
-                            <span style={{
-                              fontSize: '10px',
-                              color: '#9ca3af',
+                            <Zap size={12} color="#ffd23f" />
+                            <span className="snes-pixel" style={{
+                              fontSize: '7px',
+                              color: '#b9b3d6',
                               textTransform: 'uppercase',
-                              letterSpacing: '0.05em',
-                              fontWeight: 700
+                              letterSpacing: 0
                             }}>Energy</span>
                           </div>
-                          <div style={{ fontSize: '20px', fontWeight: 800, color: '#ffffff', lineHeight: 1 }}>{band.energy}</div>
+                          <div className="snes-pixel" style={{ fontSize: '16px', color: '#ffffff', lineHeight: 1, letterSpacing: 0 }}>{band.energy}</div>
                         </div>
                       </div>
 
                       {/* Synergies */}
                       {band.relationships && band.relationships.length > 0 && (
                         <div style={{ marginBottom: '12px' }}>
-                          <h4 style={{
-                            fontSize: '10px',
-                            fontWeight: 700,
-                            color: '#9ca3af',
+                          <h4 className="snes-pixel" style={{
+                            fontSize: '8px',
+                            color: '#b9b3d6',
                             margin: '0 0 8px',
                             textTransform: 'uppercase',
-                            letterSpacing: '0.05em'
+                            letterSpacing: 0
                           }}>Band Relationships</h4>
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                             {band.relationships.map((rel) => {
@@ -419,13 +405,13 @@ export const BandsView: React.FC = () => {
                                 <span
                                   key={rel.bandId}
                                   style={{
-                                    padding: '4px 10px',
-                                    backgroundColor: isFriendly ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)',
-                                    border: `1px solid ${isFriendly ? '#10b981' : '#ef4444'}`,
-                                    color: isFriendly ? '#34d399' : '#f87171',
+                                    padding: '5px 10px',
+                                    backgroundColor: '#0f0b1e',
+                                    border: `2px solid ${isFriendly ? '#3ad17e' : '#ff5c57'}`,
+                                    color: isFriendly ? '#3ad17e' : '#ff5c57',
                                     fontSize: '11px',
                                     fontWeight: 600,
-                                    borderRadius: '999px'
+                                    borderRadius: 0
                                   }}
                                 >
                                   {isFriendly ? '👫' : '⚔️'} {allBands.find(b => b.id === rel.bandId)?.name}
@@ -440,60 +426,44 @@ export const BandsView: React.FC = () => {
                       <div style={{ display: 'flex', gap: '8px' }}>
                         {isInRoster ? (
                           <button
+                            className="snes-btn snes-btn--danger snes-pixel"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleRemoveFromRoster(band.id);
                             }}
                             style={{
                               flex: 1,
-                              padding: '12px',
-                              backgroundColor: 'transparent',
-                              color: '#f87171',
-                              border: '1px solid #b91c1c',
-                              borderRadius: '10px',
-                              fontSize: '14px',
-                              fontWeight: 700,
+                              fontSize: '9px',
                               cursor: 'pointer',
                               minHeight: '44px',
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
                               gap: '8px',
-                              transition: 'all 0.2s'
+                              transition: 'none'
                             }}
-                            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(185,28,28,0.18)'; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
                           >
                             <UserMinus size={16} />
                             Drop from Roster
                           </button>
                         ) : (
                           <button
+                            className="snes-btn snes-btn--green snes-pixel"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleAddToRoster(band.id);
                             }}
                             style={{
                               flex: 1,
-                              padding: '12px',
-                              backgroundImage: 'linear-gradient(135deg, #10b981, #059669)',
-                              color: '#ffffff',
-                              border: 'none',
-                              borderRadius: '10px',
-                              fontSize: '14px',
-                              fontWeight: 700,
+                              fontSize: '9px',
                               cursor: 'pointer',
                               minHeight: '44px',
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
                               gap: '8px',
-                              boxShadow: '0 4px 12px rgba(16,185,129,0.3)',
-                              transition: 'transform 0.15s'
+                              transition: 'none'
                             }}
-                            onMouseDown={(e) => { e.currentTarget.style.transform = 'scale(0.98)'; }}
-                            onMouseUp={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
                           >
                             <UserPlus size={16} />
                             Sign to Roster
@@ -502,27 +472,20 @@ export const BandsView: React.FC = () => {
 
                         {band.upgrades && (
                           <button
+                            className="snes-btn snes-btn--ghost snes-pixel"
                             onClick={(e) => {
                               e.stopPropagation();
                               setUpgradeModalBand(band);
                             }}
                             style={{
-                              padding: '12px 16px',
-                              backgroundColor: 'rgba(0,0,0,0.3)',
-                              color: '#ffffff',
-                              border: '1px solid #1f2937',
-                              borderRadius: '10px',
-                              fontSize: '14px',
-                              fontWeight: 700,
+                              fontSize: '9px',
                               cursor: 'pointer',
                               minHeight: '44px',
                               display: 'flex',
                               alignItems: 'center',
                               gap: '8px',
-                              transition: 'all 0.2s'
+                              transition: 'none'
                             }}
-                            onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#374151'; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#1f2937'; }}
                           >
                             <TrendingUp size={16} />
                             Upgrade
@@ -546,19 +509,6 @@ export const BandsView: React.FC = () => {
           onClose={() => setUpgradeModalBand(null)}
         />
       )}
-
-      <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes slideDown {
-          from {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      ` }} />
     </div>
   );
 };

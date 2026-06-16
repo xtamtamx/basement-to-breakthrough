@@ -213,3 +213,6 @@
 }
 
 .snes-divider { height: 2px; background: var(--snes-line); border: none; margin: 0; }
+
+/* Tint native form controls (volume slider, checkboxes, radios) to the brand. */
+input[type='range'], input[type='checkbox'], input[type='radio'], progress { accent-color: var(--snes-magenta); }

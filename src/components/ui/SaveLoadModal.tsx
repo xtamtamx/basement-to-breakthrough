@@ -125,7 +125,7 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ isOpen, onClose })
       left: 0,
       right: 0,
       bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.95)',
+      backgroundColor: 'rgba(8, 6, 18, 0.86)',
       zIndex: 9999,
       display: 'flex',
       alignItems: 'center',
@@ -134,63 +134,74 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ isOpen, onClose })
       overflowY: 'auto'
     }} onClick={onClose}>
       <div style={{
-        backgroundColor: '#111827',
-        borderRadius: '16px',
+        backgroundColor: '#171327',
+        borderRadius: 0,
         maxWidth: '600px',
         width: '100%',
         maxHeight: '90vh',
         overflow: 'hidden',
-        border: '2px solid #ec4899',
-        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+        border: '2px solid #0a0814',
+        borderTop: '3px solid #f72585',
+        boxShadow: 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814',
         display: 'flex',
         flexDirection: 'column'
       }} onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div style={{
           padding: '20px 24px',
-          borderBottom: '1px solid #374151',
+          borderBottom: '2px solid #2a2350',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center'
         }}>
-          <h2 style={{
-            fontSize: '24px',
-            fontWeight: 'bold',
-            color: '#ec4899',
-            margin: 0
+          <h2 className="snes-pixel" style={{
+            fontSize: '14px',
+            color: '#f72585',
+            textShadow: '3px 3px 0 #0a0814',
+            margin: 0,
+            textTransform: 'uppercase'
           }}>Save & Load</h2>
           <button
             onClick={onClose}
             style={{
-              background: 'none',
-              border: 'none',
-              color: '#9ca3af',
+              width: '32px',
+              height: '32px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: '#1f1a3a',
+              border: '2px solid #0a0814',
+              borderRadius: 0,
+              color: '#b9b3d6',
               cursor: 'pointer',
-              padding: '4px'
+              padding: 0
             }}
           >
-            <X size={24} />
+            <X size={20} />
           </button>
         </div>
 
         {/* Tabs */}
         <div style={{
           display: 'flex',
-          borderBottom: '1px solid #374151'
+          borderBottom: '2px solid #2a2350'
         }}>
           <button
+            className="snes-pixel"
             onClick={() => setActiveTab('save')}
             style={{
               flex: 1,
               padding: '16px',
-              backgroundColor: activeTab === 'save' ? '#1f2937' : 'transparent',
-              color: activeTab === 'save' ? '#ec4899' : '#9ca3af',
+              minHeight: '44px',
+              backgroundColor: activeTab === 'save' ? '#0f0b1e' : 'transparent',
+              color: activeTab === 'save' ? '#f72585' : '#6f6796',
               border: 'none',
-              borderBottom: activeTab === 'save' ? '2px solid #ec4899' : '2px solid transparent',
-              fontSize: '16px',
-              fontWeight: '600',
+              borderBottom: activeTab === 'save' ? '2px solid #f72585' : '2px solid transparent',
+              fontSize: '9px',
+              textTransform: 'uppercase',
+              letterSpacing: 0,
               cursor: 'pointer',
-              transition: 'all 0.2s',
+              transition: 'none',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -201,18 +212,21 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ isOpen, onClose })
             Save Game
           </button>
           <button
+            className="snes-pixel"
             onClick={() => setActiveTab('load')}
             style={{
               flex: 1,
               padding: '16px',
-              backgroundColor: activeTab === 'load' ? '#1f2937' : 'transparent',
-              color: activeTab === 'load' ? '#ec4899' : '#9ca3af',
+              minHeight: '44px',
+              backgroundColor: activeTab === 'load' ? '#0f0b1e' : 'transparent',
+              color: activeTab === 'load' ? '#f72585' : '#6f6796',
               border: 'none',
-              borderBottom: activeTab === 'load' ? '2px solid #ec4899' : '2px solid transparent',
-              fontSize: '16px',
-              fontWeight: '600',
+              borderBottom: activeTab === 'load' ? '2px solid #f72585' : '2px solid transparent',
+              fontSize: '9px',
+              textTransform: 'uppercase',
+              letterSpacing: 0,
               cursor: 'pointer',
-              transition: 'all 0.2s',
+              transition: 'none',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -233,32 +247,36 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ isOpen, onClose })
           {/* Messages */}
           {error && (
             <div style={{
-              backgroundColor: '#dc2626',
-              color: '#ffffff',
+              backgroundColor: '#0f0b1e',
+              border: '2px solid #ff5c57',
+              color: '#ff5c57',
               padding: '12px 16px',
-              borderRadius: '8px',
+              borderRadius: 0,
               marginBottom: '16px',
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
-              fontSize: '14px'
+              fontSize: '13px',
+              boxShadow: 'inset 2px 2px 0 0 #000, inset -2px -2px 0 0 #2a2350'
             }}>
               <AlertCircle size={16} />
               {error}
             </div>
           )}
-          
+
           {success && (
             <div style={{
-              backgroundColor: '#10b981',
-              color: '#ffffff',
+              backgroundColor: '#0f0b1e',
+              border: '2px solid #3ad17e',
+              color: '#3ad17e',
               padding: '12px 16px',
-              borderRadius: '8px',
+              borderRadius: 0,
               marginBottom: '16px',
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
-              fontSize: '14px'
+              fontSize: '13px',
+              boxShadow: 'inset 2px 2px 0 0 #000, inset -2px -2px 0 0 #2a2350'
             }}>
               <CheckCircle size={16} />
               {success}
@@ -269,17 +287,15 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ isOpen, onClose })
             // Save Tab
             <div>
               {/* Current Game Info */}
-              <div style={{
-                backgroundColor: '#1f2937',
-                borderRadius: '12px',
+              <div className="snes-panel-inset" style={{
                 padding: '20px',
                 marginBottom: '20px'
               }}>
-                <h3 style={{
-                  fontSize: '16px',
-                  fontWeight: '600',
+                <h3 className="snes-pixel" style={{
+                  fontSize: '10px',
                   color: '#ffffff',
-                  marginBottom: '12px'
+                  marginBottom: '14px',
+                  textTransform: 'uppercase'
                 }}>Current Game</h3>
                 <div style={{
                   display: 'grid',
@@ -287,26 +303,26 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ isOpen, onClose })
                   gap: '12px'
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Calendar size={16} color="#9ca3af" />
-                    <span style={{ color: '#9ca3af', fontSize: '14px' }}>
+                    <Calendar size={16} color="#b9b3d6" />
+                    <span className="snes-pixel" style={{ color: '#b9b3d6', fontSize: '8px' }}>
                       Round {gameStore.currentRound}
                     </span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <DollarSign size={16} color="#10b981" />
-                    <span style={{ color: '#10b981', fontSize: '14px' }}>
+                    <DollarSign size={16} color="#3ad17e" />
+                    <span className="snes-pixel" style={{ color: '#3ad17e', fontSize: '8px' }}>
                       {formatMoney(gameStore.money)}
                     </span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Star size={16} color="#fbbf24" />
-                    <span style={{ color: '#fbbf24', fontSize: '14px' }}>
+                    <Star size={16} color="#ffd23f" />
+                    <span className="snes-pixel" style={{ color: '#ffd23f', fontSize: '8px' }}>
                       {gameStore.reputation} Rep
                     </span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Users size={16} color="#a78bfa" />
-                    <span style={{ color: '#a78bfa', fontSize: '14px' }}>
+                    <Users size={16} color="#c77dff" />
+                    <span className="snes-pixel" style={{ color: '#c77dff', fontSize: '8px' }}>
                       {gameStore.fans} Fans
                     </span>
                   </div>
@@ -315,11 +331,12 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ isOpen, onClose })
 
               {/* Save Name Input */}
               <div style={{ marginBottom: '20px' }}>
-                <label style={{
+                <label className="snes-pixel" style={{
                   display: 'block',
-                  color: '#9ca3af',
-                  fontSize: '14px',
-                  marginBottom: '8px'
+                  color: '#b9b3d6',
+                  fontSize: '8px',
+                  marginBottom: '10px',
+                  textTransform: 'uppercase'
                 }}>Save Name (optional)</label>
                 <input
                   type="text"
@@ -329,41 +346,28 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ isOpen, onClose })
                   style={{
                     width: '100%',
                     padding: '12px',
-                    backgroundColor: '#1f2937',
-                    border: '1px solid #374151',
-                    borderRadius: '8px',
+                    minHeight: '44px',
+                    backgroundColor: '#0f0b1e',
+                    border: '2px solid #0a0814',
+                    borderRadius: 0,
                     color: '#ffffff',
-                    fontSize: '14px',
-                    outline: 'none'
+                    fontSize: '13px',
+                    outline: 'none',
+                    boxShadow: 'inset 2px 2px 0 0 #000, inset -2px -2px 0 0 #2a2350'
                   }}
-                  onFocus={(e) => e.currentTarget.style.borderColor = '#ec4899'}
-                  onBlur={(e) => e.currentTarget.style.borderColor = '#374151'}
+                  onFocus={(e) => e.currentTarget.style.borderColor = '#f72585'}
+                  onBlur={(e) => e.currentTarget.style.borderColor = '#0a0814'}
                 />
               </div>
 
               {/* Save Button */}
               <button
+                className="snes-btn"
                 onClick={handleSave}
                 disabled={loading}
                 style={{
-                  width: '100%',
-                  padding: '12px',
-                  backgroundColor: '#ec4899',
-                  color: '#ffffff',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontSize: '16px',
-                  fontWeight: '600',
-                  cursor: loading ? 'default' : 'pointer',
-                  opacity: loading ? 0.7 : 1,
-                  transition: 'all 0.2s',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px'
+                  width: '100%'
                 }}
-                onMouseEnter={(e) => !loading && (e.currentTarget.style.backgroundColor = '#db2777')}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#ec4899'}
               >
                 <Save size={18} />
                 {loading ? 'Saving...' : 'Save Game'}
@@ -373,34 +377,30 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ isOpen, onClose })
             // Load Tab
             <div>
               {loading ? (
-                <div style={{
+                <div className="snes-pixel" style={{
                   textAlign: 'center',
-                  color: '#9ca3af',
+                  color: '#b9b3d6',
+                  fontSize: '9px',
                   padding: '40px'
                 }}>Loading saves...</div>
               ) : saves.length === 0 ? (
-                <div style={{
+                <div className="snes-panel-inset" style={{
                   textAlign: 'center',
-                  color: '#9ca3af',
+                  color: '#b9b3d6',
                   padding: '40px'
                 }}>
-                  <p style={{ marginBottom: '8px' }}>No saved games found</p>
-                  <p style={{ fontSize: '14px' }}>Save your game in the Save tab</p>
+                  <p className="snes-pixel" style={{ marginBottom: '12px', fontSize: '9px', color: '#ffffff' }}>No saved games found</p>
+                  <p style={{ fontSize: '13px', color: '#6f6796' }}>Save your game in the Save tab</p>
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {saves.map((save) => (
                     <div
                       key={save.id}
+                      className="snes-panel-inset"
                       style={{
-                        backgroundColor: '#1f2937',
-                        borderRadius: '12px',
-                        padding: '16px',
-                        border: '1px solid #374151',
-                        transition: 'border-color 0.2s'
+                        padding: '16px'
                       }}
-                      onMouseEnter={(e) => e.currentTarget.style.borderColor = '#ec4899'}
-                      onMouseLeave={(e) => e.currentTarget.style.borderColor = '#374151'}
                     >
                       <div style={{
                         display: 'flex',
@@ -409,17 +409,16 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ isOpen, onClose })
                         marginBottom: '12px'
                       }}>
                         <div>
-                          <h4 style={{
-                            fontSize: '16px',
-                            fontWeight: '600',
+                          <h4 className="snes-pixel" style={{
+                            fontSize: '10px',
                             color: '#ffffff',
-                            marginBottom: '4px'
+                            marginBottom: '8px'
                           }}>{save.name}</h4>
                           <div style={{
                             display: 'flex',
                             alignItems: 'center',
                             gap: '8px',
-                            color: '#9ca3af',
+                            color: '#6f6796',
                             fontSize: '12px'
                           }}>
                             <Clock size={12} />
@@ -428,41 +427,30 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ isOpen, onClose })
                         </div>
                         <div style={{ display: 'flex', gap: '8px' }}>
                           <button
+                            className="snes-btn snes-btn--cyan snes-btn--sm"
                             onClick={() => handleLoad(save.id)}
                             style={{
-                              padding: '8px 16px',
-                              backgroundColor: '#374151',
-                              color: '#ffffff',
-                              border: 'none',
-                              borderRadius: '6px',
-                              fontSize: '14px',
-                              fontWeight: '500',
-                              cursor: 'pointer',
-                              transition: 'background-color 0.2s'
+                              minHeight: '44px'
                             }}
-                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#4b5563'}
-                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#374151'}
                           >
                             Load
                           </button>
                           <button
                             onClick={() => handleDelete(save.id)}
                             style={{
-                              padding: '8px',
-                              backgroundColor: 'transparent',
-                              color: '#ef4444',
-                              border: '1px solid #ef4444',
-                              borderRadius: '6px',
+                              width: '44px',
+                              height: '44px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              padding: 0,
+                              backgroundColor: '#0f0b1e',
+                              color: '#ff5c57',
+                              border: '2px solid #ff5c57',
+                              borderRadius: 0,
                               cursor: 'pointer',
-                              transition: 'all 0.2s'
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = '#ef4444';
-                              e.currentTarget.style.color = '#ffffff';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.backgroundColor = 'transparent';
-                              e.currentTarget.style.color = '#ef4444';
+                              transition: 'none',
+                              boxShadow: 'inset 2px 2px 0 0 #000, inset -2px -2px 0 0 #2a2350'
                             }}
                           >
                             <Trash2 size={16} />
@@ -476,20 +464,20 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ isOpen, onClose })
                         fontSize: '12px'
                       }}>
                         <div>
-                          <span style={{ color: '#6b7280' }}>Round</span>
-                          <div style={{ color: '#ffffff', fontWeight: '500' }}>{save.turnNumber}</div>
+                          <span className="snes-pixel" style={{ color: '#6f6796', fontSize: '7px' }}>Round</span>
+                          <div className="snes-pixel" style={{ color: '#ffffff', fontSize: '8px', marginTop: '4px' }}>{save.turnNumber}</div>
                         </div>
                         <div>
-                          <span style={{ color: '#6b7280' }}>Money</span>
-                          <div style={{ color: '#10b981', fontWeight: '500' }}>{formatMoney(save.money)}</div>
+                          <span className="snes-pixel" style={{ color: '#6f6796', fontSize: '7px' }}>Money</span>
+                          <div className="snes-pixel" style={{ color: '#3ad17e', fontSize: '8px', marginTop: '4px' }}>{formatMoney(save.money)}</div>
                         </div>
                         <div>
-                          <span style={{ color: '#6b7280' }}>Rep</span>
-                          <div style={{ color: '#fbbf24', fontWeight: '500' }}>{save.reputation}</div>
+                          <span className="snes-pixel" style={{ color: '#6f6796', fontSize: '7px' }}>Rep</span>
+                          <div className="snes-pixel" style={{ color: '#ffd23f', fontSize: '8px', marginTop: '4px' }}>{save.reputation}</div>
                         </div>
                         <div>
-                          <span style={{ color: '#6b7280' }}>Fans</span>
-                          <div style={{ color: '#a78bfa', fontWeight: '500' }}>{save.fans}</div>
+                          <span className="snes-pixel" style={{ color: '#6f6796', fontSize: '7px' }}>Fans</span>
+                          <div className="snes-pixel" style={{ color: '#c77dff', fontSize: '8px', marginTop: '4px' }}>{save.fans}</div>
                         </div>
                       </div>
                     </div>
