@@ -19,55 +19,56 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     gap: '8px',
-    fontWeight: 700,
-    letterSpacing: '0.05em',
+    fontWeight: 400,
+    letterSpacing: '0',
     textTransform: 'uppercase' as const,
     border: 'none',
     cursor: 'pointer',
-    transition: 'all 150ms ease',
-    fontFamily: 'monospace',
+    transition: 'none',
+    fontFamily: "'Press Start 2P', ui-monospace, monospace",
     imageRendering: 'pixelated' as const,
     WebkitFontSmoothing: 'none',
-    boxShadow: 'inset -2px -2px 0px 0px rgba(0,0,0,0.5), inset 2px 2px 0px 0px rgba(255,255,255,0.3)',
+    lineHeight: 1.5,
+    boxShadow: 'inset -2px -2px 0px 0px rgba(0,0,0,0.45), inset 2px 2px 0px 0px rgba(255,255,255,0.4)',
   },
   sizes: {
     sm: {
-      padding: '8px 12px',
-      fontSize: '11px',
-      minHeight: '32px',
+      padding: '9px 12px',
+      fontSize: '8px',
+      minHeight: '34px',
     },
     md: {
-      padding: '10px 16px',
-      fontSize: '12px',
-      minHeight: '40px',
+      padding: '11px 16px',
+      fontSize: '9px',
+      minHeight: '42px',
     },
     lg: {
-      padding: '14px 24px',
-      fontSize: '14px',
-      minHeight: '48px',
+      padding: '15px 22px',
+      fontSize: '11px',
+      minHeight: '50px',
     },
   },
   variants: {
     primary: {
-      background: '#FF0066',
-      color: 'white',
+      background: '#f72585',
+      color: '#1a0a14',
     },
     secondary: {
-      background: '#2D2D2D',
-      color: '#FFFFFF',
+      background: '#1f1a3a',
+      color: '#ffffff',
     },
     success: {
-      background: '#00FF00',
-      color: '#000000',
+      background: '#3ad17e',
+      color: '#062418',
     },
     danger: {
-      background: '#FF0000',
-      color: 'white',
+      background: '#ff5c57',
+      color: '#3a0a08',
     },
     ghost: {
-      background: 'transparent',
-      color: '#FFFFFF',
-      boxShadow: 'none',
+      background: '#171327',
+      color: '#ffffff',
+      boxShadow: 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814, 0 0 0 2px #2a2350',
     },
   },
   disabled: {
@@ -131,11 +132,11 @@ export const PixelButton: React.FC<PixelButtonProps> = ({
     ...style,
   };
 
-  const hoverStyle = variant === 'primary' ? { background: '#FF3380' } :
-                    variant === 'secondary' ? { background: '#3D3D3D', color: '#FF0066' } :
-                    variant === 'success' ? { background: '#33FF33' } :
-                    variant === 'danger' ? { background: '#FF3333' } :
-                    variant === 'ghost' ? { background: 'rgba(255, 255, 255, 0.1)', color: '#FF0066' } :
+  const hoverStyle = variant === 'primary' ? { background: '#ff4d9e' } :
+                    variant === 'secondary' ? { background: '#2a2350', color: '#4cc9f0' } :
+                    variant === 'success' ? { background: '#54e094' } :
+                    variant === 'danger' ? { background: '#ff7a76' } :
+                    variant === 'ghost' ? { background: '#1f1a3a', color: '#4cc9f0' } :
                     {};
 
   const activeStyle = variant !== 'ghost' ? {

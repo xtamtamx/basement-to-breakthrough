@@ -94,8 +94,9 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         bottom: 0,
         left: 0,
         right: 0,
-        backgroundColor: '#111827',
-        borderTop: '1px solid #374151',
+        backgroundColor: '#171327',
+        borderTop: '2px solid #f72585',
+        boxShadow: 'inset 0 -2px 0 0 #0a0814',
         zIndex: 40,
         paddingBottom: 'env(safe-area-inset-bottom)'
       }}>
@@ -115,45 +116,47 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '2px',
+                gap: '3px',
                 padding: '2px 8px',
                 flex: 1,
                 minHeight: '44px',
-                background: 'none',
-                border: 'none',
-                color: currentView === view.id ? '#ec4899' : '#9ca3af',
+                background: currentView === view.id ? '#1f1a3a' : 'none',
+                borderTop: currentView === view.id ? '2px solid #f72585' : '2px solid transparent',
+                borderLeft: 'none',
+                borderRight: 'none',
+                borderBottom: 'none',
+                color: currentView === view.id ? '#f72585' : '#6f6796',
                 cursor: 'pointer',
-                transition: 'color 0.2s',
+                transition: 'none',
                 position: 'relative'
               }}
             >
               <div style={{ position: 'relative' }}>
                 {React.cloneElement(view.icon, { size: 18 })}
                 {view.badge !== undefined && view.badge > 0 && (
-                  <span className="mobile-bottom-nav__badge" style={{
+                  <span className="mobile-bottom-nav__badge snes-pixel" style={{
                     position: 'absolute',
-                    top: '-2px',
-                    right: '-2px',
-                    backgroundColor: '#ec4899',
-                    color: 'white',
-                    fontSize: '9px',
-                    borderRadius: '8px',
+                    top: '-4px',
+                    right: '-6px',
+                    backgroundColor: '#f72585',
+                    color: '#1a0a14',
+                    fontSize: '8px',
+                    borderRadius: '0',
+                    border: '1px solid #0a0814',
                     minWidth: '14px',
                     height: '14px',
                     padding: '0 3px',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 'bold'
+                    justifyContent: 'center'
                   }}>
                     {view.badge}
                   </span>
                 )}
               </div>
-              <span className="mobile-bottom-nav__label" style={{
-                fontSize: '9px',
-                fontWeight: '600',
-                letterSpacing: '-0.01em'
+              <span className="mobile-bottom-nav__label snes-pixel" style={{
+                fontSize: '7px',
+                letterSpacing: '0'
               }}>{view.label}</span>
             </button>
           ))}
@@ -170,23 +173,26 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '2px',
+              gap: '3px',
               padding: '4px',
               flex: 1,
               minHeight: '44px',
-              background: 'none',
-              border: 'none',
+              background: (showMoreMenu || secondaryViews.some(v => v.id === currentView)) ? '#1f1a3a' : 'none',
+              borderTop: (showMoreMenu || secondaryViews.some(v => v.id === currentView)) ? '2px solid #f72585' : '2px solid transparent',
+              borderLeft: 'none',
+              borderRight: 'none',
+              borderBottom: 'none',
               color: showMoreMenu || secondaryViews.some(v => v.id === currentView)
-                ? '#ec4899'
-                : '#9ca3af',
+                ? '#f72585'
+                : '#6f6796',
               cursor: 'pointer',
-              transition: 'color 0.2s'
+              transition: 'none'
             }}
           >
-            <Grid3X3 size={20} />
-            <span className="mobile-bottom-nav__label" style={{
-              fontSize: '10px',
-              fontWeight: '500'
+            <Grid3X3 size={18} />
+            <span className="mobile-bottom-nav__label snes-pixel" style={{
+              fontSize: '7px',
+              letterSpacing: '0'
             }}>More</span>
           </button>
         </div>
@@ -198,7 +204,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           style={{
             position: 'fixed',
             inset: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            backgroundColor: 'rgba(8, 6, 18, 0.8)',
             zIndex: 30
           }}
           onClick={() => setShowMoreMenu(false)}
@@ -210,8 +216,9 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
               bottom: '56px',
               left: 0,
               right: 0,
-              backgroundColor: '#111827',
-              borderTop: '1px solid #374151',
+              backgroundColor: '#171327',
+              borderTop: '2px solid #f72585',
+              boxShadow: 'inset 0 2px 0 0 #3a2f5c',
               paddingBottom: 'env(safe-area-inset-bottom)'
             }}
             onClick={(e) => e.stopPropagation()}
@@ -234,41 +241,43 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
                     flexDirection: 'column',
                     alignItems: 'center',
                     gap: '8px',
-                    padding: '12px',
-                    borderRadius: '12px',
-                    backgroundColor: currentView === view.id ? '#ec4899' : '#1f2937',
-                    color: currentView === view.id ? '#ffffff' : '#d1d5db',
-                    border: 'none',
+                    padding: '14px 12px',
+                    borderRadius: '0',
+                    backgroundColor: currentView === view.id ? '#f72585' : '#1f1a3a',
+                    color: currentView === view.id ? '#1a0a14' : '#b9b3d6',
+                    border: '2px solid #0a0814',
+                    boxShadow: 'inset 2px 2px 0 0 rgba(255,255,255,0.12), inset -2px -2px 0 0 rgba(0,0,0,0.4)',
                     cursor: 'pointer',
-                    transition: 'all 0.2s',
+                    transition: 'none',
                     position: 'relative'
                   }}
                 >
                   <div style={{ position: 'relative' }}>
                     {view.icon}
                     {view.badge && (
-                      <span style={{
+                      <span className="snes-pixel" style={{
                         position: 'absolute',
-                        top: '-2px',
-                        right: '-2px',
-                        backgroundColor: '#ec4899',
-                        color: 'white',
-                        fontSize: '12px',
-                        borderRadius: '10px',
-                        width: '20px',
-                        height: '20px',
+                        top: '-6px',
+                        right: '-8px',
+                        backgroundColor: '#ffd23f',
+                        color: '#3a2e00',
+                        fontSize: '8px',
+                        borderRadius: '0',
+                        border: '1px solid #0a0814',
+                        minWidth: '16px',
+                        height: '16px',
+                        padding: '0 3px',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center',
-                        fontWeight: 'bold'
+                        justifyContent: 'center'
                       }}>
                         {view.badge}
                       </span>
                     )}
                   </div>
-                  <span style={{
-                    fontSize: '14px',
-                    fontWeight: '500'
+                  <span className="snes-pixel" style={{
+                    fontSize: '8px',
+                    letterSpacing: '0'
                   }}>{view.label}</span>
                 </button>
               ))}
@@ -289,17 +298,17 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           right: '12px',
           width: '48px',
           height: '48px',
-          backgroundImage: 'linear-gradient(135deg, #ec4899 0%, #a855f7 100%)',
-          color: 'white',
-          borderRadius: '24px',
-          boxShadow: '0 3px 10px rgba(236, 72, 153, 0.3)',
+          background: '#f72585',
+          color: '#1a0a14',
+          borderRadius: '0',
+          border: '2px solid #0a0814',
+          boxShadow: 'inset 2px 2px 0 0 rgba(255,255,255,0.45), inset -2px -2px 0 0 rgba(0,0,0,0.45), 4px 4px 0 0 #0a0814',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           zIndex: 30,
-          border: 'none',
           cursor: 'pointer',
-          transition: 'transform 0.2s',
+          transition: 'none',
           bottom: 'calc(3rem + env(safe-area-inset-bottom) + 0.5rem)'
         }}
         onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
@@ -314,19 +323,18 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
       <div className="mobile-bottom-nav__turn-indicator" style={{
         position: 'fixed',
         left: '12px',
-        backgroundColor: 'rgba(17, 24, 39, 0.9)',
-        backdropFilter: 'blur(8px)',
-        border: '1px solid #374151',
-        borderRadius: '16px',
-        padding: '6px 10px',
+        backgroundColor: '#0f0b1e',
+        border: '2px solid #0a0814',
+        boxShadow: 'inset 1px 1px 0 0 #2a2350',
+        borderRadius: '0',
+        padding: '7px 10px',
         zIndex: 30,
         bottom: 'calc(3rem + env(safe-area-inset-bottom) + 0.5rem)'
       }}>
-        <span style={{
-          fontSize: '11px',
-          fontWeight: 'bold',
-          color: '#d1d5db'
-        }}>Turn {currentRound}</span>
+        <span className="snes-pixel" style={{
+          fontSize: '8px',
+          color: '#ffd23f'
+        }}>TURN {currentRound}</span>
       </div>
     </>
   );

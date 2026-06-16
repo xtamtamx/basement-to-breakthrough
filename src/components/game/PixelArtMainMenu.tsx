@@ -165,12 +165,13 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
         .pixel-main-menu {
           position: relative;
           min-height: 100vh;
-          background: #0A0A0A;
+          background: #0a0814;
           display: flex;
           align-items: center;
           justify-content: center;
           overflow: visible;
-          font-family: monospace;
+          font-family: 'Press Start 2P', ui-monospace, monospace;
+          -webkit-font-smoothing: none;
           padding: 40px 20px;
         }
 
@@ -200,17 +201,17 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
         }
 
         .title-text {
-          font-size: 40px;
-          font-weight: 900;
-          color: #FF0066;
+          font-size: 26px;
+          font-weight: 400;
+          color: #f72585;
           text-transform: uppercase;
-          letter-spacing: 0.05em;
+          letter-spacing: 0;
           margin: 0;
           padding: 0;
-          text-shadow: 
-            2px 2px 0px #8B0000,
-            4px 4px 0px #000,
-            4px 4px 10px rgba(255, 0, 102, 0.5);
+          line-height: 1.4;
+          text-shadow:
+            3px 3px 0px #0a0814,
+            4px 4px 0px #5a1740;
           image-rendering: pixelated;
           transform: none;
         }
@@ -221,43 +222,38 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
 
         @keyframes glitch {
           0% {
-            text-shadow: 
-              4px 4px 0px #8B0000,
-              8px 8px 0px #000,
-              8px 8px 20px rgba(255, 0, 102, 0.5);
+            text-shadow: 3px 3px 0px #0a0814, 4px 4px 0px #5a1740;
           }
           50% {
-            text-shadow: 
-              -4px 4px 0px #00FF00,
-              4px -4px 0px #0088FF,
-              8px 8px 0px #000,
-              8px 8px 20px rgba(255, 0, 102, 0.5);
+            text-shadow:
+              -3px 2px 0px #4cc9f0,
+              3px -2px 0px #f72585,
+              3px 3px 0px #0a0814;
           }
           100% {
-            text-shadow: 
-              4px 4px 0px #8B0000,
-              8px 8px 0px #000,
-              8px 8px 20px rgba(255, 0, 102, 0.5);
+            text-shadow: 3px 3px 0px #0a0814, 4px 4px 0px #5a1740;
           }
         }
 
         .subtitle-text {
-          font-size: 28px;
-          font-weight: 700;
-          color: #FFFFFF;
+          font-size: 32px;
+          font-weight: 400;
+          color: #ffd23f;
           text-transform: uppercase;
-          letter-spacing: 0.1em;
-          margin: -5px 0 0;
-          text-shadow: 
-            2px 2px 0px #2D2D2D,
-            3px 3px 0px #000;
+          letter-spacing: 0;
+          margin: 12px 0 0;
+          line-height: 1.4;
+          text-shadow:
+            3px 3px 0px #0a0814,
+            4px 4px 0px #6b5410;
         }
 
         .tagline {
-          font-size: 14px;
-          color: #8B8B8B;
-          margin: 16px 0 0;
-          letter-spacing: 0.05em;
+          font-size: 9px;
+          color: #b9b3d6;
+          margin: 18px 0 0;
+          letter-spacing: 0;
+          line-height: 1.7;
           text-transform: uppercase;
         }
 
@@ -273,35 +269,36 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
         }
 
         .credits {
-          font-size: 12px;
-          color: #5A5A5A;
-          margin: 0 0 8px;
-          letter-spacing: 0.05em;
+          font-size: 8px;
+          color: #8079a6;
+          margin: 0 0 10px;
+          letter-spacing: 0;
+          line-height: 1.7;
         }
 
         .version {
-          font-size: 10px;
-          color: #2D2D2D;
+          font-size: 7px;
+          color: #6f6796;
           margin: 0;
-          letter-spacing: 0.1em;
+          letter-spacing: 0;
+          line-height: 1.7;
           text-transform: uppercase;
         }
 
         @media (max-width: 768px) {
           .title-text {
-            font-size: 32px;
-            text-shadow: 
-              2px 2px 0px #8B0000,
-              3px 3px 0px #000,
-              3px 3px 8px rgba(255, 0, 102, 0.5);
+            font-size: 19px;
+            text-shadow:
+              2px 2px 0px #0a0814,
+              3px 3px 0px #5a1740;
           }
 
           .subtitle-text {
-            font-size: 22px;
+            font-size: 24px;
           }
 
           .tagline {
-            font-size: 12px;
+            font-size: 8px;
           }
 
           .menu-content {

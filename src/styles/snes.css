@@ -1,0 +1,215 @@
+/*
+ * snes.css — neon-punk SNES UI design system.
+ *
+ * Self-contained, class-scoped (NO global `*` hacks). The palette matches the
+ * PixelCityMap markers (magenta venues, cyan shops, gold civic/landmarks) so the
+ * chrome and the world read as one game. Chunky beveled panels, hard edges,
+ * Press Start 2P for chrome/labels — neon accents, never grimdark.
+ *
+ * Vocabulary: .snes-panel(/-inset/--magenta/--cyan/--gold) · .snes-bar ·
+ * .snes-btn(--cyan/--gold/--ghost/--danger/--sm) · .snes-chip · .snes-badge ·
+ * .snes-tab(.is-active) · .snes-title · .snes-modal(__sheet) · .snes-progress ·
+ * text: .snes-pixel .snes-ink .snes-dim .snes-mute
+ */
+
+:root {
+  --snes-void: #0a0814;     /* app bg / deepest shadow / pixel border */
+  --snes-bg: #171327;       /* panel base (deep indigo-charcoal) */
+  --snes-bg-2: #0f0b1e;     /* inset / field background */
+  --snes-edge-lt: #3a2f5c;  /* bevel highlight (top-left) */
+  --snes-line: #2a2350;     /* dividers / subtle borders */
+
+  --snes-magenta: #f72585;  /* primary / venues */
+  --snes-cyan: #4cc9f0;     /* secondary / shops */
+  --snes-gold: #ffd23f;     /* stars / reputation */
+  --snes-green: #3ad17e;    /* money / success */
+  --snes-purple: #c77dff;   /* fans */
+  --snes-red: #ff5c57;      /* danger / stress */
+
+  --snes-ink: #ffffff;      /* primary text */
+  --snes-ink-dim: #b9b3d6;  /* secondary text (lavender-gray) */
+  --snes-ink-mute: #6f6796; /* muted text */
+
+  --snes-font: 'Press Start 2P', ui-monospace, monospace;
+}
+
+/* Pixel-text treatment — apply per element, never globally. */
+.snes-pixel {
+  font-family: var(--snes-font);
+  letter-spacing: 0;
+  line-height: 1.55;
+  -webkit-font-smoothing: none;
+  text-rendering: optimizeSpeed;
+}
+.snes-ink { color: var(--snes-ink); }
+.snes-dim { color: var(--snes-ink-dim); }
+.snes-mute { color: var(--snes-ink-mute); }
+
+/* Beveled panel — the workhorse container. */
+.snes-panel {
+  background: var(--snes-bg);
+  border: 2px solid var(--snes-void);
+  border-radius: 0;
+  box-shadow: inset 2px 2px 0 0 var(--snes-edge-lt), inset -2px -2px 0 0 var(--snes-void);
+}
+.snes-panel-inset {
+  background: var(--snes-bg-2);
+  border: 2px solid var(--snes-void);
+  border-radius: 0;
+  box-shadow: inset 2px 2px 0 0 #000, inset -2px -2px 0 0 var(--snes-line);
+}
+.snes-panel--magenta { border-color: var(--snes-magenta); box-shadow: inset 2px 2px 0 0 var(--snes-edge-lt), inset -2px -2px 0 0 var(--snes-void), 0 0 0 1px var(--snes-magenta); }
+.snes-panel--cyan { border-color: var(--snes-cyan); box-shadow: inset 2px 2px 0 0 var(--snes-edge-lt), inset -2px -2px 0 0 var(--snes-void), 0 0 0 1px var(--snes-cyan); }
+.snes-panel--gold { border-color: var(--snes-gold); box-shadow: inset 2px 2px 0 0 var(--snes-edge-lt), inset -2px -2px 0 0 var(--snes-void), 0 0 0 1px var(--snes-gold); }
+
+/* Chrome bar — top HUD / bottom nav: dark field with a neon accent edge. */
+.snes-bar {
+  background: var(--snes-bg);
+  border-radius: 0;
+}
+.snes-bar--top { border-bottom: 2px solid var(--snes-magenta); box-shadow: inset 0 2px 0 0 var(--snes-edge-lt); }
+.snes-bar--bottom { border-top: 2px solid var(--snes-magenta); box-shadow: inset 0 -2px 0 0 var(--snes-void); }
+
+/* Buttons — chunky pressable pixel keys. */
+.snes-btn {
+  font-family: var(--snes-font);
+  font-size: 11px;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  color: #1a0a14;
+  background: var(--snes-magenta);
+  border: none;
+  border-radius: 0;
+  padding: 13px 16px;
+  cursor: pointer;
+  -webkit-font-smoothing: none;
+  image-rendering: pixelated;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow:
+    inset 2px 2px 0 0 rgba(255, 255, 255, 0.45),
+    inset -2px -2px 0 0 rgba(0, 0, 0, 0.45),
+    0 0 0 2px var(--snes-void),
+    4px 4px 0 0 var(--snes-void);
+  transition: none;
+}
+.snes-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow:
+    inset -2px -2px 0 0 rgba(255, 255, 255, 0.3),
+    inset 2px 2px 0 0 rgba(0, 0, 0, 0.45),
+    0 0 0 2px var(--snes-void);
+}
+.snes-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.snes-btn--sm { font-size: 9px; padding: 9px 12px; }
+.snes-btn--cyan { background: var(--snes-cyan); color: #062a36; }
+.snes-btn--gold { background: var(--snes-gold); color: #3a2e00; }
+.snes-btn--green { background: var(--snes-green); color: #062418; }
+.snes-btn--danger { background: var(--snes-red); color: #3a0a08; }
+.snes-btn--ghost {
+  background: var(--snes-bg);
+  color: var(--snes-ink);
+  box-shadow: inset 2px 2px 0 0 var(--snes-edge-lt), inset -2px -2px 0 0 var(--snes-void), 0 0 0 2px var(--snes-line);
+}
+
+/* Stat chip — money / star / fans readouts. */
+.snes-chip {
+  font-family: var(--snes-font);
+  font-size: 9px;
+  letter-spacing: 0;
+  -webkit-font-smoothing: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  background: var(--snes-bg-2);
+  border: 2px solid var(--snes-void);
+  box-shadow: inset 1px 1px 0 0 var(--snes-line);
+  color: var(--snes-ink);
+  border-radius: 0;
+}
+
+/* Badge — small count / tag. */
+.snes-badge {
+  font-family: var(--snes-font);
+  font-size: 8px;
+  letter-spacing: 0;
+  -webkit-font-smoothing: none;
+  background: var(--snes-magenta);
+  color: #1a0a14;
+  padding: 2px 4px;
+  border: 1px solid var(--snes-void);
+  border-radius: 0;
+}
+
+/* Nav / segmented tabs. */
+.snes-tab {
+  font-family: var(--snes-font);
+  font-size: 8px;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  -webkit-font-smoothing: none;
+  color: var(--snes-ink-mute);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+.snes-tab.is-active { color: var(--snes-magenta); }
+
+/* Big title (menu / headers). */
+.snes-title {
+  font-family: var(--snes-font);
+  letter-spacing: 0;
+  -webkit-font-smoothing: none;
+  text-transform: uppercase;
+  color: var(--snes-magenta);
+  text-shadow: 3px 3px 0 var(--snes-void);
+  margin: 0;
+}
+
+/* Modal overlay + bottom-sheet — hard pixel frame, no blur. */
+.snes-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 6, 18, 0.86);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.snes-modal__sheet {
+  width: 100%;
+  max-width: 440px;
+  background: var(--snes-bg);
+  border: 2px solid var(--snes-void);
+  border-top: 3px solid var(--snes-magenta);
+  box-shadow: inset 2px 2px 0 0 var(--snes-edge-lt), inset -2px -2px 0 0 var(--snes-void);
+  border-radius: 0;
+  padding: 16px;
+  max-height: 84vh;
+  overflow-y: auto;
+}
+
+/* Chunky stepped progress bar. */
+.snes-progress {
+  height: 12px;
+  background: var(--snes-bg-2);
+  border: 2px solid var(--snes-void);
+  border-radius: 0;
+  overflow: hidden;
+}
+.snes-progress__fill {
+  height: 100%;
+  background: var(--snes-magenta);
+  box-shadow: inset 0 2px 0 0 rgba(255, 255, 255, 0.3);
+  transition: width 0.3s steps(12);
+}
+
+.snes-divider { height: 2px; background: var(--snes-line); border: none; margin: 0; }

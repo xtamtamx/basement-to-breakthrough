@@ -147,47 +147,40 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
   const CurrentViewComponent = views[currentView];
 
   return (
-    <div className="h-full flex flex-col bg-gray-900">
-      {/* Ultra-Compact Header */}
-      <header className="bg-gray-900 border-b border-gray-800 px-3 py-2 flex-shrink-0">
-        <div className="flex items-center justify-between">
+    <div className="h-full flex flex-col" style={{ background: '#0a0814' }}>
+      {/* Ultra-Compact Header — neon-punk SNES HUD */}
+      <header
+        className="snes-bar snes-bar--top flex-shrink-0"
+        style={{ padding: '7px 10px' }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           {/* Resources */}
-          <div className="flex items-center gap-3 text-xs">
-            <div className="flex items-center gap-1">
-              <span className="text-green-400">$</span>
-              <span className="font-semibold">{money}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="text-yellow-400">★</span>
-              <span className="font-semibold">{reputation}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="text-purple-400">♦</span>
-              <span className="font-semibold">{fans}</span>
-            </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+            <span className="snes-chip"><span style={{ color: '#3ad17e' }}>$</span><span>{money}</span></span>
+            <span className="snes-chip"><span style={{ color: '#ffd23f' }}>★</span><span>{reputation}</span></span>
+            <span className="snes-chip"><span style={{ color: '#c77dff' }}>♦</span><span>{fans}</span></span>
             {stress > 50 && (
-              <div className={`flex items-center gap-1 ${stress > 80 ? 'text-red-400' : 'text-orange-400'}`}>
-                <span className="text-xs">⚠</span>
-                <span className="font-semibold">{stress}</span>
-              </div>
+              <span className="snes-chip" style={{ borderColor: stress > 80 ? '#ff5c57' : '#ffd23f' }}>
+                <span style={{ color: stress > 80 ? '#ff5c57' : '#ffd23f' }}>⚠</span><span>{stress}</span>
+              </span>
             )}
           </div>
-          
+
           {/* Quick Actions */}
-          <div className="flex items-center gap-1">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <button
               onClick={() => setShowSaveLoad(true)}
-              className="p-1.5 text-gray-400 hover:text-white transition-colors"
               aria-label="Save/Load"
+              style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1f1a3a', color: '#b9b3d6', border: '2px solid #0a0814', boxShadow: 'inset 1px 1px 0 #3a2f5c', cursor: 'pointer', borderRadius: 0 }}
             >
-              <Save size={16} />
+              <Save size={15} />
             </button>
             <button
               onClick={() => setShowSettings(true)}
-              className="p-1.5 text-gray-400 hover:text-white transition-colors"
               aria-label="Settings"
+              style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1f1a3a', color: '#b9b3d6', border: '2px solid #0a0814', boxShadow: 'inset 1px 1px 0 #3a2f5c', cursor: 'pointer', borderRadius: 0 }}
             >
-              <Settings size={16} />
+              <Settings size={15} />
             </button>
           </div>
         </div>
