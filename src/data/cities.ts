@@ -173,7 +173,7 @@ const atlandoDistricts = cityDistricts({
   university: { name: "Mouseketeer Commons", color: "#e84fa0" },
 }, "mixed");
 
-const tampareaDistricts = cityDistricts({
+const sanTampaDistricts = cityDistricts({
   eastside: { name: "Gator Gulch", color: "#4a5d23" },
   downtown: { name: "Blast Beach", color: "#2e6b8c" },
   industrial: { name: "The Morrisound Mile", color: "#5c4033" },
@@ -295,14 +295,14 @@ export const CITIES: City[] = [
     unlock: { type: "reputation", value: 70, label: "Reach 70 reputation" },
   },
   {
-    id: "tamparea",
-    name: "Tamparea",
+    id: "santampa",
+    name: "San Tampa",
     blurb: "The gators mosh harder than the trust-fund thrashers who priced out the swamp.",
     vibe: "swampy techno-thrash",
     primaryGenre: Genre.METAL,
     theme: "capital",
-    districts: tampareaDistricts,
-    venues: makeVenues("tamparea", tampareaDistricts, {
+    districts: sanTampaDistricts,
+    venues: makeVenues("santampa", sanTampaDistricts, {
       basement: "The Fog Cellar",
       diy: "All-Ages Alligatorium",
       warehouse: "Pier 666 Storage",

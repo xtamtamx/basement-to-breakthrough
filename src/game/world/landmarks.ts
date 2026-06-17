@@ -63,7 +63,7 @@ export interface LandmarkContext {
 }
 
 // Per-city, per-pole landmark names — each blended market gets its own scene's
-// parody landmarks (so a New Angeles anchor reads differently from a Tamparea
+// parody landmarks (so a New Angeles anchor reads differently from a San Tampa
 // one). Falls back to the generic kind names for any city not listed here.
 const CITY_LANDMARK_NAMES: Record<string, Record<LandmarkAlignment, string[]>> = {
   home: {
@@ -96,7 +96,7 @@ const CITY_LANDMARK_NAMES: Record<string, Record<LandmarkAlignment, string[]>> =
     corporate: ['Auto-Tune Brand Tower', 'Mouseworld Sponsor Dome', 'FizzPop Label HQ'],
     history: ['The First 808 Plaque', 'Boy-Band Stage Zero'],
   },
-  tamparea: {
+  santampa: {
     diy: ['Riff Raff Records & Tackle', 'The Blastbeat Boathouse', 'Tape Trader Zine Hut'],
     corporate: ['Spotifry Swamp Arena', 'Brand-O Tech-Death Tower', 'LabelCo Mosh Pavilion'],
     history: ['Plaque of the First Circle Pit', 'Morrisound Demo Stage Marker'],
