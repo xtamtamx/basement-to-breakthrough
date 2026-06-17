@@ -22,7 +22,7 @@ import { RunEndState } from "@game/constants/runConstants";
 import { gameAudio } from "@utils/gameAudio";
 import { GameErrorBoundary } from "@components/ErrorBoundary";
 import { saveGameManager } from "@game/persistence/SaveGameManager";
-import { Settings, Save } from 'lucide-react';
+import { Settings, Save, MapPin } from 'lucide-react';
 import { useSwipeable } from 'react-swipeable';
 import { QuickStartGuide } from './QuickStartGuide';
 
@@ -56,6 +56,9 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
   const resolvingRef = useRef(false);
 
   const { money, reputation, fans, stress } = useGameStore();
+  const currentCityName = useGameStore(
+    (s) => s.cities.find((c) => c.id === s.currentCityId)?.name ?? "",
+  );
 
   // Start background music + auto-save (the new-game intro is QuickStartGuide;
   // the element-highlight TutorialOverlay is launched on demand from Settings).
@@ -166,6 +169,12 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
                 <span style={{ color: stress > 80 ? '#ff5c57' : '#ffd23f' }}>⚠</span><span>{stress}</span>
               </span>
             )}
+          </div>
+
+          {/* Current city — always know where you're touring */}
+          <div className="snes-pixel" style={{ flex: 1, minWidth: 0, textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', color: '#f72585', fontSize: '8px', letterSpacing: 0, padding: '0 6px' }}>
+            <MapPin size={11} style={{ flexShrink: 0 }} />
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{currentCityName}</span>
           </div>
 
           {/* Quick Actions */}
