@@ -58,7 +58,55 @@ export interface LandmarkContext {
   discoveredCount?: number;
   /** Cross-run meta progress (totalRuns + unlocks + achievements). Only grows. */
   metaProgress?: number;
+  /** Current city id — picks that city's scene-flavored landmark names. */
+  cityId?: string;
 }
+
+// Per-city, per-pole landmark names — each blended market gets its own scene's
+// parody landmarks (so a New Angeles anchor reads differently from a Tamparea
+// one). Falls back to the generic kind names for any city not listed here.
+const CITY_LANDMARK_NAMES: Record<string, Record<LandmarkAlignment, string[]>> = {
+  home: {
+    diy: ['Half-Stack Hobby & Record', 'All-Ages Annex (BYO Chair)', 'The Xeroxed Zine Trunk'],
+    corporate: ['Warped Lot Sponsor Stage', 'Big Box Tab Tower', 'Energy Drink Pavilion'],
+    history: ['First Breakdown Plaque', 'The Original Floor-Punch Spot'],
+  },
+  bostland: {
+    diy: ['Self-Righteous Records & Brews', 'All-Ages Almanac Co-op', 'Zine & Bean Reading Room'],
+    corporate: ['Spotifly Stadium', 'The IPA-by-Anheuser Arena', 'Brand New Cardigan Tower'],
+    history: ['First Stage-Dive Plaque', 'Plot of the Last Pay Phone'],
+  },
+  detroleans: {
+    diy: ['Wax & Crawfish Records', 'The All-Ages Bayou', 'Zine Mausoleum Krewe'],
+    corporate: ['BrandMotors Soul Arena', 'Sponsor Superdome Lite', 'Coney-Cola HQ Tower'],
+    history: ['First Stooge Stoop Plaque', 'Where The Horns First Walked'],
+  },
+  nasheattle: {
+    diy: ['Boot Scoot Records', 'The All-Ages Hootenanny', 'Flannel & Fiddle Zine Hut'],
+    corporate: ['FlannelCorp Pavilion', 'Twang-A-Lot Sponsor Arena', 'Doc Marten Boot Tower'],
+    history: ['First Fuzz Pedal Plaque', 'Outlaw Cobain Crossroads'],
+  },
+  chicaustin: {
+    diy: ["Buddy's Vinyl & Tacos", 'The Weirdo All-Ages Lodge', 'Windy Zine Stacks'],
+    corporate: ['The Badge-Overload Arena', 'Brand-X-By-Brandwest Tower', 'Streamr HQ'],
+    history: ['First Drill-Blues Stage', 'The Abrasive Analog Plaque'],
+  },
+  atlando: {
+    diy: ['Disturbing tha Peace Hall', 'Bubblegum Bando Records', 'The Hot-Beat Zine Vault'],
+    corporate: ['Auto-Tune Brand Tower', 'Mouseworld Sponsor Dome', 'FizzPop Label HQ'],
+    history: ['The First 808 Plaque', 'Boy-Band Stage Zero'],
+  },
+  tamparea: {
+    diy: ['Riff Raff Records & Tackle', 'The Blastbeat Boathouse', 'Tape Trader Zine Hut'],
+    corporate: ['Spotifry Swamp Arena', 'Brand-O Tech-Death Tower', 'LabelCo Mosh Pavilion'],
+    history: ['Plaque of the First Circle Pit', 'Morrisound Demo Stage Marker'],
+  },
+  newangeles: {
+    diy: ['Bootleg Bodega Records', "The Subletter's Squat", 'Demo-on-Demand Zine Hut'],
+    corporate: ['A&R Shark Tower', 'Brand Activation Arena', 'The Industry Plant Atrium'],
+    history: ['First Stage Dive Plaque', 'The Sellout Walk of Fame'],
+  },
+};
 
 interface KindDef { name: string; blurb: string; effect: LandmarkEffect }
 
@@ -121,13 +169,15 @@ export function getCityLandmarks(districts: District[], ctx: LandmarkContext = {
         : a.id.localeCompare(b.id),
   );
 
+  const cityNames = ctx.cityId ? CITY_LANDMARK_NAMES[ctx.cityId]?.[alignment] : undefined;
+
   const out: CityLandmark[] = [];
   for (let i = 0; i < earned; i++) {
     const host = hosts[i];
     const { kind, def } = pool[i % pool.length];
     out.push({
       id: `landmark_${host.id}_${kind}`,
-      name: def.name,
+      name: cityNames?.[i] ?? def.name, // city-flavored; generic for any overflow slot
       kind,
       alignment,
       districtId: host.id,

@@ -825,14 +825,15 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
   const scheduledShows = useGameStore((s) => s.scheduledShows);
   const diyPoints = useGameStore((s) => s.diyPoints);
   const discoveredCount = useGameStore((s) => s.discoveredSynergies.length);
+  const currentCityId = useGameStore((s) => s.currentCityId);
   const themeKey = useGameStore((s) => s.cities.find((c) => c.id === s.currentCityId)?.theme ?? 'home');
   const theme = THEMES[themeKey];
 
   // Landmarks (Pillar B) derive from alignment + in-run discoveries + cross-run
-  // meta progress; recompute when those change.
+  // meta progress; their names are city-flavored. Recompute when those change.
   const landmarks = useMemo(
-    () => getCityLandmarks(districts, { diyPoints, discoveredCount, metaProgress: metaProgressValue(metaProgressionManager.getProgression()) }),
-    [districts, diyPoints, discoveredCount],
+    () => getCityLandmarks(districts, { diyPoints, discoveredCount, cityId: currentCityId, metaProgress: metaProgressValue(metaProgressionManager.getProgression()) }),
+    [districts, diyPoints, discoveredCount, currentCityId],
   );
 
   // diyPoints + district state (scene/gentrification) drive which establishments

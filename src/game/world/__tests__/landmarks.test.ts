@@ -64,6 +64,18 @@ describe('getCityLandmarks', () => {
     expect(first.alignment).toBe('history');
   });
 
+  it('uses city-flavored landmark names when a known cityId is given', () => {
+    const [diyLm] = getCityLandmarks(districts, { diyPoints: 40, metaProgress: 2, cityId: 'newangeles' });
+    expect(diyLm.name).toBe('Bootleg Bodega Records'); // New Angeles DIY anchor
+    const [corpLm] = getCityLandmarks(districts, { diyPoints: -40, metaProgress: 2, cityId: 'newangeles' });
+    expect(corpLm.name).toBe('A&R Shark Tower'); // New Angeles sellout monument
+  });
+
+  it('falls back to generic names for an unknown cityId', () => {
+    const [lm] = getCityLandmarks(districts, { diyPoints: 40, metaProgress: 2, cityId: 'atlantis' });
+    expect(lm.name).toBe('The Vinyl Cathedral'); // generic DIY default
+  });
+
   it('places at most one landmark per district', () => {
     const lms = getCityLandmarks(districts, { diyPoints: 40, metaProgress: 100 });
     const ids = new Set(lms.map((l) => l.districtId));

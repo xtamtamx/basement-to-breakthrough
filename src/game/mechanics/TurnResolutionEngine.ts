@@ -205,6 +205,7 @@ export class TurnResolutionEngine {
     const landmarks = getCityLandmarks(store.districts, {
       diyPoints: store.diyPoints,
       discoveredCount: store.discoveredSynergies.length,
+      cityId: store.currentCityId,
       metaProgress: metaProgressValue(metaProgressionManager.getProgression()),
     });
 
