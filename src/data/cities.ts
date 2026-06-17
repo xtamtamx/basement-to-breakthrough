@@ -205,7 +205,7 @@ export const CITIES: City[] = [
     blurb: "Where straight-edge bruisers and bird-on-it baristas share one wicked weird pit.",
     vibe: "twee-edge mosh",
     primaryGenre: Genre.HARDCORE,
-    theme: "seaside",
+    theme: "bostland",
     districts: bostlandDistricts,
     venues: makeVenues("bostland", bostlandDistricts, {
       basement: "The Wicked Cellah",
@@ -224,7 +224,7 @@ export const CITIES: City[] = [
     blurb: "Where the assembly line of the soul gets second-lined straight into a ditch.",
     vibe: "assembly-line second-line",
     primaryGenre: Genre.EXPERIMENTAL,
-    theme: "rust",
+    theme: "detroleans",
     districts: detroleansDistricts,
     venues: makeVenues("detroleans", detroleansDistricts, {
       basement: "The Crawdad Cellar",
@@ -243,7 +243,7 @@ export const CITIES: City[] = [
     blurb: "Every flannel hides a pedal steel and every latte is two chords short of a breakdown.",
     vibe: "honky-tonk grunge",
     primaryGenre: Genre.GRUNGE,
-    theme: "rust",
+    theme: "nasheattle",
     districts: nasheattleDistricts,
     venues: makeVenues("nasheattle", nasheattleDistricts, {
       basement: "The Drippin' Cellar",
@@ -262,7 +262,7 @@ export const CITIES: City[] = [
     blurb: "Deep-dish blues meets badge-overload weird — keep it loud, keep it gritty.",
     vibe: "windy outlaw blues",
     primaryGenre: Genre.ALTERNATIVE,
-    theme: "rust",
+    theme: "chicaustin",
     districts: chicaustinDistricts,
     venues: makeVenues("chicaustin", chicaustinDistricts, {
       basement: "Taco Bunker All-Ages",
@@ -281,7 +281,7 @@ export const CITIES: City[] = [
     blurb: "Where the 808 hits so hard it knocks the ears off a knockoff cartoon mouse.",
     vibe: "bubblegum trap",
     primaryGenre: Genre.ELECTRONIC,
-    theme: "seaside",
+    theme: "atlando",
     districts: atlandoDistricts,
     venues: makeVenues("atlando", atlandoDistricts, {
       basement: "Lil Basement (No A/C)",
@@ -300,7 +300,7 @@ export const CITIES: City[] = [
     blurb: "The gators mosh harder than the trust-fund thrashers who priced out the swamp.",
     vibe: "swampy techno-thrash",
     primaryGenre: Genre.METAL,
-    theme: "capital",
+    theme: "santampa",
     districts: sanTampaDistricts,
     venues: makeVenues("santampa", sanTampaDistricts, {
       basement: "The Fog Cellar",
@@ -319,7 +319,7 @@ export const CITIES: City[] = [
     blurb: "Where your basement demo gets an A&R deal, a brand sponsor, and a betrayal arc by Tuesday.",
     vibe: "no-wave hair-metal hustle",
     primaryGenre: Genre.INDIE,
-    theme: "capital",
+    theme: "newangeles",
     districts: newAngelesDistricts,
     venues: makeVenues("newangeles", newAngelesDistricts, {
       basement: "The Stoop Strip",

@@ -300,7 +300,15 @@ export interface District {
 // ============= Cities (tour destinations) =============
 
 /** Visual palette key consumed by the map renderer. */
-export type CityThemeKey = "home" | "rust" | "seaside" | "capital";
+export type CityThemeKey =
+  | "home"
+  | "bostland"
+  | "detroleans"
+  | "nasheattle"
+  | "chicaustin"
+  | "atlando"
+  | "santampa"
+  | "newangeles";
 
 /**
  * A tour destination: its own districts, venues, scene vibe and look. One run

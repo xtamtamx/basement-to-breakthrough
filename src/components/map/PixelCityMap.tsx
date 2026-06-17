@@ -87,51 +87,75 @@ interface MapTheme {
   tint: string; // per-city wash over the real terrain tiles (rgba)
 }
 
+// Strong Island (home) — warm suburban green; the shared base every other
+// city's palette derives from via mkTheme(overrides).
+const baseTheme: MapTheme = {
+  grass: ['#57933f', '#66a54c', '#77b65a', '#8ac66a'], grassBlade: '#9ad277', grassShade: '#3f7232',
+  path: '#c79a5e', pathLight: '#d8ac6e', pathSpeck: '#a8814c', pathDark: '#a07843',
+  cobble: '#bcae90', cobbleLight: '#ccc0a4', cobbleDark: '#a3957a', cobbleGrout: '#7a6f58',
+  soil: '#7a4d2d', soilDark: '#5f3c23',
+  gardenFlowers: ['#ef5a8a', '#f4cf4f', '#ffffff', '#b072e0', '#ff8c4d'], wildFlowers: ['#f4d04f', '#ffffff', '#ef6f9c', '#9c7be0'],
+  tree: { bark: '#6e4a2c', barkDark: '#4f3419', leafDark: '#2f7a38', leaf: '#46974c', leafLight: '#69bb60' },
+  roofMix: ['tudor', 'cottage', 'townhouse', 'stone', 'manor', 'shopAwning', 'tudor', 'cottage'], void: '#21331f',
+  streetPaved: false, waterfront: false, water: '#3f9bd6', waterLight: '#62b6e6', waterDark: '#2a7cb4', sand: '#e6d3a0',
+  tint: 'rgba(255,236,182,0.05)',
+};
+const mkTheme = (o: Partial<MapTheme>): MapTheme => ({ ...baseTheme, ...o });
+
+// Each tour city gets a bespoke palette + terrain so it reads as its own place.
 const THEMES: Record<CityThemeKey, MapTheme> = {
-  home: {
-    grass: ['#57933f', '#66a54c', '#77b65a', '#8ac66a'], grassBlade: '#9ad277', grassShade: '#3f7232',
-    path: '#c79a5e', pathLight: '#d8ac6e', pathSpeck: '#a8814c', pathDark: '#a07843',
-    cobble: '#bcae90', cobbleLight: '#ccc0a4', cobbleDark: '#a3957a', cobbleGrout: '#7a6f58',
-    soil: '#7a4d2d', soilDark: '#5f3c23',
-    gardenFlowers: ['#ef5a8a', '#f4cf4f', '#ffffff', '#b072e0', '#ff8c4d'], wildFlowers: ['#f4d04f', '#ffffff', '#ef6f9c', '#9c7be0'],
-    tree: { bark: '#6e4a2c', barkDark: '#4f3419', leafDark: '#2f7a38', leaf: '#46974c', leafLight: '#69bb60' },
-    roofMix: ['tudor', 'cottage', 'townhouse', 'stone', 'manor', 'shopAwning', 'tudor', 'cottage'], void: '#21331f',
-    streetPaved: false, waterfront: false, water: '#3f9bd6', waterLight: '#62b6e6', waterDark: '#2a7cb4', sand: '#e6d3a0',
-    tint: 'rgba(255,236,182,0.05)',
-  },
-  rust: {
-    grass: ['#5c6535', '#6b743e', '#7a8349', '#8a9255'], grassBlade: '#9aa564', grassShade: '#474f29',
-    path: '#a6824e', pathLight: '#b8945d', pathSpeck: '#7c5f37', pathDark: '#86663a',
-    cobble: '#9a958c', cobbleLight: '#aea99f', cobbleDark: '#7d7970', cobbleGrout: '#544f48',
-    soil: '#5e4427', soilDark: '#49351e',
-    gardenFlowers: ['#d8783a', '#c9a13a', '#d0d0d0', '#a06a3a', '#e0913a'], wildFlowers: ['#c9a13a', '#cacaca', '#d8783a', '#a8b06a'],
-    tree: { bark: '#5e4023', barkDark: '#422c16', leafDark: '#5e6b2c', leaf: '#8a7a30', leafLight: '#bb9a3a' },
-    roofMix: ['darkHall', 'greyShop', 'manor', 'townhouse', 'stone', 'tudor', 'greyShop'], void: '#26211a',
-    streetPaved: false, waterfront: false, water: '#4a7a86', waterLight: '#6a9aa4', waterDark: '#35606a', sand: '#b0a07a',
-    tint: 'rgba(150,112,56,0.17)',
-  },
-  seaside: {
-    grass: ['#5ea24e', '#6fb35a', '#80c468', '#93d577'], grassBlade: '#a6e188', grassShade: '#4a8440',
-    path: '#e0c98e', pathLight: '#eed8a1', pathSpeck: '#c0a96a', pathDark: '#c6af74',
-    cobble: '#cdc3a4', cobbleLight: '#ddd4b8', cobbleDark: '#b1a888', cobbleGrout: '#8c8468',
-    soil: '#8a6a3e', soilDark: '#6e5430',
-    gardenFlowers: ['#ff8cb0', '#ffe066', '#ffffff', '#7ad0e6', '#ff9e6b'], wildFlowers: ['#ffe066', '#ffffff', '#ff8cb0', '#7ad0e6'],
-    tree: { bark: '#7a5530', barkDark: '#583c20', leafDark: '#2f8a48', leaf: '#46a85e', leafLight: '#6fcf7e' },
-    roofMix: ['teal', 'shopAwning', 'cottage', 'stone', 'townhouse', 'tudor', 'teal'], void: '#16363f',
-    streetPaved: false, waterfront: true, water: '#2bb0c0', waterLight: '#5fcdd8', waterDark: '#1d8a99', sand: '#e8d7a8',
-    tint: 'rgba(96,202,206,0.07)',
-  },
-  capital: {
-    grass: ['#54795a', '#638967', '#739a77', '#86ab8a'], grassBlade: '#97bb9a', grassShade: '#43614a',
-    path: '#bdb7a8', pathLight: '#cfc9ba', pathSpeck: '#8e8a76', pathDark: '#9d988b',
-    cobble: '#b2b4bc', cobbleLight: '#c8cad0', cobbleDark: '#94969c', cobbleGrout: '#5e6068',
-    soil: '#6a5a48', soilDark: '#534639',
-    gardenFlowers: ['#c98ad0', '#8ab0e0', '#ffffff', '#e0a0c0', '#9ad0c0'], wildFlowers: ['#c98ad0', '#ffffff', '#8ab0e0', '#9ad0c0'],
-    tree: { bark: '#6a513a', barkDark: '#4d3a28', leafDark: '#3a7a52', leaf: '#52975f', leafLight: '#79b884' },
-    roofMix: ['stone', 'arch', 'greyShop', 'townhouse', 'glassHall', 'civic', 'stone'], void: '#191c24',
-    streetPaved: true, waterfront: false, water: '#3f9bd6', waterLight: '#62b6e6', waterDark: '#2a7cb4', sand: '#cfc9ba',
-    tint: 'rgba(120,124,152,0.14)',
-  },
+  home: baseTheme,
+  // Boston × Portland — cool New England maritime, evergreen w/ autumn-orange tips, harbour.
+  bostland: mkTheme({
+    grass: ['#5a8a5e', '#4d7c54', '#41704a', '#355e3d'], grassBlade: '#7aa86c', grassShade: '#2a4d32',
+    tree: { bark: '#6b4a2e', barkDark: '#48301a', leafDark: '#23533a', leaf: '#2f7048', leafLight: '#c4632e' },
+    void: '#1a2630', water: '#39627a', waterLight: '#5a86a0', waterDark: '#284959', sand: '#cdbd9a',
+    tint: 'rgba(108,134,158,0.13)', waterfront: true, streetPaved: true,
+  }),
+  // Detroit × New Orleans — muddy industrial olive, brass-warm wash, murky river.
+  detroleans: mkTheme({
+    grass: ['#779a73', '#668a66', '#577a5a', '#4a6b4e'], grassBlade: '#8aab7e', grassShade: '#384f3a',
+    tree: { bark: '#6a5236', barkDark: '#473521', leafDark: '#2c5238', leaf: '#46714a', leafLight: '#6e9460' },
+    void: '#1d2a1c', water: '#5a6e58', waterLight: '#76896c', waterDark: '#44543f', sand: '#9a8a64',
+    tint: 'rgba(196,150,74,0.13)', waterfront: true, streetPaved: true,
+  }),
+  // Nashville × Seattle — rainy overcast grey-green, wet dark evergreen, inland.
+  nasheattle: mkTheme({
+    grass: ['#5f7d6a', '#52715f', '#456354', '#384f44'], grassBlade: '#6e8c79', grassShade: '#2c3e36',
+    tree: { bark: '#4a3a2e', barkDark: '#332720', leafDark: '#1f3a30', leaf: '#2e5343', leafLight: '#447059' },
+    void: '#1b2723', water: '#3a5560', waterLight: '#557480', waterDark: '#283d46', sand: '#9aa096',
+    tint: 'rgba(118,134,150,0.16)', waterfront: false, streetPaved: false,
+  }),
+  // Chicago × Austin — golden prairie, big warm sky, Lake Michigan, paved urban core.
+  chicaustin: mkTheme({
+    grass: ['#8a9a3c', '#79892f', '#687726', '#56641e'], grassBlade: '#a8b84f', grassShade: '#454f16',
+    tree: { bark: '#6f4a26', barkDark: '#4d3217', leafDark: '#5a7a2c', leaf: '#7c9a38', leafLight: '#a4bb52' },
+    void: '#2a2410', water: '#2f8aa8', waterLight: '#54acc4', waterDark: '#1f6a86', sand: '#dcc486',
+    tint: 'rgba(240,186,82,0.12)', waterfront: true, streetPaved: true,
+  }),
+  // Atlanta × Orlando — bright tropical greens, candy-pink wash, beachy teal water.
+  atlando: mkTheme({
+    grass: ['#5fbf4a', '#74cf5a', '#8bdd6a', '#a3eb7c'], grassBlade: '#bcf590', grassShade: '#3f9636',
+    tree: { bark: '#9a6a3c', barkDark: '#6e4724', leafDark: '#2f9a48', leaf: '#4fbf5e', leafLight: '#86e57f' },
+    gardenFlowers: ['#ff5ab0', '#ffd23f', '#ffffff', '#7ad0e6', '#ff8c4d'],
+    void: '#1a3a4a', water: '#22cbd6', waterLight: '#6fe6ec', waterDark: '#16a0b0', sand: '#f2e2b0',
+    tint: 'rgba(255,138,196,0.12)', waterfront: true, streetPaved: true,
+  }),
+  // Tampa × SF Bay — humid swamp, grey-green fog wash, murky gulf, dirt roads.
+  santampa: mkTheme({
+    grass: ['#4e6b3f', '#42603a', '#395433', '#2f482b'], grassBlade: '#6a8a4e', grassShade: '#243a22',
+    tree: { bark: '#4a3a26', barkDark: '#31261a', leafDark: '#1f3f2a', leaf: '#2f5e3a', leafLight: '#4a814c' },
+    void: '#16241c', water: '#2f6a5e', waterLight: '#4a8c7c', waterDark: '#1f4d44', sand: '#9aa07a',
+    tint: 'rgba(110,134,118,0.15)', waterfront: true, streetPaved: false,
+  }),
+  // NYC × LA — cool concrete megacity, neon magenta-purple wash, harbour docks, paved.
+  newangeles: mkTheme({
+    grass: ['#4a8f6e', '#3f7d62', '#346b55', '#295748'], grassBlade: '#5fa67e', grassShade: '#21443a',
+    cobble: '#a8a6b0', cobbleLight: '#c0bec8', cobbleDark: '#88868f', cobbleGrout: '#54525c',
+    tree: { bark: '#5a4763', barkDark: '#3a2c42', leafDark: '#2a6b58', leaf: '#3d8a6c', leafLight: '#5cab7e' },
+    void: '#1a1226', water: '#2f8fb0', waterLight: '#54b4cf', waterDark: '#1e6a8a', sand: '#b8b0c4',
+    tint: 'rgba(196,72,210,0.13)', waterfront: true, streetPaved: true,
+  }),
 };
 
 const VENUE_BUILDINGS: Partial<Record<VenueType, BuildingKey>> = {
@@ -259,12 +283,62 @@ const DISTRICT_POOLS: Record<string, BuildingKey[]> = {
 const DISTRICT_KIND: Record<string, keyof typeof DISTRICT_POOLS> = {
   eastside: 'ARTS', downtown: 'DOWNTOWN', industrial: 'WAREHOUSE', university: 'COLLEGE',
 };
-const poolFor = (d: District, fallback: BuildingKey[]): BuildingKey[] => {
+// Per-CITY building pools (by district id) so each town's architecture differs,
+// not just its palette — New Angeles glass towers, Nasheattle timber, San Tampa
+// dark swamp wood, etc. Cities not listed fall back to the generic DISTRICT_POOLS
+// (home keeps the verified look that way).
+const CITY_ARCHITECTURE: Partial<Record<CityThemeKey, Record<string, BuildingKey[]>>> = {
+  bostland: {
+    eastside: ['redClub', 'arch', 'teal', 'shopAwning', 'townhouse', 'manor'],
+    downtown: ['townhouse', 'stone', 'glassHall', 'tower', 'civic', 'rotunda'],
+    industrial: ['darkHall', 'modern', 'greyShop', 'stone', 'glassHall', 'lodge'],
+    university: ['stone', 'manor', 'tudor', 'arch', 'civic', 'lodge'],
+  },
+  detroleans: {
+    eastside: ['redClub', 'teal', 'arch', 'shopAwning', 'manor'],
+    downtown: ['townhouse', 'tower', 'glassHall', 'modern', 'grandHall', 'civic'],
+    industrial: ['modern', 'darkHall', 'greyShop', 'tower', 'stone'],
+    university: ['stone', 'manor', 'tudor', 'lodge', 'arch'],
+  },
+  nasheattle: {
+    eastside: ['redClub', 'teal', 'arch', 'shopAwning', 'manor', 'cottageTan'],
+    downtown: ['townhouse', 'glassHall', 'tower', 'grandHall', 'modern', 'civic'],
+    industrial: ['darkHall', 'modern', 'greyShop', 'stone', 'tower', 'glassHall'],
+    university: ['stone', 'manor', 'tudor', 'lodge', 'civic', 'arch'],
+  },
+  chicaustin: {
+    eastside: ['redClub', 'shopAwning', 'arch', 'teal', 'townhouse'],
+    downtown: ['modern', 'tower', 'glassHall', 'arch', 'greyShop', 'civic'],
+    industrial: ['darkHall', 'greyShop', 'lodge', 'modern', 'townhouse'],
+    university: ['stone', 'manor', 'arch', 'rotunda', 'grandHall'],
+  },
+  atlando: {
+    eastside: ['redClub', 'arch', 'teal', 'shopAwning', 'townhouse'],
+    downtown: ['tower', 'modern', 'glassHall', 'greyShop', 'rotunda'],
+    industrial: ['modern', 'darkHall', 'greyShop', 'lodge'],
+    university: ['stone', 'civic', 'rotunda', 'grandHall', 'manor'],
+  },
+  santampa: {
+    eastside: ['redClub', 'darkHall', 'teal', 'shopAwning', 'arch', 'lodge'],
+    downtown: ['tower', 'glassHall', 'modern', 'townhouse', 'rotunda', 'grandHall'],
+    industrial: ['modern', 'darkHall', 'greyShop', 'tower', 'stone', 'glassHall'],
+    university: ['stone', 'arch', 'manor', 'civic', 'tudor', 'lodge'],
+  },
+  newangeles: {
+    eastside: ['redClub', 'teal', 'arch', 'shopAwning', 'townhouse', 'modern'],
+    downtown: ['tower', 'glassHall', 'modern', 'rotunda', 'grandHall', 'civic'],
+    industrial: ['modern', 'greyShop', 'darkHall', 'tower', 'glassHall', 'stone'],
+    university: ['stone', 'arch', 'manor', 'civic', 'rotunda', 'townhouse'],
+  },
+};
+const poolFor = (d: District, themeKey: CityThemeKey, fallback: BuildingKey[]): BuildingKey[] => {
+  const cityPool = CITY_ARCHITECTURE[themeKey]?.[d.id];
+  if (cityPool && cityPool.length) return cityPool;
   const kind = DISTRICT_KIND[d.id] ?? (d.type as keyof typeof DISTRICT_POOLS | undefined);
   return (kind && DISTRICT_POOLS[kind]) || fallback;
 };
 
-function planTown(districts: District[], venues: Venue[], roofMix: BuildingKey[], diyPoints: number, landmarks: CityLandmark[]): TownPlan {
+function planTown(districts: District[], venues: Venue[], roofMix: BuildingKey[], diyPoints: number, landmarks: CityLandmark[], themeKey: CityThemeKey): TownPlan {
   // Quarters (for signposts + click hit-testing) — the four grid regions.
   const quarters: Quarter[] = districts.slice(0, 4).map((district) => {
     const east = district.bounds.x >= 4;
@@ -306,7 +380,7 @@ function planTown(districts: District[], venues: Venue[], roofMix: BuildingKey[]
   const placeRow = (anchor: number, mode: 'bottom' | 'top') => {
     let tx = 3;
     while (tx < WORLD_W - 4) {
-      const pool = poolFor(districtAt(tx, anchor), roofMix);
+      const pool = poolFor(districtAt(tx, anchor), themeKey, roofMix);
       const key = pool[Math.floor(hash2(tx * 7, anchor * 17) * 997) % pool.length];
       const sprite = BUILDINGS[key];
       const tw = fpW(sprite);
@@ -838,7 +912,7 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
 
   // diyPoints + district state (scene/gentrification) drive which establishments
   // exist, so the plan must recompute as the city evolves — keep them in deps.
-  const plan = useMemo(() => planTown(districts, venues, theme.roofMix, diyPoints, landmarks), [districts, venues, theme, diyPoints, landmarks]);
+  const plan = useMemo(() => planTown(districts, venues, theme.roofMix, diyPoints, landmarks, themeKey), [districts, venues, theme, diyPoints, landmarks, themeKey]);
   const ground = useMemo(() => (sheets ? buildGround(plan, sheets, theme) : null), [plan, sheets, theme]);
 
   // Static depth-sortable objects (buildings + trees); walkers merge in per-frame.
