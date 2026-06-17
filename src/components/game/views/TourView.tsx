@@ -37,6 +37,8 @@ export const TourView: React.FC<TourViewProps> = ({ onNavigate }) => {
   const addStress = useGameStore((s) => s.addStress);
   const addFans = useGameStore((s) => s.addFans);
   const makePathChoice = useGameStore((s) => s.makePathChoice);
+  const cancelAllScheduledShows = useGameStore((s) => s.cancelAllScheduledShows);
+  const bookedShowCount = useGameStore((s) => s.scheduledShows.length);
 
   const [dest, setDest] = useState<City | null>(null);
   const [offer, setOffer] = useState<TravelOffer[]>([]);
@@ -54,6 +56,9 @@ export const TourView: React.FC<TourViewProps> = ({ onNavigate }) => {
 
   const pick = (mode: TravelOffer) => {
     if (!dest) return;
+    // Leaving town cancels any shows booked here (deposits refunded) so they
+    // don't dangle against this city's venues after you've gone.
+    if (bookedShowCount > 0) cancelAllScheduledShows();
     const e = mode.effects;
     if (e.money) addMoney(e.money);
     if (e.stress) addStress(e.stress);
@@ -132,6 +137,12 @@ export const TourView: React.FC<TourViewProps> = ({ onNavigate }) => {
                 <X size={18} />
               </button>
             </div>
+
+            {bookedShowCount > 0 && (
+              <div className="snes-panel-inset" style={{ border: "2px solid #ffd23f", padding: "8px 10px", marginTop: "8px", fontSize: "11px", color: "#ffd23f", lineHeight: 1.4 }}>
+                ⚠️ Hitting the road cancels your {bookedShowCount} booked show{bookedShowCount > 1 ? "s" : ""} here — deposits refunded.
+              </div>
+            )}
 
             <div style={{ display: "flex", flexDirection: "column", gap: "10px", margin: "12px 0" }}>
               {offer.map((mode) => {

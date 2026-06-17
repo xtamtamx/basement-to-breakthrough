@@ -162,6 +162,7 @@ interface GameStore {
 
   // Show actions
   scheduleShow: (show: Show, turnsInAdvance?: number) => void;
+  cancelAllScheduledShows: () => void;
   completeShow: (showId: string, result: ShowResult) => void;
 
   // Faction actions
@@ -920,6 +921,31 @@ export const useGameStore = create<GameStore>()(
           },
         );
       },
+
+      // Cancel every booked-but-unplayed show, refunding each booking deposit.
+      // Used when the player leaves town (you can't play a show in a city you've
+      // toured away from) — clears both the promotion Map and the display list.
+      cancelAllScheduledShows: () =>
+        set((state) => {
+          let refund = 0;
+          state.scheduledShows.forEach((s) => {
+            refund += s.bookingDeposit ?? 0;
+            showPromotionSystem.cancelShow(s.id);
+          });
+          import('@game/persistence/runtimeSnapshot').then(
+            ({ captureRuntimeSnapshot }) => {
+              set({ runtimeSnapshot: captureRuntimeSnapshot() });
+            },
+          );
+          return {
+            money: clamp(
+              state.money + refund,
+              CONSTRAINTS.MIN_MONEY,
+              CONSTRAINTS.MAX_MONEY,
+            ),
+            scheduledShows: [],
+          };
+        }),
 
       completeShow: (showId, result) =>
         set((state) => {

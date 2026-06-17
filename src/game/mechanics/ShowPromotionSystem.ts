@@ -323,6 +323,12 @@ export class ShowPromotionSystem {
    * Defensive: a no-op when every show resolves. Returns the ids that were
    * pruned so callers can keep the store's display list in sync.
    */
+  // Cancel a single booked show (e.g. when the player leaves town before it
+  // plays). Returns whether it existed.
+  cancelShow(id: string): boolean {
+    return this.scheduledShows.delete(id);
+  }
+
   pruneDangling(validBandIds: Set<string>, validVenueIds: Set<string>): string[] {
     const pruned: string[] = [];
     this.scheduledShows.forEach((show, id) => {
