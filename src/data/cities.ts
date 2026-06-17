@@ -4,8 +4,9 @@
  * Each City is its own self-contained scene: 4 districts (reusing the canonical
  * quarter ids so the map/renderer lookups keep working), a venue pool, a vibe,
  * and a visual `theme` the map renderer keys off. Home reuses the hand-authored
- * districts + venues; the others are themed via a small generator so each city
- * looks and books distinctly. Cities unlock across runs (meta progression).
+ * districts + venues; the tour stops are goofy PORTMANTEAU blends of two real
+ * music markets (parody names only — no real trademarks) so each city carries
+ * twice the scene flavor. Cities unlock across runs (meta progression).
  */
 
 import { City, District, Genre, Venue, VenueType } from "@game/types";
@@ -15,7 +16,7 @@ import { ALL_DISTRICTS } from "./districts";
 // import initialVenues here, or it bloats the initial bundle and breaks lazy-load.
 
 // Canonical quarter ids/bounds — every city reuses these four slots so the
-// renderer (FILLER_BUILDINGS, planTown) and CityView lookups stay valid.
+// renderer (DISTRICT_POOLS, planTown) and CityView lookups stay valid.
 const QUARTER_BOUNDS = {
   eastside: { x: 0, y: 0, width: 4, height: 4 },
   downtown: { x: 4, y: 0, width: 4, height: 4 },
@@ -45,6 +46,37 @@ function makeDistricts(specs: Record<QuarterId, DistrictSpec>): District[] {
     bounds: { ...QUARTER_BOUNDS[id] },
     color: specs[id].color,
   }));
+}
+
+// Compose districts from just NAMES + COLORS (the flavor) plus a stat bias, so
+// the satirical naming stays separate from the balance numbers. bias scales how
+// gentrified/expensive the whole city is: 'diy' = scrappy, 'sellout' = soulless.
+type CityBias = "diy" | "mixed" | "sellout";
+type Quarter = { name: string; color: string };
+
+const BASE_STATS: Record<QuarterId, { scene: number; gent: number; police: number }> = {
+  eastside: { scene: 80, gent: 25, police: 25 },
+  downtown: { scene: 55, gent: 55, police: 50 },
+  industrial: { scene: 72, gent: 18, police: 55 },
+  university: { scene: 58, gent: 40, police: 30 },
+};
+
+function cityDistricts(flavor: Record<QuarterId, Quarter>, bias: CityBias): District[] {
+  const g = bias === "diy" ? 0.7 : bias === "sellout" ? 1.7 : 1.0;
+  const specs = {} as Record<QuarterId, DistrictSpec>;
+  (Object.keys(BASE_STATS) as QuarterId[]).forEach((id) => {
+    const b = BASE_STATS[id];
+    const gent = Math.max(5, Math.min(98, Math.round(b.gent * g)));
+    specs[id] = {
+      name: flavor[id].name,
+      color: flavor[id].color,
+      sceneStrength: Math.round(bias === "sellout" ? b.scene - 12 : b.scene),
+      gentrificationLevel: gent,
+      policePresence: b.police,
+      rentMultiplier: +(0.8 + (gent / 100) * 1.0).toFixed(2),
+    };
+  });
+  return makeDistricts(specs);
 }
 
 // Standard venue archetypes (a capacity ramp). Each city themes the names.
@@ -105,98 +137,200 @@ function makeVenues(
   }));
 }
 
-// --- Rust Belt: sludge, smokestacks, the heaviest crowds -----------------
-const rustDistricts = makeDistricts({
-  eastside: { name: "The Foundry", sceneStrength: 85, gentrificationLevel: 15, policePresence: 35, rentMultiplier: 0.9, color: "#b06a3a" },
-  downtown: { name: "Slag Heights", sceneStrength: 60, gentrificationLevel: 55, policePresence: 55, rentMultiplier: 1.3, color: "#8a8a8a" },
-  industrial: { name: "Tannery Row", sceneStrength: 75, gentrificationLevel: 10, policePresence: 65, rentMultiplier: 0.7, color: "#7a5230" },
-  university: { name: "Steel Tech", sceneStrength: 55, gentrificationLevel: 35, policePresence: 30, rentMultiplier: 1.1, color: "#c0843e" },
-});
+// --- Tour stops: goofy two-market portmanteau blends ------------------------
+const bostlandDistricts = cityDistricts({
+  eastside: { name: "Pawtucky Heights", color: "#7b3f9e" },
+  downtown: { name: "Beanflannel Sq.", color: "#c0392b" },
+  industrial: { name: "Kombucha Wharf", color: "#4a6b5a" },
+  university: { name: "Cardigan Yard", color: "#2e5c8a" },
+}, "diy");
 
-// --- Seaside: sunny, salt-stained pop-punk -------------------------------
-const seasideDistricts = makeDistricts({
-  eastside: { name: "The Boardwalk", sceneStrength: 75, gentrificationLevel: 45, policePresence: 25, rentMultiplier: 1.2, color: "#22b3c0" },
-  downtown: { name: "Marina Bay", sceneStrength: 50, gentrificationLevel: 70, policePresence: 40, rentMultiplier: 1.6, color: "#3b82f6" },
-  industrial: { name: "The Docks", sceneStrength: 80, gentrificationLevel: 20, policePresence: 45, rentMultiplier: 0.9, color: "#0d9488" },
-  university: { name: "Surf College", sceneStrength: 60, gentrificationLevel: 40, policePresence: 20, rentMultiplier: 1.2, color: "#f59e0b" },
-});
+const detroleansDistricts = cityDistricts({
+  eastside: { name: "Coney Quarter", color: "#7a3fb5" },
+  downtown: { name: "Motorgras Row", color: "#d4a017" },
+  industrial: { name: "The Foundry Wards", color: "#b3501f" },
+  university: { name: "Brassmore Campus", color: "#2f9e8f" },
+}, "diy");
 
-// --- The Capital: sellout central, all-glass and brand activations -------
-const capitalDistricts = makeDistricts({
-  eastside: { name: "Gallery Row", sceneStrength: 55, gentrificationLevel: 75, policePresence: 30, rentMultiplier: 1.8, color: "#a855f7" },
-  downtown: { name: "Financial District", sceneStrength: 35, gentrificationLevel: 95, policePresence: 70, rentMultiplier: 2.2, color: "#64748b" },
-  industrial: { name: "Media Mile", sceneStrength: 45, gentrificationLevel: 80, policePresence: 50, rentMultiplier: 1.7, color: "#0ea5e9" },
-  university: { name: "The Quad", sceneStrength: 50, gentrificationLevel: 60, policePresence: 35, rentMultiplier: 1.5, color: "#f43f5e" },
-});
+const nasheattleDistricts = cityDistricts({
+  eastside: { name: "Twangter Park", color: "#6b8e5a" },
+  downtown: { name: "Lower Bootsy Row", color: "#c2562f" },
+  industrial: { name: "Flannel Gulch", color: "#4a5560" },
+  university: { name: "Grad Steel Hill", color: "#7a6ca8" },
+}, "mixed");
+
+const chicaustinDistricts = cityDistricts({
+  eastside: { name: "Keepin' It Weird Side", color: "#b5482e" },
+  downtown: { name: "The Windy Loop", color: "#5a86c2" },
+  industrial: { name: "Deep-Dish Stockyards", color: "#7a5a3a" },
+  university: { name: "Sixth & Studious", color: "#e0a32a" },
+}, "mixed");
+
+const atlandoDistricts = cityDistricts({
+  eastside: { name: "Eastside Auto-Trap", color: "#7a2bd6" },
+  downtown: { name: "Downtempo Loop", color: "#1f8fe0" },
+  industrial: { name: "Strip-Mall 808 Row", color: "#c9522a" },
+  university: { name: "Mouseketeer Commons", color: "#e84fa0" },
+}, "mixed");
+
+const tampareaDistricts = cityDistricts({
+  eastside: { name: "Gator Gulch", color: "#4a5d23" },
+  downtown: { name: "Blast Beach", color: "#2e6b8c" },
+  industrial: { name: "The Morrisound Mile", color: "#5c4033" },
+  university: { name: "Thrash State College", color: "#c9a227" },
+}, "mixed");
+
+const newAngelesDistricts = cityDistricts({
+  eastside: { name: "Sunset Bushwick", color: "#e0457b" },
+  downtown: { name: "No-Wave-ho", color: "#2b2d42" },
+  industrial: { name: "The Brokelyn Docks", color: "#5a6473" },
+  university: { name: "Tisch & Tan U.", color: "#3fa796" },
+}, "sellout");
 
 export const CITIES: City[] = [
   {
     id: "home",
-    name: "Basement City",
-    blurb: "Where the scene started. Your scrappy DIY hometown.",
-    vibe: "scrappy DIY punk",
-    primaryGenre: Genre.PUNK,
+    name: "Strong Island",
+    blurb: "Long Island's finest: VFW emo, strip-mall riffs, and a 9:40 last train home.",
+    vibe: "parkway pop-punk emo",
+    primaryGenre: Genre.EMO,
     theme: "home",
     districts: ALL_DISTRICTS,
     venues: [], // populated lazily by loadInitialGameData (see note above)
     unlock: { type: "default", label: "Home turf" },
   },
   {
-    id: "rust",
-    name: "Rust Belt",
-    blurb: "Smokestacks, cheap rent, and the heaviest crowds in the country.",
-    vibe: "sludge metal",
-    primaryGenre: Genre.SLUDGE,
+    id: "bostland",
+    name: "Bostland",
+    blurb: "Where straight-edge bruisers and bird-on-it baristas share one wicked weird pit.",
+    vibe: "twee-edge mosh",
+    primaryGenre: Genre.HARDCORE,
+    theme: "seaside",
+    districts: bostlandDistricts,
+    venues: makeVenues("bostland", bostlandDistricts, {
+      basement: "The Wicked Cellah",
+      diy: "Put-A-Pit-On-It Hall",
+      warehouse: "The Decommissioned Donut Co.",
+      dive: "Dunkin' & Bruisin'",
+      club: "The Masshole Lodge",
+      theater: "The Rhymin' Cardigan",
+      special: "OMFUG Chowdah Room",
+    }),
+    unlock: { type: "reputation", value: 15, label: "Reach 15 reputation" },
+  },
+  {
+    id: "detroleans",
+    name: "Detroleans",
+    blurb: "Where the assembly line of the soul gets second-lined straight into a ditch.",
+    vibe: "assembly-line second-line",
+    primaryGenre: Genre.EXPERIMENTAL,
     theme: "rust",
-    districts: rustDistricts,
-    venues: makeVenues("rust", rustDistricts, {
-      basement: "The Boiler Room",
-      diy: "Local 161 Union Hall",
-      warehouse: "Foundry Floor",
-      dive: "The Slag Heap",
-      club: "Corrosion",
-      theater: "The Carnegie (RIP)",
-      special: "Tunnel Seven",
+    districts: detroleansDistricts,
+    venues: makeVenues("detroleans", detroleansDistricts, {
+      basement: "The Crawdad Cellar",
+      diy: "Motown Bounce Hall",
+      warehouse: "Plant 9 Krewe",
+      dive: "The Rusty Tuba",
+      club: "Hitsville Hoodoo",
+      theater: "The Second-Line Fox",
+      special: "OMFUGombo",
     }),
     unlock: { type: "reputation", value: 25, label: "Reach 25 reputation" },
   },
   {
-    id: "seaside",
-    name: "Seaside",
-    blurb: "Sun, salt, and pop-punk that never grew up.",
-    vibe: "sunny pop-punk",
-    primaryGenre: Genre.EMO,
-    theme: "seaside",
-    districts: seasideDistricts,
-    venues: makeVenues("seaside", seasideDistricts, {
-      basement: "Tito's Garage",
-      diy: "The Shell Shack",
-      warehouse: "Pier 9 Warehouse",
-      dive: "The Salty Dog",
-      club: "High Tide",
-      theater: "Seabreeze Pavilion",
-      special: "The Tide Pool",
+    id: "nasheattle",
+    name: "Nasheattle",
+    blurb: "Every flannel hides a pedal steel and every latte is two chords short of a breakdown.",
+    vibe: "honky-tonk grunge",
+    primaryGenre: Genre.GRUNGE,
+    theme: "rust",
+    districts: nasheattleDistricts,
+    venues: makeVenues("nasheattle", nasheattleDistricts, {
+      basement: "The Drippin' Cellar",
+      diy: "Smells Like Picken' Hall",
+      warehouse: "The Rusty Spurnge",
+      dive: "Hank's Soggy Saloon",
+      club: "Nevermind the Opry",
+      theater: "The Grand Ol' Grunge",
+      special: "OMFUG Honky-Tonk",
     }),
-    unlock: { type: "reputation", value: 50, label: "Reach 50 reputation" },
+    unlock: { type: "reputation", value: 40, label: "Reach 40 reputation" },
   },
   {
-    id: "capital",
-    name: "The Capital",
-    blurb: "Where scenes go to get a brand deal. Mind the velvet rope.",
-    vibe: "industry-plant indie",
+    id: "chicaustin",
+    name: "Chicaustin",
+    blurb: "Deep-dish blues meets badge-overload weird — keep it loud, keep it gritty.",
+    vibe: "windy outlaw blues",
+    primaryGenre: Genre.ALTERNATIVE,
+    theme: "rust",
+    districts: chicaustinDistricts,
+    venues: makeVenues("chicaustin", chicaustinDistricts, {
+      basement: "Taco Bunker All-Ages",
+      diy: "Keep-It-Weird Hall",
+      warehouse: "The Drill Yard",
+      dive: "The Surly Armadive",
+      club: "House of Deep Dish",
+      theater: "The Rhymin' Auditorium",
+      special: "OMFUG Taco Stand",
+    }),
+    unlock: { type: "reputation", value: 55, label: "Reach 55 reputation" },
+  },
+  {
+    id: "atlando",
+    name: "Atlando",
+    blurb: "Where the 808 hits so hard it knocks the ears off a knockoff cartoon mouse.",
+    vibe: "bubblegum trap",
+    primaryGenre: Genre.ELECTRONIC,
+    theme: "seaside",
+    districts: atlandoDistricts,
+    venues: makeVenues("atlando", atlandoDistricts, {
+      basement: "Lil Basement (No A/C)",
+      diy: "The All-Ages Trap House",
+      warehouse: "Bando Magic Kingdom",
+      dive: "The Crunk Tavern",
+      club: "Club Mouse-keteer",
+      theater: "The TRL Auditrillium",
+      special: "OutKick Cellar",
+    }),
+    unlock: { type: "reputation", value: 70, label: "Reach 70 reputation" },
+  },
+  {
+    id: "tamparea",
+    name: "Tamparea",
+    blurb: "The gators mosh harder than the trust-fund thrashers who priced out the swamp.",
+    vibe: "swampy techno-thrash",
+    primaryGenre: Genre.METAL,
+    theme: "capital",
+    districts: tampareaDistricts,
+    venues: makeVenues("tamparea", tampareaDistricts, {
+      basement: "The Fog Cellar",
+      diy: "All-Ages Alligatorium",
+      warehouse: "Pier 666 Storage",
+      dive: "The Rusty Trem-Bar",
+      club: "Club Brutal Frisco",
+      theater: "The Riff Coast Palace",
+      special: "The Swamp Vault",
+    }),
+    unlock: { type: "reputation", value: 85, label: "Reach 85 reputation" },
+  },
+  {
+    id: "newangeles",
+    name: "New Angeles",
+    blurb: "Where your basement demo gets an A&R deal, a brand sponsor, and a betrayal arc by Tuesday.",
+    vibe: "no-wave hair-metal hustle",
     primaryGenre: Genre.INDIE,
     theme: "capital",
-    districts: capitalDistricts,
-    venues: makeVenues("capital", capitalDistricts, {
-      basement: "The Influencer's Loft",
-      diy: "WeWork Commons",
-      warehouse: "The Brand Activation Space",
-      dive: "Speakeasy (Ironic)",
-      club: "Verified",
-      theater: "The Synergy Center",
-      special: "Pop-Up Experience",
+    districts: newAngelesDistricts,
+    venues: makeVenues("newangeles", newAngelesDistricts, {
+      basement: "The Stoop Strip",
+      diy: "All-Ages Angeleno Hall",
+      warehouse: "Warehouse 90210-B",
+      dive: "The Sticky Apple",
+      club: "Velvet Rope-A-Dope",
+      theater: "The Rhymin' Bowl",
+      special: "OMFUG-on-Sunset",
     }),
-    unlock: { type: "reputation", value: 75, label: "Reach 75 reputation" },
+    unlock: { type: "reputation", value: 100, label: "Reach 100 reputation" },
   },
 ];
 

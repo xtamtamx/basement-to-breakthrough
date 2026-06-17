@@ -6,18 +6,18 @@ import { District } from "@game/types";
 export const DISTRICTS = {
   EASTSIDE: {
     id: "eastside",
-    name: "Eastside",
+    name: "Bagel Hamlet",
     sceneStrength: 80,
     gentrificationLevel: 30,
     policePresence: 20,
     rentMultiplier: 1,
     bounds: { x: 0, y: 0, width: 4, height: 4 },
-    color: "#ec4899",
+    color: "#ec5b8a",
   } as District,
 
   DOWNTOWN: {
     id: "downtown",
-    name: "Downtown",
+    name: "The Strip Mall",
     sceneStrength: 60,
     gentrificationLevel: 70,
     policePresence: 50,
@@ -28,18 +28,18 @@ export const DISTRICTS = {
 
   INDUSTRIAL: {
     id: "industrial",
-    name: "Industrial",
+    name: "Parkway Flats",
     sceneStrength: 70,
     gentrificationLevel: 20,
     policePresence: 60,
     rentMultiplier: 0.8,
     bounds: { x: 0, y: 4, width: 4, height: 4 },
-    color: "#10b981",
+    color: "#5a8a5a",
   } as District,
 
   UNIVERSITY: {
     id: "university",
-    name: "University",
+    name: "Good School Dist.",
     sceneStrength: 50,
     gentrificationLevel: 40,
     policePresence: 30,

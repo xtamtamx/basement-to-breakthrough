@@ -1131,6 +1131,53 @@ export const useGameStore = create<GameStore>()(
       onRehydrateStorage: () => (state) => {
         if (!state) return;
 
+        // Reconcile the persisted city roster against the current data file: a
+        // save may have been written with an older/smaller roster (or older
+        // names), so rebuild from CITIES — taking fresh names/colors/venues but
+        // preserving each district's gentrification drift (scene/gent/police/
+        // rent) so a mid-run save keeps its progress. Drop a currentCityId that
+        // points at a city no longer in the roster.
+        const savedById = new Map(
+          (Array.isArray(state.cities) ? state.cities : []).map((c) => [c.id, c]),
+        );
+        const mergeDrift = (fresh: District[], saved?: District[]): District[] => {
+          const byId = new Map((saved ?? []).map((d) => [d.id, d]));
+          return fresh.map((fd) => {
+            const sd = byId.get(fd.id);
+            return sd
+              ? {
+                  ...fd,
+                  sceneStrength: sd.sceneStrength,
+                  gentrificationLevel: sd.gentrificationLevel,
+                  policePresence: sd.policePresence,
+                  rentMultiplier: sd.rentMultiplier,
+                }
+              : fd;
+          });
+        };
+        state.cities = CITIES.map((fresh) => {
+          const saved = savedById.get(fresh.id);
+          if (!saved) return fresh;
+          return {
+            ...fresh,
+            venues: saved.venues?.length ? saved.venues : fresh.venues,
+            districts: mergeDrift(fresh.districts, saved.districts),
+          };
+        });
+        if (!CITIES.some((c) => c.id === state.currentCityId)) {
+          state.currentCityId = HOME_CITY_ID;
+        }
+        // Refresh the active district list's names/colors from the (now
+        // reconciled) current city, keeping the live drift stats already in it.
+        const curCity = state.cities.find((c) => c.id === state.currentCityId);
+        if (curCity && Array.isArray(state.districts)) {
+          const canon = new Map(curCity.districts.map((d) => [d.id, d]));
+          state.districts = state.districts.map((d) => {
+            const c = canon.get(d.id);
+            return c ? { ...d, name: c.name, color: c.color } : d;
+          });
+        }
+
         // One-time prune of dangling band/venue references orphaned by a
         // data-file patch since this save was written. Runs on every refresh
         // but is a no-op when everything resolves.
