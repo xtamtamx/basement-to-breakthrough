@@ -28,6 +28,7 @@ import {
 } from '../world/landmarks';
 import { recordCityUnlocks } from '../world/cityUnlocks';
 import { cityGenreFit } from '../world/citySynergy';
+import { getCitySignature } from '../world/citySignatures';
 import { captureRuntimeSnapshot } from '../persistence/runtimeSnapshot';
 import { devLog } from '@utils/devLogger';
 import {
@@ -522,6 +523,8 @@ export class TurnResolutionEngine {
     // City↔band scene fit: the local scene turns out for its own sound.
     const currentCity = store.cities?.find((c) => c.id === store.currentCityId);
     const sceneFit = cityGenreFit(currentCity?.primaryGenre, mainBand.genre);
+    // Per-city signature: each town plays differently (rent, crowds, incidents…).
+    const sig = getCitySignature(store.currentCityId);
 
     // Get all bands in the show. The live booking path sets show.lineup
     // (band ids, headliner first); the older show.bill is a legacy shape.
@@ -619,7 +622,8 @@ export class TurnResolutionEngine {
           hypeMultiplier *
           billMultiplier *
           gentrificationAttendance *
-          sceneFit.multiplier,
+          sceneFit.multiplier *
+          (sig?.attendanceMult ?? 1),
       ),
       effectiveCapacity,
     );
@@ -641,7 +645,7 @@ export class TurnResolutionEngine {
     );
     const revenueMultiplier = 1 + moneyBonus / 100;
     const finalRevenue = Math.floor(
-      totalRevenue * revenueMultiplier * runMods.moneyMultiplier,
+      totalRevenue * revenueMultiplier * runMods.moneyMultiplier * (sig?.revenueMult ?? 1),
     );
 
     // Calculate costs with difficulty scaling; escalation turns raise costs.
@@ -658,7 +662,8 @@ export class TurnResolutionEngine {
         districtRentMult *
         gentrificationSystem.getRentMultiplier(venue.location.id) *
         runMods.venueRentMultiplier *
-        metaBonuses.venueDiscountMultiplier,
+        metaBonuses.venueDiscountMultiplier *
+        (sig?.rentMult ?? 1),
     );
     let totalCosts = bandCosts + venueCost;
     if (isEscalation) {
@@ -681,9 +686,9 @@ export class TurnResolutionEngine {
       'REPUTATION_PERCENT',
       synergyResults,
     );
-    fanGain = Math.floor(fanGain * (1 + fansBonus / 100) * runMods.fansMultiplier);
+    fanGain = Math.floor(fanGain * (1 + fansBonus / 100) * runMods.fansMultiplier * (sig?.fanMult ?? 1));
     reputationGain = Math.floor(
-      reputationGain * (1 + repBonus / 100) * runMods.reputationMultiplier,
+      reputationGain * (1 + repBonus / 100) * runMods.reputationMultiplier * (sig?.repMult ?? 1),
     );
 
     // Playing a show is tiring — base stress scaled by the run's modifier.
@@ -699,7 +704,7 @@ export class TurnResolutionEngine {
     const incidentReduction = passiveEffects
       .filter((e) => e.type === 'INCIDENT_REDUCTION_PERCENT')
       .reduce((sum, e) => sum + e.value, 0);
-    let incidentChance = 0.1; // 10% base chance
+    let incidentChance = 0.1 * (sig?.incidentMult ?? 1); // 10% base chance, bent by the city
     if (isEscalation) {
       incidentChance *= ESCALATION_INCIDENT_MULTIPLIER;
     }

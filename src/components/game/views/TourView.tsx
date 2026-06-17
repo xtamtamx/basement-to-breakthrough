@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useGameStore } from "@stores/gameStore";
 import { isCityUnlocked, unlockRequirement } from "@game/world/cityUnlocks";
+import { getCitySignature } from "@game/world/citySignatures";
 import { rollTravelOffer, TravelOffer, TravelEffects } from "@game/world/travelModes";
 import { haptics } from "@utils/mobile";
 import { City } from "@game/types";
@@ -95,6 +96,7 @@ export const TourView: React.FC<TourViewProps> = ({ onNavigate }) => {
           const isCurrent = city.id === currentCityId;
           const unlocked = isCityUnlocked(city);
           const accent = isCurrent ? "#ffd23f" : unlocked ? "#4cc9f0" : "#2a2350";
+          const sig = getCitySignature(city.id);
           return (
             <div key={city.id} className={`snes-panel${isCurrent ? " snes-panel--gold" : unlocked ? " snes-panel--cyan" : ""}`} style={{ padding: "12px", opacity: unlocked || isCurrent ? 1 : 0.7 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", gap: "10px" }}>
@@ -107,6 +109,11 @@ export const TourView: React.FC<TourViewProps> = ({ onNavigate }) => {
                   <p style={{ fontSize: "12px", color: "#b9b3d6", margin: 0, lineHeight: 1.4, fontStyle: "italic" }}>
                     {unlocked || isCurrent ? city.blurb : `🔒 ${unlockRequirement(city)} (you: ${reputation})`}
                   </p>
+                  {(unlocked || isCurrent) && sig && (
+                    <p style={{ fontSize: "11px", color: accent, margin: "6px 0 0", lineHeight: 1.4 }}>
+                      <span className="snes-pixel" style={{ fontSize: "7px", letterSpacing: 0 }}>⚙ {sig.label}</span> — {sig.blurb}
+                    </p>
+                  )}
                 </div>
                 <div style={{ flexShrink: 0 }}>
                   {isCurrent ? (
