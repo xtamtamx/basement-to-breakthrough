@@ -1,14 +1,14 @@
 import React from 'react';
-import { 
+import {
   Building2, Users, Music, Megaphone, Briefcase, Zap, TrendingUp,
-  ChevronRight, Grid3X3
+  ChevronRight, Grid3X3, Map
 } from 'lucide-react';
 import { useGameStore } from '@stores/gameStore';
 import { showPromotionSystem } from '@game/mechanics/ShowPromotionSystem';
 import { progressionPathSystem } from '@game/mechanics/ProgressionPathSystem';
 import { haptics } from '@utils/mobile';
 
-type ViewType = "city" | "bands" | "shows" | "promotion" | "synergies" | "jobs" | "progression";
+type ViewType = "city" | "bands" | "shows" | "promotion" | "synergies" | "jobs" | "progression" | "tour";
 
 interface MobileBottomNavProps {
   currentView: ViewType;
@@ -66,6 +66,11 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   ];
 
   const secondaryViews = [
+    {
+      id: 'tour' as ViewType,
+      icon: <Map size={18} />,
+      label: 'Tour'
+    },
     {
       id: 'jobs' as ViewType,
       icon: <Briefcase size={18} />,

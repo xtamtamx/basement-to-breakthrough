@@ -26,6 +26,7 @@ import {
   landmarkPassiveMoney,
   metaProgressValue,
 } from '../world/landmarks';
+import { recordCityUnlocks } from '../world/cityUnlocks';
 import { captureRuntimeSnapshot } from '../persistence/runtimeSnapshot';
 import { devLog } from '@utils/devLogger';
 import {
@@ -305,6 +306,11 @@ export class TurnResolutionEngine {
         `BURNOUT WARNING: Stress at ${postTurnStore.stress}/${BURNOUT_STRESS_CAP}`,
       );
     }
+
+    // Reputation may have crossed a city's unlock threshold — record it (persists
+    // cross-run) and announce any newly reachable tour stops.
+    const unlockedCities = recordCityUnlocks(postTurnStore.cities ?? [], postTurnStore.reputation);
+    unlockedCities.forEach((c) => warnings.push(`NEW CITY UNLOCKED: ${c.name} — book a tour!`));
 
     // 6. Endgame check, then turn increment
     const runEnd = this.checkEndgame(postTurnStore, turn, brokeTurns);

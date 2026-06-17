@@ -7,6 +7,7 @@ import { SynergyView } from "./views/SynergyView";
 import { DayJobView } from "./views/DayJobView";
 import { PromotionView } from "./views/PromotionView";
 import { ProgressionView } from "./views/ProgressionView";
+import { TourView } from "./views/TourView";
 import { MobileBottomNav } from "./MobileBottomNav";
 import { TurnResultsModal } from "@components/ui/TurnResultsModal";
 import { SettingsModal } from "@components/ui/SettingsModal";
@@ -25,7 +26,7 @@ import { Settings, Save } from 'lucide-react';
 import { useSwipeable } from 'react-swipeable';
 import { QuickStartGuide } from './QuickStartGuide';
 
-type ViewType = "city" | "bands" | "shows" | "promotion" | "synergies" | "jobs" | "progression";
+type ViewType = "city" | "bands" | "shows" | "promotion" | "synergies" | "jobs" | "progression" | "tour";
 
 interface MainGameViewProps {
   onExitToMenu?: () => void;
@@ -117,7 +118,7 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
   };
 
   // Swipe navigation
-  const viewOrder: ViewType[] = ["city", "bands", "shows", "promotion", "jobs", "synergies", "progression"];
+  const viewOrder: ViewType[] = ["city", "bands", "shows", "promotion", "jobs", "synergies", "progression", "tour"];
   const currentIndex = viewOrder.indexOf(currentView);
   
   const swipeHandlers = useSwipeable({
@@ -142,6 +143,7 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
     jobs: DayJobView,
     synergies: SynergyView,
     progression: ProgressionView,
+    tour: TourView,
   };
 
   const CurrentViewComponent = views[currentView];
@@ -200,6 +202,8 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
             <GameErrorBoundary viewName={currentView}>
               {currentView === "promotion" ? (
                 <PromotionView onNavigate={handleViewChange} />
+              ) : currentView === "tour" ? (
+                <TourView onNavigate={handleViewChange} />
               ) : (
                 <CurrentViewComponent />
               )}

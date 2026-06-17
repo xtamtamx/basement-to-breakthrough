@@ -524,6 +524,21 @@ class MetaProgressionManager {
   getProgression(): MetaProgression {
     return this.progression;
   }
+
+  // Has a piece of content been unlocked? (criteria-met OR purchased)
+  hasUnlock(unlockId: string): boolean {
+    return this.progression.unlocks.includes(unlockId);
+  }
+
+  // Record a criteria-met unlock (no cost — e.g. a city reached by reputation).
+  // Returns true only the first time, so callers can fire a "newly unlocked!"
+  // notification. Persists cross-run.
+  recordUnlock(unlockId: string): boolean {
+    if (this.progression.unlocks.includes(unlockId)) return false;
+    this.progression.unlocks.push(unlockId);
+    this.saveProgression();
+    return true;
+  }
   
   // Get available unlocks
   getAvailableUnlocks(): UnlockableItem[] {
