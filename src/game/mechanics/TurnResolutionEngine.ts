@@ -27,6 +27,7 @@ import {
   metaProgressValue,
 } from '../world/landmarks';
 import { recordCityUnlocks } from '../world/cityUnlocks';
+import { cityGenreFit } from '../world/citySynergy';
 import { captureRuntimeSnapshot } from '../persistence/runtimeSnapshot';
 import { devLog } from '@utils/devLogger';
 import {
@@ -518,6 +519,10 @@ export class TurnResolutionEngine {
       return this.createFailedShowResult(show.id);
     }
 
+    // City↔band scene fit: the local scene turns out for its own sound.
+    const currentCity = store.cities?.find((c) => c.id === store.currentCityId);
+    const sceneFit = cityGenreFit(currentCity?.primaryGenre, mainBand.genre);
+
     // Get all bands in the show. The live booking path sets show.lineup
     // (band ids, headliner first); the older show.bill is a legacy shape.
     // Support both so multi-band bills actually draw a crowd and get charged.
@@ -613,7 +618,8 @@ export class TurnResolutionEngine {
           difficultyModifiers.attendanceMultiplier *
           hypeMultiplier *
           billMultiplier *
-          gentrificationAttendance,
+          gentrificationAttendance *
+          sceneFit.multiplier,
       ),
       effectiveCapacity,
     );

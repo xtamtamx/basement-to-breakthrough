@@ -4,6 +4,7 @@ import { Venue, Show } from '@game/types';
 import { haptics } from '@utils/mobile';
 import { synergyEngine } from '@game/mechanics/SynergyEngine';
 import { difficultySystem } from '@game/mechanics/DifficultySystem';
+import { cityGenreFit } from '@game/world/citySynergy';
 import { Calendar, MapPin, Users, Music, AlertCircle, TrendingUp, Check, Ban } from 'lucide-react';
 
 /** Step header with a numbered pill that lights up once its step is reachable. */
@@ -51,8 +52,11 @@ export const ShowBuilderView: React.FC = () => {
     venues,
     money,
     scheduledShows,
-    scheduleShow
+    scheduleShow,
+    cities,
+    currentCityId,
   } = useGameStore();
+  const currentCity = cities.find((c) => c.id === currentCityId);
 
   const [selectedBandIds, setSelectedBandIds] = useState<string[]>([]);
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
@@ -95,10 +99,13 @@ export const ShowBuilderView: React.FC = () => {
     const synergies = synergyEngine.calculateSynergies(selectedBands, selectedVenue);
     const totalMultiplier = synergyEngine.getTotalMultiplier(synergies);
 
+    // City scene fit: the local scene turns out for its own sound (headliner).
+    const sceneFit = cityGenreFit(currentCity?.primaryGenre, selectedBands[0].genre);
+
     // Calculate expected attendance
     const avgPopularity = selectedBands.reduce((sum, b) => sum + b.popularity, 0) / selectedBands.length;
     const baseAttendance = Math.floor(selectedVenue.capacity * 0.5 * (avgPopularity / 100));
-    const expectedAttendance = Math.floor(baseAttendance * totalMultiplier);
+    const expectedAttendance = Math.floor(baseAttendance * totalMultiplier * sceneFit.multiplier);
     const finalAttendance = Math.min(expectedAttendance, selectedVenue.capacity);
 
     // Calculate revenue
@@ -109,6 +116,7 @@ export const ShowBuilderView: React.FC = () => {
     return {
       synergies,
       totalMultiplier,
+      sceneFit,
       expectedAttendance: finalAttendance,
       grossRevenue,
       venueCost,
@@ -473,6 +481,19 @@ export const ShowBuilderView: React.FC = () => {
             <div className="snes-panel" style={{
               padding: '16px'
             }}>
+              {/* City scene fit — the local crowd loves its own sound */}
+              {preview.sceneFit.tier !== 'neutral' && (
+                <div className="snes-panel-inset" style={{
+                  border: `2px solid ${preview.sceneFit.tier === 'perfect' ? '#ffd23f' : '#4cc9f0'}`,
+                  padding: '8px 10px',
+                  marginBottom: '16px',
+                }}>
+                  <span className="snes-pixel" style={{ fontSize: '8px', color: preview.sceneFit.tier === 'perfect' ? '#ffd23f' : '#4cc9f0', letterSpacing: 0 }}>
+                    🔥 {preview.sceneFit.label} in {currentCity?.name} (+{Math.round((preview.sceneFit.multiplier - 1) * 100)}% crowd)
+                  </span>
+                </div>
+              )}
+
               {/* Synergies */}
               {preview.synergies.length > 0 && (
                 <div style={{ marginBottom: '16px' }}>
