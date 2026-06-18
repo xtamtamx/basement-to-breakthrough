@@ -18,6 +18,7 @@ import { turnResolutionEngine, TurnResult, RunCeremony } from "@game/mechanics/T
 import { startNewRun } from "@game/mechanics/runLifecycle";
 import { runManager } from "@game/mechanics/RunManager";
 import { RunEndScreen } from "./RunEndScreen";
+import { RunModeSelector } from "./RunModeSelector";
 import { RunEndState } from "@game/constants/runConstants";
 import { gameAudio } from "@utils/gameAudio";
 import { GameErrorBoundary } from "@components/ErrorBoundary";
@@ -49,6 +50,7 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
   const [showSaveLoad, setShowSaveLoad] = useState(false);
   const [runEnd, setRunEnd] = useState<RunEndState | null>(null);
   const [ceremony, setCeremony] = useState<RunCeremony | null>(null);
+  const [showPlayAgainPicker, setShowPlayAgainPicker] = useState(false);
   const [turnResults, setTurnResults] = useState<TurnResult>(EMPTY_TURN_RESULT);
   // Re-entrancy guard: blocks a same-tick double-tap (and taps while the
   // results modal is up) from resolving the same turn twice.
@@ -99,9 +101,14 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
     }
   };
 
-  // Same path as the main menu's start — config resources + meta bonuses
-  const handlePlayAgain = async () => {
-    await startNewRun();
+  // Play Again reopens the run-mode picker so you can switch modes between runs
+  // (rather than silently replaying the last one).
+  const handlePlayAgain = () => setShowPlayAgainPicker(true);
+
+  // Same path as the main menu's start — config resources + meta bonuses.
+  const startRunWithMode = async (configId: string) => {
+    await startNewRun(configId);
+    setShowPlayAgainPicker(false);
     setRunEnd(null);
     setCeremony(null);
     setTurnResults(EMPTY_TURN_RESULT);
@@ -257,6 +264,14 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
           ceremony={ceremony}
           onPlayAgain={handlePlayAgain}
           onMainMenu={handleMainMenu}
+        />
+      )}
+
+      {/* Pick a mode for the next run (over the run-end screen); close = stay */}
+      {showPlayAgainPicker && (
+        <RunModeSelector
+          onSelect={(config) => startRunWithMode(config.id)}
+          onClose={() => setShowPlayAgainPicker(false)}
         />
       )}
 
