@@ -17,6 +17,7 @@ import { difficultySystem } from '../DifficultySystem';
 import { runManager } from '../RunManager';
 import { dayJobSystem } from '../DayJobSystem';
 import { rollTravelOffer } from '@game/world/travelModes';
+import { isVenueUnlocked } from '@game/world/venueProgression';
 import { isCityUnlocked } from '@game/world/cityUnlocks';
 import { Show } from '@game/types';
 
@@ -70,7 +71,10 @@ function bookBestShow(): void {
   // Only spend up to ~40% of cash on rent, keeping a buffer for living costs.
   const rentCeiling = Math.max(0, s.money * 0.4);
   const venues = s.venues.filter(
-    (v) => !difficultySystem.isVenueRaided(v.id) && v.rent <= rentCeiling,
+    (v) =>
+      isVenueUnlocked(v, s.peakReputation) &&
+      !difficultySystem.isVenueRaided(v.id) &&
+      v.rent <= rentCeiling,
   );
   if (venues.length === 0) return;
   // Pick the best profit margin (capacity is the draw proxy, rent the cost) —

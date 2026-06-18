@@ -11,6 +11,7 @@ import { DistrictType as CoreDistrictType } from '@/game/types/core';
 import { Venue } from '@game/types';
 import { CityShop, SHOP_DEFS } from '@game/world/cityShops';
 import { CityLandmark } from '@game/world/landmarks';
+import { unlockedVenues } from '@game/world/venueProgression';
 import { dayJobSystem } from '@game/mechanics/DayJobSystem';
 
 // Maps store district ids onto the core DistrictType used by DistrictInfo.
@@ -213,7 +214,7 @@ export const CityView: React.FC = () => {
               <div className="snes-chip">
                 <Building2 size={12} color="#f72585" />
                 <span style={{ color: '#b9b3d6' }}>Venues</span>
-                <span style={{ color: '#ffffff' }}>{gameStore.venues.length}</span>
+                <span style={{ color: '#ffffff' }}>{unlockedVenues(gameStore.venues, gameStore.peakReputation).length}</span>
               </div>
               <div className="snes-chip">
                 <TrendingUp size={12} color="#3ad17e" />

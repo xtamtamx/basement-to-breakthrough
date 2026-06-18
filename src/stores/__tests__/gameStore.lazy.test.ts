@@ -76,7 +76,7 @@ describe('GameStore Lazy Loading', () => {
     
     // Should have loaded limited data
     expect(result.current.allBands).toHaveLength(8); // Pool of 8 signable acts
-    expect(result.current.venues).toHaveLength(3); // Only first 3 venues
+    expect(result.current.venues).toHaveLength(4); // Full venue ladder loads; the rep gate decides which show
     expect(result.current.rosterBandIds).toHaveLength(1); // Start with a single signed act
   });
 

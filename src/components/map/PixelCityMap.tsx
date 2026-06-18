@@ -32,6 +32,7 @@ import {
 } from './townAtlas';
 import { getCityShops, CityShop, ShopKind } from '@game/world/cityShops';
 import { getCityLandmarks, metaProgressValue, CityLandmark, LandmarkKind } from '@game/world/landmarks';
+import { unlockedVenues } from '@game/world/venueProgression';
 import { metaProgressionManager } from '@game/mechanics/MetaProgressionManager';
 
 interface PixelCityMapProps {
@@ -895,7 +896,12 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
   const [size, setSize] = useState({ w: 0, h: 0 });
 
   const districts = useGameStore((s) => s.districts);
-  const venues = useGameStore((s) => s.venues);
+  const allVenues = useGameStore((s) => s.venues);
+  const peakReputation = useGameStore((s) => s.peakReputation);
+  // Scene-growth ladder: only venues the scene has unlocked are placed on the
+  // map, so the town visibly fills in (DIY rooms → the Burro → the amphitheater)
+  // as reputation climbs.
+  const venues = useMemo(() => unlockedVenues(allVenues, peakReputation), [allVenues, peakReputation]);
   const scheduledShows = useGameStore((s) => s.scheduledShows);
   const diyPoints = useGameStore((s) => s.diyPoints);
   const discoveredCount = useGameStore((s) => s.discoveredSynergies.length);

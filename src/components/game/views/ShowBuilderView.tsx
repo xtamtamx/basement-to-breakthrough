@@ -5,6 +5,7 @@ import { haptics } from '@utils/mobile';
 import { synergyEngine } from '@game/mechanics/SynergyEngine';
 import { difficultySystem } from '@game/mechanics/DifficultySystem';
 import { cityGenreFit } from '@game/world/citySynergy';
+import { isVenueUnlocked } from '@game/world/venueProgression';
 import { Calendar, MapPin, Users, Music, AlertCircle, TrendingUp, Check, Ban } from 'lucide-react';
 
 /** Step header with a numbered pill that lights up once its step is reachable. */
@@ -49,7 +50,8 @@ export const ShowBuilderView: React.FC = () => {
   const {
     allBands,
     rosterBandIds,
-    venues,
+    venues: allVenues,
+    peakReputation,
     money,
     scheduledShows,
     scheduleShow,
@@ -57,6 +59,8 @@ export const ShowBuilderView: React.FC = () => {
     currentCityId,
   } = useGameStore();
   const currentCity = cities.find((c) => c.id === currentCityId);
+  // Only venues the scene has unlocked are bookable (scene-growth ladder).
+  const venues = allVenues.filter((v) => isVenueUnlocked(v, peakReputation));
 
   const [selectedBandIds, setSelectedBandIds] = useState<string[]>([]);
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);

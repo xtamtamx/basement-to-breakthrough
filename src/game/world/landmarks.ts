@@ -69,7 +69,7 @@ const CITY_LANDMARK_NAMES: Record<string, Record<LandmarkAlignment, string[]>> =
   home: {
     diy: ['Half-Stack Hobby & Record', 'All-Ages Annex (BYO Chair)', 'The Xeroxed Zine Trunk'],
     corporate: ['Warped Lot Sponsor Stage', 'Big Box Tab Tower', 'Energy Drink Pavilion'],
-    history: ['First Breakdown Plaque', 'The Original Floor-Punch Spot'],
+    history: ['Angstyville Horror House', 'The Strong Island Duck', 'The OG Spot'],
   },
   bostland: {
     diy: ['Self-Righteous Records & Brews', 'All-Ages Almanac Co-op', 'Zine & Bean Reading Room'],

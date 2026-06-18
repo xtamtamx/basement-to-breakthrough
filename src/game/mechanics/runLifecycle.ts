@@ -47,6 +47,9 @@ export async function startNewRun(
       run.config.startingReputation +
       bonuses.startingReputation,
   );
+  // Seed the venue-ladder high-water mark so a mode that starts with rep
+  // already past a tier (e.g. Festival) opens those venues from turn 1.
+  useGameStore.setState({ peakReputation: useGameStore.getState().reputation });
   store.addConnections(-store.connections + run.config.startingConnections);
 
   await store.loadInitialGameData();

@@ -292,6 +292,13 @@ export class TurnResolutionEngine {
       });
     }
 
+    // One-way venue scene-growth ladder: bank the high-water reputation so
+    // newly-opened venues stay open (and appear on the map next turn) even if
+    // reputation later dips.
+    useGameStore.setState((s) => ({
+      peakReputation: Math.max(s.peakReputation, s.reputation),
+    }));
+
     const warnings: string[] = [];
     if (isEscalation) {
       warnings.push(

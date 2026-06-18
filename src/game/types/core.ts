@@ -169,6 +169,10 @@ export interface Venue {
   hasStage?: boolean;
   isPermanent: boolean; // vs popup/temporary
   bookingDifficulty: number; // 1-10
+  /** Reputation needed before this venue opens on the map / is bookable.
+   *  0 or undefined = available from the start. Gated on PEAK reputation so a
+   *  venue never vanishes after a dip. (Scene-growth ladder.) */
+  unlockReputation?: number;
   imageUrl?: string;
   gridPosition?: { x: number; y: number }; // Position on city grid
   upgrades?: VenueUpgrade[]; // List of upgrades applied

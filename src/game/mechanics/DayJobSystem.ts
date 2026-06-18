@@ -1,6 +1,7 @@
 import { useGameStore } from '@stores/gameStore';
 import { Venue, District } from '@game/types';
 import { getCityShops, SHOP_DEFS, CityShop } from '@game/world/cityShops';
+import { isVenueUnlocked } from '@game/world/venueProgression';
 
 export enum DayJobType {
   NONE = 'NONE',
@@ -274,11 +275,12 @@ export class DayJobSystem {
   // Generate jobs based on current game state
   generateAvailableJobs(): DayJob[] {
     const state = useGameStore.getState();
-    const { venues, districts, diyPoints } = state;
+    const { venues, districts, diyPoints, peakReputation } = state;
     const jobs: DayJob[] = [];
-    
-    // Generate venue jobs
+
+    // Generate venue jobs (only at venues the scene has actually opened)
     venues.forEach(venue => {
+      if (!isVenueUnlocked(venue, peakReputation)) return;
       // Only established venues offer jobs
       if (venue.capacity >= 50) {
         // Venue staff job (always available)

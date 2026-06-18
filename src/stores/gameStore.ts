@@ -89,6 +89,9 @@ interface GameStore {
   // Game state
   money: number;
   reputation: number;
+  /** Highest reputation reached this run — gates the venue scene-growth ladder
+   *  one-way so opened venues never vanish after a rep dip. */
+  peakReputation: number;
   fans: number;
   stress: number;
   connections: number;
@@ -665,6 +668,7 @@ const initialBands: Band[] = [
 const getInitialState = () => ({
   currentRound: 1,
   reputation: 0,
+  peakReputation: 0,
   money: 200, // Starting money - barely enough for 1-2 small shows
   fans: 0,
   stress: 0,
@@ -764,7 +768,10 @@ export const useGameStore = create<GameStore>()(
 
       loadInitialGameData: async () => {
         const { bands, venues } = await loadInitialData();
-        const homeVenues = venues.slice(0, 3); // Start with first 3 of the home scene
+        // Load the FULL home venue ladder; the scene-growth gate (unlockReputation
+        // vs peakReputation) decides which actually show on the map / are bookable,
+        // so the town opens with just the DIY rooms and grows from there.
+        const homeVenues = venues;
         set((state) => ({
           // Load a pool of 8 acts so the roster slot cap (base 4) is a real
           // "who makes the cut" choice — you can only sign a subset.
@@ -1172,6 +1179,7 @@ export const useGameStore = create<GameStore>()(
         // Only persist essential game state, not UI state
         money: state.money,
         reputation: state.reputation,
+        peakReputation: state.peakReputation,
         fans: state.fans,
         stress: state.stress,
         connections: state.connections,
@@ -1212,6 +1220,10 @@ export const useGameStore = create<GameStore>()(
           state.maxRosterSize = BASE_ROSTER_SLOTS;
         }
         if (typeof state.hiredManagers !== "number") state.hiredManagers = 0;
+        // Old saves predate the venue ladder; seed peak from current rep.
+        if (typeof state.peakReputation !== "number") {
+          state.peakReputation = state.reputation ?? 0;
+        }
         // Old saves lack the slot-source snapshot; attribute the whole run-start
         // cap to "base" so the breakdown still sums to maxRosterSize.
         if (!state.rosterSlotSources || typeof state.rosterSlotSources.base !== "number") {
