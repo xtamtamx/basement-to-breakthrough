@@ -3,13 +3,35 @@ import { Venue, EquipmentType } from '@game/types';
 import { venueUpgradeSystem } from '@game/mechanics/VenueUpgradeSystem';
 import { useGameStore } from '@stores/gameStore';
 import { formatMoney } from '@utils/formatters';
+import { haptics } from '@utils/mobile';
 import { Tab } from '@headlessui/react';
+import { X } from 'lucide-react';
 
 interface VenueUpgradeModalProps {
   venue: Venue;
   isOpen: boolean;
   onClose: () => void;
 }
+
+// A neon effect chip: outlined pixel tag in the brand palette.
+const chip = (key: string, label: string, color: string) => (
+  <span
+    key={key}
+    className="snes-pixel"
+    style={{ fontSize: '7px', letterSpacing: 0, color, backgroundColor: '#0f0b1e', border: `2px solid ${color}`, padding: '3px 6px' }}
+  >
+    {label}
+  </span>
+);
+
+// Five-pip quality meter (gold filled / dim empty).
+const stars = (quality: number) => (
+  <div style={{ display: 'flex', gap: '2px', marginTop: '4px' }}>
+    {[...Array(5)].map((_, i) => (
+      <span key={i} style={{ fontSize: '9px', color: i < quality ? '#ffd23f' : '#2a2350' }}>★</span>
+    ))}
+  </div>
+);
 
 export const VenueUpgradeModal: React.FC<VenueUpgradeModalProps> = ({
   venue,
@@ -18,41 +40,34 @@ export const VenueUpgradeModal: React.FC<VenueUpgradeModalProps> = ({
 }) => {
   const store = useGameStore();
   const [selectedTab, setSelectedTab] = useState(0);
-  
+
   if (!isOpen) return null;
-  
+
   const availableUpgrades = venueUpgradeSystem.getAvailableUpgrades(venue);
   const availableEquipment = venueUpgradeSystem.getAvailableEquipment(venue);
+  const ownedEquipment = venue.equipment.filter((e) => e.owned);
   const upkeepCost = venueUpgradeSystem.calculateUpkeepCost(venue);
-  
+
   const handleUpgrade = (upgradeId: string) => {
-    const success = venueUpgradeSystem.applyUpgrade(venue.id, upgradeId);
-    if (success) {
-      // TODO: Show success feedback
-    }
+    if (venueUpgradeSystem.applyUpgrade(venue.id, upgradeId)) haptics.success();
+    else haptics.error();
   };
-  
+
   const handlePurchaseEquipment = (equipmentId: string) => {
-    const success = venueUpgradeSystem.purchaseEquipment(venue.id, equipmentId);
-    if (success) {
-      // TODO: Show success feedback
-    }
+    if (venueUpgradeSystem.purchaseEquipment(venue.id, equipmentId)) haptics.success();
+    else haptics.error();
   };
-  
+
   const handleRentEquipment = (equipmentId: string) => {
-    const success = venueUpgradeSystem.rentEquipment(venue.id, equipmentId);
-    if (success) {
-      // TODO: Show success feedback
-    }
+    if (venueUpgradeSystem.rentEquipment(venue.id, equipmentId)) haptics.success();
+    else haptics.error();
   };
-  
+
   const handleRepairEquipment = (equipmentId: string) => {
-    const success = venueUpgradeSystem.repairEquipment(venue.id, equipmentId);
-    if (success) {
-      // TODO: Show success feedback
-    }
+    if (venueUpgradeSystem.repairEquipment(venue.id, equipmentId)) haptics.success();
+    else haptics.error();
   };
-  
+
   const getEquipmentIcon = (type: EquipmentType) => {
     switch (type) {
       case EquipmentType.PA_SYSTEM: return '🔊';
@@ -63,324 +78,214 @@ export const VenueUpgradeModal: React.FC<VenueUpgradeModalProps> = ({
       default: return '📦';
     }
   };
-  
+
+  const tabStyle = (active: boolean): React.CSSProperties => ({
+    flex: 1,
+    minHeight: '40px',
+    padding: '9px 6px',
+    border: 'none',
+    borderRadius: 0,
+    cursor: 'pointer',
+    transition: 'none',
+    whiteSpace: 'nowrap',
+    background: active ? '#f72585' : 'transparent',
+    color: active ? '#ffffff' : '#6f6796',
+    fontSize: '8px',
+    letterSpacing: 0,
+  });
+
+  const actionBtn = (affordable: boolean, variant: string): string =>
+    `snes-btn snes-pixel snes-btn--sm ${affordable ? variant : 'snes-btn--ghost'}`;
+  const actionStyle = (affordable: boolean): React.CSSProperties => ({
+    flex: 1,
+    minHeight: '44px',
+    fontSize: '8px',
+    cursor: affordable ? 'pointer' : 'not-allowed',
+  });
+
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-900 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+    <div className="snes-modal" onClick={onClose}>
+      <div className="snes-modal__sheet" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
         {/* Header */}
-        <div className="bg-gray-800 px-6 py-4 border-b border-gray-700">
-          <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-bold text-white">{venue.name} - Upgrades</h2>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-white transition-colors"
-            >
-              ✕
-            </button>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', gap: '12px' }}>
+          <div style={{ minWidth: 0 }}>
+            <h2 className="snes-pixel" style={{ fontSize: '12px', color: '#f72585', margin: '0 0 4px', letterSpacing: 0, lineHeight: 1.4 }}>{venue.name}</h2>
+            <p style={{ fontSize: '11px', color: '#b9b3d6', margin: 0 }}>Build out the room — gear, capacity, vibe.</p>
           </div>
-          
-          {/* Venue Stats */}
-          <div className="mt-3 flex flex-wrap gap-4 text-sm">
-            <div className="text-gray-300">
-              <span className="text-gray-500">Capacity:</span> {venue.capacity}
-            </div>
-            <div className="text-gray-300">
-              <span className="text-gray-500">Acoustics:</span> {venue.acoustics}%
-            </div>
-            <div className="text-gray-300">
-              <span className="text-gray-500">Atmosphere:</span> {venue.atmosphere}%
-            </div>
-            <div className="text-gray-300">
-              <span className="text-gray-500">Upkeep:</span> {formatMoney(upkeepCost)}/turn
-            </div>
-          </div>
+          <button
+            onClick={onClose}
+            aria-label="Close"
+            style={{ width: 32, height: 32, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1f1a3a', color: '#b9b3d6', border: '2px solid #0a0814', boxShadow: 'inset 1px 1px 0 #3a2f5c', cursor: 'pointer', borderRadius: 0 }}
+          >
+            <X size={18} />
+          </button>
         </div>
-        
-        {/* Content */}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
-          <Tab.Group selectedIndex={selectedTab} onChange={setSelectedTab}>
-            <Tab.List className="flex space-x-1 rounded-xl bg-gray-800 p-1 mb-6">
-              <Tab className={({ selected }) =>
-                `w-full rounded-lg py-2.5 text-sm font-medium leading-5 transition-all
-                ${selected
-                  ? 'bg-pink-600 text-white shadow'
-                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                }`
-              }>
-                Upgrades ({availableUpgrades.length})
-              </Tab>
-              <Tab className={({ selected }) =>
-                `w-full rounded-lg py-2.5 text-sm font-medium leading-5 transition-all
-                ${selected
-                  ? 'bg-pink-600 text-white shadow'
-                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                }`
-              }>
-                Equipment ({availableEquipment.length})
-              </Tab>
-              <Tab className={({ selected }) =>
-                `w-full rounded-lg py-2.5 text-sm font-medium leading-5 transition-all
-                ${selected
-                  ? 'bg-pink-600 text-white shadow'
-                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                }`
-              }>
-                Owned Equipment ({venue.equipment.filter(e => e.owned).length})
-              </Tab>
-            </Tab.List>
-            
-            <Tab.Panels>
-              {/* Upgrades Tab */}
-              <Tab.Panel>
-                {availableUpgrades.length === 0 ? (
-                  <p className="text-gray-400 text-center py-8">
-                    No upgrades available. Check back when you have more money or reputation.
-                  </p>
-                ) : (
-                  <div className="grid gap-4">
-                    {availableUpgrades.map(upgrade => (
-                      <div
-                        key={upgrade.id}
-                        className="bg-gray-800 rounded-lg p-4 border border-gray-700 hover:border-pink-600 transition-colors"
-                      >
-                        <div className="flex justify-between items-start mb-2">
-                          <div>
-                            <h3 className="text-lg font-semibold text-white">{upgrade.name}</h3>
-                            <p className="text-gray-400 text-sm">{upgrade.description}</p>
+
+        {/* Venue stats */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', margin: '12px 0' }}>
+          <span className="snes-chip" style={{ fontSize: '8px', color: '#4cc9f0' }}>CAP {venue.capacity}</span>
+          <span className="snes-chip" style={{ fontSize: '8px', color: '#c77dff' }}>ACU {venue.acoustics}%</span>
+          <span className="snes-chip" style={{ fontSize: '8px', color: '#3ad17e' }}>ATM {venue.atmosphere}%</span>
+          <span className="snes-chip" style={{ fontSize: '8px', color: '#ff5c57' }}>−{formatMoney(upkeepCost)}/turn</span>
+        </div>
+
+        <Tab.Group selectedIndex={selectedTab} onChange={(i) => { setSelectedTab(i); haptics.light(); }}>
+          <Tab.List
+            style={{ display: 'flex', gap: '4px', background: '#0f0b1e', border: '2px solid #0a0814', boxShadow: 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814', borderRadius: 0, padding: '3px', marginBottom: '14px' }}
+          >
+            <Tab className="snes-pixel" style={tabStyle(selectedTab === 0)}>Upgrades {availableUpgrades.length}</Tab>
+            <Tab className="snes-pixel" style={tabStyle(selectedTab === 1)}>Gear {availableEquipment.length}</Tab>
+            <Tab className="snes-pixel" style={tabStyle(selectedTab === 2)}>Owned {ownedEquipment.length}</Tab>
+          </Tab.List>
+
+          <Tab.Panels>
+            {/* Upgrades */}
+            <Tab.Panel>
+              {availableUpgrades.length === 0 ? (
+                <p style={{ color: '#6f6796', textAlign: 'center', padding: '32px 12px', fontSize: '12px', lineHeight: 1.5 }}>
+                  No upgrades available. Check back with more money or reputation.
+                </p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {availableUpgrades.map((upgrade) => {
+                    const affordable = store.money >= upgrade.cost;
+                    return (
+                      <div key={upgrade.id} className="snes-panel-inset" style={{ padding: '12px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', gap: '10px', marginBottom: '8px' }}>
+                          <div style={{ minWidth: 0 }}>
+                            <h3 className="snes-pixel" style={{ fontSize: '10px', color: '#ffffff', margin: 0, letterSpacing: 0, lineHeight: 1.4 }}>{upgrade.name}</h3>
+                            <p style={{ fontSize: '12px', color: '#b9b3d6', margin: '5px 0 0', lineHeight: 1.4 }}>{upgrade.description}</p>
                           </div>
-                          <div className="text-right">
-                            <div className="text-lg font-bold text-green-400">
-                              {formatMoney(upgrade.cost)}
-                            </div>
-                            {upgrade.upkeepCost && (
-                              <div className="text-xs text-gray-500">
-                                +{formatMoney(upgrade.upkeepCost)}/turn
-                              </div>
-                            )}
+                          <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                            <div className="snes-pixel" style={{ fontSize: '9px', color: '#3ad17e', letterSpacing: 0 }}>{formatMoney(upgrade.cost)}</div>
+                            {upgrade.upkeepCost ? (
+                              <div style={{ fontSize: '11px', color: '#6f6796', marginTop: '3px' }}>+{formatMoney(upgrade.upkeepCost)}/turn</div>
+                            ) : null}
                           </div>
                         </div>
-                        
-                        {/* Effects */}
-                        <div className="flex flex-wrap gap-2 mb-3">
-                          {upgrade.effects.capacity && (
-                            <span className="text-xs bg-blue-900 text-blue-200 px-2 py-1 rounded">
-                              +{upgrade.effects.capacity} capacity
-                            </span>
-                          )}
-                          {upgrade.effects.acoustics && (
-                            <span className="text-xs bg-purple-900 text-purple-200 px-2 py-1 rounded">
-                              +{upgrade.effects.acoustics}% acoustics
-                            </span>
-                          )}
-                          {upgrade.effects.atmosphere && (
-                            <span className="text-xs bg-green-900 text-green-200 px-2 py-1 rounded">
-                              +{upgrade.effects.atmosphere}% atmosphere
-                            </span>
-                          )}
-                          {upgrade.effects.authenticity && (
-                            <span className={`text-xs px-2 py-1 rounded ${
-                              upgrade.effects.authenticity > 0
-                                ? 'bg-yellow-900 text-yellow-200'
-                                : 'bg-red-900 text-red-200'
-                            }`}>
-                              {upgrade.effects.authenticity > 0 ? '+' : ''}{upgrade.effects.authenticity}% authenticity
-                            </span>
-                          )}
-                          {upgrade.effects.revenue && (
-                            <span className="text-xs bg-green-900 text-green-200 px-2 py-1 rounded">
-                              +{upgrade.effects.revenue}% revenue
-                            </span>
-                          )}
+
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '10px' }}>
+                          {upgrade.effects.capacity ? chip('cap', `+${upgrade.effects.capacity} cap`, '#4cc9f0') : null}
+                          {upgrade.effects.acoustics ? chip('acu', `+${upgrade.effects.acoustics}% acoustics`, '#c77dff') : null}
+                          {upgrade.effects.atmosphere ? chip('atm', `+${upgrade.effects.atmosphere}% atmosphere`, '#3ad17e') : null}
+                          {upgrade.effects.authenticity ? chip('auth', `${upgrade.effects.authenticity > 0 ? '+' : ''}${upgrade.effects.authenticity}% cred`, upgrade.effects.authenticity > 0 ? '#ffd23f' : '#ff5c57') : null}
+                          {upgrade.effects.revenue ? chip('rev', `+${upgrade.effects.revenue}% revenue`, '#3ad17e') : null}
                         </div>
-                        
+
                         <button
                           onClick={() => handleUpgrade(upgrade.id)}
-                          disabled={store.money < upgrade.cost}
-                          className={`w-full py-2 rounded-lg font-medium transition-all ${
-                            store.money >= upgrade.cost
-                              ? 'bg-pink-600 hover:bg-pink-700 text-white'
-                              : 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                          }`}
+                          disabled={!affordable}
+                          className={actionBtn(affordable, 'snes-btn')}
+                          style={{ width: '100%', minHeight: '44px', fontSize: '9px', cursor: affordable ? 'pointer' : 'not-allowed' }}
                         >
-                          {store.money >= upgrade.cost ? 'Purchase Upgrade' : 'Insufficient Funds'}
+                          {affordable ? 'Purchase Upgrade' : 'Insufficient Funds'}
                         </button>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </Tab.Panel>
-              
-              {/* Equipment Tab */}
-              <Tab.Panel>
-                {availableEquipment.length === 0 ? (
-                  <p className="text-gray-400 text-center py-8">
-                    No equipment available for this venue type.
-                  </p>
-                ) : (
-                  <div className="grid gap-4">
-                    {availableEquipment.map(equipment => (
-                      <div
-                        key={equipment.id}
-                        className="bg-gray-800 rounded-lg p-4 border border-gray-700 hover:border-pink-600 transition-colors"
-                      >
-                        <div className="flex justify-between items-start mb-2">
-                          <div className="flex items-start gap-3">
-                            <span className="text-2xl">{getEquipmentIcon(equipment.type)}</span>
-                            <div>
-                              <h3 className="text-lg font-semibold text-white">{equipment.name}</h3>
-                              <p className="text-gray-400 text-sm">{equipment.description}</p>
-                              <div className="flex gap-1 mt-1">
-                                {[...Array(5)].map((_, i) => (
-                                  <span
-                                    key={i}
-                                    className={`text-xs ${
-                                      i < equipment.quality ? 'text-yellow-400' : 'text-gray-600'
-                                    }`}
-                                  >
-                                    ★
-                                  </span>
-                                ))}
-                              </div>
+                    );
+                  })}
+                </div>
+              )}
+            </Tab.Panel>
+
+            {/* Available equipment */}
+            <Tab.Panel>
+              {availableEquipment.length === 0 ? (
+                <p style={{ color: '#6f6796', textAlign: 'center', padding: '32px 12px', fontSize: '12px', lineHeight: 1.5 }}>
+                  No gear available for this venue type.
+                </p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {availableEquipment.map((equipment) => {
+                    const canBuy = store.money >= equipment.purchasePrice;
+                    const canRent = store.money >= equipment.rentalPrice;
+                    return (
+                      <div key={equipment.id} className="snes-panel-inset" style={{ padding: '12px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', gap: '10px', marginBottom: '8px' }}>
+                          <div style={{ display: 'flex', alignItems: 'start', gap: '10px', minWidth: 0 }}>
+                            <span style={{ fontSize: '22px', lineHeight: 1 }}>{getEquipmentIcon(equipment.type)}</span>
+                            <div style={{ minWidth: 0 }}>
+                              <h3 className="snes-pixel" style={{ fontSize: '10px', color: '#ffffff', margin: 0, letterSpacing: 0, lineHeight: 1.4 }}>{equipment.name}</h3>
+                              <p style={{ fontSize: '12px', color: '#b9b3d6', margin: '5px 0 0', lineHeight: 1.4 }}>{equipment.description}</p>
+                              {stars(equipment.quality)}
                             </div>
                           </div>
-                          <div className="text-right">
-                            <div className="text-lg font-bold text-green-400">
-                              {formatMoney(equipment.purchasePrice)}
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              or rent: {formatMoney(equipment.rentalPrice)}
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              upkeep: {formatMoney(equipment.maintenanceCost)}/turn
-                            </div>
+                          <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                            <div className="snes-pixel" style={{ fontSize: '9px', color: '#3ad17e', letterSpacing: 0 }}>{formatMoney(equipment.purchasePrice)}</div>
+                            <div style={{ fontSize: '11px', color: '#6f6796', marginTop: '3px' }}>rent {formatMoney(equipment.rentalPrice)}</div>
+                            <div style={{ fontSize: '11px', color: '#6f6796' }}>upkeep {formatMoney(equipment.maintenanceCost)}/t</div>
                           </div>
                         </div>
-                        
-                        {/* Effects */}
-                        <div className="flex flex-wrap gap-2 mb-3">
-                          {equipment.effects.acousticsBonus && (
-                            <span className="text-xs bg-purple-900 text-purple-200 px-2 py-1 rounded">
-                              +{equipment.effects.acousticsBonus}% acoustics
-                            </span>
-                          )}
-                          {equipment.effects.atmosphereBonus && (
-                            <span className="text-xs bg-green-900 text-green-200 px-2 py-1 rounded">
-                              +{equipment.effects.atmosphereBonus}% atmosphere
-                            </span>
-                          )}
-                          {equipment.effects.capacityBonus && (
-                            <span className="text-xs bg-blue-900 text-blue-200 px-2 py-1 rounded">
-                              +{equipment.effects.capacityBonus}% capacity
-                            </span>
-                          )}
-                          {equipment.effects.reputationMultiplier && (
-                            <span className="text-xs bg-yellow-900 text-yellow-200 px-2 py-1 rounded">
-                              x{equipment.effects.reputationMultiplier} reputation
-                            </span>
-                          )}
+
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '10px' }}>
+                          {equipment.effects.acousticsBonus ? chip('acu', `+${equipment.effects.acousticsBonus}% acoustics`, '#c77dff') : null}
+                          {equipment.effects.atmosphereBonus ? chip('atm', `+${equipment.effects.atmosphereBonus}% atmosphere`, '#3ad17e') : null}
+                          {equipment.effects.capacityBonus ? chip('cap', `+${equipment.effects.capacityBonus}% capacity`, '#4cc9f0') : null}
+                          {equipment.effects.reputationMultiplier ? chip('rep', `×${equipment.effects.reputationMultiplier} rep`, '#ffd23f') : null}
                         </div>
-                        
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handlePurchaseEquipment(equipment.id)}
-                            disabled={store.money < equipment.purchasePrice}
-                            className={`flex-1 py-2 rounded-lg font-medium transition-all ${
-                              store.money >= equipment.purchasePrice
-                                ? 'bg-pink-600 hover:bg-pink-700 text-white'
-                                : 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                            }`}
-                          >
-                            Purchase
+
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button onClick={() => handlePurchaseEquipment(equipment.id)} disabled={!canBuy} className={actionBtn(canBuy, 'snes-btn--gold')} style={actionStyle(canBuy)}>
+                            Buy
                           </button>
-                          <button
-                            onClick={() => handleRentEquipment(equipment.id)}
-                            disabled={store.money < equipment.rentalPrice}
-                            className={`flex-1 py-2 rounded-lg font-medium transition-all ${
-                              store.money >= equipment.rentalPrice
-                                ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                                : 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                            }`}
-                          >
+                          <button onClick={() => handleRentEquipment(equipment.id)} disabled={!canRent} className={actionBtn(canRent, 'snes-btn--cyan')} style={actionStyle(canRent)}>
                             Rent for Show
                           </button>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </Tab.Panel>
-              
-              {/* Owned Equipment Tab */}
-              <Tab.Panel>
-                {venue.equipment.filter(e => e.owned).length === 0 ? (
-                  <p className="text-gray-400 text-center py-8">
-                    No equipment owned yet. Purchase equipment from the Equipment tab.
-                  </p>
-                ) : (
-                  <div className="grid gap-4">
-                    {venue.equipment.filter(e => e.owned).map(equipment => (
-                      <div
-                        key={equipment.id}
-                        className="bg-gray-800 rounded-lg p-4 border border-gray-700"
-                      >
-                        <div className="flex justify-between items-start">
-                          <div className="flex items-start gap-3">
-                            <span className="text-2xl">{getEquipmentIcon(equipment.type)}</span>
-                            <div>
-                              <h3 className="text-lg font-semibold text-white">{equipment.name}</h3>
-                              <div className="flex gap-1 mt-1">
-                                {[...Array(5)].map((_, i) => (
-                                  <span
-                                    key={i}
-                                    className={`text-xs ${
-                                      i < equipment.quality ? 'text-yellow-400' : 'text-gray-600'
-                                    }`}
-                                  >
-                                    ★
-                                  </span>
-                                ))}
-                              </div>
+                    );
+                  })}
+                </div>
+              )}
+            </Tab.Panel>
+
+            {/* Owned equipment */}
+            <Tab.Panel>
+              {ownedEquipment.length === 0 ? (
+                <p style={{ color: '#6f6796', textAlign: 'center', padding: '32px 12px', fontSize: '12px', lineHeight: 1.5 }}>
+                  No gear owned yet. Buy some from the Gear tab.
+                </p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {ownedEquipment.map((equipment) => {
+                    const condColor = equipment.condition > 70 ? '#3ad17e' : equipment.condition > 40 ? '#ffd23f' : '#ff5c57';
+                    return (
+                      <div key={equipment.id} className="snes-panel-inset" style={{ padding: '12px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', gap: '10px' }}>
+                          <div style={{ display: 'flex', alignItems: 'start', gap: '10px', minWidth: 0 }}>
+                            <span style={{ fontSize: '22px', lineHeight: 1 }}>{getEquipmentIcon(equipment.type)}</span>
+                            <div style={{ minWidth: 0 }}>
+                              <h3 className="snes-pixel" style={{ fontSize: '10px', color: '#ffffff', margin: 0, letterSpacing: 0, lineHeight: 1.4 }}>{equipment.name}</h3>
+                              {stars(equipment.quality)}
                             </div>
                           </div>
-                          <div className="text-right">
-                            <div className="text-sm text-gray-400">
-                              Condition: {Math.round(equipment.condition)}%
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              upkeep: {formatMoney(equipment.maintenanceCost)}/turn
-                            </div>
+                          <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                            <div className="snes-pixel" style={{ fontSize: '8px', color: condColor, letterSpacing: 0 }}>{Math.round(equipment.condition)}%</div>
+                            <div style={{ fontSize: '11px', color: '#6f6796', marginTop: '3px' }}>upkeep {formatMoney(equipment.maintenanceCost)}/t</div>
                           </div>
                         </div>
-                        
-                        {/* Condition Bar */}
-                        <div className="mt-3 mb-2">
-                          <div className="w-full bg-gray-700 rounded-full h-2">
-                            <div
-                              className={`h-2 rounded-full transition-all ${
-                                equipment.condition > 70 ? 'bg-green-500' :
-                                equipment.condition > 40 ? 'bg-yellow-500' : 'bg-red-500'
-                              }`}
-                              style={{ width: `${equipment.condition}%` }}
-                            />
-                          </div>
+
+                        {/* Condition bar */}
+                        <div className="snes-progress" style={{ marginTop: '10px' }}>
+                          <div className="snes-progress__fill" style={{ width: `${equipment.condition}%`, background: condColor }} />
                         </div>
-                        
+
                         {equipment.condition < 100 && (
                           <button
                             onClick={() => handleRepairEquipment(equipment.id)}
-                            className="w-full py-2 mt-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all"
+                            className="snes-btn snes-btn--cyan snes-btn--sm snes-pixel"
+                            style={{ width: '100%', minHeight: '44px', marginTop: '10px', fontSize: '9px', cursor: 'pointer' }}
                           >
-                            Repair Equipment
+                            Repair
                           </button>
                         )}
                       </div>
-                    ))}
-                  </div>
-                )}
-              </Tab.Panel>
-            </Tab.Panels>
-          </Tab.Group>
-        </div>
+                    );
+                  })}
+                </div>
+              )}
+            </Tab.Panel>
+          </Tab.Panels>
+        </Tab.Group>
       </div>
     </div>
   );

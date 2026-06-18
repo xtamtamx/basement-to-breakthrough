@@ -819,6 +819,7 @@ export const CityView: React.FC = () => {
         />
       )}
 
+
       
       <style dangerouslySetInnerHTML={{ __html: animationStyles }} />
     </div>
