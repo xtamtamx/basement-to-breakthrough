@@ -16,6 +16,8 @@ import { startNewRun } from '../runLifecycle';
 import { difficultySystem } from '../DifficultySystem';
 import { runManager } from '../RunManager';
 import { dayJobSystem } from '../DayJobSystem';
+import { rollTravelOffer } from '@game/world/travelModes';
+import { isCityUnlocked } from '@game/world/cityUnlocks';
 import { Show } from '@game/types';
 
 interface RunOutcome {
@@ -29,6 +31,8 @@ interface RunOutcome {
   shows: number;
   peakAttendance: number;
   totalRevenue: number;
+  cities: number; // distinct cities played in
+  travels: number; // times hit the road
 }
 
 let showSeq = 0;
@@ -107,14 +111,45 @@ function manageDayJob(): void {
   }
 }
 
+// Take the scene on the road: roughly every 7 turns, hop to a different
+// unlocked city (rotating through them so every city's signature + scene-fit
+// gets exercised). Picks the most cash-favorable travel offer — a thrifty
+// touring band — and mirrors the UI by clearing any booked show first.
+// Returns true if it travelled this turn.
+function maybeTravel(turn: number): boolean {
+  const s = useGameStore.getState();
+  if (turn === 0 || turn % 7 !== 0) return false;
+  const dests = s.cities.filter((c) => c.id !== s.currentCityId && isCityUnlocked(c));
+  if (dests.length === 0) return false;
+  const dest = dests[Math.floor(turn / 7) % dests.length];
+
+  s.cancelAllScheduledShows();
+  const offer = [...rollTravelOffer({ reputation: s.reputation }, 3)].sort(
+    (a, b) => b.effects.money - a.effects.money,
+  )[0];
+  if (offer) {
+    const e = offer.effects;
+    if (e.money) s.addMoney(e.money);
+    if (e.stress) s.addStress(e.stress);
+    if (e.fans) s.addFans(e.fans);
+    if (e.diyPoints) s.makePathChoice('sim_travel', e.diyPoints);
+  }
+  s.switchCity(dest.id);
+  return true;
+}
+
 async function playOneRun(mode: string): Promise<RunOutcome> {
   await startNewRun(mode);
   dayJobSystem.setJob(null); // clean slate each run
   const cap = (runManager.getCurrentRun()?.config.maxTurns ?? 35) + 20;
   let peakAttendance = 0;
   let totalRevenue = 0;
+  const citiesVisited = new Set<string>();
+  let travels = 0;
 
   for (let i = 0; i < cap; i++) {
+    if (maybeTravel(i)) travels++;
+    citiesVisited.add(useGameStore.getState().currentCityId);
     signRoster();
     manageDayJob();
     bookBestShow();
@@ -136,6 +171,8 @@ async function playOneRun(mode: string): Promise<RunOutcome> {
         shows: s.showHistory.length,
         peakAttendance,
         totalRevenue,
+        cities: citiesVisited.size,
+        travels,
       };
     }
   }
@@ -151,6 +188,8 @@ async function playOneRun(mode: string): Promise<RunOutcome> {
     shows: s.showHistory.length,
     peakAttendance,
     totalRevenue,
+    cities: citiesVisited.size,
+    travels,
   };
 }
 
@@ -183,6 +222,8 @@ describe('balance simulation', () => {
         'shows:     avg ' + avg(outcomes.map((o) => o.shows)),
         'peak att:  avg ' + avg(outcomes.map((o) => o.peakAttendance)),
         'revenue:   avg ' + avg(outcomes.map((o) => o.totalRevenue)),
+        'cities:    avg ' + avg(outcomes.map((o) => o.cities)) + '  (max ' + Math.max(...outcomes.map((o) => o.cities)) + ')',
+        'travels:   avg ' + avg(outcomes.map((o) => o.travels)),
       );
     }
     console.log(report.join('\n'));
