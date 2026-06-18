@@ -315,7 +315,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
               color: '#b9b3d6',
               lineHeight: '1.6'
             }}>
-              <p style={{ margin: '0 0 4px 0' }}>Basement to Breakthrough v0.1.0</p>
+              <p style={{ margin: '0 0 4px 0' }}>Settling Up v0.1.0</p>
               <p style={{ margin: 0 }}>A roguelike underground music scene builder</p>
             </div>
           </section>
