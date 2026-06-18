@@ -3,21 +3,57 @@ import { Band, Genre } from '@game/types';
 import { haptics } from '@utils/mobile';
 import { BandUpgradeModal } from '../BandUpgradeModal';
 import { useGameStore } from '@stores/gameStore';
-import { UserPlus, UserMinus, TrendingUp, Star, Zap } from 'lucide-react';
+import { runManager } from '@game/mechanics/RunManager';
+import { nextBookingManagerCost } from '@game/constants/runConstants';
+import { UserPlus, UserMinus, TrendingUp, Star, Zap, Briefcase, ChevronDown } from 'lucide-react';
 
 type Filter = 'all' | 'available' | 'roster';
 
 export const BandsView: React.FC = () => {
-  const { allBands, rosterBandIds, addBandToRoster, removeBandFromRoster } = useGameStore();
+  const { allBands, rosterBandIds, maxRosterSize, hiredManagers, rosterSlotSources, money, addBandToRoster, removeBandFromRoster, hireBookingManager } = useGameStore();
   const [selectedBand, setSelectedBand] = useState<Band | null>(null);
   const [filter, setFilter] = useState<Filter>('all');
   const [upgradeModalBand, setUpgradeModalBand] = useState<Band | null>(null);
+  const [showSlotBreakdown, setShowSlotBreakdown] = useState(false);
+
+  const rosterFull = rosterBandIds.length >= maxRosterSize;
+
+  // "Where do my slots come from?" — run-start snapshot + live manager hires.
+  const slotBreakdown: { label: string; value: number }[] = [
+    { label: 'Base', value: rosterSlotSources.base },
+  ];
+  if (rosterSlotSources.mode !== 0)
+    slotBreakdown.push({ label: runManager.getCurrentRun()?.config.name ?? 'Run mode', value: rosterSlotSources.mode });
+  if (rosterSlotSources.meta > 0)
+    slotBreakdown.push({ label: 'Scene Expansion', value: rosterSlotSources.meta });
+  if (rosterSlotSources.city > 0)
+    slotBreakdown.push({ label: 'City unlocks', value: rosterSlotSources.city });
+  if (hiredManagers > 0)
+    slotBreakdown.push({ label: 'Booking Managers', value: hiredManagers });
+
+  // Booking Manager hire: buy +1 slot mid-run. Capped at one slot per band in
+  // town (can't manage more acts than exist).
+  const managerCost = nextBookingManagerCost(hiredManagers);
+  const atSlotCeiling = maxRosterSize >= allBands.length;
+  const canAffordManager = money >= managerCost;
+
+  const handleHireManager = () => {
+    if (atSlotCeiling || !canAffordManager) {
+      haptics.error();
+      return;
+    }
+    hireBookingManager();
+    haptics.success();
+  };
 
   const handleAddToRoster = (bandId: string) => {
-    if (!rosterBandIds.includes(bandId)) {
-      addBandToRoster(bandId);
-      haptics.success();
+    if (rosterBandIds.includes(bandId)) return;
+    if (rosterFull) {
+      haptics.error();
+      return;
     }
+    addBandToRoster(bandId);
+    haptics.success();
   };
 
   const handleRemoveFromRoster = (bandId: string) => {
@@ -82,6 +118,61 @@ export const BandsView: React.FC = () => {
             color: '#b9b3d6',
             margin: '3px 0 0'
           }}>Scout the scene, sign the legends.</p>
+          {/* Roster slot cap (Balatro-joker style) — how many acts you can keep.
+              Tap the chip to see where the slots come from. */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px', flexWrap: 'wrap' }}>
+            <button
+              className="snes-chip"
+              onClick={() => setShowSlotBreakdown((v) => !v)}
+              aria-expanded={showSlotBreakdown}
+              title="Where do my slots come from?"
+              style={{
+                fontSize: '8px',
+                cursor: 'pointer',
+                color: rosterFull ? '#ff5c57' : '#3ad17e',
+                borderColor: rosterFull ? '#ff5c57' : '#0a0814'
+              }}
+            >
+              ♫ {rosterBandIds.length}/{maxRosterSize}{rosterFull ? ' • FULL' : ' slots'}
+              <ChevronDown size={10} style={{ transform: showSlotBreakdown ? 'rotate(180deg)' : 'none', transition: 'none' }} />
+            </button>
+            {/* Booking Manager — buy +1 slot mid-run (escalating cash cost) */}
+            {!atSlotCeiling && (
+              <button
+                onClick={handleHireManager}
+                disabled={!canAffordManager}
+                className={`snes-btn snes-pixel ${canAffordManager ? 'snes-btn--gold' : 'snes-btn--ghost'}`}
+                title="Hire a Booking Manager: +1 roster slot"
+                style={{
+                  fontSize: '7px',
+                  minHeight: '30px',
+                  padding: '6px 8px',
+                  letterSpacing: 0,
+                  cursor: canAffordManager ? 'pointer' : 'not-allowed'
+                }}
+              >
+                <Briefcase size={11} /> +Slot ${managerCost}
+              </button>
+            )}
+          </div>
+
+          {/* Slot source breakdown */}
+          {showSlotBreakdown && (
+            <div className="snes-panel-inset" style={{ marginTop: '8px', padding: '10px', maxWidth: '220px' }}>
+              {slotBreakdown.map((row) => (
+                <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', gap: '10px', fontSize: '11px', color: '#b9b3d6', marginBottom: '5px' }}>
+                  <span>{row.label}</span>
+                  <span className="snes-pixel" style={{ fontSize: '8px', letterSpacing: 0, color: row.value < 0 ? '#ff5c57' : row.label === 'Base' ? '#b9b3d6' : '#3ad17e' }}>
+                    {row.label === 'Base' ? row.value : `${row.value > 0 ? '+' : ''}${row.value}`}
+                  </span>
+                </div>
+              ))}
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px', paddingTop: '6px', marginTop: '2px', borderTop: '2px solid #2a2350' }}>
+                <span className="snes-pixel" style={{ fontSize: '8px', letterSpacing: 0, color: '#ffffff' }}>Total slots</span>
+                <span className="snes-pixel" style={{ fontSize: '9px', letterSpacing: 0, color: '#ffd23f' }}>{maxRosterSize}</span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Filter Tabs */}
@@ -448,15 +539,16 @@ export const BandsView: React.FC = () => {
                           </button>
                         ) : (
                           <button
-                            className="snes-btn snes-btn--green snes-pixel"
+                            className={`snes-btn snes-pixel ${rosterFull ? 'snes-btn--ghost' : 'snes-btn--green'}`}
                             onClick={(e) => {
                               e.stopPropagation();
                               handleAddToRoster(band.id);
                             }}
+                            disabled={rosterFull}
                             style={{
                               flex: 1,
                               fontSize: '9px',
-                              cursor: 'pointer',
+                              cursor: rosterFull ? 'not-allowed' : 'pointer',
                               minHeight: '44px',
                               display: 'flex',
                               alignItems: 'center',
@@ -466,7 +558,7 @@ export const BandsView: React.FC = () => {
                             }}
                           >
                             <UserPlus size={16} />
-                            Sign to Roster
+                            {rosterFull ? 'Roster Full — Drop One' : 'Sign to Roster'}
                           </button>
                         )}
 

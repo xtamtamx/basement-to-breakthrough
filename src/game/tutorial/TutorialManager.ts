@@ -1,445 +1,256 @@
-import { GameState, useGameStore } from '@stores/gameStore';
+/** The narrow slice of live game state the action-gated steps actually read. */
+export interface TutorialGameSlice {
+  rosterBandIds: string[];
+  scheduledShows: unknown[];
+}
+
+/**
+ * Where a step's tooltip sits. Target-relative ('above'/'below') anchors to the
+ * highlighted element; screen-anchored ones float regardless of any target so
+ * the tip stays put while the underlying view animates / scrolls / re-lays-out.
+ */
+export type TutorialPlacement = 'center' | 'above' | 'below' | 'screen-top' | 'screen-bottom';
+
+/**
+ * How a step advances:
+ *  - button: an explicit Next/Got it/Finish tap (informational steps)
+ *  - tap:    the player taps the highlighted target itself (navigation steps)
+ *  - state:  a real change to game state satisfies `when` (the hands-on steps —
+ *            sign a band, book a show — gated on the genuine outcome, not on
+ *            poking a specific pixel)
+ */
+export type TutorialGate =
+  | { kind: 'button'; label: string }
+  | { kind: 'tap' }
+  | { kind: 'state'; when: (s: TutorialGameSlice) => boolean };
 
 export interface TutorialStep {
   id: string;
   title: string;
-  content: string;
-  target?: string; // CSS selector for element to highlight
-  position?: 'top' | 'bottom' | 'left' | 'right' | 'center';
-  action?: 'click' | 'hover' | 'wait' | 'custom';
-  nextTrigger?: 'click' | 'action' | 'auto';
-  highlightPadding?: number;
-  onShow?: () => void;
-  onComplete?: () => void;
-  isComplete?: (state: GameState) => boolean;
+  body: string;
+  /** `[data-tut="…"]` selector to spotlight / anchor the tooltip to. */
+  target?: string;
+  placement: TutorialPlacement;
+  gate: TutorialGate;
+  /** Sub-text under the body for tap/state steps ("👆 Tap Bands"). */
+  hint?: string;
 }
 
-export interface TutorialSection {
-  id: string;
-  name: string;
-  description: string;
-  steps: TutorialStep[];
-  unlockCondition?: (state: GameState) => boolean;
-}
+/**
+ * The first-show walkthrough: a short welcome, then a hands-on guided night —
+ * sign a band, book it, play the turn, read the report. Each step targets a
+ * stable `[data-tut]` hook so a restyle can't silently break it, and the
+ * hands-on steps gate on real game state so the player learns by doing.
+ */
+const STEPS: TutorialStep[] = [
+  {
+    id: 'welcome',
+    title: 'Welcome to the scene 🎸',
+    body:
+      "You run a DIY music empire — from basement shows to sold-out festivals. " +
+      "Let's book your very first night. Takes about a minute.",
+    placement: 'center',
+    gate: { kind: 'button', label: "Let's go" },
+  },
+  {
+    id: 'resources',
+    title: 'Keep an eye up here',
+    body:
+      '$ is cash for rent and bookings. ★ is reputation — it draws bigger crowds. ' +
+      '♦ is your fanbase. Watch these as your scene grows.',
+    target: '[data-tut="resources"]',
+    placement: 'below',
+    gate: { kind: 'button', label: 'Got it' },
+  },
+  {
+    id: 'go-bands',
+    title: 'Sign an act',
+    body: 'Every show needs a band. Open the Bands tab to scout the local talent.',
+    target: '[data-tut="nav-bands"]',
+    placement: 'above',
+    gate: { kind: 'tap' },
+    hint: '👆 Tap Bands',
+  },
+  {
+    id: 'sign-band',
+    title: 'Sign your first act',
+    body:
+      "You're starting light — just one band signed. Your roster is who you can put on a bill. " +
+      'Tap the "Available" tab, pick a band, and hit "Sign to Roster" to bring them on.',
+    placement: 'screen-top',
+    // New runs seed exactly one signed act (gameStore loadInitialGameData), so
+    // signing one more takes the roster to 2 and advances the step.
+    gate: { kind: 'state', when: (s) => s.rosterBandIds.length >= 2 },
+    hint: 'Sign a band to continue',
+  },
+  {
+    id: 'go-shows',
+    title: 'Book the night',
+    body: "You've got a band — now find them a stage. Head to the Shows tab.",
+    target: '[data-tut="nav-shows"]',
+    placement: 'above',
+    gate: { kind: 'tap' },
+    hint: '👆 Tap Shows',
+  },
+  {
+    id: 'build-show',
+    title: 'Put the show together',
+    body:
+      'Pick your lineup, choose a venue, and set the door price. ' +
+      'The preview shows your expected crowd and profit. When it looks good, tap "Book This Show".',
+    placement: 'screen-top',
+    gate: { kind: 'state', when: (s) => s.scheduledShows.length > 0 },
+    hint: 'Book a show to continue',
+  },
+  {
+    id: 'next-turn',
+    title: 'Play the night',
+    body: 'Shows happen when time passes. Hit the Next Turn button to run the night and see how it went.',
+    target: '[data-tut="next-turn"]',
+    placement: 'above',
+    gate: { kind: 'tap' },
+    hint: '👆 Tap Next Turn',
+  },
+  {
+    id: 'results',
+    title: "That's the loop! 🤘",
+    body:
+      'Your damage report: crowd, cash, cred and new fans. ' +
+      'Keep booking smarter shows to grow the scene — and when you can, hit the road on the Tour tab. ' +
+      "Have fun out there.",
+    placement: 'screen-top',
+    gate: { kind: 'button', label: 'Finish' },
+  },
+];
+
+const STORAGE_KEY = 'btb-tutorial-v2';
 
 export class TutorialManager {
-  private currentSection: TutorialSection | null = null;
-  private currentStepIndex: number = 0;
-  private completedSteps: Set<string> = new Set();
-  private skipped: boolean = false;
+  private steps: TutorialStep[] = STEPS;
+  private index = -1; // -1 = inactive
+  private active = false;
+  private done = false; // completed OR skipped — never auto-show again
   private onUpdateCallbacks: Array<() => void> = [];
-  
+
   constructor() {
-    this.loadProgress();
+    this.load();
   }
-  
-  // Tutorial sections
-  private sections: TutorialSection[] = [
-    {
-      id: 'welcome',
-      name: 'Welcome to the Underground',
-      description: 'Learn the basics of running DIY shows',
-      steps: [
-        {
-          id: 'welcome-intro',
-          title: 'Welcome to Basement to Breakthrough! 🎸',
-          content: `You're about to embark on a journey through the underground music scene. 
-          
-          Starting from basement shows, you'll book bands, manage venues, and build a thriving scene while navigating the challenges of gentrification, scene politics, and keeping it authentic.
-          
-          Let's start with the basics!`,
-          position: 'center',
-          nextTrigger: 'click'
-        },
-        {
-          id: 'resources-overview',
-          title: 'Your Resources 💰',
-          content: 'Keep an eye on your resources at the top of the screen:\n\n• **Money**: Book shows, upgrade venues, pay rent\n• **Reputation**: Attract better bands and bigger crowds\n• **Fans**: Your scene\'s following',
-          target: '.resources',
-          position: 'bottom',
-          highlightPadding: 10,
-          nextTrigger: 'click'
-        },
-        {
-          id: 'navigation-tabs',
-          title: 'Navigate Your Empire 🗺️',
-          content: 'Use these tabs to manage different aspects of your scene:\n\n• **City**: Place and manage venues\n• **Bands**: View and recruit bands\n• **Shows**: Book and schedule shows\n• **Synergies**: Discover powerful combinations',
-          target: '.nav-tabs',
-          position: 'bottom',
-          highlightPadding: 5,
-          nextTrigger: 'click'
-        }
-      ]
-    },
-    {
-      id: 'first-show',
-      name: 'Book Your First Show',
-      description: 'Learn how to book bands and make money',
-      steps: [
-        {
-          id: 'go-to-shows',
-          title: 'Let\'s Book a Show! 🎤',
-          content: 'Click on the **Shows** tab to start booking your first show.',
-          target: '.nav-item:nth-child(3)',
-          position: 'bottom',
-          action: 'click',
-          nextTrigger: 'action',
-          onComplete: () => {
-            // Switch to shows view
-            const navButton = document.querySelector('.nav-item:nth-child(3)') as HTMLButtonElement;
-            navButton?.click();
-          }
-        },
-        {
-          id: 'select-venue',
-          title: 'Choose a Venue 🏠',
-          content: 'Start by selecting a venue for your show. Different venues have different capacities and vibes.',
-          target: '.venue-select',
-          position: 'right',
-          nextTrigger: 'action'
-        },
-        {
-          id: 'select-band',
-          title: 'Book a Band 🎸',
-          content: 'Now select a band to play. Pay attention to:\n\n• **Popularity**: How many fans they draw\n• **Genre**: Different genres appeal to different crowds\n• **Cost**: How much they charge to play',
-          target: '.band-card',
-          position: 'right',
-          nextTrigger: 'action'
-        },
-        {
-          id: 'set-ticket-price',
-          title: 'Set Ticket Price 🎫',
-          content: 'Balance ticket prices carefully:\n\n• **Too High**: Fewer people will come\n• **Too Low**: Less profit\n• **Just Right**: Maximum revenue!',
-          target: '.ticket-price-input',
-          position: 'left',
-          nextTrigger: 'click'
-        },
-        {
-          id: 'book-show',
-          title: 'Book the Show! 🚀',
-          content: 'Click "Book Show" to schedule it. Shows happen at the end of each turn.',
-          target: '.book-show-button',
-          position: 'top',
-          action: 'click',
-          nextTrigger: 'action'
-        }
-      ]
-    },
-    {
-      id: 'end-turn',
-      name: 'Your First Turn',
-      description: 'Process your first turn and see the results',
-      steps: [
-        {
-          id: 'next-turn-intro',
-          title: 'Time Passes... ⏰',
-          content: 'Click "Next Turn" to advance time and see your show results!',
-          target: '.next-turn-btn',
-          position: 'left',
-          action: 'click',
-          nextTrigger: 'action'
-        },
-        {
-          id: 'turn-results',
-          title: 'Show Results 📊',
-          content: 'Here\'s how your show did! You\'ll see:\n\n• **Attendance**: How many people came\n• **Revenue**: Money earned\n• **Reputation**: Scene cred gained\n• **New Fans**: Growing your following',
-          target: '.turn-results-modal',
-          position: 'center',
-          nextTrigger: 'click'
-        }
-      ]
-    },
-    {
-      id: 'venue-management',
-      name: 'Venue Management',
-      description: 'Learn to place venues and manage your city',
-      unlockCondition: (state) => state.turn >= 2,
-      steps: [
-        {
-          id: 'city-view',
-          title: 'Build Your Scene 🏗️',
-          content: 'Click on the **City** tab to manage your venues and expand your empire.',
-          target: '.nav-item:nth-child(1)',
-          position: 'bottom',
-          action: 'click',
-          nextTrigger: 'action'
-        },
-        {
-          id: 'venue-placement',
-          title: 'Place New Venues 📍',
-          content: 'Click on empty spaces in the city to place new venues. Different areas have different vibes:\n\n• **Industrial**: Authentic but risky\n• **Downtown**: Expensive but profitable\n• **Residential**: Balanced option',
-          target: '.city-grid',
-          position: 'right',
-          nextTrigger: 'click'
-        },
-        {
-          id: 'venue-upgrades',
-          title: 'Upgrade Your Venues 🔧',
-          content: 'Click on a venue and select "Manage Upgrades" to:\n\n• **Buy Equipment**: Better sound = happier crowds\n• **Expand Capacity**: More tickets to sell\n• **Add Features**: Bars, security, etc.',
-          target: '.venue-sprite',
-          position: 'top',
-          nextTrigger: 'click'
-        }
-      ]
-    },
-    {
-      id: 'advanced-strategies',
-      name: 'Advanced Strategies',
-      description: 'Master synergies and scene politics',
-      unlockCondition: (state) => state.turn >= 5,
-      steps: [
-        {
-          id: 'synergies-intro',
-          title: 'Discover Synergies 🔮',
-          content: 'Some band and venue combinations create powerful synergies! Check the **Synergies** tab to see what you\'ve discovered.',
-          target: '.nav-item:nth-child(4)',
-          position: 'bottom',
-          nextTrigger: 'click'
-        },
-        {
-          id: 'scene-politics',
-          title: 'Navigate Scene Politics 🤝',
-          content: 'As your scene grows, you\'ll face:\n\n• **Band Drama**: Rivalries and friendships\n• **Gentrification**: Rising rents and changing neighborhoods\n• **Police Attention**: Too much noise brings heat\n\nBalance growth with authenticity!',
-          position: 'center',
-          nextTrigger: 'click'
-        },
-        {
-          id: 'save-progress',
-          title: 'Save Your Progress 💾',
-          content: 'Don\'t forget to save! Click the save icon to manage your saves. The game also auto-saves every 5 minutes.',
-          target: '.settings-btn:first-child',
-          position: 'left',
-          nextTrigger: 'click'
-        }
-      ]
-    }
-  ];
-  
-  // Get current tutorial state
-  getCurrentSection(): TutorialSection | null {
-    return this.currentSection;
+
+  // ── Queries ────────────────────────────────────────────────────────────
+  isActive(): boolean {
+    return this.active;
   }
-  
+
   getCurrentStep(): TutorialStep | null {
-    if (!this.currentSection || this.currentStepIndex >= this.currentSection.steps.length) {
-      return null;
-    }
-    return this.currentSection.steps[this.currentStepIndex];
+    if (!this.active || this.index < 0 || this.index >= this.steps.length) return null;
+    return this.steps[this.index];
   }
-  
+
   getCurrentProgress(): { current: number; total: number } {
-    if (!this.currentSection) {
-      return { current: 0, total: 0 };
-    }
-    return {
-      current: this.currentStepIndex + 1,
-      total: this.currentSection.steps.length
-    };
+    return { current: this.index + 1, total: this.steps.length };
   }
-  
-  // Start a tutorial section
-  startSection(sectionId: string): boolean {
-    const section = this.sections.find(s => s.id === sectionId);
-    if (!section) return false;
-    
-    this.currentSection = section;
-    this.currentStepIndex = 0;
-    this.skipped = false;
-    
-    const firstStep = this.getCurrentStep();
-    if (firstStep?.onShow) {
-      firstStep.onShow();
-    }
-    
-    this.notifyUpdate();
-    this.saveProgress();
-    return true;
-  }
-  
-  // Start the tutorial from the beginning
+
+  // ── Lifecycle ──────────────────────────────────────────────────────────
+  /** Start (or restart) from the top. Used by the Settings "replay" button. */
   startTutorial(): void {
-    this.completedSteps.clear();
-    this.startSection('welcome');
+    this.done = false;
+    this.active = true;
+    this.index = 0;
+    this.notifyUpdate();
+    this.save();
   }
-  
-  // Check if tutorial should start for new players
-  shouldShowTutorial(state: Pick<GameState, 'turn'>): boolean {
-    // Show tutorial if it's the first turn and hasn't been completed
-    return state.turn === 1 && !this.hasCompletedTutorial() && !this.skipped;
+
+  /** Auto-start only for a genuinely new player who hasn't seen/skipped it. */
+  maybeStartForNewGame(): void {
+    if (this.done || this.active) return;
+    this.startTutorial();
   }
-  
-  // Move to next step
-  nextStep(): void {
-    if (!this.currentSection) return;
-    
-    const currentStep = this.getCurrentStep();
-    if (currentStep) {
-      this.completedSteps.add(currentStep.id);
-      if (currentStep.onComplete) {
-        currentStep.onComplete();
-      }
+
+  /** Advance from a 'button' step. */
+  advance(): void {
+    if (!this.active) return;
+    this.go(this.index + 1);
+  }
+
+  /** Advance from a 'tap' step when the highlighted target is tapped. */
+  tapAdvance(): void {
+    const step = this.getCurrentStep();
+    if (step?.gate.kind === 'tap') this.go(this.index + 1);
+  }
+
+  /** Advance from a 'state' step when its predicate is satisfied. */
+  evaluateState(state: TutorialGameSlice): void {
+    const step = this.getCurrentStep();
+    if (step?.gate.kind === 'state' && step.gate.when(state)) {
+      this.go(this.index + 1);
     }
-    
-    this.currentStepIndex++;
-    
-    // Check if section is complete
-    if (this.currentStepIndex >= this.currentSection.steps.length) {
-      this.completeSection();
+  }
+
+  private go(next: number): void {
+    if (next >= this.steps.length) {
+      this.finish();
       return;
     }
-    
-    const nextStep = this.getCurrentStep();
-    if (nextStep?.onShow) {
-      nextStep.onShow();
-    }
-    
+    this.index = next;
     this.notifyUpdate();
-    this.saveProgress();
+    this.save();
   }
-  
-  // Complete current section
-  private completeSection(): void {
-    if (!this.currentSection) return;
-    
-    // Find next available section
-    const currentIndex = this.sections.findIndex(s => s.id === this.currentSection!.id);
-    const nextSection = this.sections[currentIndex + 1];
-    
-    if (nextSection) {
-      // Check if next section is unlocked
-      const state = this.getGameState();
-      if (!nextSection.unlockCondition || nextSection.unlockCondition(state)) {
-        this.startSection(nextSection.id);
-      } else {
-        // Tutorial paused until conditions are met
-        this.currentSection = null;
-        this.currentStepIndex = 0;
-      }
-    } else {
-      // Tutorial complete!
-      this.currentSection = null;
-      this.currentStepIndex = 0;
-    }
-    
+
+  private finish(): void {
+    this.done = true;
+    this.active = false;
+    this.index = -1;
     this.notifyUpdate();
-    this.saveProgress();
+    this.save();
   }
-  
-  // Skip tutorial
+
+  /** Bail out — resumable later from Settings. */
   skipTutorial(): void {
-    this.skipped = true;
-    this.currentSection = null;
-    this.currentStepIndex = 0;
+    this.finish();
+  }
+
+  /** Wipe progress so the walkthrough can be replayed. */
+  resetProgress(): void {
+    this.done = false;
+    this.active = false;
+    this.index = -1;
+    this.save();
     this.notifyUpdate();
-    this.saveProgress();
   }
-  
-  // Resume tutorial
-  resumeTutorial(): void {
-    this.skipped = false;
-    
-    // Find the next uncompleted section
-    for (const section of this.sections) {
-      const hasIncompleteSteps = section.steps.some(step => !this.completedSteps.has(step.id));
-      if (hasIncompleteSteps) {
-        const state = this.getGameState();
-        if (!section.unlockCondition || section.unlockCondition(state)) {
-          this.startSection(section.id);
-          
-          // Skip to first incomplete step
-          while (this.currentStepIndex < section.steps.length && 
-                 this.completedSteps.has(section.steps[this.currentStepIndex].id)) {
-            this.currentStepIndex++;
-          }
-          
-          break;
-        }
-      }
-    }
-    
-    this.notifyUpdate();
-    this.saveProgress();
-  }
-  
-  // Check if specific step is complete
-  isStepComplete(stepId: string): boolean {
-    return this.completedSteps.has(stepId);
-  }
-  
-  // Check if tutorial is fully complete
-  hasCompletedTutorial(): boolean {
-    const totalSteps = this.sections.reduce((sum, section) => sum + section.steps.length, 0);
-    return this.completedSteps.size >= totalSteps;
-  }
-  
-  // Get available sections based on game state
-  getAvailableSections(state: GameState): TutorialSection[] {
-    return this.sections.filter(section => 
-      !section.unlockCondition || section.unlockCondition(state)
-    );
-  }
-  
-  // Subscribe to updates
+
+  // ── Subscriptions ──────────────────────────────────────────────────────
   onUpdate(callback: () => void): () => void {
     this.onUpdateCallbacks.push(callback);
     return () => {
-      this.onUpdateCallbacks = this.onUpdateCallbacks.filter(cb => cb !== callback);
+      this.onUpdateCallbacks = this.onUpdateCallbacks.filter((cb) => cb !== callback);
     };
   }
-  
+
   private notifyUpdate(): void {
-    this.onUpdateCallbacks.forEach(cb => cb());
+    this.onUpdateCallbacks.forEach((cb) => cb());
   }
-  
-  // Persistence
-  private saveProgress(): void {
-    const progress = {
-      currentSectionId: this.currentSection?.id || null,
-      currentStepIndex: this.currentStepIndex,
-      completedSteps: Array.from(this.completedSteps),
-      skipped: this.skipped
-    };
-    
-    localStorage.setItem('tutorial-progress', JSON.stringify(progress));
-  }
-  
-  private loadProgress(): void {
+
+  // ── Persistence ────────────────────────────────────────────────────────
+  // Only the "have they finished/skipped it" bit survives a reload; an
+  // in-flight walkthrough is in-memory (mid-flow resume across reloads would
+  // race against a changed board). It only ever auto-starts on a fresh run.
+  private save(): void {
     try {
-      const saved = localStorage.getItem('tutorial-progress');
-      if (!saved) return;
-      
-      const progress = JSON.parse(saved);
-      this.completedSteps = new Set(progress.completedSteps || []);
-      this.skipped = progress.skipped || false;
-      
-      if (progress.currentSectionId && !this.skipped) {
-        const section = this.sections.find(s => s.id === progress.currentSectionId);
-        if (section) {
-          this.currentSection = section;
-          this.currentStepIndex = progress.currentStepIndex || 0;
-        }
-      }
-    } catch (error) {
-      console.error('Failed to load tutorial progress:', error);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ done: this.done }));
+    } catch {
+      /* storage unavailable — non-fatal */
     }
   }
-  
-  // Reset tutorial progress
-  resetProgress(): void {
-    this.completedSteps.clear();
-    this.currentSection = null;
-    this.currentStepIndex = 0;
-    this.skipped = false;
-    localStorage.removeItem('tutorial-progress');
-    this.notifyUpdate();
-  }
-  
-  // Get current game state (for checking conditions)
-  private getGameState(): GameState {
-    // The Zustand store (GameStore) and the legacy GameState model diverge;
-    // this manager has always treated the store as a GameState. Asserting the
-    // type keeps that long-standing behavior without a forbidden require()/any.
-    return useGameStore.getState() as unknown as GameState;
+
+  private load(): void {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (!saved) return;
+      const parsed = JSON.parse(saved);
+      this.done = Boolean(parsed?.done);
+    } catch {
+      /* ignore corrupt state */
+    }
   }
 }
 

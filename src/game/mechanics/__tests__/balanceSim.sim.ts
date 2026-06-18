@@ -33,6 +33,20 @@ interface RunOutcome {
 
 let showSeq = 0;
 
+// A new run now seeds only ONE signed act; signing the (free) available bands
+// is the player's job. A competent player grabs a few to have bill options —
+// signing up to 3 reproduces the roster depth the economy was tuned around.
+function signRoster(target = 3): void {
+  const s = useGameStore.getState();
+  if (s.rosterBandIds.length >= target) return;
+  for (const b of s.allBands) {
+    if (useGameStore.getState().rosterBandIds.length >= target) break;
+    if (!useGameStore.getState().rosterBandIds.includes(b.id)) {
+      s.addBandToRoster(b.id);
+    }
+  }
+}
+
 // Competent strategy: book the strongest show that keeps a cash buffer.
 // A prudent player doesn't blow the bank on the biggest venue every turn —
 // they pick an affordable room and scale the bill to their budget.
@@ -101,6 +115,7 @@ async function playOneRun(mode: string): Promise<RunOutcome> {
   let totalRevenue = 0;
 
   for (let i = 0; i < cap; i++) {
+    signRoster();
     manageDayJob();
     bookBestShow();
     const result = await turnResolutionEngine.executeFullTurn();

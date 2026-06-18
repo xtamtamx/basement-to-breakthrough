@@ -11,6 +11,22 @@ import { metaProgressionManager } from "@game/mechanics/MetaProgressionManager";
 
 export const cityUnlockId = (cityId: string): string => `city_${cityId}`;
 
+/**
+ * Cities that, once unlocked (cross-run), permanently grant +1 roster slot —
+ * breaking into a bigger market expands your operation. Reaching these in ANY
+ * run is a lasting Balatro-style upgrade applied at the next run's start.
+ * (Chicaustin = the mid-game leap; New Angeles = the industry-town endgame.)
+ */
+const SLOT_GRANTING_CITIES = ["chicaustin", "newangeles"] as const;
+
+/** Permanent +roster-slots earned from unlocked cities (0 if none yet). */
+export function cityRosterSlotBonus(): number {
+  return SLOT_GRANTING_CITIES.reduce(
+    (sum, id) => sum + (metaProgressionManager.hasUnlock(cityUnlockId(id)) ? 1 : 0),
+    0,
+  );
+}
+
 /** Is this city currently reachable? */
 export function isCityUnlocked(city: City): boolean {
   if (city.unlock.type === "default") return true;

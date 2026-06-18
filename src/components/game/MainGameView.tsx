@@ -24,7 +24,6 @@ import { GameErrorBoundary } from "@components/ErrorBoundary";
 import { saveGameManager } from "@game/persistence/SaveGameManager";
 import { Settings, Save, MapPin } from 'lucide-react';
 import { useSwipeable } from 'react-swipeable';
-import { QuickStartGuide } from './QuickStartGuide';
 
 type ViewType = "city" | "bands" | "shows" | "promotion" | "synergies" | "jobs" | "progression" | "tour";
 
@@ -60,8 +59,8 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
     (s) => s.cities.find((c) => c.id === s.currentCityId)?.name ?? "",
   );
 
-  // Start background music + auto-save (the new-game intro is QuickStartGuide;
-  // the element-highlight TutorialOverlay is launched on demand from Settings).
+  // Start background music + auto-save. (New-player onboarding is the
+  // interactive TutorialOverlay, auto-started from App on a fresh run.)
   useEffect(() => {
     gameAudio.startBackgroundMusic("chill");
 
@@ -160,7 +159,7 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           {/* Resources */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+          <div data-tut="resources" style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
             <span className="snes-chip"><span style={{ color: '#3ad17e' }}>$</span><span>{money}</span></span>
             <span className="snes-chip"><span style={{ color: '#ffd23f' }}>★</span><span>{reputation}</span></span>
             <span className="snes-chip"><span style={{ color: '#c77dff' }}>♦</span><span>{fans}</span></span>
@@ -270,9 +269,6 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
         isOpen={showSaveLoad}
         onClose={() => setShowSaveLoad(false)}
       />
-
-      {/* Quick Start Guide */}
-      <QuickStartGuide />
     </div>
   );
 };

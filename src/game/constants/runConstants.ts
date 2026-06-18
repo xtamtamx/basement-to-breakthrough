@@ -11,6 +11,21 @@ export const ESCALATION_START_TURN = 31;
 export const BASE_MAX_SYNERGIES = 3;
 export const HARD_CAP_EFFECTIVE_SYNERGIES = 5;
 
+// Roster Slots (Balatro-joker-style band cap) — how many acts you can have
+// signed at once. Modifiers (per-mode deltas, the Scene Expansion meta upgrade,
+// and city unlocks) push the effective cap up or down at run start. The floor
+// equals the per-show bill cap (3) so you can always field a full lineup.
+export const BASE_ROSTER_SLOTS = 4;
+export const ROSTER_SLOT_FLOOR = 3;
+
+// In-run "Booking Manager" hire: spend cash to expand the roster cap by 1,
+// applied immediately. Each successive hire costs more (escalating cash sink),
+// and you can't hire past having a slot for every band in town.
+export const BOOKING_MANAGER_BASE_COST = 250;
+export const BOOKING_MANAGER_COST_STEP = 250;
+export const nextBookingManagerCost = (hired: number): number =>
+  BOOKING_MANAGER_BASE_COST + hired * BOOKING_MANAGER_COST_STEP;
+
 // Endgame Escalation (turns 31-35)
 export const ESCALATION_COST_MULTIPLIER = 1.5;
 export const ESCALATION_INCIDENT_MULTIPLIER = 2.0;

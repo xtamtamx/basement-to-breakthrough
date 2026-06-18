@@ -114,6 +114,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           {primaryViews.map(view => (
             <button
               key={view.id}
+              data-tut={`nav-${view.id}`}
               className="mobile-bottom-nav__btn"
               onClick={() => handleViewChange(view.id)}
               style={{
@@ -293,6 +294,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
 
       {/* Floating Next Turn Button */}
       <button
+        data-tut="next-turn"
         className="mobile-bottom-nav__next-turn"
         onClick={() => {
           onNextTurn();

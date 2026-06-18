@@ -40,7 +40,9 @@ export interface MetaUpgrade {
 }
 
 export interface MetaUpgradeEffect {
-  type: 'starting_money' | 'starting_reputation' | 'band_quality' | 'venue_discount' | 'stress_reduction' | 'unlock_slot';
+  // NOTE: 'roster_slot' = permanent +N band roster slots (the Balatro-joker
+  // cap). Distinct from 'unlock_slot' (legacy synergy-slot unlock).
+  type: 'starting_money' | 'starting_reputation' | 'band_quality' | 'venue_discount' | 'stress_reduction' | 'unlock_slot' | 'roster_slot';
   value: number;
   description: string;
 }
@@ -313,6 +315,19 @@ class MetaProgressionManager {
           value: 0.15,
           description: '15% less stress per level'
         }]
+      },
+      {
+        id: 'scene_expansion',
+        name: 'Scene Expansion',
+        description: 'Manage a bigger roster — more band slots',
+        cost: { fame: 250 },
+        maxLevel: 2,
+        currentLevel: 0,
+        effects: [{
+          type: 'roster_slot',
+          value: 1,
+          description: '+1 roster slot per level'
+        }]
       }
     ];
     
@@ -448,7 +463,8 @@ class MetaProgressionManager {
       startingReputation: 0,
       bandQualityMultiplier: 1,
       venueDiscountMultiplier: 1,
-      stressReductionMultiplier: 1
+      stressReductionMultiplier: 1,
+      rosterSlotBonus: 0
     };
     
     this.progression.upgrades.forEach(upgrade => {
@@ -471,6 +487,9 @@ class MetaProgressionManager {
               break;
             case 'stress_reduction':
               bonuses.stressReductionMultiplier -= totalValue;
+              break;
+            case 'roster_slot':
+              bonuses.rosterSlotBonus += totalValue;
               break;
           }
         });

@@ -12,6 +12,8 @@ import { runManager, RunState } from './RunManager';
 import { metaProgressionManager } from './MetaProgressionManager';
 import { turnResolutionEngine } from './TurnResolutionEngine';
 import { dayJobSystem } from './DayJobSystem';
+import { cityRosterSlotBonus } from '@game/world/cityUnlocks';
+import { BASE_ROSTER_SLOTS, ROSTER_SLOT_FLOOR } from '@game/constants/runConstants';
 
 let lastConfigId = 'classic';
 
@@ -49,6 +51,22 @@ export async function startNewRun(
 
   await store.loadInitialGameData();
   dayJobSystem.refreshJobs();
+
+  // Roster slot cap (Balatro-joker style) = base + this mode's delta
+  // (Hardcore −1, Festival +1) + permanent Scene Expansion meta upgrade +
+  // city-unlock bonuses. Floored at the per-show bill cap so you can always
+  // field a full lineup.
+  const rosterSlotSources = {
+    base: BASE_ROSTER_SLOTS,
+    mode: runManager.getRosterSlotDelta(),
+    meta: bonuses.rosterSlotBonus,
+    city: cityRosterSlotBonus(),
+  };
+  const maxRosterSize = Math.max(
+    ROSTER_SLOT_FLOOR,
+    rosterSlotSources.base + rosterSlotSources.mode + rosterSlotSources.meta + rosterSlotSources.city,
+  );
+  useGameStore.setState({ maxRosterSize, rosterSlotSources });
 
   // Starting band quality: a flat run-modifier shift (Hardcore −10) plus the
   // meta Talent Scout multiplier (+10%/level). Apply once to the roster.

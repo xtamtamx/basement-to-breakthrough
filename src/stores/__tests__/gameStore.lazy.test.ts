@@ -17,6 +17,9 @@ vi.mock('../../data/initialBands', () => {
       { id: 'band4', name: 'Test Band 4' },
       { id: 'band5', name: 'Test Band 5' },
       { id: 'band6', name: 'Test Band 6' },
+      { id: 'band7', name: 'Test Band 7' },
+      { id: 'band8', name: 'Test Band 8' },
+      { id: 'band9', name: 'Test Band 9' },
     ]
   };
 });
@@ -72,9 +75,9 @@ describe('GameStore Lazy Loading', () => {
     });
     
     // Should have loaded limited data
-    expect(result.current.allBands).toHaveLength(5); // Only first 5 bands
+    expect(result.current.allBands).toHaveLength(8); // Pool of 8 signable acts
     expect(result.current.venues).toHaveLength(3); // Only first 3 venues
-    expect(result.current.rosterBandIds).toHaveLength(3); // First 3 bands in roster
+    expect(result.current.rosterBandIds).toHaveLength(1); // Start with a single signed act
   });
 
   it('demonstrates performance benefit of lazy loading', async () => {
@@ -96,7 +99,7 @@ describe('GameStore Lazy Loading', () => {
     const loadTime = performance.now() - loadStartTime;
     
     // Loading happens asynchronously
-    expect(result.current.allBands).toHaveLength(5);
+    expect(result.current.allBands).toHaveLength(8);
     
     console.log(`Initial render: ${renderTime.toFixed(2)}ms`);
     console.log(`Lazy load time: ${loadTime.toFixed(2)}ms`);
@@ -109,16 +112,16 @@ describe('GameStore Lazy Loading', () => {
       await result.current.loadInitialGameData();
     });
     
-    // Check that it loaded the right bands
+    // Check that it loaded the right bands (pool of 8)
     expect(result.current.allBands[0].id).toBe('band1');
-    expect(result.current.allBands[4].id).toBe('band5');
+    expect(result.current.allBands[7].id).toBe('band8');
     
     // Check that it loaded the right venues
     expect(result.current.venues[0].id).toBe('venue1');
     expect(result.current.venues[2].id).toBe('venue3');
     
-    // Check roster
-    expect(result.current.rosterBandIds).toEqual(['band1', 'band2', 'band3']);
+    // Check roster — a single starting act; the rest are signable free agents
+    expect(result.current.rosterBandIds).toEqual(['band1']);
   });
 
   it('should only load data once (caching)', async () => {

@@ -40,6 +40,23 @@ describe('MetaProgressionManager purchases', () => {
     expect(afterBonus).toBeGreaterThan(beforeBonus);
   });
 
+  it('Scene Expansion adds permanent roster slots', () => {
+    metaProgressionManager.addCurrency(10000);
+    const beforeBonus =
+      metaProgressionManager.getRunStartBonuses().rosterSlotBonus;
+    const upgrade = metaProgressionManager
+      .getProgression()
+      .upgrades.find((u) => u.id === 'scene_expansion')!;
+    expect(upgrade).toBeDefined();
+    if (upgrade.currentLevel >= upgrade.maxLevel) return;
+
+    metaProgressionManager.purchaseUpgrade('scene_expansion');
+
+    const afterBonus =
+      metaProgressionManager.getRunStartBonuses().rosterSlotBonus;
+    expect(afterBonus).toBe(beforeBonus + 1);
+  });
+
   it('rejects a purchase with insufficient fame', () => {
     // Drain fame by reading current and not adding; force a tiny balance by
     // purchasing nothing — instead test a wildly expensive unknown upgrade id

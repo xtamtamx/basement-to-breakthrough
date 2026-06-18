@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { MainGameView } from "@components/game/MainGameView";
 import { PixelArtMainMenu } from "@components/game/PixelArtMainMenu";
+import { RunModeSelector } from "@components/game/RunModeSelector";
 import { MetaProgressionShop } from "@components/game/MetaProgressionShop";
 import { useGameStore } from "@stores/gameStore";
 import { GamePhase } from "@game/types";
 import { SettingsModal } from "@components/ui/SettingsModal";
 import { TutorialOverlay } from "@components/tutorial/TutorialOverlay";
+import { tutorialManager } from "@game/tutorial/TutorialManager";
 import { RunConfig } from "@game/mechanics/RunManager";
 import { startNewRun } from "@game/mechanics/runLifecycle";
 import { haptics } from "@utils/mobile";
@@ -25,6 +27,7 @@ function App() {
   const [showUpgrades, setShowUpgrades] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
   const [showMainMenu, setShowMainMenu] = useState(true);
+  const [showRunModePicker, setShowRunModePicker] = useState(false);
   const [showSaveLoadTest, setShowSaveLoadTest] = useState(false);
   const [showAudioTest, setShowAudioTest] = useState(false);
   const [showLazyLoadTest, setShowLazyLoadTest] = useState(false);
@@ -56,6 +59,9 @@ function App() {
 
     setShowMainMenu(false);
     setGameStarted(true);
+    // Brand-new players get the interactive walkthrough (gated on real actions);
+    // it no-ops once they've finished or skipped it. Continue does NOT trigger it.
+    tutorialManager.maybeStartForNewGame();
     haptics.success();
     audio.play("success");
   };
@@ -96,7 +102,7 @@ function App() {
       <ColorblindProvider initialMode={savedColorblindMode}>
         <AppErrorBoundary>
           <PixelArtMainMenu
-            onStartGame={() => handleStartGame()}
+            onStartGame={() => setShowRunModePicker(true)}
             onContinueGame={
               hasSavedGame
                 ? async () => {
@@ -128,6 +134,17 @@ function App() {
           {/* Meta-progression fame shop */}
           {showUpgrades && (
             <MetaProgressionShop onClose={() => setShowUpgrades(false)} />
+          )}
+
+          {/* Run mode picker — choose a mode, then start (NEW GAME → here → run) */}
+          {showRunModePicker && (
+            <RunModeSelector
+              onSelect={(config) => {
+                setShowRunModePicker(false);
+                handleStartGame(config);
+              }}
+              onClose={() => setShowRunModePicker(false)}
+            />
           )}
         </AppErrorBoundary>
       </ColorblindProvider>

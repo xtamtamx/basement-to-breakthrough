@@ -1,357 +1,239 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { haptics } from '@utils/mobile';
+import React, { useEffect, useRef, useState } from 'react';
+import { useGameStore } from '@stores/gameStore';
 import { tutorialManager, TutorialStep } from '@game/tutorial/TutorialManager';
+import { haptics } from '@utils/mobile';
 
+const RING_PAD = 6; // px of breathing room around a highlighted target
+const ANCHOR_GAP = 14; // px between target and an above/below tooltip
+const TOOLTIP_MAX = 340; // px
+
+/**
+ * Coachmark layer for the first-show walkthrough. The overlay never blocks
+ * input (root is pointer-events:none, only the tooltip is interactive) so the
+ * real buttons the tutorial points at stay tappable — gating is driven by the
+ * player actually doing each step, polled live so a view transition can't
+ * leave a stale highlight behind.
+ */
 export const TutorialOverlay: React.FC = () => {
-  const [currentStep, setCurrentStep] = useState<TutorialStep | null>(null);
+  const [step, setStep] = useState<TutorialStep | null>(null);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
-  const [highlightBounds, setHighlightBounds] = useState<DOMRect | null>(null);
-  const overlayRef = useRef<HTMLDivElement>(null);
+  const [bounds, setBounds] = useState<DOMRect | null>(null);
+  const boundElRef = useRef<Element | null>(null);
 
+  // Track the manager's current step / progress.
   useEffect(() => {
-    // Subscribe to tutorial updates
-    const unsubscribe = tutorialManager.onUpdate(() => {
-      setCurrentStep(tutorialManager.getCurrentStep());
+    const sync = () => {
+      setStep(tutorialManager.getCurrentStep());
       setProgress(tutorialManager.getCurrentProgress());
-    });
-
-    // Initialize current state
-    setCurrentStep(tutorialManager.getCurrentStep());
-    setProgress(tutorialManager.getCurrentProgress());
-
-    return unsubscribe;
+    };
+    sync();
+    return tutorialManager.onUpdate(sync);
   }, []);
 
+  // Drive 'state'-gated steps off real game-state changes.
   useEffect(() => {
-    if (currentStep?.target) {
-      // Find target element and calculate bounds
-      const targetElement = document.querySelector(currentStep.target);
-      if (targetElement) {
-        const bounds = targetElement.getBoundingClientRect();
-        setHighlightBounds(bounds);
+    const unsub = useGameStore.subscribe(() => tutorialManager.evaluateState(useGameStore.getState()));
+    return unsub;
+  }, []);
 
-        // Set up click listener if needed
-        if (currentStep.nextTrigger === 'action' || currentStep.action === 'click') {
-          const handleClick = () => {
-            tutorialManager.nextStep();
-            haptics.light();
-          };
-          targetElement.addEventListener('click', handleClick);
-          return () => targetElement.removeEventListener('click', handleClick);
-        }
-      }
-    } else {
-      setHighlightBounds(null);
-    }
-    return undefined;
-  }, [currentStep]);
+  // Per-step: poll for the target so the highlight + any tap binding survive
+  // view transitions, scrolling and layout shifts. Also re-check a state gate
+  // on entry in case it's already satisfied.
+  const stepId = step?.id;
+  useEffect(() => {
+    boundElRef.current = null;
+    setBounds(null);
 
-  const handleNext = () => {
-    tutorialManager.nextStep();
-    haptics.light();
-  };
+    if (!step) return;
+    if (step.gate.kind === 'state') tutorialManager.evaluateState(useGameStore.getState());
+    if (!step.target) return;
 
-  const handleSkip = () => {
-    if (confirm('Are you sure you want to skip the tutorial? You can resume it later from settings.')) {
-      tutorialManager.skipTutorial();
+    const target = step.target;
+    const isTap = step.gate.kind === 'tap';
+    const onTap = () => {
+      tutorialManager.tapAdvance();
       haptics.light();
-    }
-  };
+    };
 
-  const getTooltipPosition = () => {
-    if (!highlightBounds || !currentStep?.position) {
-      return { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' };
-    }
+    const tick = () => {
+      const el = document.querySelector(target);
+      if (!el) {
+        if (boundElRef.current) {
+          boundElRef.current.removeEventListener('click', onTap);
+          boundElRef.current = null;
+        }
+        setBounds(null);
+        return;
+      }
+      setBounds(el.getBoundingClientRect());
+      if (isTap && el !== boundElRef.current) {
+        boundElRef.current?.removeEventListener('click', onTap);
+        el.addEventListener('click', onTap);
+        boundElRef.current = el;
+      }
+    };
 
-    const padding = 20;
-    const tooltipWidth = 320;
-    const tooltipHeight = 200; // Approximate
+    tick();
+    const interval = window.setInterval(tick, 150);
+    return () => {
+      window.clearInterval(interval);
+      boundElRef.current?.removeEventListener('click', onTap);
+      boundElRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stepId]);
 
-    switch (currentStep.position) {
-      case 'top':
-        return {
-          top: highlightBounds.top - tooltipHeight - padding,
-          left: highlightBounds.left + highlightBounds.width / 2 - tooltipWidth / 2,
-          transform: 'none'
-        };
-      case 'bottom':
-        return {
-          top: highlightBounds.bottom + padding,
-          left: highlightBounds.left + highlightBounds.width / 2 - tooltipWidth / 2,
-          transform: 'none'
-        };
-      case 'left':
-        return {
-          top: highlightBounds.top + highlightBounds.height / 2 - tooltipHeight / 2,
-          left: highlightBounds.left - tooltipWidth - padding,
-          transform: 'none'
-        };
-      case 'right':
-        return {
-          top: highlightBounds.top + highlightBounds.height / 2 - tooltipHeight / 2,
-          left: highlightBounds.right + padding,
-          transform: 'none'
-        };
-      default:
-        return { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' };
-    }
-  };
-  
-  if (!currentStep) return null;
+  if (!step) return null;
+
+  const vw = typeof window !== 'undefined' ? window.innerWidth : 360;
+  const vh = typeof window !== 'undefined' ? window.innerHeight : 640;
+  const width = Math.min(TOOLTIP_MAX, vw - 24);
+
+  // ── Spotlight geometry ──────────────────────────────────────────────────
+  const hole = bounds
+    ? {
+        x0: bounds.left - RING_PAD,
+        y0: bounds.top - RING_PAD,
+        x1: bounds.right + RING_PAD,
+        y1: bounds.bottom + RING_PAD,
+      }
+    : null;
+
+  // ── Tooltip position ──────────────────────────────────────────────────────
+  const tipStyle: React.CSSProperties = { width, pointerEvents: 'auto' };
+  const place = step.placement;
+  if (place === 'above' && bounds) {
+    tipStyle.bottom = vh - bounds.top + ANCHOR_GAP;
+    tipStyle.left = Math.max(12, Math.min(bounds.left + bounds.width / 2 - width / 2, vw - width - 12));
+  } else if (place === 'below' && bounds) {
+    tipStyle.top = bounds.bottom + ANCHOR_GAP;
+    tipStyle.left = Math.max(12, Math.min(bounds.left + bounds.width / 2 - width / 2, vw - width - 12));
+  } else if (place === 'center') {
+    tipStyle.top = '50%';
+    tipStyle.left = '50%';
+    tipStyle.transform = 'translate(-50%, -50%)';
+  } else if (place === 'screen-bottom') {
+    tipStyle.bottom = 'calc(env(safe-area-inset-bottom) + 96px)';
+    tipStyle.left = '50%';
+    tipStyle.transform = 'translateX(-50%)';
+  } else {
+    // screen-top — and the fallback for above/below before the target is found
+    tipStyle.top = 'calc(env(safe-area-inset-top) + 12px)';
+    tipStyle.left = '50%';
+    tipStyle.transform = 'translateX(-50%)';
+  }
+
+  const dim = 'rgba(8, 6, 18, 0.74)';
+  const showFullDim = !hole && place === 'center';
 
   return (
-    <AnimatePresence>
-      <motion.div
-        ref={overlayRef}
-        className="tutorial-overlay"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.3 }}
+    <div style={{ position: 'fixed', inset: 0, zIndex: 10000, pointerEvents: 'none' }}>
+      {/* Dimmer — spotlight cutout around a target, full dim for centered intro,
+          nothing for the hands-on steps so the view stays bright and usable. */}
+      {hole ? (
+        <>
+          <div style={{ position: 'fixed', left: 0, top: 0, width: '100vw', height: Math.max(0, hole.y0), background: dim }} />
+          <div style={{ position: 'fixed', left: 0, top: hole.y1, width: '100vw', height: Math.max(0, vh - hole.y1), background: dim }} />
+          <div style={{ position: 'fixed', left: 0, top: hole.y0, width: Math.max(0, hole.x0), height: hole.y1 - hole.y0, background: dim }} />
+          <div style={{ position: 'fixed', left: hole.x1, top: hole.y0, width: Math.max(0, vw - hole.x1), height: hole.y1 - hole.y0, background: dim }} />
+          <div
+            className="tut-ring"
+            style={{
+              position: 'fixed',
+              left: hole.x0,
+              top: hole.y0,
+              width: hole.x1 - hole.x0,
+              height: hole.y1 - hole.y0,
+              border: '3px solid #f72585',
+              borderRadius: 4,
+            }}
+          />
+        </>
+      ) : showFullDim ? (
+        <div style={{ position: 'fixed', inset: 0, background: dim }} />
+      ) : null}
+
+      {/* Tooltip card */}
+      <div
+        className="snes-panel snes-panel--magenta"
+        style={{ position: 'fixed', padding: '14px 16px', maxWidth: 'calc(100vw - 24px)', ...tipStyle }}
       >
-        {/* Backdrop with highlight cutout */}
-        <div className="tutorial-backdrop">
-          {highlightBounds && (
-            <div
-              className="tutorial-highlight"
-              style={{
-                top: highlightBounds.top - (currentStep.highlightPadding || 5),
-                left: highlightBounds.left - (currentStep.highlightPadding || 5),
-                width: highlightBounds.width + (currentStep.highlightPadding || 5) * 2,
-                height: highlightBounds.height + (currentStep.highlightPadding || 5) * 2,
-              }}
-            />
-          )}
+        {/* Header: progress squares + skip */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+          <div style={{ display: 'flex', gap: '4px' }}>
+            {Array.from({ length: progress.total }, (_, i) => (
+              <span
+                key={i}
+                style={{
+                  width: 8,
+                  height: 8,
+                  border: '2px solid #0a0814',
+                  background: i < progress.current ? '#f72585' : '#0f0b1e',
+                  boxShadow: i < progress.current ? '0 0 6px rgba(247,37,133,0.7)' : 'inset 1px 1px 0 #2a2350',
+                }}
+              />
+            ))}
+          </div>
+          <button
+            onClick={() => {
+              tutorialManager.skipTutorial();
+              haptics.light();
+            }}
+            className="snes-pixel"
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#6f6796',
+              fontSize: '7px',
+              letterSpacing: 0,
+              cursor: 'pointer',
+              padding: '4px',
+            }}
+          >
+            Skip ✕
+          </button>
         </div>
 
-        {/* Tooltip */}
-        <motion.div
-          className="tutorial-tooltip"
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.1 }}
-          style={getTooltipPosition()}
-        >
-          {/* Progress indicator */}
-          <div className="tutorial-progress">
-            <div className="progress-dots">
-              {Array.from({ length: progress.total }, (_, i) => (
-                <div
-                  key={i}
-                  className={`progress-dot ${i < progress.current ? 'active' : ''}`}
-                />
-              ))}
-            </div>
-            <button
-              className="skip-button"
-              onClick={handleSkip}
-              title="Skip tutorial"
+        {/* Content */}
+        <h3 className="snes-pixel" style={{ fontSize: '11px', color: '#ffffff', margin: '0 0 8px', letterSpacing: 0, lineHeight: 1.5 }}>
+          {step.title}
+        </h3>
+        <p style={{ fontSize: '12px', color: '#b9b3d6', margin: 0, lineHeight: 1.55 }}>{step.body}</p>
+
+        {/* Footer: button for 'button' gates, hint for tap/state gates */}
+        {step.gate.kind === 'button' ? (
+          <button
+            onClick={() => {
+              tutorialManager.advance();
+              haptics.light();
+            }}
+            className="snes-btn snes-btn--sm"
+            style={{ width: '100%', marginTop: '14px', minHeight: '40px' }}
+          >
+            {step.gate.label}
+          </button>
+        ) : (
+          step.hint && (
+            <p
+              className="snes-pixel"
+              style={{ fontSize: '8px', color: '#ffd23f', margin: '12px 0 0', letterSpacing: 0, lineHeight: 1.6, textAlign: 'center' }}
             >
-              Skip
-            </button>
-          </div>
-
-          {/* Content */}
-          <div className="tutorial-content">
-            <h3 className="tutorial-title">{currentStep.title}</h3>
-            <div 
-              className="tutorial-description"
-              dangerouslySetInnerHTML={{ __html: currentStep.content.replace(/\n/g, '<br>') }}
-            />
-          </div>
-
-          {/* Actions */}
-          <div className="tutorial-actions">
-            {currentStep.nextTrigger === 'click' && (
-              <button
-                className="tutorial-button tutorial-button-primary"
-                onClick={handleNext}
-              >
-                Next
-              </button>
-            )}
-            {currentStep.nextTrigger === 'action' && (
-              <div className="tutorial-hint">
-                {currentStep.action === 'click' ? '👆 Click the highlighted element' : 'Complete the action to continue'}
-              </div>
-            )}
-            {currentStep.nextTrigger === 'auto' && (
-              <div className="tutorial-hint">Continuing automatically...</div>
-            )}
-          </div>
-        </motion.div>
-      </motion.div>
+              {step.hint}
+            </p>
+          )
+        )}
+      </div>
 
       <style>{`
-        .tutorial-overlay {
-          position: fixed;
-          inset: 0;
-          z-index: 9999;
-          pointer-events: none;
+        .tut-ring {
+          box-shadow: 0 0 0 2px #0a0814, 0 0 18px 2px rgba(247, 37, 133, 0.65);
+          animation: tut-ring-pulse 1.4s ease-in-out infinite;
         }
-
-        .tutorial-backdrop {
-          position: absolute;
-          inset: 0;
-          background: rgba(0, 0, 0, 0.8);
-          pointer-events: all;
-        }
-
-        .tutorial-highlight {
-          position: absolute;
-          border: 3px solid var(--punk-magenta);
-          border-radius: 8px;
-          box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.8);
-          animation: pulse-highlight 2s ease-in-out infinite;
-          pointer-events: none;
-        }
-
-        @keyframes pulse-highlight {
-          0%, 100% {
-            box-shadow: 
-              0 0 0 9999px rgba(0, 0, 0, 0.8),
-              0 0 20px rgba(236, 72, 153, 0.5);
-          }
-          50% {
-            box-shadow: 
-              0 0 0 9999px rgba(0, 0, 0, 0.8),
-              0 0 40px rgba(236, 72, 153, 0.8);
-          }
-        }
-
-        .tutorial-tooltip {
-          position: absolute;
-          width: 320px;
-          max-width: calc(100vw - 40px);
-          background: var(--bg-secondary);
-          border: 2px solid var(--border-default);
-          border-radius: 12px;
-          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-          pointer-events: all;
-          overflow: hidden;
-        }
-
-        .tutorial-progress {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 12px 16px;
-          background: var(--bg-tertiary);
-          border-bottom: 1px solid var(--border-default);
-        }
-
-        .progress-dots {
-          display: flex;
-          gap: 6px;
-        }
-
-        .progress-dot {
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          background: var(--bg-hover);
-          transition: all var(--transition-fast);
-        }
-
-        .progress-dot.active {
-          background: var(--punk-magenta);
-          box-shadow: 0 0 8px rgba(236, 72, 153, 0.5);
-        }
-
-        .skip-button {
-          padding: 4px 12px;
-          background: none;
-          border: 1px solid var(--border-default);
-          border-radius: 4px;
-          color: var(--text-secondary);
-          font-size: 12px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all var(--transition-fast);
-        }
-
-        .skip-button:hover {
-          border-color: var(--danger-red);
-          color: var(--danger-red);
-        }
-
-        .tutorial-content {
-          padding: 20px;
-        }
-
-        .tutorial-title {
-          margin: 0 0 12px;
-          font-size: 18px;
-          font-weight: 700;
-          color: var(--text-primary);
-        }
-
-        .tutorial-description {
-          color: var(--text-secondary);
-          font-size: 14px;
-          line-height: 1.5;
-        }
-
-        .tutorial-description strong {
-          color: var(--text-primary);
-          font-weight: 600;
-        }
-
-        .tutorial-actions {
-          padding: 16px 20px;
-          background: var(--bg-tertiary);
-          border-top: 1px solid var(--border-default);
-        }
-
-        .tutorial-button {
-          width: 100%;
-          padding: 10px 20px;
-          border: none;
-          border-radius: 6px;
-          font-size: 14px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all var(--transition-fast);
-        }
-
-        .tutorial-button-primary {
-          background: var(--punk-magenta);
-          color: white;
-        }
-
-        .tutorial-button-primary:hover {
-          background: var(--metal-red);
-          transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);
-        }
-
-        .tutorial-hint {
-          text-align: center;
-          color: var(--text-secondary);
-          font-size: 13px;
-          font-style: italic;
-        }
-
-        @media (max-width: 480px) {
-          .tutorial-tooltip {
-            width: calc(100vw - 32px);
-            margin: 0 16px;
-          }
-
-          .tutorial-content {
-            padding: 16px;
-          }
-
-          .tutorial-title {
-            font-size: 16px;
-          }
-
-          .tutorial-description {
-            font-size: 13px;
-          }
+        @keyframes tut-ring-pulse {
+          0%, 100% { box-shadow: 0 0 0 2px #0a0814, 0 0 14px 1px rgba(247, 37, 133, 0.45); }
+          50% { box-shadow: 0 0 0 2px #0a0814, 0 0 26px 4px rgba(247, 37, 133, 0.85); }
         }
       `}</style>
-    </AnimatePresence>
+    </div>
   );
 };

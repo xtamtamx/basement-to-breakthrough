@@ -38,6 +38,8 @@ export interface RunModifier {
     stressMultiplier?: number;
     startingBandQuality?: number;
     venueRentMultiplier?: number;
+    /** +/- to the base roster slot cap for this mode (Balatro-joker style). */
+    rosterSlotDelta?: number;
   };
 }
 
@@ -149,11 +151,12 @@ class RunManager {
         {
           id: 'brutal_scene',
           name: 'Brutal Scene',
-          description: 'Everything costs more, bands are pickier',
+          description: 'Everything costs more, bands are pickier, slots are scarce',
           effects: {
             venueRentMultiplier: 1.05,
             startingBandQuality: -3,
-            moneyMultiplier: 1.0
+            moneyMultiplier: 1.0,
+            rosterSlotDelta: -1
           }
         }
       ]
@@ -176,10 +179,11 @@ class RunManager {
         {
           id: 'bill_bonus',
           name: 'Bill Specialist',
-          description: 'Big bills pull bigger crowds',
+          description: 'Big bills pull bigger crowds — room for more acts',
           effects: {
             fansMultiplier: 1.6,
-            reputationMultiplier: 1.15
+            reputationMultiplier: 1.15,
+            rosterSlotDelta: 1
           }
         }
       ]
@@ -322,6 +326,16 @@ class RunManager {
     if (!this.currentRun) return 0;
     return this.currentRun.config.modifiers.reduce(
       (sum, mod) => sum + (mod.effects.startingBandQuality ?? 0),
+      0,
+    );
+  }
+
+  // Sum of rosterSlotDelta across the active run's modifiers (0 if none) —
+  // the per-mode shift to the band roster cap (Hardcore −1, Festival +1).
+  getRosterSlotDelta(): number {
+    if (!this.currentRun) return 0;
+    return this.currentRun.config.modifiers.reduce(
+      (sum, mod) => sum + (mod.effects.rosterSlotDelta ?? 0),
       0,
     );
   }

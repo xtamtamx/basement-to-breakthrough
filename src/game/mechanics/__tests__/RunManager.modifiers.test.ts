@@ -21,12 +21,23 @@ describe('RunManager run modifiers', () => {
   it('returns neutral multipliers with no active run', () => {
     expect(runManager.getRunModifiers()).toEqual(NEUTRAL);
     expect(runManager.getStartingBandQualityModifier()).toBe(0);
+    expect(runManager.getRosterSlotDelta()).toBe(0);
   });
 
   it('Classic run has no modifiers (plays straight)', () => {
     runManager.startRun('classic');
     expect(runManager.getRunModifiers()).toEqual(NEUTRAL);
     expect(runManager.getStartingBandQualityModifier()).toBe(0);
+    expect(runManager.getRosterSlotDelta()).toBe(0);
+  });
+
+  it('Hardcore tightens roster slots (−1), Festival loosens them (+1)', () => {
+    runManager.startRun('hardcore');
+    expect(runManager.getRosterSlotDelta()).toBe(-1);
+    runManager.startRun('festival');
+    expect(runManager.getRosterSlotDelta()).toBe(1);
+    runManager.startRun('speed');
+    expect(runManager.getRosterSlotDelta()).toBe(0);
   });
 
   it('Speed run boosts reputation and stress (Fast Scene)', () => {

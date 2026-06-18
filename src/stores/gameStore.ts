@@ -27,6 +27,7 @@ import { clamp, CONSTRAINTS } from "@utils/validation";
 import { performanceMetrics } from "@utils/performanceMetrics";
 import { ALL_DISTRICTS } from "../data/districts";
 import { CITIES, HOME_CITY_ID } from "../data/cities";
+import { BASE_ROSTER_SLOTS, ROSTER_SLOT_FLOOR, nextBookingManagerCost } from "@game/constants/runConstants";
 
 // Lazy load initial data
 let initialDataPromise: Promise<{ bands: Band[], venues: Venue[] }> | null = null;
@@ -106,6 +107,15 @@ interface GameStore {
   // Band state
   allBands: Band[];
   rosterBandIds: string[];
+  /** Roster slot cap (Balatro-joker style); set at run start from
+   *  base + per-mode delta + meta upgrades + city unlocks, then bumped
+   *  in-run by each Booking Manager hire. */
+  maxRosterSize: number;
+  /** Booking Managers hired THIS run (each +1 slot; drives the next hire cost). */
+  hiredManagers: number;
+  /** Snapshot of the run-start slot contributions (for the "where do my slots
+   *  come from?" breakdown). hiredManagers is added on top, live. */
+  rosterSlotSources: { base: number; mode: number; meta: number; city: number };
 
   // Show state
   scheduledShows: Show[];
@@ -158,6 +168,8 @@ interface GameStore {
   // Band actions
   addBandToRoster: (bandId: string) => void;
   removeBandFromRoster: (bandId: string) => void;
+  /** Hire a Booking Manager: spend cash for +1 roster slot, applied now. */
+  hireBookingManager: () => void;
   updateBand: (bandId: string, updates: Partial<Band>) => void;
 
   // Show actions
@@ -667,6 +679,9 @@ const getInitialState = () => ({
   walkers: [],
   allBands: [], // Will be loaded lazily
   rosterBandIds: [], // Will be populated after bands load
+  maxRosterSize: BASE_ROSTER_SLOTS, // recomputed at run start (modifiers)
+  hiredManagers: 0,
+  rosterSlotSources: { base: BASE_ROSTER_SLOTS, mode: 0, meta: 0, city: 0 },
   scheduledShows: [],
   showHistory: [],
   lastTurnResults: [],
@@ -751,9 +766,14 @@ export const useGameStore = create<GameStore>()(
         const { bands, venues } = await loadInitialData();
         const homeVenues = venues.slice(0, 3); // Start with first 3 of the home scene
         set((state) => ({
-          allBands: bands.slice(0, 5), // Start with first 5 bands
+          // Load a pool of 8 acts so the roster slot cap (base 4) is a real
+          // "who makes the cut" choice — you can only sign a subset.
+          allBands: bands.slice(0, 8),
           venues: homeVenues,
-          rosterBandIds: bands.slice(0, 3).map((b) => b.id), // First 3 bands in roster
+          // Start with a SINGLE signed act — signing more is the player's first
+          // real decision (and the onboarding walkthrough's first hands-on step).
+          // The other first-5 bands are unsigned "Available" free agents.
+          rosterBandIds: bands.slice(0, 1).map((b) => b.id),
           // Backfill the home city's lazily-loaded venues so travelling back restores them
           cities: state.cities.map((c) =>
             c.id === HOME_CITY_ID ? { ...c, venues: homeVenues } : c,
@@ -858,14 +878,39 @@ export const useGameStore = create<GameStore>()(
 
       // Band actions
       addBandToRoster: (bandId) =>
-        set((state) => ({
-          rosterBandIds: [...state.rosterBandIds, bandId],
-        })),
+        set((state) => {
+          // Roster slot cap (Balatro-joker style): silently no-op when full or
+          // already signed. UI disables the Sign button + shows X/Y, so this is
+          // the safety net for any non-UI caller.
+          if (
+            state.rosterBandIds.includes(bandId) ||
+            state.rosterBandIds.length >= state.maxRosterSize
+          ) {
+            return {};
+          }
+          return { rosterBandIds: [...state.rosterBandIds, bandId] };
+        }),
 
       removeBandFromRoster: (bandId) =>
         set((state) => ({
           rosterBandIds: state.rosterBandIds.filter((id) => id !== bandId),
         })),
+
+      // Hire a Booking Manager: pay the escalating fee for +1 roster slot,
+      // applied immediately (the cap is dynamic). Capped at one slot per band
+      // in town (no point managing more acts than exist), and a no-op if broke.
+      hireBookingManager: () =>
+        set((state) => {
+          const cost = nextBookingManagerCost(state.hiredManagers);
+          if (state.money < cost || state.maxRosterSize >= state.allBands.length) {
+            return {};
+          }
+          return {
+            money: state.money - cost,
+            hiredManagers: state.hiredManagers + 1,
+            maxRosterSize: state.maxRosterSize + 1,
+          };
+        }),
 
       updateBand: (bandId, updates) =>
         set((state) => ({
@@ -1139,6 +1184,9 @@ export const useGameStore = create<GameStore>()(
         currentCityId: state.currentCityId,
         allBands: state.allBands,
         rosterBandIds: state.rosterBandIds,
+        maxRosterSize: state.maxRosterSize,
+        hiredManagers: state.hiredManagers,
+        rosterSlotSources: state.rosterSlotSources,
         scheduledShows: state.scheduledShows,
         showHistory: state.showHistory,
         consecutiveBrokeTurns: state.consecutiveBrokeTurns,
@@ -1156,6 +1204,24 @@ export const useGameStore = create<GameStore>()(
       // fame, booked shows, and loss state instead of silently resetting.
       onRehydrateStorage: () => (state) => {
         if (!state) return;
+
+        // Saves written before the roster slot cap won't have maxRosterSize.
+        // Default it (startNewRun recomputes from modifiers); never trim the
+        // restored roster — the cap only gates NEW signs, not earned bands.
+        if (typeof state.maxRosterSize !== "number" || state.maxRosterSize < ROSTER_SLOT_FLOOR) {
+          state.maxRosterSize = BASE_ROSTER_SLOTS;
+        }
+        if (typeof state.hiredManagers !== "number") state.hiredManagers = 0;
+        // Old saves lack the slot-source snapshot; attribute the whole run-start
+        // cap to "base" so the breakdown still sums to maxRosterSize.
+        if (!state.rosterSlotSources || typeof state.rosterSlotSources.base !== "number") {
+          state.rosterSlotSources = {
+            base: state.maxRosterSize - state.hiredManagers,
+            mode: 0,
+            meta: 0,
+            city: 0,
+          };
+        }
 
         // Reconcile the persisted city roster against the current data file: a
         // save may have been written with an older/smaller roster (or older
