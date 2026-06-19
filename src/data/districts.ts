@@ -37,15 +37,18 @@ export const DISTRICTS = {
     color: "#5a8a5a",
   } as District,
 
+  // The south-shore beach quarter (was "Good School Dist."). Hosts the Jones
+  // Beach amphitheater + the Field 6 boardwalk; rendered as sand + ocean.
   UNIVERSITY: {
     id: "university",
-    name: "Good School Dist.",
+    name: "The Boardwalk",
     sceneStrength: 50,
     gentrificationLevel: 40,
     policePresence: 30,
     rentMultiplier: 1.2,
     bounds: { x: 4, y: 4, width: 4, height: 4 },
-    color: "#f59e0b",
+    color: "#e8c87a",
+    isBeach: true,
   } as District,
 };
 

@@ -650,6 +650,30 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
     for (let ty = WORLD_H - 3; ty < WORLD_H; ty++)
       for (let tx = 0; tx < WORLD_W; tx++) setMat(tx, ty, M_WATER);
   }
+
+  // Beach district: paint its quarter as sand, with ocean along the world-edge
+  // sides it touches — so the south-shore quarter reads as a real coastline.
+  const beachDist = plan.quarters.find((q) => q.district.isBeach)?.district;
+  if (beachDist) {
+    const east = beachDist.bounds.x >= 4;
+    const south = beachDist.bounds.y >= 4;
+    const x0 = east ? ROAD_X : 0, x1 = east ? WORLD_W : ROAD_X;
+    const y0 = south ? ROAD_Y : 0, y1 = south ? WORLD_H : ROAD_Y;
+    const built = new Set<string>();
+    plan.buildings.forEach((b) => {
+      for (let r = b.ty; r < b.ty + b.th; r++)
+        for (let c = b.tx; c < b.tx + b.tw; c++) built.add(`${c},${r}`);
+    });
+    for (let ty = y0; ty < y1; ty++)
+      for (let tx = x0; tx < x1; tx++) {
+        if (isRoad(tx, ty) || isSidewalk(tx, ty)) continue; // keep the boardwalk streets
+        const nearEdge =
+          (east ? tx >= WORLD_W - 3 : tx < 3) ||
+          (south ? ty >= WORLD_H - 3 : ty < 3);
+        setMat(tx, ty, nearEdge && !built.has(`${tx},${ty}`) ? M_WATER : M_SAND);
+      }
+  }
+
   // Building front walks + venue driveways become sidewalk so they round & bevel
   // along with the corridor instead of being stamped squares.
   plan.buildings.forEach((b) => {
@@ -722,8 +746,8 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
   // the corridors and the garden island gets a rounded sidewalk surround.
   paintLayer({ field: (tx, ty) => isMat(tx, ty, M_SIDEWALK, M_ROAD), fill: theme.cobble, kerb: true, highSide: 'material', rim: theme.cobbleLight, frontShadow: theme.cobbleDark });
   paintLayer({ field: (tx, ty) => isMat(tx, ty, M_ROAD), matTile: TERRAIN.road, kerb: true, highSide: 'lower', rim: theme.cobbleLight, frontShadow: 'rgba(0,0,0,0.28)', tint: 'rgba(140,110,70,0.06)' });
-  if (theme.waterfront) {
-    paintLayer({ field: (tx, ty) => isMat(tx, ty, M_SAND, M_WATER), matTile: TERRAIN.dirt, kerb: true, highSide: 'material', rim: theme.sand, frontShadow: theme.soilDark });
+  if (theme.waterfront || beachDist) {
+    paintLayer({ field: (tx, ty) => isMat(tx, ty, M_SAND, M_WATER), fill: theme.sand, kerb: true, highSide: 'material', rim: theme.sand, frontShadow: theme.soilDark });
     paintLayer({ field: (tx, ty) => isMat(tx, ty, M_WATER), matTile: TERRAIN.water, kerb: true, highSide: 'material', rim: theme.waterLight, frontShadow: theme.waterDark, varies: false });
   }
 

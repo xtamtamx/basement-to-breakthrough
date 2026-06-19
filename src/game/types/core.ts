@@ -299,6 +299,9 @@ export interface District {
   bounds: { x: number; y: number; width: number; height: number }; // Grid bounds
   color: string; // Visual identifier
   type?: DistrictType;
+  /** Render this quarter as a beach (sand ground + water along its outer edge)
+   *  instead of grass — e.g. Strong Island's south-shore district. */
+  isBeach?: boolean;
 }
 
 // ============= Cities (tour destinations) =============
