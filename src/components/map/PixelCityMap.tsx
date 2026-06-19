@@ -459,7 +459,7 @@ function planTown(districts: District[], venues: Venue[], roofMix: BuildingKey[]
 
   // Assign shops (commerce / day-job sources) to the next-nearest buildings in
   // each district, re-spriting them as storefronts so they read as commerce.
-  for (const shop of getCityShops(districts, { diyPoints })) {
+  for (const shop of getCityShops(districts, { diyPoints, cityId: themeKey })) {
     const b = buildings
       .filter((bd) => !bd.venue && !bd.shop && !bd.landmark && bd.district?.id === shop.districtId)
       .sort((a, z) => Math.hypot(a.tx - cx, a.ty - cy) - Math.hypot(z.tx - cx, z.ty - cy))[0];

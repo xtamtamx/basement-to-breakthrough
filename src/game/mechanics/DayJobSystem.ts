@@ -363,7 +363,7 @@ export class DayJobSystem {
 
     // Generate establishment jobs — every shop & civic building offers its own work.
     // Same evolution inputs as the map, so the two never disagree on what exists.
-    getCityShops(districts, { diyPoints }).forEach(shop => {
+    getCityShops(districts, { diyPoints, cityId: state.currentCityId }).forEach(shop => {
       jobs.push(...this.buildShopJobs(shop));
     });
 

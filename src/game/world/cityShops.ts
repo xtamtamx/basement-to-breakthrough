@@ -181,19 +181,26 @@ const ANCHOR_KINDS = [ShopKind.CORNER_STORE, ShopKind.COFFEE_SHOP] as const;    
 const SCENE_KINDS = [ShopKind.RECORD_STORE, ShopKind.MUSIC_STORE, ShopKind.INSTRUMENT_SHOP, ShopKind.THRIFT_STORE, ShopKind.BOOKSTORE] as const; // bloom with a thriving DIY scene
 const COMMUNITY_CIVIC = [ShopKind.LIBRARY, ShopKind.SCHOOL, ShopKind.HOSPITAL, ShopKind.FIRE_STATION, ShopKind.POST_OFFICE] as const; // civic goods a developed district earns
 
+// Per-city shop name overrides — each scene's establishments read as the real
+// (parodied) local spots, falling back to the generic pool for any kind/city
+// not listed. Home = Long Island. Mirrors the per-city landmark naming.
+const CITY_SHOP_NAMES: Record<string, Partial<Record<ShopKind, string[]>>> = {
+  home: {
+    // Everyday LI spots (the bagel place, the diner, the grocery, the beach snack bar)
+    [ShopKind.CORNER_STORE]: ['Bagel Czar', 'The Colossal Diner', 'King Kolon', 'Field 6 Snack Bar'],
+    // Big-box corporate creep — the supermall arrives as the neighborhood turns
+    [ShopKind.CHAIN_STORE]: ['Teddyfelt Fields Mall', 'ShopWrong', 'BJ-Wholesale'],
+    [ShopKind.COFFEE_SHOP]: ['Strong Bean', 'The Daily Grindstone', 'Java the Hutt'],
+  },
+};
+
 export interface EvolutionContext {
   /** Player's DIY (+) ↔ sellout (−) alignment, −100..+100. Nudges the gates:
    *  a genuine DIY player makes scenes bloom sooner; a sellout invites corporate. */
   diyPoints?: number;
+  /** Active city — picks that city's parody shop names (defaults to generic). */
+  cityId?: string;
 }
-
-const mk = (district: District, idSuffix: string, kind: ShopKind, h: number): CityShop => ({
-  id: `${categoryOf(kind) === 'civic' ? 'civic' : 'shop'}_${district.id}_${idSuffix}`,
-  name: pick(SHOP_NAMES[kind], h >>> 4),
-  kind,
-  districtId: district.id,
-  category: categoryOf(kind),
-});
 
 /**
  * Establishments are no longer fixed — they emerge from the district's *state*.
@@ -210,6 +217,16 @@ export function getDistrictShops(district: District, ctx: EvolutionContext = {})
   const scene = clamp(district.sceneStrength + Math.max(0, diy) * 0.15, 0, 100);
   const gent = clamp(district.gentrificationLevel + Math.max(0, -diy) * 0.15, 0, 100);
   const police = district.policePresence ?? 0;
+
+  // Resolve names from the active city's parody set (falls back to generic).
+  const cityNames = CITY_SHOP_NAMES[ctx.cityId ?? ''];
+  const mk = (d: District, idSuffix: string, kind: ShopKind, hh: number): CityShop => ({
+    id: `${categoryOf(kind) === 'civic' ? 'civic' : 'shop'}_${d.id}_${idSuffix}`,
+    name: pick(cityNames?.[kind] ?? SHOP_NAMES[kind], hh >>> 4),
+    kind,
+    districtId: d.id,
+    category: categoryOf(kind),
+  });
 
   const out: CityShop[] = [];
 
