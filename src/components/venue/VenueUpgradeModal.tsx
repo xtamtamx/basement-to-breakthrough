@@ -24,6 +24,20 @@ const chip = (key: string, label: string, color: string) => (
   </span>
 );
 
+// Every effect an equipment piece carries, as neon chips. Single source of
+// truth so the Gear and Owned tabs always show the same (now-live) effects.
+const effectChips = (fx: import('@game/types').EquipmentEffects) =>
+  [
+    fx.acousticsBonus ? chip('acu', `+${fx.acousticsBonus}% acoustics`, '#c77dff') : null,
+    fx.atmosphereBonus ? chip('atm', `+${fx.atmosphereBonus}% atmosphere`, '#3ad17e') : null,
+    fx.capacityBonus ? chip('cap', `+${fx.capacityBonus}% capacity`, '#4cc9f0') : null,
+    fx.reputationMultiplier ? chip('rep', `×${fx.reputationMultiplier} rep`, '#ffd23f') : null,
+    fx.passiveIncome ? chip('inc', `+${formatMoney(fx.passiveIncome)}/turn`, '#3ad17e') : null,
+    fx.passiveFame ? chip('fame', `+${fx.passiveFame} fans/turn`, '#f72585') : null,
+    fx.stressReduction ? chip('str', `−${fx.stressReduction}% band stress`, '#4cc9f0') : null,
+    fx.incidentReduction ? chip('inc-red', `−${fx.incidentReduction}% incidents`, '#ff5c57') : null,
+  ].filter(Boolean);
+
 // Five-pip quality meter (gold filled / dim empty).
 const stars = (quality: number) => (
   <div style={{ display: 'flex', gap: '2px', marginTop: '4px' }}>
@@ -217,10 +231,7 @@ export const VenueUpgradeModal: React.FC<VenueUpgradeModalProps> = ({
                         </div>
 
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '10px' }}>
-                          {equipment.effects.acousticsBonus ? chip('acu', `+${equipment.effects.acousticsBonus}% acoustics`, '#c77dff') : null}
-                          {equipment.effects.atmosphereBonus ? chip('atm', `+${equipment.effects.atmosphereBonus}% atmosphere`, '#3ad17e') : null}
-                          {equipment.effects.capacityBonus ? chip('cap', `+${equipment.effects.capacityBonus}% capacity`, '#4cc9f0') : null}
-                          {equipment.effects.reputationMultiplier ? chip('rep', `×${equipment.effects.reputationMultiplier} rep`, '#ffd23f') : null}
+                          {effectChips(equipment.effects)}
                         </div>
 
                         <div style={{ display: 'flex', gap: '8px' }}>
@@ -263,6 +274,13 @@ export const VenueUpgradeModal: React.FC<VenueUpgradeModalProps> = ({
                             <div style={{ fontSize: '11px', color: '#6f6796', marginTop: '3px' }}>upkeep {formatMoney(equipment.maintenanceCost)}/t</div>
                           </div>
                         </div>
+
+                        {/* Live effects — note these scale down as condition drops. */}
+                        {effectChips(equipment.effects).length > 0 && (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '10px' }}>
+                            {effectChips(equipment.effects)}
+                          </div>
+                        )}
 
                         {/* Condition bar */}
                         <div className="snes-progress" style={{ marginTop: '10px' }}>
