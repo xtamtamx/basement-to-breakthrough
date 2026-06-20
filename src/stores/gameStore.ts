@@ -19,6 +19,7 @@ import {
 import { safeZustandStorage } from "@utils/safeZustandStorage";
 import type { RuntimeSnapshot } from "@game/persistence/runtimeSnapshot";
 import type { Synergy } from "@game/mechanics/SynergyManager";
+import { eventCardSystem, type EventCard } from "@game/mechanics/EventCardSystem";
 import { factionSystem } from "@game/mechanics/FactionSystem";
 import { showPromotionSystem } from "@game/mechanics/ShowPromotionSystem";
 import { VENUE_TRAITS } from "@game/data/venueTraits";
@@ -141,6 +142,10 @@ interface GameStore {
   // synergyManager singleton; NOT persisted (re-derives at the next milestone).
   pendingSynergyOffer: Synergy | null;
 
+  // Transient: a drawn event card awaiting the player's choice (band-drama /
+  // scene crisis). Mirrors pendingSynergyOffer; NOT persisted.
+  pendingEventCard: EventCard | null;
+
   // Festival state
   completedFestivals: string[]; // List of completed festival IDs
   festivalHistory: { festivalId: string; result: ShowResult; date: Date }[]; // Festival results history
@@ -194,6 +199,8 @@ interface GameStore {
   discoverSynergy: (synergyId: string) => void;
   hasSynergyDiscovered: (synergyId: string) => boolean;
   setPendingSynergyOffer: (offer: Synergy | null) => void;
+  setPendingEventCard: (card: EventCard | null) => void;
+  applyEventCardChoice: (choiceId: string | null) => void;
 
   // Festival actions
   completeFestival: (festivalId: string, result: ShowResult) => void;
@@ -700,6 +707,7 @@ const getInitialState = () => ({
   runtimeSnapshot: null,
   discoveredSynergies: [],
   pendingSynergyOffer: null as Synergy | null,
+  pendingEventCard: null as EventCard | null,
   completedFestivals: [],
   festivalHistory: [],
   diyPoints: 0,
@@ -824,10 +832,12 @@ export const useGameStore = create<GameStore>()(
           set((state) => ({
             ...state,
             ...savedState,
-            // pendingSynergyOffer is transient UI intent; an auto-save taken with
-            // the offer modal open must not re-pop it on load (sanitizeGameState
-            // keeps all non-function data fields). Re-derives at the next milestone.
+            // pendingSynergyOffer / pendingEventCard are transient UI intent; an
+            // auto-save taken with either modal open must not re-pop it on load
+            // (sanitizeGameState keeps all non-function data fields). They
+            // re-derive at the next milestone / event turn.
             pendingSynergyOffer: null,
+            pendingEventCard: null,
           }));
 
           // Rehydrate the run's singletons (active run, scheduled-show Map,
@@ -1110,6 +1120,69 @@ export const useGameStore = create<GameStore>()(
         })),
 
       setPendingSynergyOffer: (offer) => set({ pendingSynergyOffer: offer }),
+
+      setPendingEventCard: (card) => set({ pendingEventCard: card }),
+
+      // Resolve the player's choice on the pending event card: translate the
+      // EventCardSystem result into real store mutations (resources, band/venue
+      // stats, combo discoveries, and the sell-out diyPoints fork), then clear.
+      applyEventCardChoice: (choiceId) => {
+        const card = get().pendingEventCard;
+        if (!card) return;
+        const result = eventCardSystem.applyEventChoice(card, choiceId, {
+          turn: get().currentRound,
+        });
+        const s = get();
+
+        const rc = result.resourceChanges;
+        if (rc.money) s.addMoney(rc.money);
+        if (rc.reputation) s.addReputation(rc.reputation);
+        if (rc.fans) s.addFans(rc.fans);
+        if (rc.stress) s.addStress(rc.stress);
+        if (rc.connections) s.addConnections(rc.connections);
+
+        // Stat changes, target-aware. Bands only have popularity/authenticity/
+        // energy/technicalSkill (a stat `stress` routes to the player; `capacity`
+        // belongs to venues). All values clamped to sane bounds.
+        const bandKeys = ['popularity', 'authenticity', 'energy', 'technicalSkill'] as const;
+        result.modifiedCards.forEach(({ target, modifications }) => {
+          if (target === 'all_bands' || target === 'random_band') {
+            const pool = target === 'random_band' && s.allBands.length
+              ? [s.allBands[Math.floor(Math.random() * s.allBands.length)]]
+              : s.allBands;
+            pool.forEach((b) => {
+              const updates: Partial<Band> = {};
+              bandKeys.forEach((k) => {
+                const delta = modifications[k];
+                if (delta !== undefined) updates[k] = clamp((b[k] ?? 0) + delta, 0, 100);
+              });
+              if (Object.keys(updates).length) s.updateBand(b.id, updates);
+            });
+            if (modifications.stress) s.addStress(modifications.stress);
+          } else if (target === 'all_venues' || target === 'random_venue') {
+            const pool = target === 'random_venue' && s.venues.length
+              ? [s.venues[Math.floor(Math.random() * s.venues.length)]]
+              : s.venues;
+            pool.forEach((v) => {
+              if (modifications.capacity !== undefined) {
+                s.updateVenue({ ...v, capacity: Math.max(0, v.capacity + modifications.capacity) });
+              }
+            });
+          }
+        });
+
+        result.triggeredSynergies.forEach((id) => s.discoverSynergy(id));
+        result.sceneChanges.forEach((sc) => {
+          if (sc.exposure === 'high' || sc.exposure === 'mainstream') s.makePathChoice('event_exposure', -10);
+          else if (sc.exposure === 'underground') s.makePathChoice('event_exposure', 10);
+        });
+
+        // The marquee sell-out vs stay-true fork moves the Living City axis.
+        if (choiceId === 'sell_out') s.makePathChoice('event_sellout', -30);
+        else if (choiceId === 'stay_true') s.makePathChoice('event_staytrue', 20);
+
+        set({ pendingEventCard: null });
+      },
 
       hasSynergyDiscovered: (synergyId) => {
         const state = get();

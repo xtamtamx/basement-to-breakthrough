@@ -11,8 +11,12 @@ interface EventGameState {
 
 interface EventApplyResult {
   appliedEffects: EventEffect[];
-  modifiedCards: Array<{ target: string; modifications: unknown }>;
+  modifiedCards: Array<{ target: EventTarget; modifications: StatModification }>;
   resourceChanges: ResourceModification;
+  /** Combo-synergy ids a choice grants (consumed by the store -> discoverSynergy). */
+  triggeredSynergies: string[];
+  /** Scene-state nudges (consumed by the store -> diyPoints via makePathChoice). */
+  sceneChanges: SceneModification[];
   spawnedCards: unknown[];
 }
 
@@ -227,7 +231,7 @@ class EventCardSystem {
             {
               type: 'trigger_synergy',
               target: 'all_bands',
-              value: 'diy_spirit',
+              value: 'diy-authentic',
               description: 'Triggers DIY synergies'
             }
           ]
@@ -268,12 +272,7 @@ class EventCardSystem {
       type: 'crisis',
       rarity: 'uncommon',
       duration: 'instant',
-      effects: [{
-        type: 'transform_card',
-        target: 'random_venue',
-        value: { closed: true },
-        description: 'One venue temporarily closes'
-      }],
+      effects: [],
       choices: [
         {
           id: 'fundraiser',
@@ -319,12 +318,6 @@ class EventCardSystem {
               target: 'all_bands',
               value: { energy: 20, stress: 15 },
               description: 'Bands get pumped but stressed'
-            },
-            {
-              type: 'spawn_card',
-              target: 'player',
-              value: { type: 'trophy_band' },
-              description: 'Winner gets special status'
             }
           ]
         },
@@ -397,12 +390,6 @@ class EventCardSystem {
       }],
       effects: [
         {
-          type: 'spawn_card',
-          target: 'player',
-          value: { type: 'legendary_band' },
-          description: 'Legendary band available for one show'
-        },
-        {
           type: 'modify_stat',
           target: 'all_bands',
           value: { energy: 25, popularity: 15 },
@@ -411,7 +398,7 @@ class EventCardSystem {
         {
           type: 'trigger_synergy',
           target: 'all_bands',
-          value: 'scene_unity',
+          value: 'underground-network',
           description: 'Scene comes together'
         }
       ],
@@ -454,18 +441,167 @@ class EventCardSystem {
         {
           type: 'resource_change',
           target: 'player',
-          value: { 
+          value: {
             money: 1000,
-            reputation: 50,
-            legacy: 1
+            reputation: 50
           },
           description: 'Massive rewards'
         }
       ],
       flavorText: "The bathroom key is now being treated as a holy relic."
     });
+
+    // --- Added events (v2 content pass) --------------------------------------
+    this.addEventCard({
+      id: 'bandcamp_friday',
+      name: "Bandcamp Waives Its Cut For 24 Hours; Scene Collectively Pretends It Doesn't Need The Money",
+      description: "Every act in town simultaneously drops a 'surprise' live tape at 11:58pm. The servers buckle. The vibes are immaculate.",
+      icon: '💸',
+      type: 'opportunity',
+      rarity: 'common',
+      duration: 'instant',
+      effects: [],
+      choices: [
+        {
+          id: 'dump_everything',
+          text: 'Dump every demo, name-your-price, beg politely',
+          effects: [{ type: 'resource_change', target: 'player', value: { money: 150, fans: 20 }, description: '+$150, +20 fans' }],
+        },
+        {
+          id: 'hold_out',
+          text: 'Hold out for "the algorithm" (it is not coming)',
+          effects: [{ type: 'resource_change', target: 'player', value: { connections: 1, reputation: 5 }, description: '+1 connection, +5 rep' }],
+        },
+      ],
+      flavorText: 'Servers crashed; vibes immaculate.',
+    });
+
+    this.addEventCard({
+      id: 'vegan_rider_standoff',
+      name: 'Touring Band Refuses To Play Until Someone Finds Oat Milk At 11PM',
+      description: 'The promoter is openly weeping in the dairy aisle of a 24-hour Whole Foods. The drummer "doesn\'t do almond."',
+      icon: '🥬',
+      type: 'crisis',
+      rarity: 'common',
+      duration: 'instant',
+      effects: [],
+      choices: [
+        {
+          id: 'cave',
+          text: 'Cave, expense the artisanal water',
+          effects: [{ type: 'resource_change', target: 'player', value: { money: -120, reputation: 10 }, description: '-$120, +10 rep' }],
+        },
+        {
+          id: 'hose',
+          text: 'Hand them a garden hose and a smile',
+          effects: [{ type: 'resource_change', target: 'player', value: { reputation: -8, fans: 5 }, description: '-8 rep, +5 fans' }],
+        },
+      ],
+      artStyle: 'press_release',
+    });
+
+    this.addEventCard({
+      id: 'mandatory_fun_meeting',
+      name: "Collective Schedules 'Mandatory Fun Meeting' During Everyone's Only Practice",
+      description: 'A four-hour consensus circle on whether the zine should have staples. Tabled until next week.',
+      icon: '📋',
+      type: 'wildcard',
+      rarity: 'uncommon',
+      duration: 'instant',
+      effects: [],
+      choices: [
+        {
+          id: 'consensus',
+          text: 'Achieve consensus (lose the whole night)',
+          effects: [
+            { type: 'modify_stat', target: 'all_bands', value: { energy: -10 }, description: 'Bands drained' },
+            { type: 'resource_change', target: 'player', value: { connections: 2 }, description: '+2 connections' },
+          ],
+        },
+        {
+          id: 'walk_out',
+          text: 'Walk out and just play the songs',
+          effects: [{ type: 'modify_stat', target: 'all_bands', value: { energy: 10, authenticity: 10 }, description: 'Bands fired up' }],
+        },
+      ],
+      flavorText: 'Motion to adjourn the motion failed 6-5.',
+    });
+
+    this.addEventCard({
+      id: 'influencer_discovers_scene',
+      name: "TikTok Influencer Discovers Hardcore, Calls It 'Spicy Meditation'",
+      description: 'Two million views. Zero understanding. The comments are a war crime.',
+      icon: '📱',
+      type: 'wildcard',
+      rarity: 'uncommon',
+      duration: 'instant',
+      effects: [],
+      choices: [
+        {
+          id: 'sell_out',
+          text: 'Ride the clout wave, post the GRWM',
+          effects: [{ type: 'modify_stat', target: 'all_bands', value: { popularity: 25 }, description: 'Bands go viral' }],
+        },
+        {
+          id: 'stay_true',
+          text: 'Gatekeep, aggressively',
+          effects: [{ type: 'modify_stat', target: 'all_bands', value: { authenticity: 15 }, description: 'Cred up' }],
+        },
+      ],
+      artStyle: 'backstage_pass',
+    });
+
+    this.addEventCard({
+      id: 'merch_table_heist',
+      name: "Someone Steals The Merch Cashbox; Suspect Described As 'Guy In A Band Shirt'",
+      description: 'Witnesses have narrowed the suspect pool down to literally everyone in attendance.',
+      icon: '🧦',
+      type: 'crisis',
+      rarity: 'uncommon',
+      duration: 'instant',
+      effects: [],
+      choices: [
+        {
+          id: 'eat_loss',
+          text: 'Eat the loss, stay classy',
+          effects: [{ type: 'resource_change', target: 'player', value: { money: -200, reputation: 15 }, description: '-$200, +15 rep' }],
+        },
+        {
+          id: 'witch_hunt',
+          text: 'Start a witch hunt in the group chat',
+          effects: [{ type: 'resource_change', target: 'player', value: { money: -50, stress: 10, reputation: -5 }, description: '-$50, +10 stress, -5 rep' }],
+        },
+      ],
+    });
+
+    this.addEventCard({
+      id: 'mutual_aid_benefit',
+      name: 'Benefit Show Raises 43 Dollars And Immeasurable Cred',
+      description: 'The cause is good. The turnout is "intimate." The cred is the point.',
+      icon: '🤝',
+      type: 'opportunity',
+      rarity: 'uncommon',
+      duration: 'instant',
+      effects: [],
+      choices: [
+        {
+          id: 'donate_door',
+          text: 'Donate the whole door',
+          effects: [
+            { type: 'resource_change', target: 'player', value: { money: -60, reputation: 25 }, description: '-$60, +25 rep' },
+            { type: 'trigger_synergy', target: 'all_bands', value: 'underground-network', description: 'Scene unity' },
+          ],
+        },
+        {
+          id: 'keep_door',
+          text: 'Quietly keep the door (rent is rent)',
+          effects: [{ type: 'resource_change', target: 'player', value: { money: 60, reputation: -8 }, description: '+$60, -8 rep' }],
+        },
+      ],
+      flavorText: 'The cred does not pay rent. The cred is the point.',
+    });
   }
-  
+
   private addEventCard(card: EventCard) {
     this.eventCards.set(card.id, card);
   }
@@ -535,34 +671,40 @@ class EventCardSystem {
       appliedEffects: effects,
       modifiedCards: [],
       resourceChanges: {},
+      triggeredSynergies: [],
+      sceneChanges: [],
       spawnedCards: []
     };
-    
-    // Apply each effect
+
+    // Resolve each effect into store-applicable changes. The store action
+    // (gameStore.applyEventCardChoice) consumes this result.
     effects.forEach(effect => {
       switch (effect.type) {
         case 'modify_stat':
-          // This would modify actual game cards
           results.modifiedCards.push({
             target: effect.target,
             modifications: effect.value
           });
           break;
-          
+
         case 'resource_change':
-          results.resourceChanges = effect.value;
+          // MERGE additively — a choice can carry multiple resource legs (e.g.
+          // -$200 AND +15 rep); overwriting would silently drop all but the last.
+          (Object.entries(effect.value) as [keyof ResourceModification, number][]).forEach(([k, v]) => {
+            results.resourceChanges[k] = (results.resourceChanges[k] ?? 0) + v;
+          });
           break;
-          
+
         case 'spawn_card':
           results.spawnedCards.push(effect.value);
           break;
-          
+
         case 'trigger_synergy':
-          // Trigger specific synergies
+          results.triggeredSynergies.push(effect.value);
           break;
-          
+
         case 'scene_change':
-          // Modify scene state
+          results.sceneChanges.push(effect.value);
           break;
       }
     });

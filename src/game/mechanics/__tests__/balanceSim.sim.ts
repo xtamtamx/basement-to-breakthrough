@@ -181,6 +181,9 @@ async function playOneRun(mode: string): Promise<RunOutcome> {
     bookBestShow();
     const result = await turnResolutionEngine.executeFullTurn();
     acceptSynergyOffer(i);
+    // Resolve any drawn event card like a player would (take the first choice).
+    const ev = useGameStore.getState().pendingEventCard;
+    if (ev) useGameStore.getState().applyEventCardChoice(ev.choices?.[0]?.id ?? null);
     result.showResults.forEach((r) => {
       peakAttendance = Math.max(peakAttendance, r.attendance);
       totalRevenue += r.revenue;

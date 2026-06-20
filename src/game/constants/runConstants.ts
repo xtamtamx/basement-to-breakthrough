@@ -19,6 +19,10 @@ export const COMBO_MULT_CAP = 1.3;
 // Turns on which the player is offered a new equipped synergy ("joker").
 export const SYNERGY_REWARD_TURNS = [5, 12, 20, 28];
 
+// Turns on which an EVENT CARD is drawn (a band-drama / scene crisis with a
+// choice). Offset from the synergy turns so the two never collide on one turn.
+export const EVENT_CARD_TURNS = [8, 16, 24, 32];
+
 // Roster Slots (Balatro-joker-style band cap) — how many acts you can have
 // signed at once. Modifiers (per-mode deltas, the Scene Expansion meta upgrade,
 // and city unlocks) push the effective cap up or down at run start. The floor

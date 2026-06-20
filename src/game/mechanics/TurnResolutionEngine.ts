@@ -13,6 +13,7 @@
 import { useGameStore } from '@stores/gameStore';
 import { synergyManager, SynergyTriggerResult } from './SynergyManager';
 import { synergyEngine } from './SynergyEngine';
+import { eventCardSystem } from './EventCardSystem';
 import { walkerSystem } from './WalkerSystem';
 import { dayJobSystem } from './DayJobSystem';
 import { difficultySystem } from './DifficultySystem';
@@ -46,6 +47,7 @@ import {
   STRESS_RECOVERY_PER_TURN,
   COMBO_MULT_CAP,
   SYNERGY_REWARD_TURNS,
+  EVENT_CARD_TURNS,
   RunEndState,
 } from '../constants/runConstants';
 import {
@@ -340,6 +342,21 @@ export class TurnResolutionEngine {
     if (!runEnd && SYNERGY_REWARD_TURNS.includes(turn)) {
       const offer = synergyManager.getRandomAvailableSynergy();
       if (offer) useGameStore.setState({ pendingSynergyOffer: offer });
+    }
+
+    // Event card: on event turns (offset from synergy turns so they never share a
+    // turn), draw a band-drama / scene crisis that pauses for the player's choice.
+    if (!runEnd && EVENT_CARD_TURNS.includes(turn) && !SYNERGY_REWARD_TURNS.includes(turn)) {
+      const card = eventCardSystem.drawEventCard({
+        turn,
+        reputation: postTurnStore.reputation,
+        // sceneState is derived (the store has no such field): a DIY-leaning scene
+        // is "underground" — this revives police_crackdown's gated requirement.
+        sceneState: postTurnStore.diyPoints >= 25 ? 'underground' : 'mainstream',
+        activeSynergies: synergyManager.getEquippedSynergies()?.length ?? 0,
+        totalCards: postTurnStore.discoveredSynergies?.length ?? 0,
+      });
+      if (card) useGameStore.setState({ pendingEventCard: card });
     }
 
     // Persist the run's singleton state so a refresh/load resumes intact.

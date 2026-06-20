@@ -11,6 +11,7 @@ import { TourView } from "./views/TourView";
 import { MobileBottomNav } from "./MobileBottomNav";
 import { SynergyBar } from "./SynergyBar";
 import { SynergyAcquireModal } from "./SynergyAcquireModal";
+import { EventCardModal } from "./EventCardModal";
 import { captureRuntimeSnapshot } from "@game/persistence/runtimeSnapshot";
 import { TurnResultsModal } from "@components/ui/TurnResultsModal";
 import { SettingsModal } from "@components/ui/SettingsModal";
@@ -64,6 +65,8 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
   // re-render on acquire/replace unless we bump this counter to force it.
   const [synergyVersion, setSynergyVersion] = useState(0);
   const pendingSynergyOffer = useGameStore((s) => s.pendingSynergyOffer);
+  const pendingEventCard = useGameStore((s) => s.pendingEventCard);
+  const setPendingEventCard = useGameStore((s) => s.setPendingEventCard);
   const setPendingSynergyOffer = useGameStore((s) => s.setPendingSynergyOffer);
   const currentRound = useGameStore((s) => s.currentRound);
 
@@ -327,6 +330,15 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
             haptics.success();
             handleSynergyOfferDone();
           }}
+        />
+      )}
+
+      {/* Event card (band-drama / scene crisis) — pauses for a choice. Renders
+          above the turn-results modal at z-9999 if both land the same turn. */}
+      {pendingEventCard && (
+        <EventCardModal
+          event={pendingEventCard}
+          onClose={() => setPendingEventCard(null)}
         />
       )}
 
