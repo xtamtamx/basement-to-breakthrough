@@ -1,6 +1,3 @@
-import { haptics } from '@utils/mobile';
-import { audio } from '@utils/audio';
-
 interface EventGameState {
   turn?: number;
   reputation?: number;
@@ -809,19 +806,10 @@ class EventCardSystem {
     );
     
     const selected = weightedCards[Math.floor(Math.random() * weightedCards.length)];
-    
-    // Play sound based on type
-    if (selected.type === 'crisis') {
-      haptics.heavy();
-      audio.play('alarm');
-    } else if (selected.type === 'legendary') {
-      haptics.success();
-      audio.play('achievement');
-    } else {
-      haptics.medium();
-      audio.play('notification');
-    }
-    
+
+    // Feedback is owned by EventCardModal's mount effect (type-tiered audio +
+    // haptic) so the card "rings in" when the player actually sees it — firing
+    // here too would double up a beat before the modal even shows.
     return selected;
   }
   

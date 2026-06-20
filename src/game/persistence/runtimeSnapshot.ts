@@ -23,12 +23,15 @@ import {
 } from '../mechanics/ShowPromotionSystem';
 import { difficultySystem } from '../mechanics/DifficultySystem';
 import { synergyManager, SynergyState } from '../mechanics/SynergyManager';
+import { progressionPathSystem } from '../mechanics/ProgressionPathSystem';
 
 export interface RuntimeSnapshot {
   run: RunState | null;
   scheduledShows: SerializedScheduledShow[];
   difficultyBlocks: { raided: string[]; unavailable: string[] };
   synergy: SynergyState;
+  /** Chosen progression path (run-scoped singleton state). Optional for old saves. */
+  progression?: string;
 }
 
 export function captureRuntimeSnapshot(): RuntimeSnapshot {
@@ -37,6 +40,7 @@ export function captureRuntimeSnapshot(): RuntimeSnapshot {
     scheduledShows: showPromotionSystem.serialize(),
     difficultyBlocks: difficultySystem.serializeBlocks(),
     synergy: synergyManager.serialize(),
+    progression: progressionPathSystem.serialize(),
   };
 }
 
@@ -59,4 +63,5 @@ export function restoreRuntimeSnapshot(snap?: RuntimeSnapshot | null): void {
 
   difficultySystem.restoreBlocks(snap.difficultyBlocks);
   if (snap.synergy) synergyManager.deserialize(snap.synergy);
+  if (snap.progression) progressionPathSystem.deserialize(snap.progression);
 }

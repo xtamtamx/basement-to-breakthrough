@@ -694,6 +694,10 @@ export class TurnResolutionEngine {
         if (fx.incidentReduction) equipmentIncidentReduction += fx.incidentReduction * effectMultiplier;
       }
     });
+    // Reputation multipliers stack multiplicatively across gear, so a fully-kitted
+    // venue could otherwise reach ~1.8x and trivialize rep-farming. Cap it at the
+    // same 1.4x ceiling the attendance/quality bonus uses below.
+    equipmentReputationMultiplier = Math.min(1.4, equipmentReputationMultiplier);
 
     // Apply venue upgrades to capacity
     const upgradeCapacityBonus =

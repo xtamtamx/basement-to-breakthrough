@@ -49,6 +49,11 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
   const venues = useGameStore((state) => state.venues);
   const scheduledShows = useGameStore((state) => state.scheduledShows);
   const showHistory = useGameStore((state) => state.showHistory);
+  // A synergy-offer or event modal opens right after this report is dismissed and
+  // plays its own entrance sound — so we let it own the "something special" cue.
+  const followUpModalPending = useGameStore(
+    (state) => state.pendingSynergyOffer != null || state.pendingEventCard != null,
+  );
 
   const getShowDetails = (showId: string) => {
     // A resolved show is moved out of scheduledShows into showHistory before this
@@ -69,7 +74,10 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
   const totalRevenue = showResults.reduce((sum, result) => sum + result.revenue, 0);
   const totalCosts = showResults.reduce((sum, result) => sum + result.financials.costs, 0) + totalUpkeep;
   const totalProfit = totalRevenue - totalCosts;
-  const totalFans = showResults.reduce((sum, result) => sum + result.fansGained, 0);
+  // Include passive fans (gear/landmarks) so the Fans box matches the real
+  // balance change — otherwise passive fan gain is buried in a footnote.
+  const totalFans =
+    showResults.reduce((sum, result) => sum + result.fansGained, 0) + (passiveIncome?.fans ?? 0);
   const totalRep = showResults.reduce((sum, result) => sum + (result.reputationChange ?? result.reputationGain ?? 0), 0);
 
   const getTurnResultMessage = () => {
@@ -110,7 +118,7 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
   // matching haptic when the report opens, so a great night actually lands.
   useEffect(() => {
     if (!isOpen) return;
-    if (anyDiscovery) audio.synergy();
+    if (anyDiscovery && !followUpModalPending) audio.synergy();
     else if (anySoldOut) audio.soldOut();
     else if (totalProfit > 100) audio.coin();
     else if (totalProfit >= 0) audio.success();
@@ -279,7 +287,7 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
                 {passiveIncome && passiveIncome.money > 0 && (
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px' }}>
                     <span style={{ color: '#6f6796', fontSize: '12px' }}>
-                      └ Gear & Landmarks (merch, EPs sold){passiveIncome.fans > 0 ? ` • +${passiveIncome.fans} fans` : ''}
+                      └ Gear & Landmarks (merch, EPs sold)
                     </span>
                     <span style={{ color: '#3ad17e', fontSize: '12px' }}>+${passiveIncome.money}</span>
                   </div>

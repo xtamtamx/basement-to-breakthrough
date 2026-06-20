@@ -115,36 +115,8 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
     const results = await turnResolutionEngine.executeFullTurn();
     setTurnResults(results);
     setShowTurnResults(true);
-
-    // Juice: outcome-scaled audio + haptics on the night's results so the payoff
-    // moment lands. Priority: a NEW synergy > a sold-out room > a profit > a
-    // played-but-mediocre night > a quiet (no-show) turn.
-    const store = useGameStore.getState();
-    const shows = results.showResults ?? [];
-    const capOf = (showId: string) => {
-      const sh =
-        store.showHistory.find((s) => s.id === showId) ??
-        store.scheduledShows.find((s) => s.id === showId);
-      return sh ? store.venues.find((v) => v.id === sh.venueId)?.capacity ?? Infinity : Infinity;
-    };
-    const discovered = shows.some((r) => (r.combosDiscovered?.length ?? 0) > 0);
-    const soldOut = shows.some((r) => r.attendance > 0 && r.attendance >= capOf(r.showId));
-    const netProfit = shows.reduce((s, r) => s + (r.revenue - r.financials.costs), 0);
-    if (discovered) {
-      audio.play("synergy");
-      haptics.success();
-    } else if (soldOut) {
-      audio.play("soldOut");
-      haptics.success();
-    } else if (netProfit > 0) {
-      audio.play("coin");
-      haptics.success();
-    } else if (shows.length > 0) {
-      audio.play("success");
-      haptics.medium();
-    } else {
-      haptics.light();
-    }
+    // Outcome-tiered audio + haptics are owned by TurnResultsModal's open effect
+    // (single source of truth — this block used to double-fire the same stinger).
   };
 
   // The run-end screen appears once the player closes the final turn's results
@@ -336,8 +308,10 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
         passiveIncome={turnResults.passiveIncome}
       />
 
-      {/* Milestone synergy offer ("joker" reward) */}
-      {pendingSynergyOffer && (
+      {/* Milestone synergy offer ("joker" reward). Gated behind the turn-results
+          modal so the two never stack (both are z-9999) and their entrance audio
+          plays in sequence, not on top of each other. */}
+      {!showTurnResults && pendingSynergyOffer && (
         <SynergyAcquireModal
           synergy={pendingSynergyOffer}
           onClose={handleSynergyOfferDone}
@@ -349,9 +323,9 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
         />
       )}
 
-      {/* Event card (band-drama / scene crisis) — pauses for a choice. Renders
-          above the turn-results modal at z-9999 if both land the same turn. */}
-      {pendingEventCard && (
+      {/* Event card (band-drama / scene crisis) — pauses for a choice. Also gated
+          behind the results modal; appears once the player closes the report. */}
+      {!showTurnResults && pendingEventCard && (
         <EventCardModal
           event={pendingEventCard}
           onClose={() => setPendingEventCard(null)}

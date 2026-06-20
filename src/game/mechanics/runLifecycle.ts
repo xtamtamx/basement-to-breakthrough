@@ -14,6 +14,7 @@ import { turnResolutionEngine } from './TurnResolutionEngine';
 import { dayJobSystem } from './DayJobSystem';
 import { synergyManager, STARTER_SYNERGIES } from './SynergyManager';
 import { objectiveManager } from './ObjectiveManager';
+import { progressionPathSystem } from './ProgressionPathSystem';
 import type { RunMode } from '@game/types';
 import { captureRuntimeSnapshot } from '@game/persistence/runtimeSnapshot';
 import { cityRosterSlotBonus } from '@game/world/cityUnlocks';
@@ -37,6 +38,7 @@ export async function startNewRun(
   // Wipe any previous run so a finished (GAME_OVER) run can't bleed through
   useGameStore.getState().resetGame();
   turnResolutionEngine.reset();
+  progressionPathSystem.reset(); // run-scoped path must not bleed into the new run
 
   const run = runManager.startRun(configId);
   const bonuses = metaProgressionManager.getRunStartBonuses();

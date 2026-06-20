@@ -642,6 +642,17 @@ export class ProgressionPathSystem {
     return { ...this.state };
   }
 
+  // Reset to a clean slate for a new run (the chosen path is run-scoped — without
+  // this it would bleed into the next run started in the same session).
+  reset(): void {
+    this.state = {
+      currentPath: ProgressionPath.NONE,
+      currentTier: PathTier.FOUNDATION,
+      unlockedChoices: [],
+      lockedIn: false,
+    };
+  }
+
   // Serialize for save/load
   serialize(): string {
     return JSON.stringify(this.state);
