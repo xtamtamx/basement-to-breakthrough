@@ -239,6 +239,20 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
               </div>
             )}
 
+            {ceremony.completedObjectives.length > 0 && (
+              <div style={{ marginTop: '8px' }}>
+                <div style={{ fontSize: '10px', textTransform: 'uppercase', color: '#9ca3af', fontWeight: 700, marginBottom: '2px' }}>
+                  Challenges Cleared (+{ceremony.objectiveBonus} fame)
+                </div>
+                {ceremony.completedObjectives.map((o) => (
+                  <div key={o.id} style={{ fontSize: '12px', color: '#c4b5fd', display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
+                    <span>🎯 {o.title}</span>
+                    <span style={{ color: '#f472b6', flexShrink: 0 }}>+{o.fameReward}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <div
               style={{
                 marginTop: '10px',

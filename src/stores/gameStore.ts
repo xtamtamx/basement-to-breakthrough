@@ -15,7 +15,9 @@ import {
   TraitType,
   Show,
   ShowResult,
+  RunObjectives,
 } from "@game/types";
+import { objectiveManager } from "@game/mechanics/ObjectiveManager";
 import { safeZustandStorage } from "@utils/safeZustandStorage";
 import type { RuntimeSnapshot } from "@game/persistence/runtimeSnapshot";
 import type { Synergy } from "@game/mechanics/SynergyManager";
@@ -136,6 +138,7 @@ interface GameStore {
 
   // Discovery state
   discoveredSynergies: string[]; // List of discovered synergy IDs
+  runObjectives: RunObjectives; // Optional run challenges (meta-fame rewards)
 
   // Transient: a milestone-offered equipped synergy ("joker") awaiting the
   // player's accept/replace decision. The reactive bridge to the off-Zustand
@@ -706,6 +709,7 @@ const getInitialState = () => ({
   consecutiveBrokeTurns: 0,
   runtimeSnapshot: null,
   discoveredSynergies: [],
+  runObjectives: objectiveManager.emptyState(),
   pendingSynergyOffer: null as Synergy | null,
   pendingEventCard: null as EventCard | null,
   completedFestivals: [],
@@ -1300,6 +1304,7 @@ export const useGameStore = create<GameStore>()(
         consecutiveBrokeTurns: state.consecutiveBrokeTurns,
         runtimeSnapshot: state.runtimeSnapshot,
         discoveredSynergies: state.discoveredSynergies,
+        runObjectives: state.runObjectives,
         completedFestivals: state.completedFestivals,
         festivalHistory: state.festivalHistory,
         diyPoints: state.diyPoints,

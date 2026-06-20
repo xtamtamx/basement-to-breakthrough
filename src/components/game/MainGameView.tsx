@@ -16,6 +16,7 @@ import { captureRuntimeSnapshot } from "@game/persistence/runtimeSnapshot";
 import { TurnResultsModal } from "@components/ui/TurnResultsModal";
 import { SettingsModal } from "@components/ui/SettingsModal";
 import { SaveLoadModal } from "@components/ui/SaveLoadModal";
+import { ObjectivesModal } from "./ObjectivesModal";
 import { useGameStore } from "@stores/gameStore";
 import { haptics } from "@utils/mobile";
 import { audio } from "@utils/simpleAudio";
@@ -28,7 +29,7 @@ import { RunEndState } from "@game/constants/runConstants";
 import { gameAudio } from "@utils/gameAudio";
 import { GameErrorBoundary } from "@components/ErrorBoundary";
 import { saveGameManager } from "@game/persistence/SaveGameManager";
-import { Settings, Save, MapPin } from 'lucide-react';
+import { Settings, Save, MapPin, Target } from 'lucide-react';
 import { useSwipeable } from 'react-swipeable';
 
 type ViewType = "city" | "bands" | "shows" | "promotion" | "synergies" | "jobs" | "progression" | "tour";
@@ -53,6 +54,10 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
   const [showTurnResults, setShowTurnResults] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showSaveLoad, setShowSaveLoad] = useState(false);
+  const [showObjectives, setShowObjectives] = useState(false);
+  const objectives = useGameStore((s) => s.runObjectives);
+  const objectivesDone = objectives?.progress.filter((p) => p.completed).length ?? 0;
+  const objectivesTotal = objectives?.progress.length ?? 0;
   const [runEnd, setRunEnd] = useState<RunEndState | null>(null);
   const [ceremony, setCeremony] = useState<RunCeremony | null>(null);
   const [showPlayAgainPicker, setShowPlayAgainPicker] = useState(false);
@@ -236,6 +241,16 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
 
           {/* Quick Actions */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            {objectivesTotal > 0 && (
+              <button
+                onClick={() => setShowObjectives(true)}
+                aria-label="Challenges"
+                style={{ height: 32, minWidth: 32, padding: '0 7px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', background: '#1f1a3a', color: objectivesDone > 0 ? '#3ad17e' : '#c77dff', border: '2px solid #0a0814', boxShadow: 'inset 1px 1px 0 #3a2f5c', cursor: 'pointer', borderRadius: 0 }}
+              >
+                <Target size={14} />
+                <span className="snes-pixel" style={{ fontSize: '8px', letterSpacing: 0 }}>{objectivesDone}/{objectivesTotal}</span>
+              </button>
+            )}
             <button
               onClick={() => setShowSaveLoad(true)}
               aria-label="Save/Load"
@@ -369,6 +384,8 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
         isOpen={showSaveLoad}
         onClose={() => setShowSaveLoad(false)}
       />
+
+      {showObjectives && <ObjectivesModal onClose={() => setShowObjectives(false)} />}
     </div>
   );
 };

@@ -13,6 +13,8 @@ import { metaProgressionManager } from './MetaProgressionManager';
 import { turnResolutionEngine } from './TurnResolutionEngine';
 import { dayJobSystem } from './DayJobSystem';
 import { synergyManager, STARTER_SYNERGIES } from './SynergyManager';
+import { objectiveManager } from './ObjectiveManager';
+import type { RunMode } from '@game/types';
 import { captureRuntimeSnapshot } from '@game/persistence/runtimeSnapshot';
 import { cityRosterSlotBonus } from '@game/world/cityUnlocks';
 import { BASE_ROSTER_SLOTS, ROSTER_SLOT_FLOOR } from '@game/constants/runConstants';
@@ -38,6 +40,10 @@ export async function startNewRun(
 
   const run = runManager.startRun(configId);
   const bonuses = metaProgressionManager.getRunStartBonuses();
+
+  // Roll this run's optional challenges (meta-fame rewards only — see
+  // ObjectiveManager). Seeded fresh each run; persisted via the store.
+  useGameStore.setState({ runObjectives: objectiveManager.selectForRun(configId as RunMode) });
 
   // Set starting resources: run config + earned meta bonuses
   const store = useGameStore.getState();

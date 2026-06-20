@@ -879,3 +879,45 @@ export interface UnlockableContent {
   name: string;
   description?: string;
 }
+
+// ============= Optional Run Objectives (Balatro-style challenges) =============
+// Optional, run-specific goals. Rewards are META FAME ONLY (cross-run currency)
+// granted at run end — they never touch in-run resources, so the 4-mode balance
+// is provably unchanged.
+export type RunMode = 'classic' | 'speed' | 'hardcore' | 'festival';
+
+export interface ObjectiveDefinition {
+  id: string;
+  title: string;
+  description: string;
+  fameReward: number; // meta fame on completion (no in-run effect)
+  modes: RunMode[]; // empty = all modes
+  target: number; // value `current` must reach
+  /** Avoidance goals ("never…", "zero…") only resolve at run end. */
+  finalizeOnly?: boolean;
+}
+
+export interface ObjectiveProgress {
+  id: string;
+  current: number;
+  target: number;
+  completed: boolean;
+}
+
+/** Cumulative per-run counters the objectives are evaluated against. */
+export interface ObjectiveRunStats {
+  selloutShows: number;
+  combosFired: number;
+  maxTurnIncome: number;
+  totalShows: number;
+  showsWithIncident: number;
+  maxVenueCapacity: number;
+  usedDayJob: boolean;
+  reachedTurn: number;
+}
+
+export interface RunObjectives {
+  selected: string[];
+  progress: ObjectiveProgress[];
+  stats: ObjectiveRunStats;
+}

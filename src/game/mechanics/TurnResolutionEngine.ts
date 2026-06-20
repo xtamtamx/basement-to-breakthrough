@@ -21,6 +21,7 @@ import { showPromotionSystem } from './ShowPromotionSystem';
 import { venueUpgradeSystem } from './VenueUpgradeSystem';
 import { runManager } from './RunManager';
 import { metaProgressionManager } from './MetaProgressionManager';
+import { objectiveManager } from './ObjectiveManager';
 import { gentrificationSystem } from './GentrificationSystem';
 import {
   getCityLandmarks,
@@ -97,6 +98,10 @@ export interface RunCeremony {
     startingMoney: number;
     startingReputation: number;
   };
+  /** Bonus meta fame from completed optional challenges (already in fameEarned). */
+  objectiveBonus: number;
+  /** Completed optional challenges, for the end-screen breakdown. */
+  completedObjectives: { id: string; title: string; fameReward: number }[];
 }
 
 export interface TurnResult {
@@ -156,6 +161,15 @@ export class TurnResolutionEngine {
     const showResults: ShowResult[] = [];
     // Districts that hosted a show this turn gentrify faster
     const activeDistrictIds = new Set<string>();
+    // Optional-objective tallies for this turn (folded into run stats below).
+    const objDelta = {
+      selloutShows: 0,
+      combosFired: 0,
+      turnIncome: 0,
+      shows: 0,
+      incidents: 0,
+      maxVenueCapacity: 0,
+    };
 
     showsToExecute.forEach((scheduledShow) => {
       // Refund the booking deposit now that the show resolves — the full cost
@@ -197,6 +211,16 @@ export class TurnResolutionEngine {
           result.financials.profit > 0 &&
           result.attendance > venue.capacity * 0.5;
         walkerSystem.spawnShowResultWalkers(venue, result.attendance, success);
+      }
+
+      // Tally objective progress for this (non-cancelled) show.
+      objDelta.shows += 1;
+      objDelta.turnIncome += result.revenue;
+      objDelta.combosFired += result.venueSynergies?.length ?? 0;
+      if (result.incidentOccurred) objDelta.incidents += 1;
+      if (venue) {
+        objDelta.maxVenueCapacity = Math.max(objDelta.maxVenueCapacity, venue.capacity);
+        if (result.attendance >= venue.capacity * 0.9) objDelta.selloutShows += 1;
       }
     });
 
@@ -328,6 +352,17 @@ export class TurnResolutionEngine {
     const unlockedCities = recordCityUnlocks(postTurnStore.cities ?? [], postTurnStore.reputation);
     unlockedCities.forEach((c) => warnings.push(`NEW CITY UNLOCKED: ${c.name} — book a tour!`));
 
+    // Fold this turn into the optional-objective stats (meta-fame challenges).
+    // Live objectives may complete here; avoidance ones resolve in concludeRun.
+    {
+      const { updated } = objectiveManager.recordTurn(postTurnStore.runObjectives, {
+        ...objDelta,
+        usedDayJob: !!jobResult,
+        turn,
+      });
+      useGameStore.setState({ runObjectives: updated });
+    }
+
     // 6. Endgame check, then turn increment
     const runEnd = this.checkEndgame(postTurnStore, turn, brokeTurns);
     let ceremony: RunCeremony | null = null;
@@ -432,8 +467,24 @@ export class TurnResolutionEngine {
     if (result.achievements.length > 0) {
       metaProgressionManager.addAchievements(result.achievements);
     }
+
+    // Resolve avoidance challenges + tally bonus meta fame. Read runObjectives
+    // FRESH — recordTurn mutated it this turn, so the captured snapshot is stale.
+    const finalizedObjectives = objectiveManager.finalize(
+      useGameStore.getState().runObjectives,
+    );
+    useGameStore.setState({ runObjectives: finalizedObjectives });
+    const objectiveBonus = objectiveManager.fameBonus(finalizedObjectives);
+    const completedObjectives = finalizedObjectives.progress
+      .filter((p) => p.completed)
+      .map((p) => {
+        const def = objectiveManager.getDefinition(p.id);
+        return { id: p.id, title: def?.title ?? p.id, fameReward: def?.fameReward ?? 0 };
+      });
+    const totalFame = fameEarned + objectiveBonus;
+
     // Credit fame at most once per run id; a replayed conclusion is a no-op.
-    metaProgressionManager.bankRunOnce(runId, fameEarned);
+    metaProgressionManager.bankRunOnce(runId, totalFame);
 
     const progression = metaProgressionManager.getProgression();
     const bonuses = metaProgressionManager.getRunStartBonuses();
@@ -441,7 +492,9 @@ export class TurnResolutionEngine {
     return {
       isWin,
       score: Math.round(result.score),
-      fameEarned,
+      fameEarned: totalFame,
+      objectiveBonus,
+      completedObjectives,
       newHighScore: result.newHighScore,
       achievements: result.achievements.map((a) => ({
         id: a.id,
