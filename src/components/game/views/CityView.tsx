@@ -206,7 +206,10 @@ export const CityView: React.FC = () => {
             <div style={{
               position: 'absolute',
               left: '12px',
-              bottom: 'calc(5rem + env(safe-area-inset-bottom))',
+              // Sit clear ABOVE the fixed TURN indicator (which lives at
+              // 3rem+inset+0.5rem and is ~2rem tall) so the two don't overlap
+              // in the bottom-left corner.
+              bottom: 'calc(3rem + env(safe-area-inset-bottom) + 4rem)',
               display: 'flex',
               gap: '12px',
               alignItems: 'center'

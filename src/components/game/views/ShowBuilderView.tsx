@@ -6,6 +6,7 @@ import { synergyEngine } from '@game/mechanics/SynergyEngine';
 import { difficultySystem } from '@game/mechanics/DifficultySystem';
 import { cityGenreFit } from '@game/world/citySynergy';
 import { isVenueUnlocked } from '@game/world/venueProgression';
+import { tutorialManager } from '@game/tutorial/TutorialManager';
 import { Calendar, MapPin, Users, Music, AlertCircle, TrendingUp, Check, Ban } from 'lucide-react';
 
 /** Step header with a numbered pill that lights up once its step is reachable. */
@@ -106,16 +107,24 @@ export const ShowBuilderView: React.FC = () => {
     // City scene fit: the local scene turns out for its own sound (headliner).
     const sceneFit = cityGenreFit(currentCity?.primaryGenre, selectedBands[0].genre);
 
-    // Calculate expected attendance
+    // Expected attendance — mirror the engine's deterministic shape (crowd scales
+    // with venue atmosphere, +20% per extra band on the bill) so the preview
+    // doesn't oversell the room. See TurnResolutionEngine.executeShow.
     const avgPopularity = selectedBands.reduce((sum, b) => sum + b.popularity, 0) / selectedBands.length;
-    const baseAttendance = Math.floor(selectedVenue.capacity * 0.5 * (avgPopularity / 100));
-    const expectedAttendance = Math.floor(baseAttendance * totalMultiplier * sceneFit.multiplier);
+    const venueBonus = selectedVenue.atmosphere / 100;
+    const billMultiplier = 1 + 0.2 * Math.max(0, selectedBands.length - 1);
+    const baseAttendance = Math.floor(selectedVenue.capacity * (avgPopularity / 100) * venueBonus);
+    const expectedAttendance = Math.floor(baseAttendance * billMultiplier * totalMultiplier * sceneFit.multiplier);
     const finalAttendance = Math.min(expectedAttendance, selectedVenue.capacity);
 
-    // Calculate revenue
-    const grossRevenue = finalAttendance * ticketPrice;
-    const venueCost = selectedVenue.rent;
-    const netRevenue = grossRevenue - venueCost;
+    // Revenue includes bar sales where the venue has a bar (matches the engine).
+    const grossRevenue = finalAttendance * ticketPrice + (selectedVenue.hasBar ? finalAttendance * 5 : 0);
+    // Costs: the scaled venue rent PLUS the per-band fee paid to every act on the
+    // bill. The old preview omitted band fees, so it promised a profit on bills
+    // that actually lose money — the most misleading number in the game.
+    const venueCost = Math.floor(difficultySystem.getScaledVenueCost(selectedVenue.rent));
+    const bandCost = selectedBands.length * difficultySystem.getScaledBandCost();
+    const netRevenue = grossRevenue - venueCost - bandCost;
 
     return {
       synergies,
@@ -124,13 +133,20 @@ export const ShowBuilderView: React.FC = () => {
       expectedAttendance: finalAttendance,
       grossRevenue,
       venueCost,
+      bandCost,
       netRevenue,
       capacity: selectedVenue.capacity
     };
   };
 
   const preview = calculateShowPreview();
-  const canBook = selectedBands.length > 0 && selectedVenue && money >= selectedVenue.rent;
+  // Gate booking on the TRUE outlay (rent + every band's fee), not just rent —
+  // otherwise a near-broke player books a bill they can't afford to resolve.
+  const canBook =
+    selectedBands.length > 0 &&
+    !!selectedVenue &&
+    !!preview &&
+    money >= preview.venueCost + preview.bandCost;
 
   const handleBookShow = () => {
     if (!canBook) return;
@@ -147,7 +163,13 @@ export const ShowBuilderView: React.FC = () => {
       revenue: 0,
     };
 
-    scheduleShow(show);
+    // During the guided tutorial, book the very first show only 1 turn out so the
+    // single coached "Next Turn" actually resolves it and the player sees their
+    // damage report (the default 3-turn promotion would leave that step empty).
+    const duringTutorialBuild =
+      tutorialManager.isActive() &&
+      tutorialManager.getCurrentStep()?.id === 'build-show';
+    scheduleShow(show, duringTutorialBuild ? 1 : undefined);
     haptics.success();
 
     // Reset selections
@@ -593,6 +615,10 @@ export const ShowBuilderView: React.FC = () => {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px' }}>
                     <span style={{ color: '#b9b3d6' }}>Venue Rent</span>
                     <span className="snes-pixel" style={{ color: '#ff5c57', fontSize: '9px' }}>-${preview.venueCost}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px' }}>
+                    <span style={{ color: '#b9b3d6' }}>Band Fees{selectedBands.length > 1 ? ` (×${selectedBands.length})` : ''}</span>
+                    <span className="snes-pixel" style={{ color: '#ff5c57', fontSize: '9px' }}>-${preview.bandCost}</span>
                   </div>
                   <div style={{
                     display: 'flex',

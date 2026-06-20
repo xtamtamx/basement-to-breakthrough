@@ -76,7 +76,7 @@ const STEPS: TutorialStep[] = [
     title: 'Sign your first act',
     body:
       "You're starting light — just one band signed. Your roster is who you can put on a bill. " +
-      'Tap the "Available" tab, pick a band, and hit "Sign to Roster" to bring them on.',
+      'Open the "Available" tab, TAP a band to expand it, then hit "Sign to Roster".',
     placement: 'screen-top',
     // New runs seed exactly one signed act (gameStore loadInitialGameData), so
     // signing one more takes the roster to 2 and advances the step.

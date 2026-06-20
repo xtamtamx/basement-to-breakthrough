@@ -39,9 +39,15 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
   const allBands = useGameStore((state) => state.allBands);
   const venues = useGameStore((state) => state.venues);
   const scheduledShows = useGameStore((state) => state.scheduledShows);
+  const showHistory = useGameStore((state) => state.showHistory);
 
   const getShowDetails = (showId: string) => {
-    const show = scheduledShows.find((s) => s.id === showId);
+    // A resolved show is moved out of scheduledShows into showHistory before this
+    // modal renders, so fall back to history — otherwise every result row reads
+    // "Unknown Band @ Unknown Venue".
+    const show =
+      scheduledShows.find((s) => s.id === showId) ??
+      showHistory.find((s) => s.id === showId);
     const band = show ? allBands.find((b) => b.id === show.bandId) : undefined;
     const venue = show ? venues.find((v) => v.id === show.venueId) : undefined;
     return {

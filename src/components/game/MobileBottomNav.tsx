@@ -211,7 +211,9 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
             position: 'fixed',
             inset: 0,
             backgroundColor: 'rgba(8, 6, 18, 0.8)',
-            zIndex: 30
+            // Above the floating Next-Turn button + TURN box (both z-30) and the
+            // nav bar (z-40) so they don't punch through the dimmed menu.
+            zIndex: 50
           }}
           onClick={() => setShowMoreMenu(false)}
         >
