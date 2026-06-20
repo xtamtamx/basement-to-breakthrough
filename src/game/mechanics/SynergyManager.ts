@@ -215,6 +215,41 @@ export const STARTER_SYNERGIES: Synergy[] = [
     ],
     icon: '🛡️',
   },
+
+  // LEGENDARY (3) — top-end rewards (rarely rolled, milestone-only)
+  {
+    id: 'sold_out_tour',
+    name: 'Sold-Out Tour',
+    description: 'Big money and fans from every show',
+    rarity: 'LEGENDARY',
+    trigger: 'SHOW_END',
+    effects: [
+      { type: 'MONEY_PERCENT', value: 25, description: '+25% money from shows' },
+      { type: 'FANS_PERCENT', value: 15, description: '+15% fans from shows' },
+    ],
+    icon: '🎟️',
+  },
+  {
+    id: 'scene_royalty',
+    name: 'Scene Royalty',
+    description: 'Commanding reputation from every show',
+    rarity: 'LEGENDARY',
+    trigger: 'SHOW_END',
+    effects: [{ type: 'REPUTATION_PERCENT', value: 25, description: '+25% reputation from shows' }],
+    icon: '👑',
+  },
+  {
+    id: 'the_machine',
+    name: 'The Machine',
+    description: 'A relentless touring engine',
+    rarity: 'LEGENDARY',
+    trigger: 'TURN_START',
+    effects: [
+      { type: 'MONEY_FLAT', value: 30, description: '+$30 at turn start' },
+      { type: 'FANS_FLAT', value: 8, description: '+8 fans at turn start' },
+    ],
+    icon: '🚐',
+  },
 ];
 
 // ============= SynergyManager Class =============
