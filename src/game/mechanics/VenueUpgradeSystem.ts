@@ -213,6 +213,58 @@ export const EQUIPMENT_CATALOG: Equipment[] = [
       powerRequirements: 3,
       spaceRequirements: 4,
     }
+  },
+
+  // Merch & comfort — cheap, character-rich gear that leans on the now-live
+  // passive-income / stress / incident effect keys.
+  {
+    id: 'merch-table',
+    name: 'Silk-Screen Merch Table',
+    description: 'Hand-printed shirts and dubbed tapes move steadily by the door',
+    type: EquipmentType.RECORDING,
+    quality: 1,
+    condition: 100,
+    maintenanceCost: 8,
+    purchasePrice: 600,
+    rentalPrice: 60,
+    owned: false,
+    effects: {
+      passiveIncome: 45,
+      passiveFame: 4,
+      atmosphereBonus: 4,
+    }
+  },
+  {
+    id: 'green-room',
+    name: 'Actual Green Room',
+    description: "Somewhere for bands to decompress that isn't the alley",
+    type: EquipmentType.BACKLINE,
+    quality: 3,
+    condition: 100,
+    maintenanceCost: 12,
+    purchasePrice: 900,
+    rentalPrice: 80,
+    owned: false,
+    effects: {
+      stressReduction: 30,
+      atmosphereBonus: 6,
+    }
+  },
+  {
+    id: 'exit-lighting',
+    name: 'Up-to-Code Exit Lighting',
+    description: 'Lit exits and signage — fewer reasons for the fire marshal to shut you down',
+    type: EquipmentType.LIGHTING,
+    quality: 2,
+    condition: 100,
+    maintenanceCost: 6,
+    purchasePrice: 500,
+    rentalPrice: 40,
+    owned: false,
+    effects: {
+      incidentReduction: 25,
+      atmosphereBonus: 3,
+    }
   }
 ];
 

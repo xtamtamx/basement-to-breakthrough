@@ -605,23 +605,34 @@ export class TurnResolutionEngine {
       synergyResults,
     );
 
-    // Calculate equipment effects
+    // Calculate equipment effects. Each scales with condition (gear at <20%
+    // condition is treated as broken and contributes nothing).
     let equipmentCapacityBonus = 1;
     let equipmentReputationMultiplier = 1;
+    let equipmentQualityBonus = 0; // flat add to venue atmosphere (acoustics + vibe)
+    let equipmentStressReduction = 0; // flat stress points shaved off the show
+    let equipmentIncidentReduction = 0; // flat % off incident chance
 
     venue.equipment.forEach((equipment) => {
       if (equipment.owned && equipment.condition > 20) {
         // Equipment needs 20%+ condition to work; effects scale with condition
         const effectMultiplier = equipment.condition / 100;
+        const fx = equipment.effects;
 
-        if (equipment.effects.capacityBonus) {
-          equipmentCapacityBonus +=
-            (equipment.effects.capacityBonus / 100) * effectMultiplier;
+        if (fx.capacityBonus) {
+          equipmentCapacityBonus += (fx.capacityBonus / 100) * effectMultiplier;
         }
-        if (equipment.effects.reputationMultiplier) {
+        if (fx.reputationMultiplier) {
           equipmentReputationMultiplier *=
-            1 + (equipment.effects.reputationMultiplier - 1) * effectMultiplier;
+            1 + (fx.reputationMultiplier - 1) * effectMultiplier;
         }
+        // A better PA + a better-lit, better-sounding room draws a bigger crowd.
+        if (fx.acousticsBonus) equipmentQualityBonus += fx.acousticsBonus * effectMultiplier;
+        if (fx.atmosphereBonus) equipmentQualityBonus += fx.atmosphereBonus * effectMultiplier;
+        // Backline / green-room gear means bands haul less and rest more.
+        if (fx.stressReduction) equipmentStressReduction += fx.stressReduction * effectMultiplier;
+        // Pro gear + a door person heads off trouble before it starts.
+        if (fx.incidentReduction) equipmentIncidentReduction += fx.incidentReduction * effectMultiplier;
       }
     });
 
@@ -639,7 +650,9 @@ export class TurnResolutionEngine {
     const avgPopularity =
       allShowBands.reduce((acc, b) => acc + b.popularity, 0) /
       allShowBands.length;
-    const venueBonus = venue.atmosphere / 100;
+    // Equipment quality (acoustics + atmosphere) lifts the room's draw, capped
+    // so a fully-kitted venue tops out ~1.4x rather than ballooning.
+    const venueBonus = Math.min(1.4, (venue.atmosphere + equipmentQualityBonus) / 100);
     const baseAttendance = Math.floor(
       effectiveCapacity * (avgPopularity / 100) * venueBonus,
     );
@@ -750,10 +763,16 @@ export class TurnResolutionEngine {
 
     // Playing a show is tiring — base stress scaled by the run's modifier.
     // This is what makes Burnout reachable through normal play.
-    const stressGain = Math.round(
-      SHOW_STRESS_BASE *
-        runMods.stressMultiplier *
-        metaBonuses.stressReductionMultiplier,
+    // Backline / green-room gear shaves a slice off show stress (treated as a
+    // percentage, capped at 60% so it can never fully negate burnout).
+    const stressGain = Math.max(
+      0,
+      Math.round(
+        SHOW_STRESS_BASE *
+          runMods.stressMultiplier *
+          metaBonuses.stressReductionMultiplier *
+          (1 - Math.min(0.6, equipmentStressReduction / 100)),
+      ),
     );
 
     // Check for incidents with escalation and synergy modifiers
@@ -765,7 +784,10 @@ export class TurnResolutionEngine {
     if (isEscalation) {
       incidentChance *= ESCALATION_INCIDENT_MULTIPLIER;
     }
-    incidentChance = Math.max(0, incidentChance - incidentReduction / 100);
+    incidentChance = Math.max(
+      0,
+      incidentChance - (incidentReduction + equipmentIncidentReduction) / 100,
+    );
 
     const incidents: Incident[] = [];
     if (Math.random() < incidentChance) {
