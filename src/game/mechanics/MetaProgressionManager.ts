@@ -42,7 +42,7 @@ export interface MetaUpgrade {
 export interface MetaUpgradeEffect {
   // NOTE: 'roster_slot' = permanent +N band roster slots (the Balatro-joker
   // cap). Distinct from 'unlock_slot' (legacy synergy-slot unlock).
-  type: 'starting_money' | 'starting_reputation' | 'band_quality' | 'venue_discount' | 'stress_reduction' | 'unlock_slot' | 'roster_slot';
+  type: 'starting_money' | 'starting_reputation' | 'starting_fans' | 'band_quality' | 'venue_discount' | 'stress_reduction' | 'unlock_slot' | 'roster_slot';
   value: number;
   description: string;
 }
@@ -328,6 +328,32 @@ class MetaProgressionManager {
           value: 1,
           description: '+1 roster slot per level'
         }]
+      },
+      {
+        id: 'demo_tape',
+        name: 'Demo Tape Buzz',
+        description: 'That old demo still circulates — start with a small fanbase',
+        cost: { fame: 200 },
+        maxLevel: 3,
+        currentLevel: 0,
+        effects: [{
+          type: 'starting_fans',
+          value: 40,
+          description: '+40 starting fans per level'
+        }]
+      },
+      {
+        id: 'merch_startup',
+        name: 'Pre-Printed Merch',
+        description: 'Show up with a box of shirts already screen-printed',
+        cost: { fame: 150 },
+        maxLevel: 2,
+        currentLevel: 0,
+        effects: [{
+          type: 'starting_money',
+          value: 75,
+          description: '+$75 starting money per level'
+        }]
       }
     ];
     
@@ -461,6 +487,7 @@ class MetaProgressionManager {
     const bonuses = {
       startingMoney: 0,
       startingReputation: 0,
+      startingFans: 0,
       bandQualityMultiplier: 1,
       venueDiscountMultiplier: 1,
       stressReductionMultiplier: 1,
@@ -478,6 +505,9 @@ class MetaProgressionManager {
               break;
             case 'starting_reputation':
               bonuses.startingReputation += totalValue;
+              break;
+            case 'starting_fans':
+              bonuses.startingFans += totalValue;
               break;
             case 'band_quality':
               bonuses.bandQualityMultiplier += totalValue / 100;

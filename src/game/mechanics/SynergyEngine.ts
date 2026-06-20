@@ -198,6 +198,24 @@ export class SynergyEngine {
       return null;
     });
 
+    // Basement Magic - Your most authentic act in the rawest room. Looser than
+    // True DIY (one headliner, auth>80, basement/house only) so it rewards early
+    // basement gigs without overlapping the all-DIY legendary combo.
+    this.registerSynergy('basement-magic', (bands, venue) => {
+      const headliner = bands[0];
+      const isRawRoom = venue.type === VenueType.BASEMENT || venue.type === VenueType.HOUSE_SHOW;
+      if (headliner.authenticity > 80 && isRawRoom) {
+        return {
+          id: 'basement-magic',
+          name: 'Basement Magic',
+          description: 'A true believer in a low-ceiling room — this is what it is all about',
+          multiplier: 1.25,
+          reputationBonus: 6,
+        };
+      }
+      return null;
+    });
+
     // Real Artist Spotlight - Real artists get special bonus
     this.registerSynergy('real-artist', (bands) => {
       const hasRealArtist = bands.some(b => b.isRealArtist);
@@ -247,6 +265,7 @@ export const COMBO_CATALOG: {
   { id: 'chaos-reigns', name: 'Controlled Chaos', description: 'A high-energy band crammed into a tiny room makes legend.', tier: 'rare' },
   { id: 'genre-match', name: 'Perfect Fit', description: "A band that matches the venue's specialty thrives.", tier: 'rare' },
   { id: 'underground-network', name: 'Scene Unity', description: 'A bill of underground bands supporting each other.', tier: 'rare' },
+  { id: 'basement-magic', name: 'Basement Magic', description: 'Nothing says real like a low ceiling and one working outlet.', tier: 'rare' },
   { id: 'hometown-heroes', name: 'Hometown Heroes', description: 'Local support packs the room.', tier: 'common' },
   { id: 'real-artist', name: 'Authentic Experience', description: 'Featuring a real underground artist.', tier: 'common' },
   { id: 'bar-boost', name: 'Thirsty Crowd', description: 'An older crowd at a bar venue drinks the place dry.', tier: 'common' },

@@ -99,6 +99,34 @@ describe('SynergyEngine', () => {
       expect(chaosSynergy?.name).toBe('Controlled Chaos');
     });
 
+    it('should detect Basement Magic for an authentic headliner in a basement', () => {
+      const band = createTestBand({ authenticity: 85 });
+      const venue = createTestVenue({ type: VenueType.BASEMENT, authenticity: 70 });
+
+      const synergies = synergyEngine.calculateSynergies([band], venue);
+
+      const magic = synergies.find(s => s.id === 'basement-magic');
+      expect(magic).toBeDefined();
+      expect(magic?.name).toBe('Basement Magic');
+      expect(magic?.multiplier).toBe(1.25);
+    });
+
+    it('should not detect Basement Magic in a non-raw room or with a low-auth headliner', () => {
+      // Right room, headliner not authentic enough.
+      const tameBand = createTestBand({ authenticity: 60 });
+      const basement = createTestVenue({ type: VenueType.BASEMENT });
+      expect(
+        synergyEngine.calculateSynergies([tameBand], basement).find(s => s.id === 'basement-magic'),
+      ).toBeUndefined();
+
+      // Authentic headliner, wrong room.
+      const trueBand = createTestBand({ authenticity: 90 });
+      const club = createTestVenue({ type: VenueType.CONCERT_HALL });
+      expect(
+        synergyEngine.calculateSynergies([trueBand], club).find(s => s.id === 'basement-magic'),
+      ).toBeUndefined();
+    });
+
     it('should not detect synergies when conditions are not met', () => {
       const band = createTestBand({ 
         genre: Genre.INDIE,

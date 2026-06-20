@@ -53,6 +53,8 @@ export async function startNewRun(
   // already past a tier (e.g. Festival) opens those venues from turn 1.
   useGameStore.setState({ peakReputation: useGameStore.getState().reputation });
   store.addConnections(-store.connections + run.config.startingConnections);
+  // Earned meta fanbase (Demo Tape Buzz) — fans drive attendance + win targets.
+  if (bonuses.startingFans) store.addFans(bonuses.startingFans);
 
   await store.loadInitialGameData();
   dayJobSystem.refreshJobs();
