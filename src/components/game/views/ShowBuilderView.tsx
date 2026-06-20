@@ -7,6 +7,7 @@ import { difficultySystem } from '@game/mechanics/DifficultySystem';
 import { cityGenreFit } from '@game/world/citySynergy';
 import { isVenueUnlocked } from '@game/world/venueProgression';
 import { tutorialManager } from '@game/tutorial/TutorialManager';
+import { COMBO_MULT_CAP } from '@game/constants/runConstants';
 import { Calendar, MapPin, Users, Music, AlertCircle, TrendingUp, Check, Ban } from 'lucide-react';
 
 /** Step header with a numbered pill that lights up once its step is reachable. */
@@ -100,9 +101,11 @@ export const ShowBuilderView: React.FC = () => {
   const calculateShowPreview = () => {
     if (!selectedVenue || selectedBands.length === 0) return null;
 
-    // Calculate synergies
+    // Band+venue combo synergies — cap the product at COMBO_MULT_CAP so the
+    // preview matches what executeShow actually applies (TurnResolutionEngine).
     const synergies = synergyEngine.calculateSynergies(selectedBands, selectedVenue);
-    const totalMultiplier = synergyEngine.getTotalMultiplier(synergies);
+    const totalMultiplier = Math.min(synergyEngine.getTotalMultiplier(synergies), COMBO_MULT_CAP);
+    const reputationBonus = synergyEngine.getTotalReputationBonus(synergies);
 
     // City scene fit: the local scene turns out for its own sound (headliner).
     const sceneFit = cityGenreFit(currentCity?.primaryGenre, selectedBands[0].genre);
@@ -129,6 +132,7 @@ export const ShowBuilderView: React.FC = () => {
     return {
       synergies,
       totalMultiplier,
+      reputationBonus,
       sceneFit,
       expectedAttendance: finalAttendance,
       grossRevenue,
@@ -549,6 +553,11 @@ export const ShowBuilderView: React.FC = () => {
                       </span>
                     ))}
                   </div>
+                  {preview.reputationBonus > 0 && (
+                    <div className="snes-pixel" style={{ fontSize: '8px', color: '#ffd23f', letterSpacing: 0, marginTop: '6px' }}>
+                      +{preview.reputationBonus} ★ rep from combos
+                    </div>
+                  )}
                 </div>
               )}
 

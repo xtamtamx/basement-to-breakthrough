@@ -9,6 +9,9 @@ import { PromotionView } from "./views/PromotionView";
 import { ProgressionView } from "./views/ProgressionView";
 import { TourView } from "./views/TourView";
 import { MobileBottomNav } from "./MobileBottomNav";
+import { SynergyBar } from "./SynergyBar";
+import { SynergyAcquireModal } from "./SynergyAcquireModal";
+import { captureRuntimeSnapshot } from "@game/persistence/runtimeSnapshot";
 import { TurnResultsModal } from "@components/ui/TurnResultsModal";
 import { SettingsModal } from "@components/ui/SettingsModal";
 import { SaveLoadModal } from "@components/ui/SaveLoadModal";
@@ -55,6 +58,21 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
   // Re-entrancy guard: blocks a same-tick double-tap (and taps while the
   // results modal is up) from resolving the same turn twice.
   const resolvingRef = useRef(false);
+
+  // synergyManager is a singleton OUTSIDE Zustand, so the SynergyBar won't
+  // re-render on acquire/replace unless we bump this counter to force it.
+  const [synergyVersion, setSynergyVersion] = useState(0);
+  const pendingSynergyOffer = useGameStore((s) => s.pendingSynergyOffer);
+  const setPendingSynergyOffer = useGameStore((s) => s.setPendingSynergyOffer);
+  const currentRound = useGameStore((s) => s.currentRound);
+
+  // Close out a milestone synergy offer: clear it, persist the new equipped
+  // loadout immediately, and refresh the bar.
+  const handleSynergyOfferDone = () => {
+    setPendingSynergyOffer(null);
+    useGameStore.setState({ runtimeSnapshot: captureRuntimeSnapshot() });
+    setSynergyVersion((v) => v + 1);
+  };
 
   const { money, reputation, fans, stress } = useGameStore();
   const currentCityName = useGameStore(
@@ -203,6 +221,16 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
         </div>
       </header>
 
+      {/* Equipped synergies ("jokers") — always visible just under the HUD.
+          Keyed on version+round so the singleton-backed bar re-renders on
+          acquire and after each turn (trigger counts). */}
+      <div style={{ flexShrink: 0, padding: '6px 10px 0' }}>
+        <SynergyBar
+          key={`${synergyVersion}-${currentRound}`}
+          onSlotClick={() => handleViewChange('synergies')}
+        />
+      </div>
+
       {/* View Content with Swipe Support */}
       <main className="flex-1 overflow-hidden relative" {...swipeHandlers}>
         <AnimatePresence mode="wait">
@@ -256,7 +284,17 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
         totalUpkeep={turnResults.totalUpkeep}
         dayJobResult={turnResults.dayJobResult}
         difficultyEvent={turnResults.difficultyEvent}
+        synergyEffects={turnResults.synergyEffects}
       />
+
+      {/* Milestone synergy offer ("joker" reward) */}
+      {pendingSynergyOffer && (
+        <SynergyAcquireModal
+          synergy={pendingSynergyOffer}
+          onClose={handleSynergyOfferDone}
+          onAcquired={handleSynergyOfferDone}
+        />
+      )}
 
       {runEnd && (
         <RunEndScreen

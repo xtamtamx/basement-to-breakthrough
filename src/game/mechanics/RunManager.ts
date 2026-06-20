@@ -102,7 +102,7 @@ class RunManager {
       maxTurns: 50,
       winConditions: [
         { type: 'reputation', target: 80, description: 'Reach 80 reputation' },
-        { type: 'fans', target: 425, description: 'Build a 425-strong following' }
+        { type: 'fans', target: 525, description: 'Build a 525-strong following' }
       ],
       modifiers: []
     });
@@ -117,7 +117,8 @@ class RunManager {
       startingConnections: 10,
       maxTurns: 20,
       winConditions: [
-        { type: 'reputation', target: 70, description: 'Reach 70 reputation in 20 turns' }
+        { type: 'reputation', target: 82, description: 'Reach 82 reputation in 20 turns' },
+        { type: 'fans', target: 250, description: 'Pull 250 fans in 20 turns' }
       ],
       modifiers: [
         {
@@ -145,7 +146,7 @@ class RunManager {
         // rep is clamped at 100, so the old 150 target was literally
         // unreachable; pair a high rep with a real bankroll instead.
         { type: 'reputation', target: 80, description: 'Reach legendary status (80 rep)' },
-        { type: 'money', target: 1000, description: 'Bank $1,000' }
+        { type: 'money', target: 2000, description: 'Bank $2,000' }
       ],
       modifiers: [
         {
@@ -172,8 +173,8 @@ class RunManager {
       startingConnections: 15,
       maxTurns: 40,
       winConditions: [
-        { type: 'shows', target: 15, description: 'Run 15 multi-band shows' },
-        { type: 'fans', target: 500, description: 'Attract 500 total fans' }
+        { type: 'shows', target: 18, description: 'Run 18 multi-band shows' },
+        { type: 'fans', target: 650, description: 'Attract 650 total fans' }
       ],
       modifiers: [
         {

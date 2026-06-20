@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ShowResult } from '@game/types';
 import { useGameStore } from '@stores/gameStore';
 import { SATIRICAL_TURN_RESULTS } from '@game/data/satiricalText';
+import type { SynergyTriggerResult } from '@game/mechanics/SynergyManager';
 import { X, Users, DollarSign, Star } from 'lucide-react';
 
 interface TurnResultsModalProps {
@@ -26,6 +27,8 @@ interface TurnResultsModalProps {
     message: string;
     reputationLost: number;
   };
+  /** Equipped-synergy ("joker") triggers that fired this turn, for feedback. */
+  synergyEffects?: SynergyTriggerResult[];
 }
 
 export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
@@ -34,7 +37,8 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
   showResults = [],
   totalUpkeep = 0,
   dayJobResult,
-  difficultyEvent
+  difficultyEvent,
+  synergyEffects = []
 }) => {
   const allBands = useGameStore((state) => state.allBands);
   const venues = useGameStore((state) => state.venues);
@@ -351,9 +355,48 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
                       <div style={{ color: '#6f6796', fontSize: '12px' }}>
                         {result.attendance}/{details.capacity} attended • +{result.fansGained} fans
                       </div>
+                      {result.venueSynergies && result.venueSynergies.length > 0 && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '8px' }}>
+                          {result.venueSynergies.map((s, i) => (
+                            <span key={i} className="snes-pixel" style={{
+                              fontSize: '7px', letterSpacing: 0, color: '#3ad17e',
+                              border: '2px solid #3ad17e', backgroundColor: '#0a1410', padding: '3px 5px'
+                            }}>🔥 {s.name}</span>
+                          ))}
+                        </div>
+                      )}
+                      {result.combosDiscovered && result.combosDiscovered.length > 0 && (
+                        <div className="snes-pixel" style={{
+                          fontSize: '8px', letterSpacing: 0, color: '#ffd23f', marginTop: '8px'
+                        }}>✨ NEW SYNERGY DISCOVERED!</div>
+                      )}
                     </div>
                     );
                   })}
+                </div>
+              </div>
+            )}
+
+            {/* Equipped synergies ("jokers") that fired this turn */}
+            {synergyEffects.filter((s) => s.triggered).length > 0 && (
+              <div style={{ marginBottom: '20px' }}>
+                <h3 className="snes-pixel" style={{
+                  fontSize: '10px', color: '#c77dff', marginTop: 0, marginBottom: '12px', letterSpacing: 0
+                }}>Jokers Fired 🃏</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {synergyEffects.filter((s) => s.triggered).map((s, i) => (
+                    <div key={i} style={{
+                      backgroundColor: '#0f0b1e', border: '2px solid #0a0814',
+                      borderLeft: '4px solid #c77dff', padding: '8px 10px'
+                    }}>
+                      <span className="snes-pixel" style={{ fontSize: '8px', color: '#c77dff', letterSpacing: 0 }}>
+                        {s.synergyName}
+                      </span>
+                      <div style={{ color: '#b9b3d6', fontSize: '11px', marginTop: '3px' }}>
+                        {s.effects.map((e) => e.description).join(' · ')}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}

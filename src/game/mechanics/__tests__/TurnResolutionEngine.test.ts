@@ -123,6 +123,7 @@ describe('TurnResolutionEngine', () => {
     addReputation: vi.fn(),
     addStress: vi.fn(),
     completeShow: vi.fn(),
+    discoverSynergy: vi.fn(),
     setPhase: vi.fn(),
     resetGame: vi.fn(),
     ...overrides,

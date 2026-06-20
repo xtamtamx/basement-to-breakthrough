@@ -12,6 +12,8 @@ import { runManager, RunState } from './RunManager';
 import { metaProgressionManager } from './MetaProgressionManager';
 import { turnResolutionEngine } from './TurnResolutionEngine';
 import { dayJobSystem } from './DayJobSystem';
+import { synergyManager, STARTER_SYNERGIES } from './SynergyManager';
+import { captureRuntimeSnapshot } from '@game/persistence/runtimeSnapshot';
 import { cityRosterSlotBonus } from '@game/world/cityUnlocks';
 import { BASE_ROSTER_SLOTS, ROSTER_SLOT_FLOOR } from '@game/constants/runConstants';
 
@@ -86,6 +88,14 @@ export async function startNewRun(
       });
     });
   }
+
+  // Grant a starter equipped synergy ("joker") so the Balatro loop is live from
+  // turn 1. synergyManager was just cleared by turnResolutionEngine.reset(); a
+  // deterministic gentle COMMON (DIY Hustle, +$10/turn) keeps onboarding stable.
+  synergyManager.acquireSynergy(STARTER_SYNERGIES[0], 1);
+  // Snapshot NOW so a refresh before the first turn keeps the starter (snapshots
+  // are otherwise only captured at end-of-turn / on booking).
+  useGameStore.setState({ runtimeSnapshot: captureRuntimeSnapshot() });
 
   return {
     run,

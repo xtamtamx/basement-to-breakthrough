@@ -18,6 +18,7 @@ import {
 } from "@game/types";
 import { safeZustandStorage } from "@utils/safeZustandStorage";
 import type { RuntimeSnapshot } from "@game/persistence/runtimeSnapshot";
+import type { Synergy } from "@game/mechanics/SynergyManager";
 import { factionSystem } from "@game/mechanics/FactionSystem";
 import { showPromotionSystem } from "@game/mechanics/ShowPromotionSystem";
 import { VENUE_TRAITS } from "@game/data/venueTraits";
@@ -135,6 +136,11 @@ interface GameStore {
   // Discovery state
   discoveredSynergies: string[]; // List of discovered synergy IDs
 
+  // Transient: a milestone-offered equipped synergy ("joker") awaiting the
+  // player's accept/replace decision. The reactive bridge to the off-Zustand
+  // synergyManager singleton; NOT persisted (re-derives at the next milestone).
+  pendingSynergyOffer: Synergy | null;
+
   // Festival state
   completedFestivals: string[]; // List of completed festival IDs
   festivalHistory: { festivalId: string; result: ShowResult; date: Date }[]; // Festival results history
@@ -187,6 +193,7 @@ interface GameStore {
   // Discovery actions
   discoverSynergy: (synergyId: string) => void;
   hasSynergyDiscovered: (synergyId: string) => boolean;
+  setPendingSynergyOffer: (offer: Synergy | null) => void;
 
   // Festival actions
   completeFestival: (festivalId: string, result: ShowResult) => void;
@@ -692,6 +699,7 @@ const getInitialState = () => ({
   consecutiveBrokeTurns: 0,
   runtimeSnapshot: null,
   discoveredSynergies: [],
+  pendingSynergyOffer: null as Synergy | null,
   completedFestivals: [],
   festivalHistory: [],
   diyPoints: 0,
@@ -816,6 +824,10 @@ export const useGameStore = create<GameStore>()(
           set((state) => ({
             ...state,
             ...savedState,
+            // pendingSynergyOffer is transient UI intent; an auto-save taken with
+            // the offer modal open must not re-pop it on load (sanitizeGameState
+            // keeps all non-function data fields). Re-derives at the next milestone.
+            pendingSynergyOffer: null,
           }));
 
           // Rehydrate the run's singletons (active run, scheduled-show Map,
@@ -1083,6 +1095,8 @@ export const useGameStore = create<GameStore>()(
             ? state.discoveredSynergies
             : [...state.discoveredSynergies, synergyId],
         })),
+
+      setPendingSynergyOffer: (offer) => set({ pendingSynergyOffer: offer }),
 
       hasSynergyDiscovered: (synergyId) => {
         const state = get();

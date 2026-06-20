@@ -11,6 +11,14 @@ export const ESCALATION_START_TURN = 31;
 export const BASE_MAX_SYNERGIES = 3;
 export const HARD_CAP_EFFECTIVE_SYNERGIES = 5;
 
+// Band+venue COMBO synergies (SynergyEngine): the multiplicative bonus from a
+// well-matched bill+venue is capped so it can't balloon when it stacks on top of
+// equipped jokers / scene-fit / hype / bill / gentrification multipliers.
+export const COMBO_MULT_CAP = 1.3;
+
+// Turns on which the player is offered a new equipped synergy ("joker").
+export const SYNERGY_REWARD_TURNS = [5, 12, 20, 28];
+
 // Roster Slots (Balatro-joker-style band cap) — how many acts you can have
 // signed at once. Modifiers (per-mode deltas, the Scene Expansion meta upgrade,
 // and city unlocks) push the effective cap up or down at run start. The floor

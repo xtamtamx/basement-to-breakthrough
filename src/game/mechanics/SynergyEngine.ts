@@ -1,16 +1,19 @@
 import { Band, Venue, Genre, VenueType } from '@game/types';
 
 /**
- * Represents a synergy - a special bonus activated by specific band/venue combinations
+ * A band+venue COMBO synergy: a situational bonus activated by a specific
+ * bill+venue combination. (Distinct from SynergyManager's equipped "joker"
+ * Synergy — that's a persistent run-long slot modifier.)
  */
-export interface Synergy {
+export interface ComboSynergy {
   /** Unique identifier for the synergy */
   id: string;
   /** Display name of the synergy */
   name: string;
   /** Description of what triggers and benefits from this synergy */
   description: string;
-  /** Multiplier applied to base show metrics (1.0 = no change, 2.0 = double) */
+  /** Attendance multiplier applied to the show (1.0 = no change). Tuned modest:
+   *  combos stack multiplicatively and are capped by COMBO_MULT_CAP. */
   multiplier: number;
   /** Flat reputation bonus added when this synergy activates */
   reputationBonus: number;
@@ -19,14 +22,14 @@ export interface Synergy {
 /**
  * Core engine for detecting and calculating synergies between bands and venues
  * Manages the complex interactions that create emergent gameplay
- * 
+ *
  * @example
  * const engine = new SynergyEngine();
  * const synergies = engine.calculateSynergies([punkBand], diyVenue);
  */
 export class SynergyEngine {
   /** Registry of all synergy calculators indexed by synergy ID */
-  private synergies: Map<string, (bands: Band[], venue: Venue) => Synergy | null> = new Map();
+  private synergies: Map<string, (bands: Band[], venue: Venue) => ComboSynergy | null> = new Map();
 
   constructor() {
     this.registerDefaultSynergies();
@@ -38,8 +41,8 @@ export class SynergyEngine {
    * @param venue - The venue hosting the show
    * @returns Array of active synergies that apply to this combination
    */
-  calculateSynergies(bands: Band[], venue: Venue): Synergy[] {
-    const activeSynergies: Synergy[] = [];
+  calculateSynergies(bands: Band[], venue: Venue): ComboSynergy[] {
+    const activeSynergies: ComboSynergy[] = [];
 
     for (const [, calculator] of this.synergies) {
       const synergy = calculator(bands, venue);
@@ -57,8 +60,8 @@ export class SynergyEngine {
    * @param calculator - Function that determines if synergy applies and returns it
    */
   registerSynergy(
-    id: string, 
-    calculator: (bands: Band[], venue: Venue) => Synergy | null
+    id: string,
+    calculator: (bands: Band[], venue: Venue) => ComboSynergy | null
   ): void {
     this.synergies.set(id, calculator);
   }
@@ -72,15 +75,15 @@ export class SynergyEngine {
     // DIY Authenticity - DIY bands in DIY spaces
     this.registerSynergy('diy-authentic', (bands, venue) => {
       const allDIY = bands.every(b => b.authenticity > 90);
-      const diyVenue = venue.authenticity > 90 && 
+      const diyVenue = venue.authenticity > 90 &&
         (venue.type === VenueType.BASEMENT || venue.type === VenueType.DIY_SPACE);
-      
+
       if (allDIY && diyVenue) {
         return {
           id: 'diy-authentic',
           name: 'True DIY',
-          description: 'Authentic underground vibes double the impact',
-          multiplier: 2.0,
+          description: 'Authentic underground vibes pack the room.',
+          multiplier: 1.5,
           reputationBonus: 10,
         };
       }
@@ -102,7 +105,7 @@ export class SynergyEngine {
           id: 'genre-match',
           name: 'Perfect Fit',
           description: `${band.genre} bands thrive in this venue`,
-          multiplier: 1.5,
+          multiplier: 1.3,
           reputationBonus: 5,
         };
       }
@@ -117,7 +120,7 @@ export class SynergyEngine {
           id: 'hometown-heroes',
           name: 'Hometown Heroes',
           description: 'Local support boosts attendance',
-          multiplier: 1.3,
+          multiplier: 1.2,
           reputationBonus: 3,
         };
       }
@@ -128,15 +131,15 @@ export class SynergyEngine {
     this.registerSynergy('legendary-pairing', (bands, venue) => {
       const band = bands[0];
       const isLegendaryBand = band.technicalSkill > 80 && band.popularity > 70;
-      const isPremiumVenue = venue.type === VenueType.CONCERT_HALL || 
+      const isPremiumVenue = venue.type === VenueType.CONCERT_HALL ||
                             venue.type === VenueType.THEATER;
-      
+
       if (isLegendaryBand && isPremiumVenue) {
         return {
           id: 'legendary-pairing',
           name: 'Legendary Performance',
           description: 'Master musicians in a proper venue',
-          multiplier: 1.8,
+          multiplier: 1.4,
           reputationBonus: 15,
         };
       }
@@ -148,13 +151,13 @@ export class SynergyEngine {
       const band = bands[0];
       const isChaoticBand = band.energy > 85;
       const isSmallVenue = venue.capacity < 50;
-      
+
       if (isChaoticBand && isSmallVenue) {
         return {
           id: 'chaos-reigns',
           name: 'Controlled Chaos',
           description: 'Insane energy in tight quarters creates legendary shows',
-          multiplier: 1.6,
+          multiplier: 1.35,
           reputationBonus: 8,
         };
       }
@@ -165,13 +168,13 @@ export class SynergyEngine {
     this.registerSynergy('bar-boost', (bands, venue) => {
       const band = bands[0];
       const matureAudience = band.popularity > 40 && !band.traits.some(t => t.name === 'Youth Crew');
-      
+
       if (venue.hasBar && matureAudience) {
         return {
           id: 'bar-boost',
           name: 'Thirsty Crowd',
           description: 'Bar sales through the roof',
-          multiplier: 1.2,
+          multiplier: 1.15,
           reputationBonus: 0, // Money bonus instead
         };
       }
@@ -181,14 +184,14 @@ export class SynergyEngine {
     // Underground Network - Multiple underground bands
     this.registerSynergy('underground-network', (bands) => {
       if (bands.length < 2) return null;
-      
+
       const allUnderground = bands.every(b => b.authenticity > 70 && b.popularity < 30);
       if (allUnderground) {
         return {
           id: 'underground-network',
           name: 'Scene Unity',
           description: 'Underground bands supporting each other',
-          multiplier: 1.4,
+          multiplier: 1.25,
           reputationBonus: 6,
         };
       }
@@ -203,7 +206,7 @@ export class SynergyEngine {
           id: 'real-artist',
           name: 'Authentic Experience',
           description: 'Featuring real underground artists',
-          multiplier: 1.25,
+          multiplier: 1.15,
           reputationBonus: 7,
         };
       }
@@ -218,14 +221,33 @@ export class SynergyEngine {
   }
 
   // Calculate total multiplier from synergies array
-  getTotalMultiplier(synergies: Synergy[]): number {
+  getTotalMultiplier(synergies: ComboSynergy[]): number {
     return synergies.reduce((total, synergy) => total * synergy.multiplier, 1);
   }
 
   // Calculate total reputation bonus from synergies array
-  getTotalReputationBonus(synergies: Synergy[]): number {
+  getTotalReputationBonus(synergies: ComboSynergy[]): number {
     return synergies.reduce((total, synergy) => total + synergy.reputationBonus, 0);
   }
 }
 
 export const synergyEngine = new SynergyEngine();
+
+/** Static metadata for every band+venue combo, so the Synergy Discovery codex
+ *  has a real denominator and can render locked ("???") entries. Tier is derived
+ *  from each combo's attendance multiplier (>=1.4 legendary, >=1.25 rare, else common). */
+export const COMBO_CATALOG: {
+  id: string;
+  name: string;
+  description: string;
+  tier: 'common' | 'rare' | 'legendary';
+}[] = [
+  { id: 'diy-authentic', name: 'True DIY', description: 'All-DIY bands in an authentic underground space pack the room.', tier: 'legendary' },
+  { id: 'legendary-pairing', name: 'Legendary Performance', description: 'Master musicians in a proper theater or hall.', tier: 'legendary' },
+  { id: 'chaos-reigns', name: 'Controlled Chaos', description: 'A high-energy band crammed into a tiny room makes legend.', tier: 'rare' },
+  { id: 'genre-match', name: 'Perfect Fit', description: "A band that matches the venue's specialty thrives.", tier: 'rare' },
+  { id: 'underground-network', name: 'Scene Unity', description: 'A bill of underground bands supporting each other.', tier: 'rare' },
+  { id: 'hometown-heroes', name: 'Hometown Heroes', description: 'Local support packs the room.', tier: 'common' },
+  { id: 'real-artist', name: 'Authentic Experience', description: 'Featuring a real underground artist.', tier: 'common' },
+  { id: 'bar-boost', name: 'Thirsty Crowd', description: 'An older crowd at a bar venue drinks the place dry.', tier: 'common' },
+];

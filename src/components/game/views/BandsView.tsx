@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { Band, Genre } from '@game/types';
 import { haptics } from '@utils/mobile';
-import { BandUpgradeModal } from '../BandUpgradeModal';
 import { useGameStore } from '@stores/gameStore';
 import { runManager } from '@game/mechanics/RunManager';
 import { nextBookingManagerCost } from '@game/constants/runConstants';
-import { UserPlus, UserMinus, TrendingUp, Star, Zap, Briefcase, ChevronDown } from 'lucide-react';
+import { UserPlus, UserMinus, Star, Zap, Briefcase, ChevronDown } from 'lucide-react';
 
 type Filter = 'all' | 'available' | 'roster';
 
@@ -13,7 +12,6 @@ export const BandsView: React.FC = () => {
   const { allBands, rosterBandIds, maxRosterSize, hiredManagers, rosterSlotSources, money, addBandToRoster, removeBandFromRoster, hireBookingManager } = useGameStore();
   const [selectedBand, setSelectedBand] = useState<Band | null>(null);
   const [filter, setFilter] = useState<Filter>('all');
-  const [upgradeModalBand, setUpgradeModalBand] = useState<Band | null>(null);
   const [showSlotBreakdown, setShowSlotBreakdown] = useState(false);
 
   const rosterFull = rosterBandIds.length >= maxRosterSize;
@@ -562,27 +560,6 @@ export const BandsView: React.FC = () => {
                           </button>
                         )}
 
-                        {band.upgrades && (
-                          <button
-                            className="snes-btn snes-btn--ghost snes-pixel"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setUpgradeModalBand(band);
-                            }}
-                            style={{
-                              fontSize: '9px',
-                              cursor: 'pointer',
-                              minHeight: '44px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '8px',
-                              transition: 'none'
-                            }}
-                          >
-                            <TrendingUp size={16} />
-                            Upgrade
-                          </button>
-                        )}
                       </div>
                     </div>
                   )}
@@ -593,14 +570,6 @@ export const BandsView: React.FC = () => {
         )}
       </div>
 
-      {/* Band Upgrade Modal */}
-      {upgradeModalBand && (
-        <BandUpgradeModal
-          band={upgradeModalBand}
-          isOpen={true}
-          onClose={() => setUpgradeModalBand(null)}
-        />
-      )}
     </div>
   );
 };

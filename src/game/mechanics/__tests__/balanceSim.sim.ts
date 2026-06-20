@@ -16,7 +16,29 @@ import { startNewRun } from '../runLifecycle';
 import { difficultySystem } from '../DifficultySystem';
 import { runManager } from '../RunManager';
 import { dayJobSystem } from '../DayJobSystem';
+import { synergyManager } from '../SynergyManager';
 import { rollTravelOffer } from '@game/world/travelModes';
+
+// Greedy "keep the best joker" rank for milestone replacement.
+const RARITY_RANK: Record<string, number> = { COMMON: 0, UNCOMMON: 1, RARE: 2, LEGENDARY: 3 };
+
+// Accept a milestone synergy offer the way a player would: equip it, replacing
+// the weakest-rarity slot when full. Keeps the sim on-model with production.
+function acceptSynergyOffer(turn: number): void {
+  const s = useGameStore.getState();
+  const offer = s.pendingSynergyOffer;
+  if (!offer) return;
+  if (synergyManager.isFull()) {
+    const weakest = [...synergyManager.getEquippedSynergies()].sort(
+      (a, b) => RARITY_RANK[a.synergy.rarity] - RARITY_RANK[b.synergy.rarity],
+    )[0];
+    synergyManager.acquireSynergy(offer, turn); // stages as pending
+    if (weakest) synergyManager.replaceSynergy(weakest.slotIndex, turn);
+  } else {
+    synergyManager.acquireSynergy(offer, turn);
+  }
+  s.setPendingSynergyOffer(null);
+}
 import { isVenueUnlocked } from '@game/world/venueProgression';
 import { isCityUnlocked } from '@game/world/cityUnlocks';
 import { Show } from '@game/types';
@@ -158,6 +180,7 @@ async function playOneRun(mode: string): Promise<RunOutcome> {
     manageDayJob();
     bookBestShow();
     const result = await turnResolutionEngine.executeFullTurn();
+    acceptSynergyOffer(i);
     result.showResults.forEach((r) => {
       peakAttendance = Math.max(peakAttendance, r.attendance);
       totalRevenue += r.revenue;

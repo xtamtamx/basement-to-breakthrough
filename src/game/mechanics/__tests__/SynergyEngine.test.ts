@@ -65,7 +65,7 @@ describe('SynergyEngine', () => {
       const diySynergy = synergies.find(s => s.id === 'diy-authentic');
       expect(diySynergy).toBeDefined();
       expect(diySynergy?.name).toBe('True DIY');
-      expect(diySynergy?.multiplier).toBe(2.0);
+      expect(diySynergy?.multiplier).toBe(1.5);
     });
 
     it('should detect genre match synergy for metal', () => {
@@ -157,7 +157,7 @@ describe('SynergyEngine', () => {
       // Basement + high authenticity should trigger DIY authentic synergy
       const diySynergy = synergies.find(s => s.id === 'diy-authentic');
       expect(diySynergy).toBeDefined();
-      expect(diySynergy?.multiplier).toBe(2.0);
+      expect(diySynergy?.multiplier).toBe(1.5);
       expect(diySynergy?.reputationBonus).toBe(10);
     });
   });

@@ -533,6 +533,9 @@ export interface ShowResult {
     name: string;
     description: string;
   }[];
+  /** Combo synergy ids first discovered by THIS show (drives the "NEW SYNERGY
+   *  DISCOVERED" beat in the results modal). */
+  combosDiscovered?: string[];
   districtBonus?: {
     type: DistrictType;
     description: string;

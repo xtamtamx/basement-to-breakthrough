@@ -16,11 +16,20 @@ interface SynergyAcquireModalProps {
   onAcquired: () => void;
 }
 
-const RARITY_COLORS: Record<SynergyRarity, { bg: string; border: string; text: string }> = {
-  COMMON: { bg: 'bg-gray-700', border: 'border-gray-500', text: 'text-gray-300' },
-  UNCOMMON: { bg: 'bg-green-900', border: 'border-green-500', text: 'text-green-300' },
-  RARE: { bg: 'bg-blue-900', border: 'border-blue-500', text: 'text-blue-300' },
-  LEGENDARY: { bg: 'bg-purple-900', border: 'border-purple-400', text: 'text-purple-300' },
+/** Rarity → neon-punk SNES accent color (header / borders). */
+const RARITY_COLOR: Record<SynergyRarity, string> = {
+  COMMON: '#6f6796',
+  UNCOMMON: '#3ad17e',
+  RARE: '#4cc9f0',
+  LEGENDARY: '#c77dff',
+};
+
+/** LEGENDARY gets a subtle outer glow; others are flat. */
+const RARITY_GLOW: Record<SynergyRarity, string> = {
+  COMMON: '',
+  UNCOMMON: '',
+  RARE: '',
+  LEGENDARY: '0 0 10px 0 rgba(199, 125, 255, 0.6)',
 };
 
 export const SynergyAcquireModal: React.FC<SynergyAcquireModalProps> = ({
@@ -33,7 +42,8 @@ export const SynergyAcquireModal: React.FC<SynergyAcquireModalProps> = ({
 
   const isFull = synergyManager.isFull();
   const equipped = synergyManager.getEquippedSynergies();
-  const colors = RARITY_COLORS[synergy.rarity];
+  const accent = RARITY_COLOR[synergy.rarity];
+  const glow = RARITY_GLOW[synergy.rarity];
 
   const handleAcquire = () => {
     if (isFull && selectedReplaceSlot === null) {
@@ -56,41 +66,110 @@ export const SynergyAcquireModal: React.FC<SynergyAcquireModalProps> = ({
     onClose();
   };
 
+  const acquireDisabled = isFull && selectedReplaceSlot === null;
+
   return (
-    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-      <div className={`${colors.bg} ${colors.border} border-2 rounded-xl max-w-md w-full
-                      shadow-2xl animate-fadeIn`}>
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        backgroundColor: 'rgba(8, 6, 18, 0.8)',
+        zIndex: 9999,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '16px',
+        overflowY: 'auto',
+      }}
+    >
+      <div
+        style={{
+          backgroundColor: '#171327',
+          maxWidth: '440px',
+          width: '100%',
+          maxHeight: '90vh',
+          overflow: 'hidden',
+          border: `2px solid ${accent}`,
+          borderRadius: 0,
+          boxShadow: glow
+            ? `inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814, ${glow}`
+            : 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
         {/* Header */}
-        <div className="p-4 border-b border-white/10">
-          <div className="flex items-center gap-3">
-            <span className="text-4xl">{synergy.icon}</span>
-            <div>
-              <h2 className="text-xl font-bold text-white">{synergy.name}</h2>
-              <span className={`text-xs uppercase font-bold ${colors.text}`}>
-                {synergy.rarity}
-              </span>
-            </div>
+        <div
+          style={{
+            padding: '16px 20px',
+            borderBottom: '2px solid #0a0814',
+            backgroundColor: '#0f0b1e',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+          }}
+        >
+          <span style={{ fontSize: '32px', lineHeight: 1, flexShrink: 0 }}>{synergy.icon}</span>
+          <div style={{ minWidth: 0 }}>
+            <h2
+              className="snes-pixel"
+              style={{ fontSize: '12px', color: '#ffffff', margin: 0, letterSpacing: 0, lineHeight: 1.5 }}
+            >
+              {synergy.name}
+            </h2>
+            <span
+              className="snes-pixel"
+              style={{
+                fontSize: '8px',
+                color: accent,
+                letterSpacing: 0,
+                textTransform: 'uppercase',
+                display: 'inline-block',
+                marginTop: '6px',
+              }}
+            >
+              {synergy.rarity}
+            </span>
           </div>
         </div>
 
         {/* Content */}
-        <div className="p-4 space-y-4">
-          <p className="text-gray-300">{synergy.description}</p>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
+          <p style={{ color: '#b9b3d6', fontSize: '13px', lineHeight: 1.6, margin: '0 0 16px 0' }}>
+            {synergy.description}
+          </p>
 
           {/* Effects */}
-          <div className="bg-black/30 rounded-lg p-3">
-            <h3 className="text-sm font-bold text-white mb-2">Effects</h3>
-            <ul className="space-y-1">
+          <div
+            style={{
+              backgroundColor: '#0f0b1e',
+              border: '2px solid #0a0814',
+              borderRadius: 0,
+              boxShadow: 'inset 2px 2px 0 0 #000, inset -2px -2px 0 0 #2a2350',
+              padding: '12px',
+              marginBottom: '16px',
+            }}
+          >
+            <h3
+              className="snes-pixel"
+              style={{ fontSize: '9px', color: '#ffffff', margin: '0 0 10px 0', letterSpacing: 0, lineHeight: 1.4 }}
+            >
+              Effects
+            </h3>
+            <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '6px' }}>
               {synergy.effects.map((effect, i) => (
-                <li key={i} className="text-sm text-green-400 flex items-center gap-2">
-                  <span className="text-green-500">+</span>
-                  {effect.description}
+                <li
+                  key={i}
+                  style={{ fontSize: '12px', color: '#3ad17e', display: 'flex', alignItems: 'flex-start', gap: '6px', lineHeight: 1.5 }}
+                >
+                  <span style={{ color: '#3ad17e', fontWeight: 700 }}>+</span>
+                  <span>{effect.description}</span>
                 </li>
               ))}
             </ul>
             {synergy.condition && (
-              <div className="mt-2 pt-2 border-t border-white/10">
-                <span className="text-xs text-yellow-400">
+              <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '2px solid #2a2350' }}>
+                <span style={{ fontSize: '11px', color: '#ffd23f', lineHeight: 1.5 }}>
                   Condition: {synergy.condition.description}
                 </span>
               </div>
@@ -98,68 +177,111 @@ export const SynergyAcquireModal: React.FC<SynergyAcquireModalProps> = ({
           </div>
 
           {/* Trigger Type */}
-          <div className="flex items-center gap-2 text-sm text-gray-400">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#6f6796' }}>
             <span>Triggers:</span>
-            <span className="bg-gray-800 px-2 py-1 rounded text-white">
+            <span
+              className="snes-pixel"
+              style={{
+                fontSize: '8px',
+                letterSpacing: 0,
+                color: '#ffffff',
+                background: '#1f1a3a',
+                border: '2px solid #0a0814',
+                borderRadius: 0,
+                padding: '4px 6px',
+                textTransform: 'uppercase',
+              }}
+            >
               {synergy.trigger.replace('_', ' ')}
             </span>
           </div>
 
           {/* Replacement Selection (if full) */}
           {isFull && (
-            <div className="bg-red-900/30 border border-red-500/50 rounded-lg p-3">
-              <h3 className="text-sm font-bold text-red-400 mb-2">
-                Synergy slots full! Choose one to replace:
+            <div
+              style={{
+                marginTop: '16px',
+                backgroundColor: '#0f0b1e',
+                border: '2px solid #ff5c57',
+                borderRadius: 0,
+                padding: '12px',
+              }}
+            >
+              <h3
+                className="snes-pixel"
+                style={{ fontSize: '9px', color: '#ff5c57', margin: '0 0 10px 0', letterSpacing: 0, lineHeight: 1.4 }}
+              >
+                Slots full! Choose one to replace:
               </h3>
-              <div className="space-y-2">
-                {equipped.map((eq) => (
-                  <button
-                    key={eq.slotIndex}
-                    onClick={() => setSelectedReplaceSlot(eq.slotIndex)}
-                    className={`w-full p-2 rounded border-2 text-left transition-all
-                              ${selectedReplaceSlot === eq.slotIndex
-                                ? 'border-red-500 bg-red-900/50'
-                                : 'border-gray-600 bg-gray-800/50 hover:border-gray-500'
-                              }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="text-xl">{eq.synergy.icon}</span>
-                      <div className="flex-1">
-                        <div className="text-white font-medium">{eq.synergy.name}</div>
-                        <div className="text-xs text-gray-400">
-                          {eq.synergy.description}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {equipped.map((eq) => {
+                  const selected = selectedReplaceSlot === eq.slotIndex;
+                  return (
+                    <button
+                      key={eq.slotIndex}
+                      onClick={() => setSelectedReplaceSlot(eq.slotIndex)}
+                      style={{
+                        width: '100%',
+                        textAlign: 'left',
+                        padding: '8px 10px',
+                        minHeight: '44px',
+                        background: selected ? '#2a1218' : '#1f1a3a',
+                        border: `2px solid ${selected ? '#ff5c57' : '#0a0814'}`,
+                        borderRadius: 0,
+                        boxShadow: selected ? 'none' : 'inset 1px 1px 0 0 #3a2f5c',
+                        cursor: 'pointer',
+                        touchAction: 'manipulation',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '18px', lineHeight: 1, flexShrink: 0 }}>{eq.synergy.icon}</span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ color: '#ffffff', fontWeight: 500, fontSize: '13px' }}>
+                            {eq.synergy.name}
+                          </div>
+                          <div style={{ fontSize: '11px', color: '#6f6796', lineHeight: 1.4 }}>
+                            {eq.synergy.description}
+                          </div>
                         </div>
+                        {selected && (
+                          <span
+                            className="snes-pixel"
+                            style={{ fontSize: '7px', letterSpacing: 0, color: '#ff5c57', flexShrink: 0 }}
+                          >
+                            REPLACE
+                          </span>
+                        )}
                       </div>
-                      {selectedReplaceSlot === eq.slotIndex && (
-                        <span className="text-red-400 text-sm">REPLACE</span>
-                      )}
-                    </div>
-                  </button>
-                ))}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
         </div>
 
         {/* Actions */}
-        <div className="p-4 border-t border-white/10 flex gap-3">
+        <div
+          style={{
+            padding: '16px 20px',
+            borderTop: '2px solid #0a0814',
+            backgroundColor: '#0f0b1e',
+            display: 'flex',
+            gap: '12px',
+          }}
+        >
           <button
             onClick={handleDiscard}
-            className="flex-1 py-3 px-4 bg-gray-700 hover:bg-gray-600
-                     text-white rounded-lg font-medium transition-colors
-                     touch-manipulation min-h-[44px]"
+            className="snes-btn snes-btn--ghost"
+            style={{ flex: 1, minHeight: '44px', fontSize: '10px', cursor: 'pointer' }}
           >
             Discard
           </button>
           <button
             onClick={handleAcquire}
-            disabled={isFull && selectedReplaceSlot === null}
-            className={`flex-1 py-3 px-4 rounded-lg font-medium transition-colors
-                       touch-manipulation min-h-[44px]
-                       ${isFull && selectedReplaceSlot === null
-                         ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                         : 'bg-green-600 hover:bg-green-500 text-white'
-                       }`}
+            disabled={acquireDisabled}
+            className="snes-btn snes-btn--green"
+            style={{ flex: 1, minHeight: '44px', fontSize: '10px', cursor: acquireDisabled ? 'not-allowed' : 'pointer' }}
           >
             {isFull ? 'Replace & Acquire' : 'Acquire'}
           </button>

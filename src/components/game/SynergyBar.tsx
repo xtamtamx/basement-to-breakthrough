@@ -11,18 +11,20 @@ interface SynergyBarProps {
   compact?: boolean;
 }
 
-const RARITY_COLORS: Record<SynergyRarity, string> = {
-  COMMON: 'bg-gray-600 border-gray-500',
-  UNCOMMON: 'bg-green-800 border-green-600',
-  RARE: 'bg-blue-800 border-blue-500',
-  LEGENDARY: 'bg-purple-800 border-purple-500',
+/** Rarity → neon-punk SNES accent color (borders / glows). */
+const RARITY_COLOR: Record<SynergyRarity, string> = {
+  COMMON: '#6f6796',
+  UNCOMMON: '#3ad17e',
+  RARE: '#4cc9f0',
+  LEGENDARY: '#c77dff',
 };
 
+/** LEGENDARY gets a subtle outer glow; others are flat. */
 const RARITY_GLOW: Record<SynergyRarity, string> = {
   COMMON: '',
-  UNCOMMON: 'shadow-green-500/30',
-  RARE: 'shadow-blue-500/50',
-  LEGENDARY: 'shadow-purple-500/70 animate-pulse',
+  UNCOMMON: '',
+  RARE: '',
+  LEGENDARY: '0 0 6px 0 rgba(199, 125, 255, 0.7)',
 };
 
 export const SynergyBar: React.FC<SynergyBarProps> = ({ onSlotClick, compact = false }) => {
@@ -38,7 +40,7 @@ export const SynergyBar: React.FC<SynergyBarProps> = ({ onSlotClick, compact = f
 
   if (compact) {
     return (
-      <div className="flex gap-1">
+      <div style={{ display: 'flex', gap: '4px' }}>
         {slots.map((slot, index) => (
           <CompactSlot
             key={index}
@@ -51,18 +53,31 @@ export const SynergyBar: React.FC<SynergyBarProps> = ({ onSlotClick, compact = f
     );
   }
 
+  // Default render: a short horizontal strip that mounts just under the HUD.
   return (
-    <div className="bg-gray-900/90 rounded-lg p-3 border border-gray-700">
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="text-sm font-bold text-white">Synergies</h3>
-        <span className="text-xs text-gray-400">
-          {equipped.length}/{maxSlots} slots
-        </span>
-      </div>
-
-      <div className="flex gap-2">
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '6px',
+        height: '40px',
+        padding: '0 8px',
+        background: '#0f0b1e',
+        border: '2px solid #0a0814',
+        borderRadius: 0,
+        boxShadow: 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814',
+        overflowX: 'auto',
+      }}
+    >
+      <span
+        className="snes-pixel"
+        style={{ fontSize: '8px', letterSpacing: 0, color: '#6f6796', flexShrink: 0 }}
+      >
+        <span style={{ color: '#c77dff' }}>♦</span> {equipped.length}/{maxSlots}
+      </span>
+      <div style={{ display: 'flex', gap: '5px', flexShrink: 0 }}>
         {slots.map((slot, index) => (
-          <SynergySlot
+          <StripSlot
             key={index}
             slot={slot}
             index={index}
@@ -80,42 +95,90 @@ interface SlotProps {
   onClick?: () => void;
 }
 
-const SynergySlot: React.FC<SlotProps> = ({ slot, index, onClick }) => {
+/**
+ * Strip tile — small square used in the under-HUD horizontal strip.
+ * Filled: rarity-bordered with the synergy icon + a gold trigger-count badge.
+ * Empty: dashed-border tile with a '+'.
+ */
+const StripSlot: React.FC<SlotProps> = ({ slot, index, onClick }) => {
   if (!slot) {
     return (
       <button
         onClick={onClick}
-        className="w-16 h-16 rounded-lg border-2 border-dashed border-gray-600
-                   flex items-center justify-center text-gray-500
-                   hover:border-gray-500 hover:bg-gray-800/50 transition-all
-                   touch-manipulation min-h-[44px]"
+        style={{
+          width: '30px',
+          height: '30px',
+          minHeight: '30px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: '#0a0814',
+          border: '2px dashed #2a2350',
+          borderRadius: 0,
+          color: '#6f6796',
+          fontSize: '14px',
+          lineHeight: 1,
+          cursor: 'pointer',
+          padding: 0,
+          touchAction: 'manipulation',
+        }}
         aria-label={`Empty synergy slot ${index + 1}`}
       >
-        <span className="text-2xl">+</span>
+        +
       </button>
     );
   }
 
   const { synergy, timesTriggered } = slot;
-  const rarityClass = RARITY_COLORS[synergy.rarity];
-  const glowClass = RARITY_GLOW[synergy.rarity];
+  const accent = RARITY_COLOR[synergy.rarity];
+  const glow = RARITY_GLOW[synergy.rarity];
 
   return (
     <button
       onClick={onClick}
-      className={`w-16 h-16 rounded-lg border-2 ${rarityClass} ${glowClass}
-                 flex flex-col items-center justify-center
-                 hover:brightness-110 transition-all shadow-lg
-                 touch-manipulation min-h-[44px] relative`}
+      style={{
+        position: 'relative',
+        width: '30px',
+        height: '30px',
+        minHeight: '30px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#1f1a3a',
+        border: `2px solid ${accent}`,
+        borderRadius: 0,
+        fontSize: '15px',
+        lineHeight: 1,
+        cursor: 'pointer',
+        padding: 0,
+        touchAction: 'manipulation',
+        boxShadow: glow || 'inset 1px 1px 0 0 #3a2f5c',
+      }}
       aria-label={`${synergy.name} - ${synergy.description}`}
     >
-      <span className="text-2xl">{synergy.icon}</span>
-      <span className="text-[10px] text-white/80 truncate w-full text-center px-1">
-        {synergy.name}
-      </span>
+      <span>{synergy.icon}</span>
       {timesTriggered > 0 && (
-        <span className="absolute -top-1 -right-1 bg-yellow-500 text-black text-[10px]
-                        rounded-full w-4 h-4 flex items-center justify-center font-bold">
+        <span
+          className="snes-pixel"
+          style={{
+            position: 'absolute',
+            top: '-5px',
+            right: '-5px',
+            minWidth: '13px',
+            height: '13px',
+            padding: '0 2px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: '#ffd23f',
+            color: '#3a2e00',
+            border: '1px solid #0a0814',
+            borderRadius: 0,
+            fontSize: '7px',
+            letterSpacing: 0,
+            lineHeight: 1,
+          }}
+        >
           {timesTriggered}
         </span>
       )}
@@ -123,14 +186,28 @@ const SynergySlot: React.FC<SlotProps> = ({ slot, index, onClick }) => {
   );
 };
 
-const CompactSlot: React.FC<SlotProps> = ({ slot, onClick }) => {
+const CompactSlot: React.FC<SlotProps> = ({ slot, index, onClick }) => {
   if (!slot) {
     return (
       <button
         onClick={onClick}
-        className="w-8 h-8 rounded border border-dashed border-gray-600
-                   flex items-center justify-center text-gray-500 text-sm
-                   hover:border-gray-500 transition-all touch-manipulation"
+        style={{
+          width: '28px',
+          height: '28px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: '#0a0814',
+          border: '2px dashed #2a2350',
+          borderRadius: 0,
+          color: '#6f6796',
+          fontSize: '12px',
+          lineHeight: 1,
+          cursor: 'pointer',
+          padding: 0,
+          touchAction: 'manipulation',
+        }}
+        aria-label={`Empty synergy slot ${index + 1}`}
       >
         +
       </button>
@@ -138,17 +215,31 @@ const CompactSlot: React.FC<SlotProps> = ({ slot, onClick }) => {
   }
 
   const { synergy } = slot;
-  const rarityClass = RARITY_COLORS[synergy.rarity];
+  const accent = RARITY_COLOR[synergy.rarity];
+  const glow = RARITY_GLOW[synergy.rarity];
 
   return (
     <button
       onClick={onClick}
-      className={`w-8 h-8 rounded border ${rarityClass}
-                 flex items-center justify-center
-                 hover:brightness-110 transition-all touch-manipulation`}
+      style={{
+        width: '28px',
+        height: '28px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#1f1a3a',
+        border: `2px solid ${accent}`,
+        borderRadius: 0,
+        fontSize: '13px',
+        lineHeight: 1,
+        cursor: 'pointer',
+        padding: 0,
+        touchAction: 'manipulation',
+        boxShadow: glow || 'inset 1px 1px 0 0 #3a2f5c',
+      }}
       title={`${synergy.name}: ${synergy.description}`}
     >
-      <span className="text-sm">{synergy.icon}</span>
+      <span>{synergy.icon}</span>
     </button>
   );
 };

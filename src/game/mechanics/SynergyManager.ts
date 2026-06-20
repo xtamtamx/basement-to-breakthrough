@@ -428,7 +428,11 @@ class SynergyManager {
     return effects;
   }
 
-  // Calculate total effect value for a specific effect type
+  // Sum the value of a given effect type across the TRIGGERED results passed in.
+  // NOTE: passive effects are deliberately NOT rolled up here — this is called
+  // once per phase AND multiple times per show, so re-adding passives each call
+  // multiplied them in repeatedly. Passive effects (incident/cost reduction) are
+  // read at their single point of use via getPassiveEffects() instead.
   calculateEffectTotal(effectType: SynergyEffectType, triggerResults: SynergyTriggerResult[]): number {
     let total = 0;
 
@@ -439,13 +443,6 @@ class SynergyManager {
             total += effect.value;
           }
         }
-      }
-    }
-
-    // Also include passive effects
-    for (const effect of this.getPassiveEffects()) {
-      if (effect.type === effectType) {
-        total += effect.value;
       }
     }
 

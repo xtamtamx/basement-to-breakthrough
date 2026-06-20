@@ -12,6 +12,7 @@
 
 import { useGameStore } from '@stores/gameStore';
 import { synergyManager, SynergyTriggerResult } from './SynergyManager';
+import { synergyEngine } from './SynergyEngine';
 import { walkerSystem } from './WalkerSystem';
 import { dayJobSystem } from './DayJobSystem';
 import { difficultySystem } from './DifficultySystem';
@@ -43,6 +44,8 @@ import {
   LIVING_COSTS_PER_TURN,
   SHOW_STRESS_BASE,
   STRESS_RECOVERY_PER_TURN,
+  COMBO_MULT_CAP,
+  SYNERGY_REWARD_TURNS,
   RunEndState,
 } from '../constants/runConstants';
 import {
@@ -331,6 +334,14 @@ export class TurnResolutionEngine {
       store.nextRound();
     }
 
+    // Milestone reward: offer a new equipped synergy ("joker") on reward turns,
+    // as long as the run continues and the pool isn't exhausted. The UI shows the
+    // SynergyAcquireModal; the offer is transient (re-derives next milestone).
+    if (!runEnd && SYNERGY_REWARD_TURNS.includes(turn)) {
+      const offer = synergyManager.getRandomAvailableSynergy();
+      if (offer) useGameStore.setState({ pendingSynergyOffer: offer });
+    }
+
     // Persist the run's singleton state so a refresh/load resumes intact.
     useGameStore.setState({
       lastTurnResults: showResults,
@@ -547,6 +558,17 @@ export class TurnResolutionEngine {
       if (band) allShowBands.push(band);
     });
 
+    // Band+venue COMBO synergies (the "discover powerful combos" pillar): the
+    // SAME calculator the ShowBuilder preview shows, now ACTUALLY applied to the
+    // result. The product is capped (COMBO_MULT_CAP) so it can't balloon when it
+    // stacks on top of the joker/scene-fit/hype/bill/gentrification multipliers.
+    const combos = synergyEngine.calculateSynergies(allShowBands, venue);
+    const comboMult = Math.min(
+      synergyEngine.getTotalMultiplier(combos),
+      COMBO_MULT_CAP,
+    );
+    const comboRep = synergyEngine.getTotalReputationBonus(combos);
+
     // Trigger SHOW_START synergies
     const synergyContext = {
       currentTurn: store.currentRound,
@@ -630,6 +652,7 @@ export class TurnResolutionEngine {
           billMultiplier *
           gentrificationAttendance *
           sceneFit.multiplier *
+          comboMult *
           (sig?.attendanceMult ?? 1),
       ),
       effectiveCapacity,
@@ -676,6 +699,14 @@ export class TurnResolutionEngine {
     if (isEscalation) {
       totalCosts = Math.floor(totalCosts * ESCALATION_COST_MULTIPLIER);
     }
+    // Budget Booker (PASSIVE joker) trims show costs.
+    const costReduction = synergyManager
+      .getPassiveEffects()
+      .filter((e) => e.type === 'COST_REDUCTION_PERCENT')
+      .reduce((sum, e) => sum + e.value, 0);
+    if (costReduction > 0) {
+      totalCosts = Math.floor(totalCosts * (1 - costReduction / 100));
+    }
 
     // Calculate reputation and fan gains with equipment bonus. (Balance pass:
     // gains were ~1 order of magnitude below the win thresholds, making every
@@ -697,6 +728,8 @@ export class TurnResolutionEngine {
     reputationGain = Math.floor(
       reputationGain * (1 + repBonus / 100) * runMods.reputationMultiplier * (sig?.repMult ?? 1),
     );
+    // Flat reputation from band+venue combos (e.g. True DIY +10).
+    reputationGain += comboRep;
 
     // Playing a show is tiring — base stress scaled by the run's modifier.
     // This is what makes Burnout reachable through normal play.
@@ -728,6 +761,12 @@ export class TurnResolutionEngine {
       reputationGain -= 5;
     }
 
+    // Record any combos this bill+venue triggered (idempotent + persisted for
+    // free via store.discoveredSynergies); flag the ones first found TONIGHT for
+    // the results modal's "NEW SYNERGY DISCOVERED" beat.
+    const prevDiscovered = new Set(store.discoveredSynergies);
+    combos.forEach((c) => store.discoverSynergy(c.id));
+
     return {
       showId: show.id,
       success: true,
@@ -744,6 +783,13 @@ export class TurnResolutionEngine {
       },
       incidents,
       isSuccess: finalRevenue > totalCosts,
+      venueSynergies: combos.map((c) => ({
+        name: c.name,
+        description: c.description,
+      })),
+      combosDiscovered: combos
+        .filter((c) => !prevDiscovered.has(c.id))
+        .map((c) => c.id),
     };
   }
 
@@ -770,6 +816,8 @@ export class TurnResolutionEngine {
         },
       ],
       isSuccess: false,
+      venueSynergies: [],
+      combosDiscovered: [],
     };
   }
 
@@ -795,6 +843,8 @@ export class TurnResolutionEngine {
         },
       ],
       isSuccess: false,
+      venueSynergies: [],
+      combosDiscovered: [],
     };
   }
 
