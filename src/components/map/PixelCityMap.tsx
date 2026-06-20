@@ -76,6 +76,10 @@ function inPlaza(tx: number, ty: number): boolean {
 }
 
 interface TreePalette { bark: string; barkDark: string; leafDark: string; leaf: string; leafLight: string }
+// Per-locale coastline character: a warm sand BEACH, a working wooden HARBOR
+// wharf, a muddy RIVER bank, or landlocked NONE. Keeps Detroit off the ocean
+// and gives Boston/Seattle/Brooklyn docks instead of a sunbathing beach.
+type ShoreKind = 'none' | 'beach' | 'harbor' | 'river';
 interface MapTheme {
   grass: string[]; grassBlade: string; grassShade: string;
   path: string; pathLight: string; pathSpeck: string; pathDark: string;
@@ -83,8 +87,9 @@ interface MapTheme {
   soil: string; soilDark: string; gardenFlowers: string[]; wildFlowers: string[];
   tree: TreePalette; roofMix: BuildingKey[]; void: string;
   streetPaved: boolean; // cobblestone streets (urban) vs dirt
-  waterfront: boolean; // draw water along the south edge
+  shore: ShoreKind; // how the south-edge coast reads per locale (see ShoreKind)
   water: string; waterLight: string; waterDark: string; sand: string;
+  dock: string; dockLight: string; dockDark: string; // wharf decking for shore: 'harbor'
   tint: string; // per-city wash over the real terrain tiles (rgba)
 }
 
@@ -98,7 +103,8 @@ const baseTheme: MapTheme = {
   gardenFlowers: ['#ef5a8a', '#f4cf4f', '#ffffff', '#b072e0', '#ff8c4d'], wildFlowers: ['#f4d04f', '#ffffff', '#ef6f9c', '#9c7be0'],
   tree: { bark: '#6e4a2c', barkDark: '#4f3419', leafDark: '#2f7a38', leaf: '#46974c', leafLight: '#69bb60' },
   roofMix: ['tudor', 'cottage', 'townhouse', 'stone', 'manor', 'shopAwning', 'tudor', 'cottage'], void: '#21331f',
-  streetPaved: false, waterfront: false, water: '#3f9bd6', waterLight: '#62b6e6', waterDark: '#2a7cb4', sand: '#e6d3a0',
+  streetPaved: false, shore: 'none', water: '#3f9bd6', waterLight: '#62b6e6', waterDark: '#2a7cb4', sand: '#e6d3a0',
+  dock: '#6b4f34', dockLight: '#8a6743', dockDark: '#4a3520',
   tint: 'rgba(255,236,182,0.05)',
 };
 const mkTheme = (o: Partial<MapTheme>): MapTheme => ({ ...baseTheme, ...o });
@@ -111,28 +117,28 @@ const THEMES: Record<CityThemeKey, MapTheme> = {
     grass: ['#5a8a5e', '#4d7c54', '#41704a', '#355e3d'], grassBlade: '#7aa86c', grassShade: '#2a4d32',
     tree: { bark: '#6b4a2e', barkDark: '#48301a', leafDark: '#23533a', leaf: '#2f7048', leafLight: '#c4632e' },
     void: '#1a2630', water: '#39627a', waterLight: '#5a86a0', waterDark: '#284959', sand: '#cdbd9a',
-    tint: 'rgba(108,134,158,0.13)', waterfront: true, streetPaved: true,
+    tint: 'rgba(108,134,158,0.13)', shore: 'harbor', streetPaved: true,
   }),
   // Detroit × New Orleans — muddy industrial olive, brass-warm wash, murky river.
   detroleans: mkTheme({
     grass: ['#779a73', '#668a66', '#577a5a', '#4a6b4e'], grassBlade: '#8aab7e', grassShade: '#384f3a',
     tree: { bark: '#6a5236', barkDark: '#473521', leafDark: '#2c5238', leaf: '#46714a', leafLight: '#6e9460' },
     void: '#1d2a1c', water: '#5a6e58', waterLight: '#76896c', waterDark: '#44543f', sand: '#9a8a64',
-    tint: 'rgba(196,150,74,0.13)', waterfront: true, streetPaved: true,
+    tint: 'rgba(196,150,74,0.13)', shore: 'river', streetPaved: true,
   }),
-  // Nashville × Seattle — rainy overcast grey-green, wet dark evergreen, inland.
+  // Nashville × Seattle — rainy overcast grey-green, wet dark evergreen, Puget Sound piers.
   nasheattle: mkTheme({
     grass: ['#5f7d6a', '#52715f', '#456354', '#384f44'], grassBlade: '#6e8c79', grassShade: '#2c3e36',
     tree: { bark: '#4a3a2e', barkDark: '#332720', leafDark: '#1f3a30', leaf: '#2e5343', leafLight: '#447059' },
     void: '#1b2723', water: '#3a5560', waterLight: '#557480', waterDark: '#283d46', sand: '#9aa096',
-    tint: 'rgba(118,134,150,0.16)', waterfront: false, streetPaved: false,
+    tint: 'rgba(118,134,150,0.16)', shore: 'harbor', streetPaved: false,
   }),
   // Chicago × Austin — golden prairie, big warm sky, Lake Michigan, paved urban core.
   chicaustin: mkTheme({
     grass: ['#8a9a3c', '#79892f', '#687726', '#56641e'], grassBlade: '#a8b84f', grassShade: '#454f16',
     tree: { bark: '#6f4a26', barkDark: '#4d3217', leafDark: '#5a7a2c', leaf: '#7c9a38', leafLight: '#a4bb52' },
     void: '#2a2410', water: '#2f8aa8', waterLight: '#54acc4', waterDark: '#1f6a86', sand: '#dcc486',
-    tint: 'rgba(240,186,82,0.12)', waterfront: true, streetPaved: true,
+    tint: 'rgba(240,186,82,0.12)', shore: 'beach', streetPaved: true,
   }),
   // Atlanta × Orlando — bright tropical greens, candy-pink wash, beachy teal water.
   atlando: mkTheme({
@@ -140,14 +146,14 @@ const THEMES: Record<CityThemeKey, MapTheme> = {
     tree: { bark: '#9a6a3c', barkDark: '#6e4724', leafDark: '#2f9a48', leaf: '#4fbf5e', leafLight: '#86e57f' },
     gardenFlowers: ['#ff5ab0', '#ffd23f', '#ffffff', '#7ad0e6', '#ff8c4d'],
     void: '#1a3a4a', water: '#22cbd6', waterLight: '#6fe6ec', waterDark: '#16a0b0', sand: '#f2e2b0',
-    tint: 'rgba(255,138,196,0.12)', waterfront: true, streetPaved: true,
+    tint: 'rgba(255,138,196,0.12)', shore: 'beach', streetPaved: true,
   }),
   // Tampa × SF Bay — humid swamp, grey-green fog wash, murky gulf, dirt roads.
   santampa: mkTheme({
     grass: ['#4e6b3f', '#42603a', '#395433', '#2f482b'], grassBlade: '#6a8a4e', grassShade: '#243a22',
     tree: { bark: '#4a3a26', barkDark: '#31261a', leafDark: '#1f3f2a', leaf: '#2f5e3a', leafLight: '#4a814c' },
     void: '#16241c', water: '#2f6a5e', waterLight: '#4a8c7c', waterDark: '#1f4d44', sand: '#9aa07a',
-    tint: 'rgba(110,134,118,0.15)', waterfront: true, streetPaved: false,
+    tint: 'rgba(110,134,118,0.15)', shore: 'beach', streetPaved: false,
   }),
   // NYC × LA — cool concrete megacity, neon magenta-purple wash, harbour docks, paved.
   newangeles: mkTheme({
@@ -155,7 +161,7 @@ const THEMES: Record<CityThemeKey, MapTheme> = {
     cobble: '#a8a6b0', cobbleLight: '#c0bec8', cobbleDark: '#88868f', cobbleGrout: '#54525c',
     tree: { bark: '#5a4763', barkDark: '#3a2c42', leafDark: '#2a6b58', leaf: '#3d8a6c', leafLight: '#5cab7e' },
     void: '#1a1226', water: '#2f8fb0', waterLight: '#54b4cf', waterDark: '#1e6a8a', sand: '#b8b0c4',
-    tint: 'rgba(196,72,210,0.13)', waterfront: true, streetPaved: true,
+    tint: 'rgba(196,72,210,0.13)', shore: 'harbor', streetPaved: true,
   }),
 };
 
@@ -645,8 +651,14 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
       if (isRoad(tx, ty)) setMat(tx, ty, M_ROAD);
       else if (isSidewalk(tx, ty)) setMat(tx, ty, M_SIDEWALK);
     }
-  if (theme.waterfront) {
+  // South-edge coast, styled per locale (theme.shore). A beach or harbour gets a
+  // 1-tile shore band (M_SAND = warm sand OR wharf decking, decided at paint) over
+  // a 3-tile sea; a river is just the bank — water meets the land with no strip.
+  if (theme.shore === 'beach' || theme.shore === 'harbor') {
     for (let tx = 0; tx < WORLD_W; tx++) setMat(tx, WORLD_H - 4, M_SAND);
+    for (let ty = WORLD_H - 3; ty < WORLD_H; ty++)
+      for (let tx = 0; tx < WORLD_W; tx++) setMat(tx, ty, M_WATER);
+  } else if (theme.shore === 'river') {
     for (let ty = WORLD_H - 3; ty < WORLD_H; ty++)
       for (let tx = 0; tx < WORLD_W; tx++) setMat(tx, ty, M_WATER);
   }
@@ -704,7 +716,7 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
   // 2a. Dual-grid paint: each material drawn over the lower terrain with rounded
   // edges + a bevelled raised kerb (lit top, shadowed front face, cast shadow).
   const blit4 = (s: AtlasSprite, tx: number, ty: number) => { tile(s, tx, ty); tile(s, tx + 1, ty); tile(s, tx, ty + 1); tile(s, tx + 1, ty + 1); };
-  interface LayerCfg { field: (tx: number, ty: number) => boolean; matTile?: AtlasSprite; fill?: string; rim: string; frontShadow: string; highSide?: 'material' | 'lower'; tint?: string; kerb?: boolean; varies?: boolean }
+  interface LayerCfg { field: (tx: number, ty: number) => boolean; matTile?: AtlasSprite; fill?: string; rim: string; frontShadow: string; highSide?: 'material' | 'lower'; tint?: string; kerb?: boolean; varies?: boolean; planks?: boolean; plankLine?: string; plankSeam?: string }
   const paintLayer = (cfg: LayerCfg) => {
     const f = cfg.field;
     for (let ty = -1; ty < WORLD_H; ty++)
@@ -717,6 +729,14 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
         if (cfg.fill) {
           // flat palette fill (clips cleanly to rounded edges — no cut-up tile grid)
           ctx.fillStyle = cfg.fill; ctx.fillRect(ox, oy, TILE, TILE);
+          if (cfg.planks) {
+            // wharf decking: vertical board joints + horizontal plank seams. Drawn
+            // inside the clipped dual-grid shape, so the wood reads only on the dock.
+            ctx.fillStyle = cfg.plankSeam ?? cfg.frontShadow;
+            for (let bx = ox + 5; bx < ox + TILE; bx += 6) ctx.fillRect(bx, oy, 1, TILE);
+            ctx.fillStyle = cfg.plankLine ?? cfg.rim;
+            ctx.fillRect(ox, oy + 3, TILE, 1); ctx.fillRect(ox, oy + TILE - 4, TILE, 1);
+          }
         } else if (cfg.matTile) {
           blit4(cfg.matTile, tx, ty);
         }
@@ -746,8 +766,9 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
   // the corridors and the garden island gets a rounded sidewalk surround.
   paintLayer({ field: (tx, ty) => isMat(tx, ty, M_SIDEWALK, M_ROAD), fill: theme.cobble, kerb: true, highSide: 'material', rim: theme.cobbleLight, frontShadow: theme.cobbleDark });
   paintLayer({ field: (tx, ty) => isMat(tx, ty, M_ROAD), matTile: TERRAIN.road, kerb: true, highSide: 'lower', rim: theme.cobbleLight, frontShadow: 'rgba(0,0,0,0.28)', tint: 'rgba(140,110,70,0.06)' });
-  if (theme.waterfront || beachDist) {
-    paintLayer({ field: (tx, ty) => isMat(tx, ty, M_SAND, M_WATER), fill: theme.sand, kerb: true, highSide: 'material', rim: theme.sand, frontShadow: theme.soilDark });
+  if (theme.shore !== 'none' || beachDist) {
+    const dock = theme.shore === 'harbor'; // wooden wharf decking vs warm sand
+    paintLayer({ field: (tx, ty) => isMat(tx, ty, M_SAND, M_WATER), fill: dock ? theme.dock : theme.sand, kerb: true, highSide: 'material', rim: dock ? theme.dockLight : theme.sand, frontShadow: dock ? theme.dockDark : theme.soilDark, planks: dock, plankLine: theme.dockLight, plankSeam: theme.dockDark });
     paintLayer({ field: (tx, ty) => isMat(tx, ty, M_WATER), matTile: TERRAIN.water, kerb: true, highSide: 'material', rim: theme.waterLight, frontShadow: theme.waterDark, varies: false });
   }
 
