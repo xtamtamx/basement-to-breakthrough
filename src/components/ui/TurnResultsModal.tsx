@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShowResult } from '@game/types';
 import { useGameStore } from '@stores/gameStore';
 import { SATIRICAL_TURN_RESULTS } from '@game/data/satiricalText';
 import type { SynergyTriggerResult } from '@game/mechanics/SynergyManager';
+import { audio } from '@utils/simpleAudio';
+import { haptics } from '@utils/mobile';
 import { X, Users, DollarSign, Star } from 'lucide-react';
 
 interface TurnResultsModalProps {
@@ -29,6 +31,8 @@ interface TurnResultsModalProps {
   };
   /** Equipped-synergy ("joker") triggers that fired this turn, for feedback. */
   synergyEffects?: SynergyTriggerResult[];
+  /** Per-turn passive payout from owned gear + sellout landmarks. */
+  passiveIncome?: { money: number; fans: number };
 }
 
 export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
@@ -38,7 +42,8 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
   totalUpkeep = 0,
   dayJobResult,
   difficultyEvent,
-  synergyEffects = []
+  synergyEffects = [],
+  passiveIncome
 }) => {
   const allBands = useGameStore((state) => state.allBands);
   const venues = useGameStore((state) => state.venues);
@@ -93,6 +98,29 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
     return "";
   };
 
+  const anySoldOut = showResults.some((r) => {
+    const d = getShowDetails(r.showId);
+    return d.capacity > 0 && r.attendance >= d.capacity;
+  });
+  const anyDiscovery = showResults.some((r) => (r.combosDiscovered?.length ?? 0) > 0);
+  const anyIncident = showResults.some((r) => r.incidentOccurred);
+  const bigNight = anySoldOut || anyDiscovery || totalProfit > 100;
+
+  // The turn used to resolve in silence. Fire one outcome-tiered stinger + a
+  // matching haptic when the report opens, so a great night actually lands.
+  useEffect(() => {
+    if (!isOpen) return;
+    if (anyDiscovery) audio.synergy();
+    else if (anySoldOut) audio.soldOut();
+    else if (totalProfit > 100) audio.coin();
+    else if (totalProfit >= 0) audio.success();
+    else audio.error();
+    if (totalProfit >= 0 && !anyIncident) haptics.success();
+    else haptics.error();
+    // Fire once per open; the derived flags are snapshots of this turn's result.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (
@@ -146,13 +174,13 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
             alignItems: 'center',
             gap: '12px'
           }}>
-            <h2 className="snes-pixel" style={{
+            <h2 className={`snes-pixel${bigNight ? ' btb-shake' : ''}`} style={{
               fontSize: '12px',
-              color: '#f72585',
+              color: bigNight ? '#ffd23f' : '#f72585',
               margin: 0,
               letterSpacing: 0,
               lineHeight: 1.5
-            }}>Post-Show Damage Report</h2>
+            }}>{anySoldOut ? '🎉 Sold-Out Night!' : 'Post-Show Damage Report'}</h2>
             <button
               onClick={onClose}
               style={{
@@ -246,6 +274,14 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px' }}>
                     <span style={{ color: '#6f6796', fontSize: '12px' }}>└ Living Costs (rent, ramen, regret)</span>
                     <span style={{ color: '#ff5c57', fontSize: '12px' }}>-${totalUpkeep}</span>
+                  </div>
+                )}
+                {passiveIncome && passiveIncome.money > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px' }}>
+                    <span style={{ color: '#6f6796', fontSize: '12px' }}>
+                      └ Gear & Landmarks (merch, EPs sold){passiveIncome.fans > 0 ? ` • +${passiveIncome.fans} fans` : ''}
+                    </span>
+                    <span style={{ color: '#3ad17e', fontSize: '12px' }}>+${passiveIncome.money}</span>
                   </div>
                 )}
                 <div style={{
@@ -355,10 +391,16 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
                       <div style={{ color: '#6f6796', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                         <span>{result.attendance}/{details.capacity} attended • +{result.fansGained} fans</span>
                         {details.capacity > 0 && result.attendance >= details.capacity && (
-                          <span className="snes-pixel btb-pop" style={{
+                          <span className="snes-pixel btb-pop btb-shake" style={{
                             fontSize: '7px', letterSpacing: 0, color: '#1a0a14',
                             backgroundColor: '#ffd23f', padding: '2px 5px'
                           }}>🎉 SOLD OUT</span>
+                        )}
+                        {result.incidentOccurred && (
+                          <span className="snes-pixel btb-pop" style={{
+                            fontSize: '7px', letterSpacing: 0, color: '#ffffff',
+                            backgroundColor: '#ff5c57', padding: '2px 5px'
+                          }}>🚨 INCIDENT</span>
                         )}
                       </div>
                       {result.venueSynergies && result.venueSynergies.length > 0 && (

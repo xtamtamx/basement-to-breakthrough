@@ -104,6 +104,8 @@ export interface TurnResult {
   showResults: ShowResult[];
   /** Flat living costs + equipment upkeep (venue rent is per-show, not per-turn) */
   totalUpkeep: number;
+  /** Per-turn passive payout from owned gear + sellout landmarks (recording sales, etc.) */
+  passiveIncome?: { money: number; fans: number };
   dayJobResult?: DayJobTurnResult;
   difficultyEvent?: DifficultyTurnEvent;
   // Phase A run structure
@@ -368,6 +370,10 @@ export class TurnResolutionEngine {
     return {
       showResults,
       totalUpkeep,
+      passiveIncome:
+        passiveMoney > 0 || passiveFans > 0
+          ? { money: passiveMoney, fans: passiveFans }
+          : undefined,
       dayJobResult: jobResult || undefined,
       difficultyEvent: difficultyEvent.message
         ? {

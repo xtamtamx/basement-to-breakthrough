@@ -318,6 +318,7 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
         dayJobResult={turnResults.dayJobResult}
         difficultyEvent={turnResults.difficultyEvent}
         synergyEffects={turnResults.synergyEffects}
+        passiveIncome={turnResults.passiveIncome}
       />
 
       {/* Milestone synergy offer ("joker" reward) */}
