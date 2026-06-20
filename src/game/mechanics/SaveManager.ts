@@ -21,7 +21,6 @@
  * (src/game/mechanics/__tests__/SaveManager.test.ts).
  */
 import { Band, Venue, Show, Resources, Equipment, FactionEvent } from '@game/types';
-import { equipmentManagerV2 } from './EquipmentManagerV2';
 import { venueUpgradeManager } from './VenueUpgradeManager';
 import { factionSystem } from './FactionSystem';
 import { safeStorage } from '@utils/safeStorage';
@@ -240,18 +239,11 @@ class SaveManager {
 
   // Serialize system states
   private serializeEquipmentState(): EquipmentStateData {
-    try {
-      // Get equipment data from equipmentManagerV2
-      const ownedEquipment = equipmentManagerV2.getOwnedEquipment();
-      const rentedEquipment = equipmentManagerV2.getRentedEquipment();
-      return {
-        owned: ownedEquipment.map(e => ({ ...e })),
-        rented: rentedEquipment.map(e => ({ equipmentId: e.id, turnsRemaining: 1 }))
-      };
-    } catch (error) {
-      devLog.error('Failed to serialize equipment state:', error);
-      return { owned: [], rented: [] };
-    }
+    // The global player-owned equipment inventory (EquipmentManagerV2) was
+    // removed — equipment is now per-venue (VenueUpgradeSystem) and never lived
+    // in this legacy save path. Emit an empty payload to keep the save shape
+    // back-compatible.
+    return { owned: [], rented: [] };
   }
 
   private serializeVenueUpgradeState(): VenueUpgradeStateData {
@@ -281,29 +273,10 @@ class SaveManager {
   }
 
   // Restore system states
-  private restoreEquipmentState(state: EquipmentStateData): void {
-    try {
-      if (!state || typeof state !== 'object') return;
-      
-      // Clear current equipment
-      equipmentManagerV2.clearInventory();
-      
-      // Restore owned equipment
-      if (Array.isArray(state.owned)) {
-        state.owned.forEach((equipment: Equipment) => {
-          equipmentManagerV2.addEquipment(equipment);
-        });
-      }
-      
-      // Restore rented equipment
-      if (Array.isArray(state.rented)) {
-        state.rented.forEach((rental: { equipmentId: string; turnsRemaining: number }) => {
-          equipmentManagerV2.rentEquipmentForSave(rental.equipmentId, rental.turnsRemaining);
-        });
-      }
-    } catch (error) {
-      prodLog.error('Failed to restore equipment state:', error);
-    }
+  private restoreEquipmentState(_state: EquipmentStateData): void {
+    // No-op: the global equipment inventory (EquipmentManagerV2) was removed and
+    // nothing consumes a restored inventory. Older saves may still carry an
+    // `equipment` payload; it is harmlessly ignored.
   }
 
   private restoreVenueUpgradeState(state: VenueUpgradeStateData): void {

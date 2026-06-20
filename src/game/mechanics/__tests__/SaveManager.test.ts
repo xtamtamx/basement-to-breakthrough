@@ -12,17 +12,7 @@ vi.mock('@utils/safeStorage', () => ({
   }
 }));
 
-// Mock equipment and faction managers
-vi.mock('../EquipmentManagerV2', () => ({
-  equipmentManagerV2: {
-    getOwnedEquipment: vi.fn().mockReturnValue([]),
-    getRentedEquipment: vi.fn().mockReturnValue([]),
-    clearInventory: vi.fn(),
-    addEquipment: vi.fn(),
-    rentEquipmentForSave: vi.fn(),
-  }
-}));
-
+// Mock venue-upgrade and faction managers
 vi.mock('../VenueUpgradeManager', () => ({
   venueUpgradeManager: {
     applyUpgrade: vi.fn(),
