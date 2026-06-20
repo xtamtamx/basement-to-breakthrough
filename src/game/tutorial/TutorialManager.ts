@@ -63,6 +63,27 @@ const STEPS: TutorialStep[] = [
     gate: { kind: 'button', label: 'Got it' },
   },
   {
+    id: 'jokers',
+    title: 'These are your jokers 🃏',
+    body:
+      'You start with one passive perk down here. It fires every show. ' +
+      "You'll be offered more as your scene grows — and matching the right bands to the right " +
+      'venues triggers bonus combos on top. This is where the real strategy lives.',
+    target: '[data-tut="jokers"]',
+    placement: 'below',
+    gate: { kind: 'button', label: 'Nice' },
+  },
+  {
+    id: 'challenges',
+    title: 'Optional challenges 🎯',
+    body:
+      'Each run rolls a few optional goals up here. Clear them for bonus fame — your ' +
+      "permanent currency for upgrades between runs. No pressure: they don't affect this run at all.",
+    target: '[data-tut="challenges"]',
+    placement: 'below',
+    gate: { kind: 'button', label: 'Got it' },
+  },
+  {
     id: 'go-bands',
     title: 'Sign an act',
     body: 'Every show needs a band. Open the Bands tab to scout the local talent.',

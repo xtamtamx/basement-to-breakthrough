@@ -217,6 +217,7 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
               <button
                 onClick={() => setShowObjectives(true)}
                 aria-label="Challenges"
+                data-tut="challenges"
                 style={{ height: 32, minWidth: 32, padding: '0 7px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', background: '#1f1a3a', color: objectivesDone > 0 ? '#3ad17e' : '#c77dff', border: '2px solid #0a0814', boxShadow: 'inset 1px 1px 0 #3a2f5c', cursor: 'pointer', borderRadius: 0 }}
               >
                 <Target size={14} />
@@ -244,7 +245,7 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
       {/* Equipped synergies ("jokers") — always visible just under the HUD.
           Keyed on version+round so the singleton-backed bar re-renders on
           acquire and after each turn (trigger counts). */}
-      <div style={{ flexShrink: 0, padding: '6px 10px 0' }}>
+      <div data-tut="jokers" style={{ flexShrink: 0, padding: '6px 10px 0' }}>
         <SynergyBar
           key={`${synergyVersion}-${currentRound}`}
           onSlotClick={() => handleViewChange('synergies')}

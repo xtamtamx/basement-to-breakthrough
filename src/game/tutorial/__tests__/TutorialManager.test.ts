@@ -19,7 +19,7 @@ describe('TutorialManager', () => {
     tm.startTutorial();
     expect(tm.isActive()).toBe(true);
     expect(tm.getCurrentStep()?.id).toBe('welcome');
-    expect(tm.getCurrentProgress()).toEqual({ current: 1, total: 8 });
+    expect(tm.getCurrentProgress()).toEqual({ current: 1, total: 10 });
   });
 
   it("'button' steps advance only via advance()", () => {
@@ -33,6 +33,8 @@ describe('TutorialManager', () => {
     const tm = new TutorialManager();
     tm.startTutorial();
     tm.advance(); // -> resources (button)
+    tm.advance(); // -> jokers (button)
+    tm.advance(); // -> challenges (button)
     tm.advance(); // -> go-bands (tap)
     expect(tm.getCurrentStep()?.id).toBe('go-bands');
 
@@ -47,6 +49,8 @@ describe('TutorialManager', () => {
     const tm = new TutorialManager();
     tm.startTutorial();
     tm.advance(); // resources
+    tm.advance(); // jokers
+    tm.advance(); // challenges
     tm.advance(); // go-bands
     tm.tapAdvance(); // sign-band
     expect(tm.getCurrentStep()?.id).toBe('sign-band');
@@ -61,12 +65,14 @@ describe('TutorialManager', () => {
   it("the build-show 'state' gate advances only once a show is booked", () => {
     const tm = new TutorialManager();
     tm.startTutorial();
-    // welcome, resources, go-bands, sign-band, go-shows, build-show
-    tm.advance();
-    tm.advance();
-    tm.tapAdvance();
-    tm.evaluateState(slice({ rosterBandIds: ['a', 'b'] }));
-    tm.tapAdvance();
+    // welcome, resources, jokers, challenges, go-bands, sign-band, go-shows, build-show
+    tm.advance(); // resources
+    tm.advance(); // jokers
+    tm.advance(); // challenges
+    tm.advance(); // go-bands
+    tm.tapAdvance(); // sign-band
+    tm.evaluateState(slice({ rosterBandIds: ['a', 'b'] })); // go-shows
+    tm.tapAdvance(); // build-show
     expect(tm.getCurrentStep()?.id).toBe('build-show');
 
     tm.evaluateState(slice({ scheduledShows: [] })); // no shows yet — stays
@@ -81,6 +87,8 @@ describe('TutorialManager', () => {
     tm.startTutorial();
     // walk to the final 'results' step
     tm.advance(); // resources
+    tm.advance(); // jokers
+    tm.advance(); // challenges
     tm.advance(); // go-bands
     tm.tapAdvance(); // sign-band
     tm.evaluateState(slice({ rosterBandIds: ['a', 'b'] })); // go-shows
