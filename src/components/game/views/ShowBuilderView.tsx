@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useGameStore } from '@stores/gameStore';
 import { Venue, Show } from '@game/types';
 import { haptics } from '@utils/mobile';
@@ -145,6 +145,20 @@ export const ShowBuilderView: React.FC = () => {
   };
 
   const preview = calculateShowPreview();
+
+  // The Balatro "ooh!" beat: when tweaking the bill lights up a NEW combo, ding +
+  // buzz so build-craft feels alive. Only fires on an increase (not on un-picks
+  // or ticket-price tweaks), tracked across renders by a ref.
+  const synergyCount = preview?.synergies.length ?? 0;
+  const prevSynergyCount = useRef(0);
+  useEffect(() => {
+    if (synergyCount > prevSynergyCount.current) {
+      audio.synergy();
+      haptics.medium();
+    }
+    prevSynergyCount.current = synergyCount;
+  }, [synergyCount]);
+
   // Gate booking on the TRUE outlay (rent + every band's fee), not just rent —
   // otherwise a near-broke player books a bill they can't afford to resolve.
   const canBook =
@@ -177,6 +191,8 @@ export const ShowBuilderView: React.FC = () => {
     scheduleShow(show, duringTutorialBuild ? 1 : undefined);
     haptics.success();
     audio.play('cardDrop'); // satisfying "thunk" as the show lands on the calendar
+    // A bill with combos stacked on it lands with a flourish, not just a thunk.
+    if ((preview?.synergies.length ?? 0) > 0) audio.soldOut();
 
     // Reset selections
     setSelectedBandIds([]);
@@ -529,7 +545,7 @@ export const ShowBuilderView: React.FC = () => {
               {/* Synergies */}
               {preview.synergies.length > 0 && (
                 <div style={{ marginBottom: '16px' }}>
-                  <h4 className="snes-pixel" style={{
+                  <h4 className="snes-pixel btb-glow" style={{
                     fontSize: '8px',
                     color: '#3ad17e',
                     margin: '0 0 8px',
@@ -539,8 +555,8 @@ export const ShowBuilderView: React.FC = () => {
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                     {preview.synergies.map((synergy, idx) => (
                       <span
-                        key={idx}
-                        className="snes-pixel"
+                        key={synergy.id ?? idx}
+                        className="snes-pixel btb-pop"
                         style={{
                           padding: '5px 8px',
                           backgroundColor: '#0f0b1e',
