@@ -173,7 +173,7 @@ export class DifficultySystem {
   }
   
   // Get band cost with difficulty scaling
-  getScaledBandCost(baseCost: number = 35): number {
+  getScaledBandCost(baseCost: number = 24): number {
     const difficulty = this.getCurrentDifficulty();
     return Math.floor(baseCost * difficulty.bandCostMultiplier);
   }

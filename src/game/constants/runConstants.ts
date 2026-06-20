@@ -40,7 +40,7 @@ export const EVICTION_TURNS_BROKE = 3;
 // Turn Economy
 // Flat per-turn burn ("rent, ramen, and regret"). Venue rent is paid per
 // show at booking/resolution time — NOT per turn for every city venue.
-export const LIVING_COSTS_PER_TURN = 20;
+export const LIVING_COSTS_PER_TURN = 14;
 
 // Base stress each show adds before the run's stressMultiplier. Touring is
 // tiring — this is what makes the Burnout loss reachable through play (not

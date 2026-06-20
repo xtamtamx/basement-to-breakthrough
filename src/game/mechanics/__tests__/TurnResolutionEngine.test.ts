@@ -262,10 +262,10 @@ describe('TurnResolutionEngine', () => {
     it('charges flat living costs instead of per-venue rent', async () => {
       const result = await turnResolutionEngine.executeFullTurn();
 
-      // LIVING_COSTS_PER_TURN (20) + mocked upkeep (0); venue rent is paid
+      // LIVING_COSTS_PER_TURN (14) + mocked upkeep (0); venue rent is paid
       // per show, never per turn for unbooked city venues
-      expect(result.totalUpkeep).toBe(20);
-      expect(state.addMoney).toHaveBeenCalledWith(-20);
+      expect(result.totalUpkeep).toBe(14);
+      expect(state.addMoney).toHaveBeenCalledWith(-14);
     });
 
     it('passes through day job results', async () => {

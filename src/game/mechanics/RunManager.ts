@@ -102,7 +102,7 @@ class RunManager {
       maxTurns: 50,
       winConditions: [
         { type: 'reputation', target: 80, description: 'Reach 80 reputation' },
-        { type: 'fans', target: 350, description: 'Build a 350-strong following' }
+        { type: 'fans', target: 425, description: 'Build a 425-strong following' }
       ],
       modifiers: []
     });
