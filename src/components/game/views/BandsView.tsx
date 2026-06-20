@@ -95,13 +95,14 @@ export const BandsView: React.FC = () => {
       backgroundColor: '#0a0814',
       overflow: 'hidden'
     }}>
-      {/* Header */}
+      {/* Header — title + slot controls stacked above a full-width filter row so
+          the four controls don't cram into one line and overflow at 375px. */}
       <div className="snes-bar snes-bar--top" style={{
         padding: 'calc(8px + env(safe-area-inset-top)) 14px 8px',
         flexShrink: 0,
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
+        flexDirection: 'column',
+        alignItems: 'stretch',
         gap: '10px'
       }}>
         <div style={{ minWidth: 0 }}>
@@ -192,7 +193,12 @@ export const BandsView: React.FC = () => {
                 onClick={() => setFilter(tab.id)}
                 className="snes-pixel"
                 style={{
-                  padding: '8px 10px',
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '4px',
+                  padding: '8px 6px',
                   minHeight: '44px',
                   backgroundColor: active ? '#f72585' : 'transparent',
                   color: active ? '#ffffff' : '#6f6796',

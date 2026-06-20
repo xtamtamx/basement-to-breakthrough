@@ -863,24 +863,31 @@ export const useGameStore = create<GameStore>()(
       // City actions
       updateDistricts: (districts) => set({ districts }),
       updateVenues: (venues) => set({ venues }),
-      switchCity: (cityId) =>
-        set((state) => {
-          const target = state.cities.find((c) => c.id === cityId);
-          if (!target || cityId === state.currentCityId) return {};
-          // Write the active scene's live districts/venues back into its city so
-          // per-city gentrification / venue state survives the round trip.
-          const cities = state.cities.map((c) =>
-            c.id === state.currentCityId
-              ? { ...c, districts: state.districts, venues: state.venues }
-              : c,
-          );
-          return {
-            cities,
-            currentCityId: cityId,
-            districts: target.districts,
-            venues: target.venues,
-          };
-        }),
+      switchCity: (cityId) => {
+        const state = get();
+        const target = state.cities.find((c) => c.id === cityId);
+        if (!target || cityId === state.currentCityId) return;
+        // Write the active scene's live districts/venues back into its city so
+        // per-city gentrification / venue state survives the round trip.
+        const cities = state.cities.map((c) =>
+          c.id === state.currentCityId
+            ? { ...c, districts: state.districts, venues: state.venues }
+            : c,
+        );
+        set({
+          cities,
+          currentCityId: cityId,
+          districts: target.districts,
+          venues: target.venues,
+        });
+        // The day-job pool is per-city (DayJobSystem derives it from the active
+        // districts/shops). Regenerate it for the new scene — the same refresh
+        // startNewRun does — so the jobs list isn't stale from the city you left.
+        // Dynamic import avoids a circular dependency (DayJobSystem reads the store).
+        import('@game/mechanics/DayJobSystem').then(({ dayJobSystem }) =>
+          dayJobSystem.refreshJobs(),
+        );
+      },
       updateVenue: (venue) =>
         set((state) => ({
           venues: state.venues.map(v => v.id === venue.id ? venue : v)
@@ -956,7 +963,13 @@ export const useGameStore = create<GameStore>()(
         // the show resolves; the full cost is charged at execution).
         const venue = get().venues.find((v) => v.id === show.venueId);
         const deposit = venue ? Math.max(0, venue.rent) : 0;
-        const bookedShow = { ...show, bookingDeposit: deposit };
+        // Store the amount ACTUALLY debited (after the MIN_MONEY clamp) as the
+        // deposit, so the resolve-time refund can't over-credit a near-broke
+        // player whose debit was clamped short of the full rent.
+        const currentMoney = get().money;
+        const actualDeposit =
+          currentMoney - clamp(currentMoney - deposit, CONSTRAINTS.MIN_MONEY, CONSTRAINTS.MAX_MONEY);
+        const bookedShow = { ...show, bookingDeposit: actualDeposit };
 
         showPromotionSystem.scheduleShow(bookedShow, turns);
 
