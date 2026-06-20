@@ -35,7 +35,12 @@ const effectChips = (fx: import('@game/types').EquipmentEffects) =>
     fx.passiveIncome ? chip('inc', `+${formatMoney(fx.passiveIncome)}/turn`, '#3ad17e') : null,
     fx.passiveFame ? chip('fame', `+${fx.passiveFame} fans/turn`, '#f72585') : null,
     fx.stressReduction ? chip('str', `−${fx.stressReduction}% band stress`, '#4cc9f0') : null,
-    fx.incidentReduction ? chip('inc-red', `−${fx.incidentReduction}% incidents`, '#ff5c57') : null,
+    // Positive = fewer incidents (good, cyan); negative = an open-air gamble (bad, red).
+    fx.incidentReduction
+      ? fx.incidentReduction > 0
+        ? chip('inc-red', `−${fx.incidentReduction}% incidents`, '#4cc9f0')
+        : chip('inc-red', `+${-fx.incidentReduction}% incident risk`, '#ff5c57')
+      : null,
   ].filter(Boolean);
 
 // Five-pip quality meter (gold filled / dim empty).

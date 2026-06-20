@@ -2,7 +2,9 @@
  * SynergyAcquireModal - Modal for acquiring or replacing synergies
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { audio } from '@utils/simpleAudio';
+import { haptics } from '@utils/mobile';
 import {
   synergyManager,
   Synergy,
@@ -45,6 +47,12 @@ export const SynergyAcquireModal: React.FC<SynergyAcquireModalProps> = ({
   const accent = RARITY_COLOR[synergy.rarity];
   const glow = RARITY_GLOW[synergy.rarity];
 
+  // A milestone joker offer is a celebration — ring it in on open.
+  useEffect(() => {
+    audio.synergy();
+    haptics.success();
+  }, []);
+
   const handleAcquire = () => {
     if (isFull && selectedReplaceSlot === null) {
       return; // Must select a slot to replace
@@ -83,6 +91,7 @@ export const SynergyAcquireModal: React.FC<SynergyAcquireModalProps> = ({
       }}
     >
       <div
+        className={`btb-pop ${glow ? 'btb-glow' : ''}`}
         style={{
           backgroundColor: '#171327',
           maxWidth: '440px',

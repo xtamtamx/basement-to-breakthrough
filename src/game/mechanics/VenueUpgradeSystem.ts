@@ -265,6 +265,62 @@ export const EQUIPMENT_CATALOG: Equipment[] = [
       incidentReduction: 25,
       atmosphereBonus: 3,
     }
+  },
+  {
+    id: 'diy-zine-table',
+    name: 'DIY Zine & Photocopied Merch Station',
+    description: 'Hand-printed zines, stickers, badly dubbed tapes. Supply limited; vibes unlimited.',
+    type: EquipmentType.RECORDING,
+    quality: 1,
+    condition: 100,
+    maintenanceCost: 5,
+    purchasePrice: 400,
+    rentalPrice: 40,
+    owned: false,
+    effects: {
+      passiveIncome: 25,
+      passiveFame: 3,
+      atmosphereBonus: 8,
+    }
+  },
+  {
+    id: 'bass-amp-wall',
+    name: "The Legendary Bassist's Amp Wall",
+    description: 'A storied tower of vintage gear, duct-taped to glory since the 90s. Every bass player in town trusts this rig.',
+    type: EquipmentType.BACKLINE,
+    quality: 3,
+    condition: 100,
+    maintenanceCost: 25,
+    purchasePrice: 2200,
+    rentalPrice: 180,
+    owned: false,
+    effects: {
+      stressReduction: 35,
+      acousticsBonus: 12,
+      reputationMultiplier: 1.12,
+      incidentReduction: 10,
+    },
+    requirements: {
+      minCapacity: 75,
+    }
+  },
+  {
+    id: 'parking-lot-stage',
+    name: 'Actual Parking Lot (Adjacent to Venue)',
+    description: "It's not a stage, it's a parking lot. Somehow that's the whole point — open air, chaos energy, the occasional patrol car.",
+    type: EquipmentType.STAGE,
+    quality: 2,
+    condition: 100,
+    maintenanceCost: 15,
+    purchasePrice: 1800,
+    rentalPrice: 120,
+    owned: false,
+    effects: {
+      capacityBonus: 30,
+      atmosphereBonus: 12,
+      reputationMultiplier: 1.08,
+      incidentReduction: -10, // open-air gamble: cops + weather raise the odds
+    }
   }
 ];
 

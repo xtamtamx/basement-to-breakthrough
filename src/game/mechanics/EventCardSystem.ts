@@ -600,6 +600,169 @@ class EventCardSystem {
       ],
       flavorText: 'The cred does not pay rent. The cred is the point.',
     });
+
+    this.addEventCard({
+      id: 'local_promoter_spotify',
+      name: "Local Promoter Has Never Heard of Spotify (It's 2024)",
+      description: 'An aging scenester insists all bookings go through a LiveJournal link he has not updated since 2009. Does not understand "streaming." Has a Rolodex.',
+      icon: '📇',
+      type: 'opportunity',
+      rarity: 'uncommon',
+      duration: 'instant',
+      effects: [],
+      choices: [
+        {
+          id: 'indulge',
+          text: 'Pretend you still use MySpace, get the booking',
+          effects: [{ type: 'resource_change', target: 'player', value: { reputation: 12, connections: 1 }, description: '+12 rep, +1 connection' }],
+        },
+        {
+          id: 'modernize',
+          text: 'Send him a Spotify link anyway (efficient, condescending)',
+          effects: [{ type: 'resource_change', target: 'player', value: { reputation: -5 }, description: 'He calls you "too online"' }],
+        },
+      ],
+      flavorText: 'His filing cabinet has a USB slot taped to the side.',
+      artStyle: 'backstage_pass',
+    });
+
+    this.addEventCard({
+      id: 'drummer_tsa',
+      name: "Drummer's Cymbals Confiscated by TSA, Replaced With 'Replicas'",
+      description: 'Three 20-year-old Paiste cymbals are now government property. Replacements arrived via overnight shipping at 2:30 AM. They sound like trash can lids.',
+      icon: '✈️',
+      type: 'crisis',
+      rarity: 'common',
+      duration: 'instant',
+      effects: [],
+      choices: [
+        {
+          id: 'replace_quick',
+          text: 'Buy emergency cymbals to save the show (oof)',
+          effects: [{ type: 'resource_change', target: 'player', value: { money: -180, reputation: 8 }, description: '-$180, +8 rep for saving it' }],
+        },
+        {
+          id: 'borrow_kit',
+          text: 'Call a local drummer; borrow their kit',
+          effects: [{ type: 'resource_change', target: 'player', value: { connections: -2, stress: 5 }, description: '-2 connections, +5 stress' }],
+        },
+      ],
+    });
+
+    this.addEventCard({
+      id: 'three_band_wrong_venue',
+      name: 'Three Bands Show Up to Wrong Venue, Accidentally Throw a Festival',
+      description: 'A routing mishap deposits two openers and a headliner at a room expecting only one of them. The crowd is confused. The vibe is immaculate. Attendance doubled.',
+      icon: '🗺️',
+      type: 'wildcard',
+      rarity: 'uncommon',
+      duration: 'instant',
+      effects: [],
+      choices: [
+        {
+          id: 'lean_in',
+          text: 'Turn it into a surprise festival moment',
+          effects: [
+            { type: 'modify_stat', target: 'all_bands', value: { popularity: 12, energy: 15 }, description: 'All bands ride the high' },
+            { type: 'resource_change', target: 'player', value: { fans: 40, reputation: 15 }, description: '+40 fans, +15 rep' },
+          ],
+        },
+        {
+          id: 'apologize',
+          text: 'Apologize, reschedule the extras',
+          effects: [{ type: 'resource_change', target: 'player', value: { stress: 8, reputation: -5 }, description: '+8 stress, -5 rep' }],
+        },
+      ],
+      artStyle: 'concert_poster',
+    });
+
+    this.addEventCard({
+      id: 'vinyl_repress_shortage',
+      name: 'Vinyl Sold Out Before Release; Scene Debates "Authenticity" of Digital Drop',
+      description: 'The 300-copy hand-pressed run was gone in pre-orders within three hours. A 47-post thread erupts over whether a Bandcamp-only drop "defeats the purpose."',
+      icon: '💿',
+      type: 'opportunity',
+      rarity: 'uncommon',
+      duration: 'instant',
+      effects: [],
+      choices: [
+        {
+          id: 'embrace_digital',
+          text: 'Celebrate the digital drop; move copies, build buzz',
+          effects: [
+            { type: 'resource_change', target: 'player', value: { money: 200, fans: 30 }, description: '+$200, +30 fans' },
+            { type: 'trigger_synergy', target: 'all_bands', value: 'underground-network', description: 'Scene unity over format wars' },
+          ],
+        },
+        {
+          id: 'rush_repress',
+          text: 'Emergency repress; spend big to get vinyl in hand',
+          effects: [{ type: 'resource_change', target: 'player', value: { money: -300, reputation: 20 }, description: '-$300 rush fee, +20 rep for commitment' }],
+        },
+      ],
+      flavorText: 'The thread is cross-posted to Reddit, Threads, and three Discord servers.',
+    });
+
+    this.addEventCard({
+      id: 'venue_brunch_rebrand',
+      name: "Venue Owner Wants to 'Rebrand' as a Brunch Spot; Your Lease Is Up",
+      description: 'The space that hosted 200 shows is now gentrification target #1. The landlord wants a pastry display, and live music "doesn\'t really fit the new vision."',
+      icon: '🥐',
+      type: 'crisis',
+      rarity: 'rare',
+      duration: 'instant',
+      effects: [],
+      choices: [
+        {
+          id: 'fight_it',
+          text: 'Organize a scene defense; publicize the landlord greed',
+          effects: [
+            { type: 'resource_change', target: 'player', value: { money: -100, reputation: 35, connections: -1 }, description: '-$100, +35 rep, -1 connection (burned bridge)' },
+            { type: 'trigger_synergy', target: 'all_bands', value: 'underground-network', description: 'The scene unifies' },
+          ],
+        },
+        {
+          id: 'negotiate',
+          text: 'Pitch a 3x/month "heritage series" (compromise)',
+          effects: [{ type: 'resource_change', target: 'player', value: { reputation: 10, connections: 1 }, description: '+10 rep, +1 connection' }],
+        },
+        {
+          id: 'fold',
+          text: 'Accept defeat; start scouting new rooms',
+          effects: [{ type: 'resource_change', target: 'player', value: { reputation: -20, stress: 15 }, description: '-20 rep, +15 stress' }],
+        },
+      ],
+      artStyle: 'press_release',
+    });
+
+    this.addEventCard({
+      id: 'legendary_opener_slot',
+      name: 'Major Festival Needs a Last-Minute Opener; Your Best Band Gets the Call',
+      description: 'A mid-tier act dropped out of a 5,000-cap fest. The booker saw your scene energy and offers your hottest band the opening slot. Friday, one-hour set, no pay — but the exposure is real.',
+      icon: '👑',
+      type: 'legendary',
+      rarity: 'rare',
+      duration: 'instant',
+      requirements: [{ type: 'turn_number', value: 15, operator: 'greater_than' }],
+      effects: [],
+      choices: [
+        {
+          id: 'say_yes',
+          text: 'Say yes; brief the band and pray they kill it',
+          effects: [
+            { type: 'modify_stat', target: 'all_bands', value: { popularity: 20, energy: 18, stress: 12 }, description: 'Fame + adrenaline + nerves' },
+            { type: 'resource_change', target: 'player', value: { reputation: 25, fans: 60 }, description: '+25 rep, +60 fans' },
+          ],
+        },
+        {
+          id: 'decline',
+          text: 'Decline (building your own festival sounds better)',
+          effects: [{ type: 'resource_change', target: 'player', value: { reputation: 5 }, description: '+5 rep for staying true' }],
+        },
+      ],
+      flavorText: 'The crowd will be 60% crew and VIPs. You have 59 minutes to prepare the band of their life.',
+      artStyle: 'tour_flyer',
+    });
   }
 
   private addEventCard(card: EventCard) {

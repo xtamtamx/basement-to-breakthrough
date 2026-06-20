@@ -1,4 +1,4 @@
-import { Band, Venue, Genre, VenueType } from '@game/types';
+import { Band, Venue, Genre, VenueType, EquipmentType } from '@game/types';
 
 /**
  * A band+venue COMBO synergy: a situational bonus activated by a specific
@@ -230,6 +230,60 @@ export class SynergyEngine {
       }
       return null;
     });
+
+    // Basement Democracy - several authentic acts crammed into a tiny basement.
+    // Distinct from True DIY (needs the WHOLE bill at auth>90) and Basement Magic
+    // (one headliner): this rewards a deep, scrappy, collective bill.
+    this.registerSynergy('basement-democracy', (bands, venue) => {
+      const tinyRawRoom =
+        (venue.type === VenueType.BASEMENT || venue.type === VenueType.HOUSE_SHOW) &&
+        venue.capacity < 75;
+      const deepAuthenticBill = bands.length >= 3 && bands.every(b => b.authenticity > 75);
+      if (deepAuthenticBill && tinyRawRoom) {
+        return {
+          id: 'basement-democracy',
+          name: 'Basement Democracy',
+          description: 'A deep bill of true believers in one sweaty basement — consensus through volume',
+          multiplier: 1.2,
+          reputationBonus: 8,
+        };
+      }
+      return null;
+    });
+
+    // Skipped Record Store - a recording rig in a room where physical media moves.
+    this.registerSynergy('vinyl-revival', (bands, venue) => {
+      const band = bands[0];
+      const hasRecordingGear = venue.equipment.some(
+        e => e.owned && e.type === EquipmentType.RECORDING,
+      );
+      const vinylRoom = venue.type === VenueType.DIVE_BAR || venue.type === VenueType.PUNK_CLUB;
+      if (hasRecordingGear && vinylRoom && band.authenticity > 60) {
+        return {
+          id: 'vinyl-revival',
+          name: 'Skipped Record Store',
+          description: 'A live rig in a room where people still buy the tape — physical media moves',
+          multiplier: 1.15,
+          reputationBonus: 4,
+        };
+      }
+      return null;
+    });
+
+    // Scene Savior - a high-energy band reviving a dying neighborhood.
+    this.registerSynergy('underground-rescue', (bands, venue) => {
+      const band = bands[0];
+      if (band.energy > 80 && venue.location.sceneStrength < 40) {
+        return {
+          id: 'underground-rescue',
+          name: 'Scene Savior',
+          description: 'Rebuilding a dormant corner of town one high-octane show at a time',
+          multiplier: 1.25,
+          reputationBonus: 12,
+        };
+      }
+      return null;
+    });
   }
 
   // Get synergy preview for planning
@@ -269,4 +323,7 @@ export const COMBO_CATALOG: {
   { id: 'hometown-heroes', name: 'Hometown Heroes', description: 'Local support packs the room.', tier: 'common' },
   { id: 'real-artist', name: 'Authentic Experience', description: 'Featuring a real underground artist.', tier: 'common' },
   { id: 'bar-boost', name: 'Thirsty Crowd', description: 'An older crowd at a bar venue drinks the place dry.', tier: 'common' },
+  { id: 'basement-democracy', name: 'Basement Democracy', description: 'A deep bill of true believers crammed into one tiny basement.', tier: 'rare' },
+  { id: 'vinyl-revival', name: 'Skipped Record Store', description: 'A live recording rig in a dive where physical media still moves.', tier: 'common' },
+  { id: 'underground-rescue', name: 'Scene Savior', description: 'A high-energy band rebuilding a forgotten corner of the city.', tier: 'rare' },
 ];

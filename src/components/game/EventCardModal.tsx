@@ -3,9 +3,11 @@
  * its choices. Blocks until the player picks. Mirrors SynergyAcquireModal chrome.
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { EventCard } from '@game/mechanics/EventCardSystem';
 import { useGameStore } from '@stores/gameStore';
+import { audio } from '@utils/simpleAudio';
+import { haptics } from '@utils/mobile';
 
 interface EventCardModalProps {
   event: EventCard;
@@ -24,6 +26,28 @@ export const EventCardModal: React.FC<EventCardModalProps> = ({ event, onClose }
   const applyEventCardChoice = useGameStore((s) => s.applyEventCardChoice);
   const accent = TYPE_COLOR[event.type];
   const glow = event.type === 'legendary' ? '0 0 10px 0 rgba(199, 125, 255, 0.6)' : '';
+
+  // Ring the card in by type the moment it's drawn — crises sting, opportunities
+  // chime, legendaries blare. Fires once on mount.
+  useEffect(() => {
+    switch (event.type) {
+      case 'crisis':
+        audio.error();
+        haptics.heavy();
+        break;
+      case 'opportunity':
+        audio.coin();
+        haptics.success();
+        break;
+      case 'legendary':
+        audio.achievement();
+        haptics.heavy();
+        break;
+      default: // wildcard
+        audio.synergy();
+        haptics.medium();
+    }
+  }, [event.type]);
 
   const pick = (choiceId: string | null) => {
     applyEventCardChoice(choiceId);
@@ -45,7 +69,7 @@ export const EventCardModal: React.FC<EventCardModalProps> = ({ event, onClose }
       }}
     >
       <div
-        className="btb-pop"
+        className={`btb-pop ${event.type === 'crisis' ? 'btb-shake' : ''} ${event.type === 'legendary' ? 'btb-glow' : ''}`}
         style={{
           backgroundColor: '#171327',
           maxWidth: '440px',
