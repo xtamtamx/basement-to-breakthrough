@@ -16,7 +16,6 @@ import { safeStorage } from "@utils/safeStorage";
 import { AppErrorBoundary } from "@components/ErrorBoundary/AppErrorBoundary";
 import { ColorblindProvider } from "@contexts/ColorblindContext";
 import { ColorblindMode } from "@game/types";
-import { SaveLoadTest } from "@components/SaveLoadTest";
 import { AudioMemoryTest } from "@components/AudioMemoryTest";
 import { LazyLoadTest } from "@components/LazyLoadTest";
 import { PerformanceMetricsView } from "@components/PerformanceMetricsView";
@@ -28,7 +27,6 @@ function App() {
   const [gameStarted, setGameStarted] = useState(false);
   const [showMainMenu, setShowMainMenu] = useState(true);
   const [showRunModePicker, setShowRunModePicker] = useState(false);
-  const [showSaveLoadTest, setShowSaveLoadTest] = useState(false);
   const [showAudioTest, setShowAudioTest] = useState(false);
   const [showLazyLoadTest, setShowLazyLoadTest] = useState(false);
   const [showPerfMetrics, setShowPerfMetrics] = useState(false);
@@ -40,9 +38,7 @@ function App() {
   // Check for test modes in URL
   const urlParams = new URLSearchParams(window.location.search);
   const testMode = urlParams.get('test');
-  if (testMode === 'saveload' && !showSaveLoadTest) {
-    setShowSaveLoadTest(true);
-  } else if (testMode === 'audio' && !showAudioTest) {
+  if (testMode === 'audio' && !showAudioTest) {
     setShowAudioTest(true);
   } else if (testMode === 'lazy' && !showLazyLoadTest) {
     setShowLazyLoadTest(true);
@@ -66,11 +62,6 @@ function App() {
     audio.play("success");
   };
 
-  // Show save/load test if requested
-  if (showSaveLoadTest) {
-    return <SaveLoadTest />;
-  }
-  
   // Show audio test if requested
   if (showAudioTest) {
     return <AudioMemoryTest />;

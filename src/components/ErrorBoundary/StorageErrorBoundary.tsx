@@ -1,7 +1,8 @@
 import { Component, ErrorInfo, ReactNode } from 'react';
 import { Database, AlertTriangle, Download, Trash2 } from 'lucide-react';
 import { haptics } from '@utils/mobile';
-import { saveManager } from '@game/mechanics/SaveManager';
+import { saveGameManager } from '@game/persistence/SaveGameManager';
+import { safeStorage } from '@utils/safeStorage';
 
 interface Props {
   children: ReactNode;
@@ -69,23 +70,60 @@ export class StorageErrorBoundary extends Component<Props, State> {
     haptics.error();
   }
 
-  handleExportSave = () => {
+  handleExportSave = async () => {
     haptics.medium();
-    const saveData = saveManager.exportSave();
-    
-    if (saveData) {
-      // Create download link
-      const blob = new Blob([saveData], { type: 'application/json' });
+    try {
+      // Emergency backup before the user wipes storage. Gather everything we can
+      // so no progress is lost:
+      //   - the live in-progress session (zustand persist → localStorage), which
+      //     is the most current state and survives even if IndexedDB is the
+      //     failing subsystem;
+      //   - every explicit/auto save slot (SaveGameManager → IndexedDB).
+      const backup: { exportedAt: string; liveSession?: unknown; saves: unknown[] } = {
+        exportedAt: new Date().toISOString(),
+        saves: [],
+      };
+
+      // 'diy-indie-empire-storage' is the gameStore zustand-persist key
+      // (see SaveGameManager docs and App.tsx's Continue check).
+      const liveSession = safeStorage.getItem('diy-indie-empire-storage');
+      if (liveSession) {
+        try {
+          backup.liveSession = JSON.parse(liveSession);
+        } catch {
+          backup.liveSession = liveSession;
+        }
+      }
+
+      try {
+        const slots = await saveGameManager.getSaveList();
+        for (const slot of slots) {
+          const slotBlob = await saveGameManager.exportSave(slot.id);
+          backup.saves.push(JSON.parse(await slotBlob.text()));
+        }
+      } catch (error) {
+        console.warn('Could not read save slots for export:', error);
+      }
+
+      if (!backup.liveSession && backup.saves.length === 0) {
+        haptics.warning();
+        return;
+      }
+
+      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `btb-save-${Date.now()}.json`;
+      a.download = `btb-save-backup-${Date.now()}.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      
+
       haptics.success();
+    } catch (error) {
+      console.error('Failed to export save:', error);
+      haptics.error();
     }
   };
 
