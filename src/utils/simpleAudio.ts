@@ -115,6 +115,22 @@ class SimpleAudioManager {
     setTimeout(() => this.playTone(1046.5, 0.3), 150); // C6
   }
 
+  synergy() {
+    // Synergy discovered — a bright shimmering sparkle (high triangle arpeggio).
+    this.playTone(1046.5, 0.07, "triangle"); // C6
+    setTimeout(() => this.playTone(1318.51, 0.07, "triangle"), 60); // E6
+    setTimeout(() => this.playTone(1567.98, 0.07, "triangle"), 120); // G6
+    setTimeout(() => this.playTone(2093.0, 0.18, "triangle"), 180); // C7
+  }
+
+  soldOut() {
+    // Sold-out show — a big rising fanfare (square-wave, punchy).
+    this.playTone(392.0, 0.1, "square"); // G4
+    setTimeout(() => this.playTone(523.25, 0.1, "square"), 80); // C5
+    setTimeout(() => this.playTone(659.25, 0.1, "square"), 160); // E5
+    setTimeout(() => this.playTone(783.99, 0.28, "square"), 240); // G5
+  }
+
   play(soundName: string) {
     // Map old API to new methods
     switch (soundName) {
@@ -144,6 +160,12 @@ class SimpleAudioManager {
         break;
       case "achievement":
         this.achievement();
+        break;
+      case "synergy":
+        this.synergy();
+        break;
+      case "soldOut":
+        this.soldOut();
         break;
       default:
         this.tap(); // Default sound

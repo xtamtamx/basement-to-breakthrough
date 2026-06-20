@@ -352,8 +352,14 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
                           ${result.revenue - result.financials.costs}
                         </span>
                       </div>
-                      <div style={{ color: '#6f6796', fontSize: '12px' }}>
-                        {result.attendance}/{details.capacity} attended • +{result.fansGained} fans
+                      <div style={{ color: '#6f6796', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                        <span>{result.attendance}/{details.capacity} attended • +{result.fansGained} fans</span>
+                        {details.capacity > 0 && result.attendance >= details.capacity && (
+                          <span className="snes-pixel btb-pop" style={{
+                            fontSize: '7px', letterSpacing: 0, color: '#1a0a14',
+                            backgroundColor: '#ffd23f', padding: '2px 5px'
+                          }}>🎉 SOLD OUT</span>
+                        )}
                       </div>
                       {result.venueSynergies && result.venueSynergies.length > 0 && (
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '8px' }}>
@@ -366,7 +372,7 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
                         </div>
                       )}
                       {result.combosDiscovered && result.combosDiscovered.length > 0 && (
-                        <div className="snes-pixel" style={{
+                        <div className="snes-pixel btb-pop btb-glow" style={{
                           fontSize: '8px', letterSpacing: 0, color: '#ffd23f', marginTop: '8px'
                         }}>✨ NEW SYNERGY DISCOVERED!</div>
                       )}

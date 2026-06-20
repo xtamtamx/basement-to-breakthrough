@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useGameStore } from '@stores/gameStore';
 import { Venue, Show } from '@game/types';
 import { haptics } from '@utils/mobile';
+import { audio } from '@utils/simpleAudio';
 import { synergyEngine } from '@game/mechanics/SynergyEngine';
 import { difficultySystem } from '@game/mechanics/DifficultySystem';
 import { cityGenreFit } from '@game/world/citySynergy';
@@ -175,6 +176,7 @@ export const ShowBuilderView: React.FC = () => {
       tutorialManager.getCurrentStep()?.id === 'build-show';
     scheduleShow(show, duringTutorialBuild ? 1 : undefined);
     haptics.success();
+    audio.play('cardDrop'); // satisfying "thunk" as the show lands on the calendar
 
     // Reset selections
     setSelectedBandIds([]);
