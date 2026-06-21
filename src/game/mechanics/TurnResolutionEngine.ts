@@ -227,6 +227,8 @@ export class TurnResolutionEngine {
     // One-turn raid/drama blocks have now done their job this turn; clear them
     // before step 4 declares fresh ones for next turn.
     difficultySystem.consumeTurnBlocks();
+    // Single-show equipment rentals applied to tonight's shows above; strip them.
+    venueUpgradeSystem.clearRentals();
 
     // SHOW_END triggers scale with what the shows actually produced
     const showEndEffects = this.applyShowEndPhase(showResults);
@@ -673,8 +675,9 @@ export class TurnResolutionEngine {
     let equipmentIncidentReduction = 0; // flat % off incident chance
 
     venue.equipment.forEach((equipment) => {
-      if (equipment.owned && equipment.condition > 20) {
-        // Equipment needs 20%+ condition to work; effects scale with condition
+      if ((equipment.owned || equipment.rentedForShow) && equipment.condition > 20) {
+        // Owned or rented-for-this-show gear both give show effects (rentals just
+        // don't earn passive income — see calculatePassiveIncome's owned check).
         const effectMultiplier = equipment.condition / 100;
         const fx = equipment.effects;
 

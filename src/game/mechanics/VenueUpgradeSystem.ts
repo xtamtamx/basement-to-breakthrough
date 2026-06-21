@@ -25,7 +25,7 @@ export const EQUIPMENT_CATALOG: Equipment[] = [
       atmosphereBonus: 5,
     },
     requirements: {
-      minCapacity: 50,
+      minCapacity: 30,
     }
   },
   {
@@ -46,7 +46,7 @@ export const EQUIPMENT_CATALOG: Equipment[] = [
       reputationMultiplier: 1.1,
     },
     requirements: {
-      minCapacity: 100,
+      minCapacity: 75,
       powerRequirements: 2,
     }
   },
@@ -187,7 +187,7 @@ export const EQUIPMENT_CATALOG: Equipment[] = [
     effects: {
       reputationMultiplier: 1.1, // Bands love being recorded
       atmosphereBonus: 5,
-      passiveIncome: 30, // demo tapes move slowly
+      passiveIncome: 50, // demo tapes move slowly
       passiveFame: 2,
     }
   },
@@ -206,7 +206,7 @@ export const EQUIPMENT_CATALOG: Equipment[] = [
       reputationMultiplier: 1.3,
       atmosphereBonus: 10,
       // A working studio: recorded EPs sell + circulate every turn
-      passiveIncome: 120,
+      passiveIncome: 200,
       passiveFame: 8,
     },
     requirements: {
@@ -229,7 +229,7 @@ export const EQUIPMENT_CATALOG: Equipment[] = [
     rentalPrice: 60,
     owned: false,
     effects: {
-      passiveIncome: 45,
+      passiveIncome: 60,
       passiveFame: 4,
       atmosphereBonus: 4,
     }
@@ -278,7 +278,7 @@ export const EQUIPMENT_CATALOG: Equipment[] = [
     rentalPrice: 40,
     owned: false,
     effects: {
-      passiveIncome: 25,
+      passiveIncome: 35,
       passiveFame: 3,
       atmosphereBonus: 8,
     }
@@ -644,22 +644,40 @@ export class VenueUpgradeSystem {
   }
   
   // Rent equipment for a single show
-  rentEquipment(_venueId: string, equipmentId: string): boolean {
+  rentEquipment(venueId: string, equipmentId: string): boolean {
     const store = useGameStore.getState();
+    const venue = store.venues.find(v => v.id === venueId);
     const equipment = EQUIPMENT_CATALOG.find(e => e.id === equipmentId);
-    
-    if (!equipment) return false;
-    
-    // Check if can afford
+    if (!venue || !equipment) return false;
     if (store.money < equipment.rentalPrice) return false;
-    
-    // Deduct rental cost
+
+    // Don't double up if it's already owned or already rented this turn.
+    if (venue.equipment.some(e => e.id === equipmentId)) return false;
+
     store.addMoney(-equipment.rentalPrice);
-    
-    // Add temporary equipment bonus for next show
-    // TODO: Implement temporary equipment system
-    
+    // Install it for the next show only: full condition, owned=false (so it gives
+    // show effects but no per-turn passive income), flagged for end-of-turn cleanup.
+    store.updateVenue({
+      ...venue,
+      equipment: [
+        ...venue.equipment,
+        { ...equipment, owned: false, rentedForShow: true, condition: 100 },
+      ],
+    });
     return true;
+  }
+
+  /** Strip spent single-show rentals from every venue (called at end of turn). */
+  clearRentals(): void {
+    const store = useGameStore.getState();
+    store.venues.forEach((venue) => {
+      if (venue.equipment.some((e) => e.rentedForShow)) {
+        store.updateVenue({
+          ...venue,
+          equipment: venue.equipment.filter((e) => !e.rentedForShow),
+        });
+      }
+    });
   }
   
   // Calculate total upkeep costs for a venue

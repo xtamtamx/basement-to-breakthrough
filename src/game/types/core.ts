@@ -353,6 +353,9 @@ export interface Equipment {
   purchasePrice: number;
   rentalPrice: number;
   owned: boolean;
+  /** Rented for the next show only — applies show effects (not passive income),
+   *  then is cleared at end of turn. Mutually exclusive with `owned`. */
+  rentedForShow?: boolean;
   effects: EquipmentEffects;
   requirements?: EquipmentRequirements;
 }
