@@ -1,11 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 import { runManager, RunConfig } from "@game/mechanics/RunManager";
+import { stakesManager, STAKE_TIERS } from "@game/mechanics/StakesManager";
 import { BASE_ROSTER_SLOTS } from "@game/constants/runConstants";
 import { haptics } from "@utils/mobile";
-import { X, DollarSign, Clock, Users, Trophy } from "lucide-react";
+import { X, DollarSign, Clock, Users, Trophy, Lock, Flame } from "lucide-react";
 
 interface RunModeSelectorProps {
-  onSelect: (config: RunConfig) => void;
+  onSelect: (config: RunConfig, stakeTier: number) => void;
   onClose: () => void;
 }
 
@@ -47,12 +48,26 @@ const perkChips = (config: RunConfig): { label: string; good: boolean }[] => {
   return chips;
 };
 
+/** What the chosen stake makes harder, as red "▼" chips (Open Mic = none). */
+const stakeChips = (tier: number): string[] => {
+  const s = STAKE_TIERS[tier];
+  if (!s || s.tier === 0) return [];
+  const chips: string[] = [];
+  if (s.rentMult !== 1) chips.push(`${s.rentMult}× rent`);
+  if (s.gainMult !== 1) chips.push(`${s.gainMult}× gains`);
+  if (s.incidentMult !== 1) chips.push(`${s.incidentMult}× chaos`);
+  if (s.turnMult !== 1) chips.push(`−${Math.round((1 - s.turnMult) * 100)}% turns`);
+  return chips;
+};
+
 export const RunModeSelector: React.FC<RunModeSelectorProps> = ({ onSelect, onClose }) => {
   const configs = runManager.getRunConfigs();
+  // Selected stake tier per mode (defaults to Open Mic so newcomers aren't walled).
+  const [tiers, setTiers] = useState<Record<string, number>>({});
 
-  const pick = (config: RunConfig) => {
+  const pick = (config: RunConfig, tier: number) => {
     haptics.success();
-    onSelect(config);
+    onSelect(config, tier);
   };
 
   return (
@@ -69,7 +84,7 @@ export const RunModeSelector: React.FC<RunModeSelectorProps> = ({ onSelect, onCl
               Pick Your Run
             </h2>
             <p style={{ fontSize: "11px", color: "#b9b3d6", margin: 0 }}>
-              Each mode plays differently — money, length, and band slots all shift.
+              Choose a mode and a stake. Win a stake to unlock the next, harder one.
             </p>
           </div>
           <button
@@ -86,15 +101,17 @@ export const RunModeSelector: React.FC<RunModeSelectorProps> = ({ onSelect, onCl
             const accent = MODE_ACCENT[config.id] ?? "#f72585";
             const slots = rosterSlotsFor(config);
             const perks = perkChips(config);
+            const tier = tiers[config.id] ?? 0;
+            const stake = STAKE_TIERS[tier];
+            const effTurns = Math.max(5, Math.round(config.maxTurns * stake.turnMult));
+            const harder = stakeChips(tier);
             return (
-              <button
+              <div
                 key={config.id}
-                onClick={() => pick(config)}
                 className="snes-panel"
                 style={{
                   textAlign: "left",
                   padding: "12px",
-                  cursor: "pointer",
                   border: `2px solid ${accent}`,
                   boxShadow: `inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814, 0 0 0 1px ${accent}`,
                   borderRadius: 0,
@@ -106,20 +123,20 @@ export const RunModeSelector: React.FC<RunModeSelectorProps> = ({ onSelect, onCl
                 </div>
                 <p style={{ fontSize: "12px", color: "#b9b3d6", margin: "0 0 8px", lineHeight: 1.4, fontStyle: "italic" }}>{config.description}</p>
 
-                {/* Key stats */}
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: perks.length ? "6px" : 0 }}>
+                {/* Key stats (turns reflect the chosen stake) */}
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: perks.length ? "6px" : "8px" }}>
                   <span className="snes-chip" style={{ fontSize: "8px", color: "#3ad17e" }}>
                     <DollarSign size={11} />{config.startingMoney}
                   </span>
                   <span className="snes-chip" style={{ fontSize: "8px", color: "#b9b3d6" }}>
-                    <Clock size={11} />{config.maxTurns} turns
+                    <Clock size={11} />{effTurns} turns
                   </span>
                   <span className="snes-chip" style={{ fontSize: "8px", color: accent, borderColor: accent }}>
                     <Users size={11} />{slots} slots
                   </span>
                 </div>
 
-                {/* Modifier perks */}
+                {/* Mode perks */}
                 {perks.length > 0 && (
                   <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "8px" }}>
                     {perks.map((p, i) => (
@@ -131,11 +148,65 @@ export const RunModeSelector: React.FC<RunModeSelectorProps> = ({ onSelect, onCl
                 )}
 
                 {/* Win conditions */}
-                <div style={{ display: "flex", alignItems: "start", gap: "6px", fontSize: "11px", color: "#6f6796" }}>
+                <div style={{ display: "flex", alignItems: "start", gap: "6px", fontSize: "11px", color: "#6f6796", marginBottom: "10px" }}>
                   <Trophy size={12} color="#ffd23f" style={{ flexShrink: 0, marginTop: "1px" }} />
                   <span style={{ lineHeight: 1.4 }}>{config.winConditions.map((w) => w.description).join(" + ")}</span>
                 </div>
-              </button>
+
+                {/* Stake selector */}
+                <div style={{ borderTop: "2px solid #2a2350", paddingTop: "10px" }}>
+                  <div className="snes-pixel" style={{ fontSize: "7px", color: "#c77dff", letterSpacing: 0, marginBottom: "6px", display: "flex", alignItems: "center", gap: "5px" }}>
+                    <Flame size={11} color="#c77dff" /> STAKE
+                  </div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "5px", marginBottom: "6px" }}>
+                    {STAKE_TIERS.map((s) => {
+                      const unlocked = stakesManager.isUnlocked(config.id, s.tier);
+                      const selected = s.tier === tier;
+                      return (
+                        <button
+                          key={s.tier}
+                          disabled={!unlocked}
+                          onClick={() => { setTiers((t) => ({ ...t, [config.id]: s.tier })); haptics.light(); }}
+                          className="snes-pixel"
+                          style={{
+                            fontSize: "7px",
+                            letterSpacing: 0,
+                            padding: "4px 7px",
+                            minHeight: "28px",
+                            cursor: unlocked ? "pointer" : "not-allowed",
+                            color: selected ? "#0a0814" : unlocked ? "#c77dff" : "#4b4470",
+                            backgroundColor: selected ? "#c77dff" : "#0f0b1e",
+                            border: `2px solid ${selected ? "#c77dff" : unlocked ? "#3a2f5c" : "#241f3d"}`,
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "3px",
+                          }}
+                        >
+                          {!unlocked && <Lock size={9} />}
+                          {s.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p style={{ fontSize: "11px", color: "#6f6796", margin: "0 0 8px", lineHeight: 1.4 }}>{stake.blurb}</p>
+                  {harder.length > 0 && (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "5px", marginBottom: "8px" }}>
+                      {harder.map((h, i) => (
+                        <span key={i} className="snes-pixel" style={{ fontSize: "7px", letterSpacing: 0, color: "#ff5c57", backgroundColor: "#0f0b1e", border: "2px solid #ff5c57", padding: "3px 6px" }}>
+                          ▼ {h}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <button
+                    onClick={() => pick(config, tier)}
+                    className="snes-btn snes-pixel"
+                    style={{ width: "100%", minHeight: "44px", fontSize: "9px", cursor: "pointer", color: "#ffffff", backgroundColor: accent, borderColor: accent }}
+                  >
+                    ▶ Play — {stake.name}
+                  </button>
+                </div>
+              </div>
             );
           })}
         </div>

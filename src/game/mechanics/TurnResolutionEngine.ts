@@ -22,6 +22,7 @@ import { venueUpgradeSystem } from './VenueUpgradeSystem';
 import { runManager } from './RunManager';
 import { metaProgressionManager } from './MetaProgressionManager';
 import { objectiveManager } from './ObjectiveManager';
+import { stakesManager, STAKE_TIERS } from './StakesManager';
 import { gentrificationSystem } from './GentrificationSystem';
 import {
   getCityLandmarks,
@@ -102,6 +103,10 @@ export interface RunCeremony {
   objectiveBonus: number;
   /** Completed optional challenges, for the end-screen breakdown. */
   completedObjectives: { id: string; title: string; fameReward: number }[];
+  /** The difficulty stake this run was played at (0 = Open Mic). */
+  stakeTier: number;
+  /** Name of a newly-unlocked stake tier (a win advanced the ladder), else null. */
+  unlockedStakeName: string | null;
 }
 
 export interface TurnResult {
@@ -441,6 +446,9 @@ export class TurnResolutionEngine {
 
     const isWin = runEnd.reason === 'BREAKTHROUGH_WIN';
     const configId = run.config.id;
+    const stakeTier = run.stakeTier ?? 0;
+    // Winning a stake unlocks the next tier for this mode (persisted cross-run).
+    const unlockedStake = isWin ? stakesManager.recordWin(configId, stakeTier) : null;
     // Capture before endRun() nulls the active run — banking is keyed on this so
     // a replayed conclusion (load a mid-run save, play it out again) is a no-op
     // for currency.
@@ -497,6 +505,8 @@ export class TurnResolutionEngine {
       fameEarned: totalFame,
       objectiveBonus,
       completedObjectives,
+      stakeTier,
+      unlockedStakeName: unlockedStake !== null ? STAKE_TIERS[unlockedStake].name : null,
       newHighScore: result.newHighScore,
       achievements: result.achievements.map((a) => ({
         id: a.id,
@@ -846,7 +856,8 @@ export class TurnResolutionEngine {
     const incidentReduction = passiveEffects
       .filter((e) => e.type === 'INCIDENT_REDUCTION_PERCENT')
       .reduce((sum, e) => sum + e.value, 0);
-    let incidentChance = 0.1 * (sig?.incidentMult ?? 1); // 10% base chance, bent by the city
+    // 10% base, bent by the city signature AND the run's difficulty stake.
+    let incidentChance = 0.1 * (sig?.incidentMult ?? 1) * runManager.getStakeIncidentMult();
     if (isEscalation) {
       incidentChance *= ESCALATION_INCIDENT_MULTIPLIER;
     }

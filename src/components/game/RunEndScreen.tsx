@@ -253,6 +253,26 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
               </div>
             )}
 
+            {ceremony.unlockedStakeName && (
+              <div
+                className="btb-pop"
+                style={{
+                  marginTop: '10px',
+                  padding: '10px 12px',
+                  border: '2px solid #c77dff',
+                  background: 'rgba(199,125,255,0.12)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                }}
+              >
+                <span style={{ fontSize: '18px' }}>🔥</span>
+                <span style={{ fontSize: '12px', color: '#e9d5ff', fontWeight: 700 }}>
+                  New stake unlocked: <span style={{ color: '#c77dff' }}>{ceremony.unlockedStakeName}</span> — play it for a tougher run.
+                </span>
+              </div>
+            )}
+
             <div
               style={{
                 marginTop: '10px',

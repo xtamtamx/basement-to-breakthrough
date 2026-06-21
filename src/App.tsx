@@ -48,10 +48,10 @@ function App() {
     setShowPerfTest(true);
   }
 
-  const handleStartGame = async (runConfig?: RunConfig) => {
+  const handleStartGame = async (runConfig?: RunConfig, stakeTier = 0) => {
     // One canonical start path (config resources + meta bonuses + fresh
     // engine/store) — shared with the run-end screen's "Play Again"
-    await startNewRun(runConfig?.id ?? "classic");
+    await startNewRun(runConfig?.id ?? "classic", stakeTier);
 
     setShowMainMenu(false);
     setGameStarted(true);
@@ -130,9 +130,9 @@ function App() {
           {/* Run mode picker — choose a mode, then start (NEW GAME → here → run) */}
           {showRunModePicker && (
             <RunModeSelector
-              onSelect={(config) => {
+              onSelect={(config, stakeTier) => {
                 setShowRunModePicker(false);
-                handleStartGame(config);
+                handleStartGame(config, stakeTier);
               }}
               onClose={() => setShowRunModePicker(false)}
             />

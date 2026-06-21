@@ -134,8 +134,8 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
   const handlePlayAgain = () => setShowPlayAgainPicker(true);
 
   // Same path as the main menu's start — config resources + meta bonuses.
-  const startRunWithMode = async (configId: string) => {
-    await startNewRun(configId);
+  const startRunWithMode = async (configId: string, stakeTier = 0) => {
+    await startNewRun(configId, stakeTier);
     setShowPlayAgainPicker(false);
     setRunEnd(null);
     setCeremony(null);
@@ -345,7 +345,7 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
       {/* Pick a mode for the next run (over the run-end screen); close = stay */}
       {showPlayAgainPicker && (
         <RunModeSelector
-          onSelect={(config) => startRunWithMode(config.id)}
+          onSelect={(config, stakeTier) => startRunWithMode(config.id, stakeTier)}
           onClose={() => setShowPlayAgainPicker(false)}
         />
       )}

@@ -8,6 +8,7 @@ interface GameStateProps {
 }
 import { SATIRICAL_ACHIEVEMENTS } from '@game/data/satiricalText';
 import { safeStorage } from '@utils/safeStorage';
+import { stakesManager } from './StakesManager';
 
 export interface RunConfig {
   id: string;
@@ -46,6 +47,8 @@ export interface RunModifier {
 export interface RunState {
   runId: string;
   config: RunConfig;
+  /** Selected difficulty stake tier (0 = Open Mic / base). */
+  stakeTier: number;
   currentTurn: number;
   startTime: Date;
   endTime?: Date;
@@ -192,15 +195,43 @@ class RunManager {
   }
   
   // Start a new run
-  startRun(configId: string): RunState {
-    const config = this.runConfigs.get(configId);
-    if (!config) {
+  startRun(configId: string, stakeTier = 0): RunState {
+    const base = this.runConfigs.get(configId);
+    if (!base) {
       throw new Error(`Run config ${configId} not found`);
     }
-    
+
+    // Fold the stake into a per-run COPY of the config (never mutate the shared
+    // base). Stakes raise rent + stress and cool rep/fan gain via a synthetic
+    // modifier (multiplies with the mode's own modifiers in getModifiers), and
+    // shorten the run via turnDelta. Incidents are scaled separately at show time.
+    const stake = stakesManager.getTier(stakeTier);
+    const config: RunConfig = {
+      ...base,
+      maxTurns: Math.max(5, Math.round(base.maxTurns * stake.turnMult)),
+      modifiers:
+        stake.tier === 0
+          ? [...base.modifiers]
+          : [
+              ...base.modifiers,
+              {
+                id: `stake-${stake.tier}`,
+                name: stake.name,
+                description: stake.blurb,
+                effects: {
+                  venueRentMultiplier: stake.rentMult,
+                  reputationMultiplier: stake.gainMult,
+                  fansMultiplier: stake.gainMult,
+                  stressMultiplier: stake.stressMult,
+                },
+              },
+            ],
+    };
+
     this.currentRun = {
       runId: `run-${Date.now()}`,
       config,
+      stakeTier: stake.tier,
       currentTurn: 1,
       startTime: new Date(),
       score: 0,
@@ -339,6 +370,12 @@ class RunManager {
       (sum, mod) => sum + (mod.effects.rosterSlotDelta ?? 0),
       0,
     );
+  }
+
+  /** Incident-chance multiplier from the active run's difficulty stake (1 if none). */
+  getStakeIncidentMult(): number {
+    if (!this.currentRun) return 1;
+    return stakesManager.getTier(this.currentRun.stakeTier).incidentMult;
   }
 
   // End the current run

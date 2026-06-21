@@ -15,6 +15,7 @@ import { dayJobSystem } from './DayJobSystem';
 import { synergyManager, STARTER_SYNERGIES } from './SynergyManager';
 import { objectiveManager } from './ObjectiveManager';
 import { progressionPathSystem } from './ProgressionPathSystem';
+import { stakesManager } from './StakesManager';
 import type { RunMode } from '@game/types';
 import { captureRuntimeSnapshot } from '@game/persistence/runtimeSnapshot';
 import { cityRosterSlotBonus } from '@game/world/cityUnlocks';
@@ -32,15 +33,17 @@ export interface RunStartInfo {
 
 export async function startNewRun(
   configId: string = lastConfigId,
+  stakeTier = 0,
 ): Promise<RunStartInfo> {
   lastConfigId = configId;
+  stakesManager.select(stakeTier);
 
   // Wipe any previous run so a finished (GAME_OVER) run can't bleed through
   useGameStore.getState().resetGame();
   turnResolutionEngine.reset();
   progressionPathSystem.reset(); // run-scoped path must not bleed into the new run
 
-  const run = runManager.startRun(configId);
+  const run = runManager.startRun(configId, stakeTier);
   const bonuses = metaProgressionManager.getRunStartBonuses();
 
   // Roll this run's optional challenges (meta-fame rewards only — see
