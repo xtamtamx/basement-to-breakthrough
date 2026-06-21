@@ -3,9 +3,11 @@
  * Inline-styled (house style) and compact enough for landscape phones.
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { RunEndState, RunEndReason } from '@game/constants/runConstants';
 import { RunCeremony } from '@game/mechanics/TurnResolutionEngine';
+import { audio } from '@utils/simpleAudio';
+import { haptics } from '@utils/mobile';
 
 interface RunEndScreenProps {
   result: RunEndState;
@@ -64,6 +66,18 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
   const config = RESULT_CONFIGS[result.reason];
   const isWin = result.reason === 'BREAKTHROUGH_WIN';
 
+  // The run's climax used to land in silence — ring it in (and harder on a win).
+  useEffect(() => {
+    if (isWin) {
+      audio.achievement();
+      haptics.success();
+    } else {
+      audio.error();
+      haptics.heavy();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div
       style={{
@@ -107,7 +121,7 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
           }}
         >
           <div style={{ fontSize: '40px', lineHeight: 1 }}>{config.icon}</div>
-          <div>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <h1
               style={{
                 fontSize: '26px',
@@ -123,6 +137,38 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
               {config.subtitle}
             </p>
           </div>
+          {/* Grade reveal — graded by the stake you beat (Open Mic→C … No Future→S),
+              bumped a letter by a new high score. The run's emotional payoff. */}
+          {(() => {
+            const GRADES = ['C', 'B', 'A', 'S'];
+            const GRADE_COLOR: Record<string, string> = { S: '#ffd23f', A: '#c77dff', B: '#4cc9f0', C: '#3ad17e', F: '#ff5c57' };
+            const idx = Math.min(3, (ceremony?.stakeTier ?? 0) + (ceremony?.newHighScore ? 1 : 0));
+            const grade = isWin ? GRADES[idx] : 'F';
+            const color = GRADE_COLOR[grade];
+            return (
+              <div
+                className={`btb-pop${grade === 'S' ? ' btb-glow' : ''}`}
+                style={{
+                  flexShrink: 0,
+                  width: '58px',
+                  height: '58px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: `3px solid ${color}`,
+                  color,
+                  fontSize: '34px',
+                  fontWeight: 900,
+                  lineHeight: 1,
+                  background: 'rgba(0,0,0,0.35)',
+                  boxShadow: `0 0 12px 0 ${color}66`,
+                }}
+                aria-label={`Grade ${grade}`}
+              >
+                {grade}
+              </div>
+            );
+          })()}
         </div>
 
         {/* Stats */}
