@@ -171,7 +171,9 @@ export const SynergyAcquireModal: React.FC<SynergyAcquireModalProps> = ({
                   key={i}
                   style={{ fontSize: '12px', color: '#3ad17e', display: 'flex', alignItems: 'flex-start', gap: '6px', lineHeight: 1.5 }}
                 >
-                  <span style={{ color: '#3ad17e', fontWeight: 700 }}>+</span>
+                  {/* Neutral bullet — the description carries its own sign (a "+"
+                      marker turned reductions like "-15%" into "+ -15%"). */}
+                  <span style={{ color: '#3ad17e', fontWeight: 700 }}>▸</span>
                   <span>{effect.description}</span>
                 </li>
               ))}

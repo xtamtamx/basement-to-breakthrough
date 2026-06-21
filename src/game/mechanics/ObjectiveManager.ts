@@ -106,8 +106,8 @@ class ObjectiveManager {
         return s.combosFired;
       case 'theater_tier':
         return s.maxVenueCapacity;
-      case 'survive_escalation':
-        return s.reachedTurn;
+      case 'workhorse':
+        return s.totalShows;
       case 'never_worked':
         return s.usedDayJob ? 0 : 1;
       case 'zero_disasters':

@@ -40,13 +40,15 @@ export const OBJECTIVE_DEFINITIONS: Record<string, ObjectiveDefinition> = {
     modes: ['classic', 'festival', 'hardcore'],
     target: 500,
   },
-  survive_escalation: {
-    id: 'survive_escalation',
-    title: 'Escalation Conqueror',
-    description: 'Reach turn 31 without going under',
-    fameReward: 140,
-    modes: ['classic', 'hardcore'],
-    target: 31,
+  workhorse: {
+    // Replaces survive_escalation (which targeted turn 31 — unreachable, since
+    // every mode WINS and ends well before then). Total shows is reachable + real.
+    id: 'workhorse',
+    title: 'Workhorse',
+    description: 'Play 12 shows in a single run',
+    fameReward: 110,
+    modes: ['classic', 'hardcore', 'festival'],
+    target: 12,
   },
   never_worked: {
     id: 'never_worked',
