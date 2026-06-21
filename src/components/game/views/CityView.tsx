@@ -449,29 +449,22 @@ export const CityView: React.FC = () => {
               borderTop: '2px solid #2a2350'
             }}>
               {selectedTileData.venue ? (
-                (() => {
-                  const hasUpgrades = selectedTileData.venue.upgrades &&
-                    selectedTileData.venue.upgrades.length > 0;
-
-                  return (
-                    <button
-                      onClick={() => {
-                        if (hasUpgrades) {
-                          setShowVenueUpgrade(true);
-                          haptics.light();
-                        }
-                      }}
-                      disabled={!hasUpgrades}
-                      className={hasUpgrades ? 'snes-btn' : 'snes-btn snes-btn--ghost'}
-                      style={{
-                        flex: 1,
-                        minHeight: '44px'
-                      }}
-                    >
-                      {hasUpgrades ? 'View Upgrades' : 'No Upgrades Available'}
-                    </button>
-                  );
-                })()
+                // Always open the gear/upgrades shop — this modal is where you BUY
+                // a venue's first upgrades + equipment, so gating it on
+                // already-applied upgrades made the whole system unreachable.
+                <button
+                  onClick={() => {
+                    setShowVenueUpgrade(true);
+                    haptics.light();
+                  }}
+                  className="snes-btn"
+                  style={{
+                    flex: 1,
+                    minHeight: '44px'
+                  }}
+                >
+                  🔧 Gear &amp; Upgrades
+                </button>
               ) : (
                 <div className="snes-panel-inset" style={{
                   flex: 1,

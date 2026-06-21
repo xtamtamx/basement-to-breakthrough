@@ -59,6 +59,22 @@ export const VenueUpgradeModal: React.FC<VenueUpgradeModalProps> = ({
 }) => {
   const store = useGameStore();
   const [selectedTab, setSelectedTab] = useState(0);
+  // One-time "what is this" intro the first time a player opens the gear shop.
+  const [introSeen, setIntroSeen] = useState(() => {
+    try {
+      return localStorage.getItem('btb-venue-intro-v1') === '1';
+    } catch {
+      return true;
+    }
+  });
+  const dismissIntro = () => {
+    setIntroSeen(true);
+    try {
+      localStorage.setItem('btb-venue-intro-v1', '1');
+    } catch {
+      /* private mode — just hide it this session */
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -147,6 +163,24 @@ export const VenueUpgradeModal: React.FC<VenueUpgradeModalProps> = ({
           <span className="snes-chip" style={{ fontSize: '8px', color: '#3ad17e' }}>ATM {venue.atmosphere}%</span>
           <span className="snes-chip" style={{ fontSize: '8px', color: '#ff5c57' }}>−{formatMoney(upkeepCost)}/turn</span>
         </div>
+
+        {!introSeen && (
+          <div className="snes-panel-inset" style={{ padding: '12px', marginBottom: '14px', borderLeft: '4px solid #ffd23f' }}>
+            <p style={{ fontSize: '12px', color: '#b9b3d6', margin: 0, lineHeight: 1.5 }}>
+              <strong style={{ color: '#ffd23f' }}>New here?</strong> Kit out this room to pull bigger,
+              calmer, safer shows. <strong style={{ color: '#ffffff' }}>Buy</strong> gear to keep it (it
+              wears down — repair it on the Owned tab), or <strong style={{ color: '#ffffff' }}>Rent</strong> it
+              for a single show. The chips on each piece show exactly what it does.
+            </p>
+            <button
+              onClick={dismissIntro}
+              className="snes-btn snes-btn--gold snes-btn--sm snes-pixel"
+              style={{ marginTop: '10px', minHeight: '36px', fontSize: '8px', cursor: 'pointer', padding: '0 12px' }}
+            >
+              Got it
+            </button>
+          </div>
+        )}
 
         <Tab.Group selectedIndex={selectedTab} onChange={(i) => { setSelectedTab(i); haptics.light(); }}>
           <Tab.List
