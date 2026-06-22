@@ -42,6 +42,13 @@ interface PixelCityMapProps {
   onLandmarkClick?: (landmark: CityLandmark) => void;
 }
 
+// --- Post-FX ----------------------------------------------------------------
+// Neon bloom: downsample factor (higher = softer/cheaper), additive mix amount,
+// and a master toggle (perf escape hatch for low-end devices).
+const BLOOM_ON = true;
+const BLOOM_SCALE = 3;
+const BLOOM_STRENGTH = 1.1;
+
 // --- World layout (in 16px tiles) -------------------------------------------
 const WORLD_W = 60;
 const WORLD_H = 46;
@@ -990,6 +997,9 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
 export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onVenueClick, onShopClick, onLandmarkClick }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  // Offscreen buffers for the neon-bloom post-FX (downsampled bright-pass).
+  const fxLoRef = useRef<HTMLCanvasElement | null>(null);
+  const fxLo2Ref = useRef<HTMLCanvasElement | null>(null);
   const [sheets, setSheets] = useState<Record<SheetName, HTMLImageElement> | null>(null);
   const [size, setSize] = useState({ w: 0, h: 0 });
 
@@ -1392,6 +1402,54 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
 
       ctx.restore();
 
+      // ── Neon bloom ──────────────────────────────────────────────────────
+      // Cheap CRT-style glow: downsample the rendered frame, square it (multiply
+      // by itself) to keep only the brights, then add the blurred result back.
+      // Makes lit windows / venue marquees / city neon bloom without any
+      // per-pixel JS — just four GPU drawImage calls at 1/3 resolution.
+      if (BLOOM_ON) {
+        const lw = Math.max(1, Math.round(size.w / BLOOM_SCALE));
+        const lh = Math.max(1, Math.round(size.h / BLOOM_SCALE));
+        let lo = fxLoRef.current;
+        let lo2 = fxLo2Ref.current;
+        if (!lo) lo = fxLoRef.current = document.createElement('canvas');
+        if (!lo2) lo2 = fxLo2Ref.current = document.createElement('canvas');
+        if (lo.width !== lw || lo.height !== lh) {
+          lo.width = lo2.width = lw;
+          lo.height = lo2.height = lh;
+        }
+        const lctx = lo.getContext('2d');
+        const l2ctx = lo2.getContext('2d');
+        if (lctx && l2ctx) {
+          // 1. downsample the full frame
+          lctx.globalCompositeOperation = 'source-over';
+          lctx.globalAlpha = 1;
+          lctx.imageSmoothingEnabled = true;
+          lctx.clearRect(0, 0, lw, lh);
+          lctx.drawImage(canvas, 0, 0, lw, lh);
+          // 2. bright-pass = scene^3 (cubed: only the very brightest neon / lit
+          //    windows / lamp glows survive; mid-bright pavement falls off, so we
+          //    bloom the lights without hazing the whole street out).
+          l2ctx.globalCompositeOperation = 'source-over';
+          l2ctx.globalAlpha = 1;
+          l2ctx.imageSmoothingEnabled = true;
+          l2ctx.clearRect(0, 0, lw, lh);
+          l2ctx.drawImage(lo, 0, 0);
+          l2ctx.globalCompositeOperation = 'multiply';
+          l2ctx.drawImage(lo, 0, 0);
+          l2ctx.drawImage(lo, 0, 0);
+          l2ctx.globalCompositeOperation = 'source-over';
+          // 3. add it back, upscaled (= blurred) and additive
+          ctx.globalCompositeOperation = 'lighter';
+          ctx.globalAlpha = BLOOM_STRENGTH;
+          ctx.imageSmoothingEnabled = true;
+          ctx.drawImage(lo2, 0, 0, size.w, size.h);
+          ctx.globalCompositeOperation = 'source-over';
+          ctx.globalAlpha = 1;
+          ctx.imageSmoothingEnabled = false;
+        }
+      }
+
       // per-city colour wash (ties the whole scene to the city's palette)
       ctx.fillStyle = theme.tint;
       ctx.fillRect(0, 0, size.w, size.h);
@@ -1443,6 +1501,18 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
         onPointerUp={(e) => endPointer(e, true)}
         onPointerCancel={(e) => endPointer(e, false)}
         onWheel={handleWheel}
+      />
+      {/* CRT scanlines — faint horizontal rule overlay for a premium retro feel.
+          Pure CSS (zero per-frame cost), non-interactive, sits above the canvas. */}
+      <div
+        aria-hidden
+        style={{
+          position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 4,
+          backgroundImage:
+            'repeating-linear-gradient(0deg, rgba(0,0,0,0.10) 0px, rgba(0,0,0,0.10) 1px, rgba(0,0,0,0) 1px, rgba(0,0,0,0) 3px)',
+          opacity: 0.55,
+          mixBlendMode: 'multiply',
+        }}
       />
       <div style={{ position: 'absolute', right: 10, top: 10, display: 'flex', flexDirection: 'column', gap: 6, zIndex: 5 }}>
         <button style={zoomBtn} aria-label="Zoom in" onClick={() => { zoomAt(size.w / 2, size.h / 2, 1.3); haptics.light(); }}>+</button>
