@@ -31,7 +31,7 @@ import {
   loadAllSheets,
 } from './townAtlas';
 import { GENERATED_SPRITES } from './generatedAtlas';
-import { MapFXLayer } from '@components/effects/MapFXLayer';
+import { MapFXLayer, type SurgePoint } from '@components/effects/MapFXLayer';
 import { MapCompositor } from '@components/effects/MapCompositor';
 import { useFxQuality } from '@utils/fxQuality';
 import { getCityShops, CityShop, ShopKind } from '@game/world/cityShops';
@@ -1166,6 +1166,8 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
 
   const zoomRef = useRef(ZOOM_DEFAULT);
   const cameraRef = useRef({ x: 0, y: 0 });
+  // Screen-space position of the playing venue (written each frame) → mote surge.
+  const surgeRef = useRef<SurgePoint>(null);
   const pointersRef = useRef(new Map<number, { x: number; y: number }>());
   const panRef = useRef<{ startX: number; startY: number; camX: number; camY: number; moved: boolean } | null>(null);
   const pinchRef = useRef<{ dist: number } | null>(null);
@@ -1373,6 +1375,7 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
         else drawPropObj(ctx, sheets, d.o!.p);
       });
 
+      surgeRef.current = null; // recomputed below if a show is on tonight
       plan.buildings.forEach((b) => {
         if (!b.venue) return;
         const cx = (b.tx + b.tw / 2) * TILE;
@@ -1381,6 +1384,15 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
           // Show tonight: warm light spills onto the street + a crowd gathers.
           const footX = (b.tx + b.tw / 2) * TILE;
           const footY = (b.ty + b.th) * TILE;
+          // Project the venue centre to screen space so the mote overlay can
+          // stream "scene energy" toward it (first show venue wins).
+          if (!surgeRef.current) {
+            const zc = zoomRef.current;
+            surgeRef.current = {
+              x: cx * zc - cameraRef.current.x,
+              y: (b.ty + b.th / 2) * TILE * zc - cameraRef.current.y,
+            };
+          }
           const glow = ctx.createRadialGradient(footX, footY + 4, 2, footX, footY + 4, b.tw * TILE * 0.95);
           glow.addColorStop(0, 'rgba(255, 196, 130, 0.34)');
           glow.addColorStop(1, 'rgba(255, 196, 130, 0)');
@@ -1618,7 +1630,7 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
       )}
       {/* Pixi (WebGL) neon-mote overlay — floats above the map, below the CRT.
           Tinted to the city's palette + surges on show-nights. */}
-      <MapFXLayer accents={CITY_ACCENTS[themeKey]} intensity={Math.min(1, venuesWithShows.size / 3)} />
+      <MapFXLayer accents={CITY_ACCENTS[themeKey]} intensity={Math.min(1, venuesWithShows.size / 3)} surgeRef={surgeRef} />
       {/* CRT scanlines — faint horizontal rule overlay for a premium retro feel.
           Pure CSS (zero per-frame cost), non-interactive, sits above the canvas. */}
       <div

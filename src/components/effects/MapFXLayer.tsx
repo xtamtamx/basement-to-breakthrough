@@ -21,14 +21,20 @@
 import { useEffect, useRef } from 'react';
 import type { Application, Sprite, Ticker } from 'pixi.js';
 import { useFxQuality, fxParticleCount } from '@utils/fxQuality';
+import { audio } from '@utils/simpleAudio';
 
 const DEFAULT_ACCENTS = [0xf72585, 0x4cc9f0, 0xffd23f, 0x3ad17e, 0xc77dff, 0xff5c57];
+
+/** Live screen-space point (CSS px) the surge-motes stream toward, or null. */
+export type SurgePoint = { x: number; y: number } | null;
 
 interface MapFXLayerProps {
   /** Per-city neon tints for the motes (hex ints). Defaults to the full palette. */
   accents?: number[];
   /** 0..1 show-night surge — brightens + livens the motes. Default 0. */
   intensity?: number;
+  /** Stable ref to the playing venue's screen position; surge-motes stream to it. */
+  surgeRef?: React.RefObject<SurgePoint>;
 }
 
 interface Mote {
@@ -39,14 +45,16 @@ interface Mote {
   tw: number;
   base: number;
   ai: number; // accent index (for re-tinting on city change)
+  streamer: boolean; // a fraction of motes stream toward the playing venue
 }
 
-export const MapFXLayer: React.FC<MapFXLayerProps> = ({ accents, intensity = 0 }) => {
+export const MapFXLayer: React.FC<MapFXLayerProps> = ({ accents, intensity = 0, surgeRef }) => {
   const hostRef = useRef<HTMLDivElement>(null);
   const quality = useFxQuality((s) => s.quality);
   // Reactive state read by the Pixi ticker — updated WITHOUT tearing down the app.
   const stateRef = useRef({ accents: accents?.length ? accents : DEFAULT_ACCENTS, intensity });
   const motesRef = useRef<Mote[]>([]);
+  const audioLevelRef = useRef(0); // smoothed audio amplitude
 
   // City accents / show-night intensity change often (travel, per turn); fold them
   // into the ticker-read ref + re-tint live motes instead of re-initing Pixi.
@@ -140,6 +148,7 @@ export const MapFXLayer: React.FC<MapFXLayerProps> = ({ accents, intensity = 0 }
           tw: 0.5 + Math.random() * 1.5,
           base: 0.22 + Math.random() * 0.42,
           ai: i,
+          streamer: Math.random() < 0.4, // ~40% stream toward the playing venue
         });
       }
       motesRef.current = motes;
@@ -151,9 +160,32 @@ export const MapFXLayer: React.FC<MapFXLayerProps> = ({ accents, intensity = 0 }
         const w = a.screen.width;
         const h = a.screen.height;
         const surge = stateRef.current.intensity; // show-night liveliness 0..1
-        const speed = 1 + surge * 0.7;
-        const glow = 1 + surge * 0.9;
+        // Audio-reactive: ease toward the live amplitude so motes pulse on sound.
+        const lvl = audio.getLevel();
+        audioLevelRef.current += (lvl - audioLevelRef.current) * Math.min(1, 0.2 * dt);
+        const beat = audioLevelRef.current;
+        const speed = 1 + surge * 0.7 + beat * 0.5;
+        const glow = 1 + surge * 0.9 + beat * 1.1; // flare on every sound
+        const target = surgeRef?.current ?? null; // playing-venue screen pos
         for (const m of motes) {
+          // On show-nights, ~40% of motes stream toward the playing venue.
+          if (target && m.streamer && surge > 0) {
+            const dx = target.x - m.sp.x;
+            const dy = target.y - m.sp.y;
+            const dist = Math.hypot(dx, dy) || 1;
+            const pull = (0.5 + surge) * 0.6;
+            m.sp.x += (dx / dist) * pull * dt;
+            m.sp.y += (dy / dist) * pull * dt;
+            m.sp.x += Math.sin(m.phase) * (m.drift / 90) * dt; // a little wander
+            m.phase += 0.03 * dt;
+            const near = 1 + Math.max(0, 1 - dist / 140) * 0.8; // brighter near the venue
+            m.sp.alpha = m.base * (0.5 + 0.5 * Math.sin(t * 0.04 * m.tw + m.phase)) * glow * near;
+            if (dist < 14) { // reached it → respawn at an edge to keep the stream flowing
+              m.sp.x = Math.random() * w;
+              m.sp.y = h + 16;
+            }
+            continue;
+          }
           m.sp.y -= ((m.vy * speed) / 60) * dt; // drift upward like embers
           m.phase += 0.02 * speed * dt;
           m.sp.x += Math.sin(m.phase) * (m.drift / 60) * dt;
@@ -179,7 +211,9 @@ export const MapFXLayer: React.FC<MapFXLayerProps> = ({ accents, intensity = 0 }
         app = null;
       }
     };
-  }, [quality]);
+    // surgeRef is a stable ref (identity never changes) — listed to satisfy the
+    // linter; it does NOT cause a re-init. Init is effectively keyed on quality.
+  }, [quality, surgeRef]);
 
   return <div ref={hostRef} aria-hidden style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 3 }} />;
 };

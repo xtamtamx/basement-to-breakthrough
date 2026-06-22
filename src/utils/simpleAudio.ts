@@ -7,6 +7,10 @@ class SimpleAudioManager {
   private context: AudioContext | null = null;
   private enabled = true;
   private volume = 0.7;
+  // Master analyser tap — every tone routes through it so visuals (e.g. the map
+  // mote overlay) can pulse with the audio. getLevel() reads a 0..1 amplitude.
+  private analyser: AnalyserNode | null = null;
+  private levelBuf: Uint8Array | null = null;
 
   constructor() {
     this.init();
@@ -18,6 +22,19 @@ class SimpleAudioManager {
         window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
       if (AudioContextClass) {
         this.context = new AudioContextClass();
+        // Master analyser → destination; tones connect to the analyser. Optional:
+        // isolated so an unsupported createAnalyser never disables core audio.
+        try {
+          if (typeof this.context.createAnalyser === 'function') {
+            this.analyser = this.context.createAnalyser();
+            this.analyser.fftSize = 256;
+            this.analyser.smoothingTimeConstant = 0.6;
+            this.analyser.connect(this.context.destination);
+            this.levelBuf = new Uint8Array(this.analyser.fftSize);
+          }
+        } catch {
+          this.analyser = null; // fall back to direct-to-destination
+        }
       }
 
       // Resume context on user interaction (required for mobile)
@@ -48,7 +65,7 @@ class SimpleAudioManager {
     const gainNode = this.context.createGain();
 
     oscillator.connect(gainNode);
-    gainNode.connect(this.context.destination);
+    gainNode.connect(this.analyser ?? this.context.destination);
 
     oscillator.type = type;
     oscillator.frequency.setValueAtTime(frequency, this.context.currentTime);
@@ -66,6 +83,18 @@ class SimpleAudioManager {
 
     oscillator.start(this.context.currentTime);
     oscillator.stop(this.context.currentTime + duration);
+  }
+
+  /** Current output amplitude 0..1 (RMS) — for audio-reactive visuals. */
+  getLevel(): number {
+    if (!this.analyser || !this.levelBuf) return 0;
+    this.analyser.getByteTimeDomainData(this.levelBuf);
+    let sum = 0;
+    for (let i = 0; i < this.levelBuf.length; i++) {
+      const x = (this.levelBuf[i] - 128) / 128;
+      sum += x * x;
+    }
+    return Math.min(1, Math.sqrt(sum / this.levelBuf.length) * 3.2);
   }
 
   // Sound effects using generated tones

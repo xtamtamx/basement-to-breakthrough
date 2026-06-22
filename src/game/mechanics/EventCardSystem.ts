@@ -760,6 +760,127 @@ class EventCardSystem {
       flavorText: 'The crowd will be 60% crew and VIPs. You have 59 minutes to prepare the band of their life.',
       artStyle: 'tour_flyer',
     });
+
+    this.addEventCard({
+      id: 'soundguy_power_trip',
+      name: 'Sound Engineer Who Mixed One Tool Album in 1996 Refuses To Turn Up Vocals',
+      description: 'He has folded his arms. He has said "trust me" four times. The monitors are feeding back in a key he describes as "intentional." He keeps calling the singer "chief."',
+      icon: '🎛️',
+      type: 'wildcard',
+      rarity: 'common',
+      duration: 'instant',
+      effects: [],
+      choices: [
+        {
+          id: 'let_him_cook',
+          text: 'Nod gravely and let him cook',
+          effects: [
+            { type: 'modify_stat', target: 'all_bands', value: { technicalSkill: 15, energy: -5 }, description: 'A genuinely great mix (he was right, annoyingly)' },
+          ],
+        },
+        {
+          id: 'seize_the_board',
+          text: 'Gently seize the board and push the faders yourself',
+          effects: [
+            { type: 'modify_stat', target: 'all_bands', value: { authenticity: 15, energy: 10 }, description: 'DIY to the bone' },
+            { type: 'resource_change', target: 'player', value: { reputation: -3 }, description: 'He is telling everyone you "don\'t respect the craft"' },
+          ],
+        },
+      ],
+      flavorText: 'There is no in-ear monitor mix in punk. There is only faith.',
+      artStyle: 'backstage_pass',
+    });
+
+    this.addEventCard({
+      id: 'amp_dies_mid_set',
+      name: 'Headlining Band\'s Only Amp Emits Smell, Then Light, Then Silence',
+      description: 'The 1978 combo they bought "as a project" has chosen tonight to become a paperweight. The crowd, sensing weakness, has begun a slow clap. The merch person owns a bass amp and is making meaningful eye contact.',
+      icon: '🔌',
+      type: 'crisis',
+      rarity: 'common',
+      duration: 'instant',
+      effects: [],
+      choices: [
+        {
+          id: 'borrow_gear',
+          text: 'Borrow the opener\'s rig (you owe them now)',
+          effects: [
+            { type: 'modify_stat', target: 'all_bands', value: { energy: 10 }, description: 'Show goes on, louder than ever' },
+            { type: 'resource_change', target: 'player', value: { connections: -1, reputation: 5 }, description: 'Scene solidarity (costs a favor)' },
+          ],
+        },
+        {
+          id: 'acoustic_pivot',
+          text: 'Unplug everything and call it "an intimate set"',
+          effects: [
+            { type: 'modify_stat', target: 'all_bands', value: { authenticity: 25, popularity: -10 }, description: 'Legendarily raw; not everyone stayed' },
+          ],
+        },
+      ],
+      flavorText: 'Every great band has one show where the gear died and it became the best one.',
+      artStyle: 'concert_poster',
+    });
+
+    this.addEventCard({
+      id: 'viral_clip_misfire',
+      name: 'Band Goes Viral For 8 Seconds Of Bassist Eating It On Stage',
+      description: 'The music is not in the clip. The clip is 11 million views of your bassist discovering a monitor wedge with their face. The comments are, somehow, mostly supportive. A brand wants to "collab."',
+      icon: '📱',
+      type: 'opportunity',
+      rarity: 'uncommon',
+      duration: 'instant',
+      effects: [],
+      choices: [
+        {
+          id: 'lean_in',
+          text: 'Lean all the way in (pin the clip, sell the shirt)',
+          effects: [
+            { type: 'resource_change', target: 'player', value: { fans: 200, money: 150 }, description: 'Numbers go up' },
+            { type: 'modify_stat', target: 'all_bands', value: { popularity: 20, authenticity: -20 }, description: 'Famous for the wrong eight seconds' },
+          ],
+        },
+        {
+          id: 'log_off',
+          text: 'Post "we are a band, please listen to the band" and log off',
+          effects: [
+            { type: 'modify_stat', target: 'all_bands', value: { authenticity: 20 }, description: 'The real ones respected it' },
+            { type: 'trigger_synergy', target: 'all_bands', value: 'diy-authentic', description: 'Triggers DIY synergies' },
+          ],
+        },
+      ],
+      flavorText: 'Going viral is just a noise complaint from the whole internet.',
+      artStyle: 'press_release',
+    });
+
+    this.addEventCard({
+      id: 'string_lights_inspector',
+      name: 'Fire Marshal Counts The Venue\'s Festive String Lights, Has Concerns',
+      description: 'He has a clipboard. He has counted forty-one bulbs across "clearly more than one daisy-chained power strip." He is not mad, he is just going to need you to either fix this or develop a sudden, convincing love of candlelight.',
+      icon: '🚨',
+      type: 'crisis',
+      rarity: 'common',
+      duration: 'instant',
+      effects: [],
+      choices: [
+        {
+          id: 'pay_electrician',
+          text: 'Pay the one scene electrician to make it legit',
+          effects: [
+            { type: 'resource_change', target: 'player', value: { money: -120, reputation: 6 }, description: 'Up to code, and the room looks incredible' },
+          ],
+        },
+        {
+          id: 'unplug_half',
+          text: 'Unplug half of them and call it "ambiance"',
+          effects: [
+            { type: 'modify_stat', target: 'all_venues', value: { capacity: -5 }, description: 'Dimmer, smaller, somehow cozier' },
+            { type: 'modify_stat', target: 'all_bands', value: { authenticity: 10 }, description: 'The mood is immaculate' },
+          ],
+        },
+      ],
+      flavorText: 'A real DIY space is one bad extension cord away from legend or disaster.',
+      artStyle: 'tour_flyer',
+    });
   }
 
   private addEventCard(card: EventCard) {
