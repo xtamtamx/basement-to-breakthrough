@@ -122,7 +122,8 @@ const StripSlot: React.FC<SlotProps> = ({ slot, index, onClick }) => {
           padding: 0,
           touchAction: 'manipulation',
         }}
-        aria-label={`Empty synergy slot ${index + 1}`}
+        aria-label={`Empty synergy slot ${index + 1} — earn synergies by hitting turn milestones`}
+        title="Earn synergies at turn milestones (turns 5, 12, 20, 28)"
       >
         +
       </button>
@@ -207,7 +208,8 @@ const CompactSlot: React.FC<SlotProps> = ({ slot, index, onClick }) => {
           padding: 0,
           touchAction: 'manipulation',
         }}
-        aria-label={`Empty synergy slot ${index + 1}`}
+        aria-label={`Empty synergy slot ${index + 1} — earn synergies by hitting turn milestones`}
+        title="Earn synergies at turn milestones (turns 5, 12, 20, 28)"
       >
         +
       </button>

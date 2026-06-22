@@ -442,7 +442,7 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
                       {result.venueSynergies && result.venueSynergies.length > 0 && (
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '8px' }}>
                           {result.venueSynergies.map((s, i) => (
-                            <span key={i} className="snes-pixel" style={{
+                            <span key={i} className="snes-pixel" title={s.description} style={{
                               fontSize: '7px', letterSpacing: 0, color: '#3ad17e',
                               border: '2px solid #3ad17e', backgroundColor: '#0a1410', padding: '3px 5px'
                             }}>🔥 {s.name}</span>

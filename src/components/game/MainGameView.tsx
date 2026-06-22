@@ -87,6 +87,7 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
   const [ceremony, setCeremony] = useState<RunCeremony | null>(null);
   const [showPlayAgainPicker, setShowPlayAgainPicker] = useState(false);
   const [turnResults, setTurnResults] = useState<TurnResult>(EMPTY_TURN_RESULT);
+  const [announcement, setAnnouncement] = useState(''); // screen-reader aria-live
   // Re-entrancy guard: blocks a same-tick double-tap (and taps while the
   // results modal is up) from resolving the same turn twice.
   const resolvingRef = useRef(false);
@@ -148,6 +149,10 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
     const results = await turnResolutionEngine.executeFullTurn();
     setTurnResults(results);
     setShowTurnResults(true);
+    // Announce the new state to screen readers (the visual HUD/modal say nothing
+    // to assistive tech otherwise).
+    const s = useGameStore.getState();
+    setAnnouncement(`Turn resolved. Money $${s.money}, reputation ${s.reputation}, ${s.fans} fans, stress ${s.stress} of 100.`);
     // Outcome-tiered audio + haptics are owned by TurnResultsModal's open effect
     // (single source of truth — this block used to double-fire the same stinger).
   };
@@ -220,6 +225,15 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
 
   return (
     <div className="h-full flex flex-col" style={{ background: '#0a0814' }}>
+      {/* Screen-reader-only live region — announces turn outcomes to assistive
+          tech (the visual HUD/modal are otherwise silent). */}
+      <div
+        aria-live="polite"
+        aria-atomic="true"
+        style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0 }}
+      >
+        {announcement}
+      </div>
       {/* Ultra-Compact Header — neon-punk SNES HUD */}
       <header
         className="snes-bar snes-bar--top flex-shrink-0"
