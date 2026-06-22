@@ -131,6 +131,14 @@ const POOLS: Record<LandmarkAlignment, { kind: LandmarkKind; def: KindDef }[]> =
   history: Object.entries(HIST_KINDS).map(([kind, def]) => ({ kind: kind as LandmarkKind, def })),
 };
 
+// Pole-fitting blurbs for the city-flavored (one-off-named) landmarks, so the
+// sub-text always matches the name's vibe instead of a mismatched kind blurb.
+const POLE_BLURB: Record<LandmarkAlignment, string> = {
+  diy: 'A DIY cornerstone the whole scene was built on — more heart than ceiling height.',
+  corporate: 'The money got here first and made itself at home. The logo outlasts the bands.',
+  history: 'A piece of local scene lore — the kind of landmark that outlives the bands who played it.',
+};
+
 // progress (meta + in-run) → how many landmarks the scene has earned.
 const THRESHOLDS = [2, 5, 9, 14];
 
@@ -175,13 +183,18 @@ export function getCityLandmarks(districts: District[], ctx: LandmarkContext = {
   for (let i = 0; i < earned; i++) {
     const host = hosts[i];
     const { kind, def } = pool[i % pool.length];
+    // City-flavored landmark NAMES are evocative one-offs ("The Strong Island
+    // Duck") that don't line up with the generic per-kind blurbs — pairing them
+    // produced nonsense ("a duck" described as "a plywood riser you played on").
+    // When a city name is used, give it a blurb that fits its POLE instead.
+    const cityName = cityNames?.[i];
     out.push({
       id: `landmark_${host.id}_${kind}`,
-      name: cityNames?.[i] ?? def.name, // city-flavored; generic for any overflow slot
+      name: cityName ?? def.name,
       kind,
       alignment,
       districtId: host.id,
-      blurb: def.blurb,
+      blurb: cityName ? POLE_BLURB[alignment] : def.blurb,
       effect: def.effect,
     });
   }

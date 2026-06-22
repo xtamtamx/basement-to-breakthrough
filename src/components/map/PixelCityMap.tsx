@@ -299,6 +299,13 @@ const DISTRICT_KIND: Record<string, keyof typeof DISTRICT_POOLS> = {
 // dark swamp wood, etc. Cities not listed fall back to the generic DISTRICT_POOLS
 // (home keeps the verified look that way).
 const CITY_ARCHITECTURE: Partial<Record<CityThemeKey, Record<string, BuildingKey[]>>> = {
+  // Home: the downtown quarter is literally named "The Strip Mall", so give it
+  // low retail storefronts + a big-box anchor (it already gets a parking lot) so
+  // it reads as a strip mall, not a cluster of glass high-rises. Other home
+  // quarters fall through to the verified DISTRICT_POOLS look.
+  home: {
+    downtown: ['greyShop', 'shopAwning', 'teal', 'greyShop', 'modern', 'shopAwning'],
+  },
   bostland: {
     eastside: ['redClub', 'arch', 'teal', 'shopAwning', 'townhouse', 'manor'],
     downtown: ['townhouse', 'stone', 'glassHall', 'tower', 'civic', 'rotunda'],

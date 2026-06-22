@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { WalkerSprite } from '@components/graphics/PixelArtSprites';
 import { PixelButton } from '@components/ui/PixelButton';
 import { haptics } from '@utils/mobile';
 
@@ -22,6 +21,24 @@ const NOTES = [
   { glyph: '♫', left: '92%', size: '18px', dur: 21, delay: 5, color: '#f72585' },
 ];
 
+// A few twinkling stars up in the night sky.
+const STARS = [
+  { l: '8%', t: '12%', d: 0 }, { l: '22%', t: '22%', d: 1.4 }, { l: '37%', t: '9%', d: 0.7 },
+  { l: '54%', t: '18%', d: 2.1 }, { l: '69%', t: '11%', d: 1.0 }, { l: '83%', t: '24%', d: 0.4 },
+  { l: '91%', t: '15%', d: 1.8 }, { l: '15%', t: '32%', d: 2.4 }, { l: '78%', t: '34%', d: 0.9 },
+  { l: '46%', t: '30%', d: 1.6 },
+];
+
+// The neon-town skyline (the hero). Each building: x, width, height (px up from the
+// 220 baseline). `marquee` = the venue with a glowing sign. Window colours cycle.
+const BUILDINGS = [
+  { x: -4, w: 40, h: 64 }, { x: 38, w: 28, h: 104 }, { x: 68, w: 34, h: 78 },
+  { x: 104, w: 24, h: 132 }, { x: 130, w: 44, h: 70, marquee: true }, { x: 176, w: 30, h: 110 },
+  { x: 208, w: 38, h: 86 }, { x: 248, w: 26, h: 150 }, { x: 276, w: 40, h: 72 },
+  { x: 318, w: 30, h: 116 }, { x: 350, w: 32, h: 80 },
+];
+const WIN = ['#ffd23f', '#f72585', '#4cc9f0', '#3ad17e'];
+
 export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
   onStartGame,
   onContinueGame,
@@ -41,30 +58,62 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
 
   return (
     <div className="pixel-main-menu">
-      {/* Animated walkers (the scene wandering through) */}
-      <div className="background-walkers">
-        {[...Array(5)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="walker"
-            initial={{ x: -50, y: 50 + i * 100 }}
-            animate={{
-              x: window.innerWidth + 50,
-              y: 50 + i * 100 + Math.sin(i) * 20,
-            }}
-            transition={{
-              duration: 20 + i * 5,
-              repeat: Infinity,
-              ease: "linear",
-              delay: i * 2,
-            }}
-          >
-            <WalkerSprite pixelSize={3} />
-          </motion.div>
+      {/* Night sky: moon + twinkling stars */}
+      <div className="sky">
+        <div className="moon" />
+        {STARS.map((s, i) => (
+          <span key={i} className="star" style={{ left: s.l, top: s.t, animationDelay: `${s.d}s` }} />
         ))}
       </div>
 
-      {/* Drifting music notes */}
+      {/* Neon-town skyline silhouette at the horizon — the hero visual */}
+      <svg className="skyline" viewBox="0 0 375 220" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+        <defs>
+          <linearGradient id="glow" x1="0" y1="1" x2="0" y2="0">
+            <stop offset="0%" stopColor="#f72585" stopOpacity="0.45" />
+            <stop offset="60%" stopColor="#7b1d52" stopOpacity="0.12" />
+            <stop offset="100%" stopColor="#7b1d52" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        {/* magenta horizon glow behind the buildings */}
+        <rect x="0" y="40" width="375" height="180" fill="url(#glow)" />
+        {BUILDINGS.map((b, bi) => {
+          const top = 220 - b.h;
+          const cells: React.ReactNode[] = [];
+          // window grid — a lit window every so often, colour cycling
+          for (let wy = top + 8; wy < 216; wy += 9) {
+            for (let wx = b.x + 5; wx < b.x + b.w - 4; wx += 8) {
+              if ((wx + wy + bi) % 3 === 0) {
+                cells.push(
+                  <rect key={`${wx}-${wy}`} x={wx} y={wy} width="3" height="4"
+                    fill={WIN[(wx + wy) % WIN.length]} opacity="0.85" />,
+                );
+              }
+            }
+          }
+          return (
+            <g key={bi}>
+              <rect x={b.x} y={top} width={b.w} height={b.h} fill="#1b1030" />
+              <rect x={b.x} y={top} width={b.w} height="2" fill="#2c1c4a" />
+              {cells}
+              {b.marquee && (
+                <>
+                  {/* the venue's glowing marquee */}
+                  <rect x={b.x + 4} y={top + 6} width={b.w - 8} height="7" fill="#f72585" />
+                  <rect x={b.x + 4} y={top + 6} width={b.w - 8} height="7" fill="#ff7ab8" opacity="0.5" />
+                  <rect x={b.x + 6} y={top - 2} width="2" height="8" fill="#3a2350" />
+                  <rect x={b.x + b.w - 8} y={top - 2} width="2" height="8" fill="#3a2350" />
+                </>
+              )}
+            </g>
+          );
+        })}
+      </svg>
+
+      {/* CRT scanlines */}
+      <div className="crt-scanlines" />
+
+      {/* Drifting music notes (rise out of the skyline) */}
       <div className="floating-notes">
         {NOTES.map((n, i) => (
           <span
@@ -76,9 +125,6 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
           </span>
         ))}
       </div>
-
-      {/* CRT scanlines */}
-      <div className="crt-scanlines" />
 
       {/* Main content */}
       <motion.div
@@ -94,15 +140,9 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.5 }}
         >
-          <h1 className={`title-text ${glitchText ? 'glitch' : ''}`}>
-            SETTLING
-          </h1>
-          <h2 className="subtitle-text">
-            UP
-          </h2>
-          <p className="tagline">
-            From breaking even to breaking through
-          </p>
+          <h1 className={`title-text ${glitchText ? 'glitch' : ''}`}>SETTLING</h1>
+          <h2 className="subtitle-text">UP</h2>
+          <p className="tagline">From breaking even to breaking through</p>
         </motion.div>
 
         {/* Menu buttons */}
@@ -113,77 +153,29 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
           transition={{ delay: 0.4 }}
         >
           {hasSavedGame && onContinueGame && (
-            <PixelButton
-              variant="primary"
-              size="lg"
-              fullWidth
-              onClick={() => {
-                haptics.medium();
-                onContinueGame();
-              }}
-              icon="▶️"
-            >
+            <PixelButton variant="primary" size="lg" fullWidth onClick={() => { haptics.medium(); onContinueGame(); }} icon="▶️">
               Continue
             </PixelButton>
           )}
-
-          <PixelButton
-            variant={hasSavedGame ? "secondary" : "primary"}
-            size="lg"
-            fullWidth
-            onClick={() => {
-              haptics.medium();
-              onStartGame();
-            }}
-            icon="🎸"
-          >
+          <PixelButton variant={hasSavedGame ? 'secondary' : 'primary'} size="lg" fullWidth onClick={() => { haptics.medium(); onStartGame(); }} icon="🎸">
             New Game
           </PixelButton>
-
           {onUpgrades && (
-            <PixelButton
-              variant="secondary"
-              size="lg"
-              fullWidth
-              onClick={() => {
-                haptics.light();
-                onUpgrades();
-              }}
-              icon="⭐"
-            >
+            <PixelButton variant="secondary" size="lg" fullWidth onClick={() => { haptics.light(); onUpgrades(); }} icon="⭐">
               Scene Cred
             </PixelButton>
           )}
-
           {onSettings && (
-            <PixelButton
-              variant="ghost"
-              size="lg"
-              fullWidth
-              onClick={() => {
-                haptics.light();
-                onSettings();
-              }}
-              icon="⚙️"
-            >
+            <PixelButton variant="ghost" size="lg" fullWidth onClick={() => { haptics.light(); onSettings(); }} icon="⚙️">
               Settings
             </PixelButton>
           )}
         </motion.div>
 
         {/* Footer */}
-        <motion.div
-          className="menu-footer"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
-        >
-          <p className="credits">
-            A game about DIY ethics vs. selling out
-          </p>
-          <p className="version">
-            v1.0.0 • Made with ❤️ and 🤘
-          </p>
+        <motion.div className="menu-footer" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}>
+          <p className="credits">A game about DIY ethics vs. selling out</p>
+          <p className="version">v1.0.0 • Made with ❤️ and 🤘</p>
         </motion.div>
       </motion.div>
 
@@ -191,8 +183,7 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
         .pixel-main-menu {
           position: relative;
           min-height: 100vh;
-          background:
-            radial-gradient(120% 90% at 50% 0%, #1a0f2e 0%, #0a0814 60%);
+          background: linear-gradient(180deg, #0a0814 0%, #160b28 48%, #24123f 100%);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -202,184 +193,97 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
           padding: 40px 20px;
         }
 
-        .background-walkers {
-          position: absolute;
-          inset: 0;
-          pointer-events: none;
-          opacity: 0.3;
+        .sky { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+        .moon {
+          position: absolute; top: 9%; right: 16%;
+          width: 36px; height: 36px; border-radius: 50%;
+          background: #fff3c4; box-shadow: 0 0 26px 6px rgba(255, 243, 196, 0.35);
         }
-
-        .walker {
-          position: absolute;
+        .moon::after {
+          content: ''; position: absolute; top: -6px; left: 10px;
+          width: 30px; height: 30px; border-radius: 50%; background: #160b28;
         }
-
-        .floating-notes {
-          position: absolute;
-          inset: 0;
-          pointer-events: none;
-          overflow: hidden;
+        .star {
+          position: absolute; width: 2px; height: 2px; background: #fff;
+          opacity: 0.85; animation: twinkle 3.2s ease-in-out infinite;
         }
+        @keyframes twinkle { 0%, 100% { opacity: 0.18; } 50% { opacity: 0.9; } }
 
-        .note {
-          position: absolute;
-          bottom: -48px;
-          opacity: 0;
+        .skyline {
+          position: absolute; left: 0; right: 0; bottom: 0;
+          width: 100%; height: 46vh; min-height: 240px;
+          z-index: 2; pointer-events: none;
           image-rendering: pixelated;
-          text-shadow: 2px 2px 0 #0a0814;
-          animation-name: float-up;
-          animation-iteration-count: infinite;
-          animation-timing-function: linear;
         }
 
+        .background-walkers { position: absolute; inset: 0; pointer-events: none; opacity: 0.3; }
+
+        .floating-notes { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 3; }
+        .note {
+          position: absolute; bottom: 22%; opacity: 0;
+          image-rendering: pixelated; text-shadow: 2px 2px 0 #0a0814;
+          animation-name: float-up; animation-iteration-count: infinite; animation-timing-function: linear;
+        }
         @keyframes float-up {
           0%   { transform: translateY(0) translateX(0) rotate(0deg); opacity: 0; }
-          12%  { opacity: 0.55; }
-          88%  { opacity: 0.55; }
-          100% { transform: translateY(-112vh) translateX(24px) rotate(12deg); opacity: 0; }
+          12%  { opacity: 0.6; }
+          88%  { opacity: 0.6; }
+          100% { transform: translateY(-92vh) translateX(24px) rotate(12deg); opacity: 0; }
         }
 
         .crt-scanlines {
-          position: absolute;
-          inset: 0;
-          pointer-events: none;
-          z-index: 6;
-          background: repeating-linear-gradient(
-            0deg,
-            rgba(0, 0, 0, 0.18) 0px,
-            rgba(0, 0, 0, 0.18) 1px,
-            transparent 1px,
-            transparent 3px
-          );
-          opacity: 0.35;
+          position: absolute; inset: 0; pointer-events: none; z-index: 6;
+          background: repeating-linear-gradient(0deg, rgba(0,0,0,0.18) 0px, rgba(0,0,0,0.18) 1px, transparent 1px, transparent 3px);
+          opacity: 0.3;
         }
 
         .menu-content {
-          position: relative;
-          z-index: 10;
-          width: 100%;
-          max-width: 400px;
-          padding: 40px 20px 20px;
-          text-align: center;
+          position: relative; z-index: 10; width: 100%; max-width: 400px;
+          padding: 24px 20px 20px; text-align: center;
+          margin-bottom: 14vh; /* float the content above the skyline */
         }
 
-        .game-title {
-          margin-bottom: 44px;
-          margin-top: 0;
-        }
+        .game-title { margin-bottom: 40px; margin-top: 0; }
 
         .title-text {
-          font-size: 30px;
-          font-weight: 400;
-          color: #f72585;
-          text-transform: uppercase;
-          letter-spacing: 0;
-          margin: 0;
-          padding: 0;
-          line-height: 1.3;
-          text-shadow:
-            3px 3px 0px #0a0814,
-            4px 4px 0px #5a1740;
+          font-size: 34px; font-weight: 400; color: #f72585; text-transform: uppercase;
+          letter-spacing: 2px; margin: 0; padding: 0; line-height: 1.1;
+          text-shadow: 3px 3px 0 #0a0814, 0 0 18px rgba(247, 37, 133, 0.55);
           image-rendering: pixelated;
         }
-
-        .title-text.glitch {
-          animation: glitch 100ms steps(2);
-        }
-
+        .title-text.glitch { animation: glitch 100ms steps(2); }
         @keyframes glitch {
-          0% {
-            text-shadow: 3px 3px 0px #0a0814, 4px 4px 0px #5a1740;
-          }
-          50% {
-            text-shadow:
-              -3px 2px 0px #4cc9f0,
-              3px -2px 0px #f72585,
-              3px 3px 0px #0a0814;
-          }
-          100% {
-            text-shadow: 3px 3px 0px #0a0814, 4px 4px 0px #5a1740;
-          }
+          0% { text-shadow: 3px 3px 0 #0a0814, 0 0 18px rgba(247,37,133,0.55); }
+          50% { text-shadow: -3px 2px 0 #4cc9f0, 3px -2px 0 #f72585, 3px 3px 0 #0a0814; }
+          100% { text-shadow: 3px 3px 0 #0a0814, 0 0 18px rgba(247,37,133,0.55); }
         }
 
         .subtitle-text {
-          font-size: 56px;
-          font-weight: 400;
-          color: #ffd23f;
-          text-transform: uppercase;
-          letter-spacing: 0;
-          margin: 6px 0 0;
-          line-height: 1.1;
-          text-shadow:
-            4px 4px 0px #0a0814,
-            5px 5px 0px #6b5410;
+          font-size: 60px; font-weight: 400; color: #ffd23f; text-transform: uppercase;
+          letter-spacing: 4px; margin: 4px 0 0; line-height: 1;
+          text-shadow: 4px 4px 0 #0a0814, 0 0 22px rgba(255, 210, 63, 0.5);
         }
 
         .tagline {
-          font-size: 9px;
-          color: #b9b3d6;
-          margin: 22px 0 0;
-          letter-spacing: 0;
-          line-height: 1.8;
-          text-transform: uppercase;
+          font-size: 9px; color: #c9c2e6; margin: 20px 0 0; letter-spacing: 1px;
+          line-height: 1.8; text-transform: uppercase;
         }
 
-        .menu-buttons {
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
-          margin-bottom: 48px;
-        }
+        .menu-buttons { display: flex; flex-direction: column; gap: 14px; margin-bottom: 28px; }
 
-        .menu-footer {
-          text-align: center;
-        }
-
-        .credits {
-          font-size: 8px;
-          color: #8079a6;
-          margin: 0 0 10px;
-          letter-spacing: 0;
-          line-height: 1.7;
-        }
-
-        .version {
-          font-size: 7px;
-          color: #6f6796;
-          margin: 0;
-          letter-spacing: 0;
-          line-height: 1.7;
-          text-transform: uppercase;
-        }
+        .menu-footer { text-align: center; }
+        .credits { font-size: 8px; color: #8079a6; margin: 0 0 10px; letter-spacing: 0; line-height: 1.7; }
+        .version { font-size: 7px; color: #6f6796; margin: 0; letter-spacing: 0; line-height: 1.7; text-transform: uppercase; }
 
         @media (max-width: 768px) {
-          .title-text {
-            font-size: 22px;
-            text-shadow:
-              2px 2px 0px #0a0814,
-              3px 3px 0px #5a1740;
-          }
-
-          .subtitle-text {
-            font-size: 44px;
-          }
-
-          .tagline {
-            font-size: 8px;
-          }
-
-          .menu-content {
-            padding: 20px 16px;
-          }
+          .title-text { font-size: 26px; text-shadow: 2px 2px 0 #0a0814, 0 0 14px rgba(247,37,133,0.55); }
+          .subtitle-text { font-size: 48px; }
+          .tagline { font-size: 8px; }
+          .menu-content { padding: 20px 16px; }
         }
-
         @media (max-height: 700px) {
-          .game-title {
-            margin-bottom: 32px;
-          }
-
-          .menu-buttons {
-            margin-bottom: 32px;
-          }
+          .game-title { margin-bottom: 26px; }
+          .menu-content { margin-bottom: 10vh; }
         }
       `}</style>
     </div>
