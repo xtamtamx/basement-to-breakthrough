@@ -51,8 +51,12 @@ const PLAZA_R = 4; // roundabout footprint radius (tiles) around the crossroads
 
 // Each street is a paved CORRIDOR: 1-tile flagstone sidewalk | 2-tile dirt road
 // | 1-tile sidewalk. Townsfolk walk the sidewalks; the road centre is for looks.
-const STREET_V = [6, 18, ROAD_X, 42];
-const STREET_H = [5, 16, ROAD_Y, 38];
+// Spacing is deliberately IRREGULAR (varied gaps, not a uniform 12-tile grid) so
+// the town reads hand-built, not graph paper. The central crossroads stays at
+// ROAD_X/ROAD_Y; only the side streets shift, so the plaza + quarters + all
+// venue/shop/landmark placement (which is plaza-relative, not grid-indexed) hold.
+const STREET_V = [5, 19, ROAD_X, 43]; // gaps: 14 · 11 · 13 · 17
+const STREET_H = [4, 17, ROAD_Y, 39]; // gaps: 13 · 10 · 12 · 7
 
 const ZOOM_MIN = 1.3;
 const ZOOM_MAX = 5;
@@ -385,7 +389,9 @@ function planTown(districts: District[], venues: Venue[], roofMix: BuildingKey[]
   // the street, fronts facing it); 'top' = south side (roofs toward the street)
   // so both sides of every street are lined → dense blocks.
   const placeRow = (anchor: number, mode: 'bottom' | 'top') => {
-    let tx = 3;
+    // Start each row at a varied offset so buildings DON'T line up in perfect
+    // columns across rows (the biggest "graph paper" tell after the grid itself).
+    let tx = 3 + ((Math.abs(anchor) * 2) % 5);
     while (tx < WORLD_W - 4) {
       const pool = poolFor(districtAt(tx, anchor), themeKey, roofMix);
       const key = pool[Math.floor(hash2(tx * 7, anchor * 17) * 997) % pool.length];
@@ -403,7 +409,9 @@ function planTown(districts: District[], venues: Venue[], roofMix: BuildingKey[]
       buildings.push(b);
       markB(b);
       if (mode === 'bottom') paving.push({ tx: tx + Math.floor(tw / 2), ty: anchor + 1 });
-      tx += tw + 1;
+      // Vary the gap to the next building — usually 1 tile, sometimes a wider
+      // yard/vacant lot — so blocks aren't an evenly-packed wall of facades.
+      tx += tw + 1 + (hash2(tx * 3 + 1, anchor * 5 + 2) < 0.28 ? 1 + Math.floor(hash2(tx, anchor) * 2) : 0);
     }
   };
   // Reserve a parking lot fronting a central street in each quarter BEFORE
@@ -478,15 +486,27 @@ function planTown(districts: District[], venues: Venue[], roofMix: BuildingKey[]
     b.th = nh;
   }
 
-  // Street trees: a tidy row on the grass shoulder just south of each street.
+  // Street trees on the grass shoulder south of each street — IRREGULARLY spaced
+  // (varied gaps, two sizes, occasional clusters + bare stretches) so the shoulder
+  // reads planted-by-hand, not a stamped row every 5 tiles.
   const overlapsBuilding = (tx: number, ty: number) =>
     buildings.some((b) => tx >= b.tx - 1 && tx <= b.tx + b.tw && ty >= b.ty && ty <= b.ty + b.th);
+  const freeFor = (tx: number, ty: number) => !(isStreet(tx, ty) || inPlaza(tx, ty) || overlapsBuilding(tx, ty));
   for (const sy of STREET_H) {
     const row = sy + 2;
     if (row >= WORLD_H - 3) continue;
-    for (let tx = 4; tx < WORLD_W - 3; tx += 5) {
-      if (isStreet(tx, row) || inPlaza(tx, row) || overlapsBuilding(tx, row)) continue;
-      trees.push({ sprite: PROPS.treeB, tx, ty: row, th: fpH(PROPS.treeB) });
+    let tx = 4 + (Math.abs(sy) % 3);
+    while (tx < WORLD_W - 3) {
+      const hv = hash2(tx * 9 + 1, sy * 7 + 3);
+      if (hv > 0.24 && freeFor(tx, row)) {
+        const big = hv > 0.55;
+        const sprite = big ? PROPS.treeB : PROPS.tree;
+        trees.push({ sprite, tx, ty: row, th: fpH(sprite) });
+        // a big tree sometimes gets a smaller buddy beside it → a little cluster
+        if (big && hv > 0.74 && freeFor(tx + 1, row))
+          trees.push({ sprite: PROPS.tree, tx: tx + 1, ty: row - (hv > 0.88 ? 1 : 0), th: fpH(PROPS.tree) });
+      }
+      tx += 3 + Math.floor(hash2(tx * 5, sy * 3) * 4); // step 3–6
     }
   }
 
@@ -802,13 +822,26 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
     }
     for (let a = 0; a < 14; a++) { const ang = a * 2.399, rr = 10 + (a % 3) * 5; px(Math.round(cgx + Math.cos(ang) * rr), Math.round(cgy + Math.sin(ang) * rr * 0.85), 2, 2, theme.gardenFlowers[a % theme.gardenFlowers.length]); }
     const lampInline = (lx: number, ly: number) => { ell(lx + 1, ly + 1, 3, 1.4, 'rgba(20,30,18,0.25)'); px(lx, ly - 12, 2, 12, '#2f271e'); px(lx - 1, ly - 1, 4, 2, '#5a4a36'); ell(lx + 1, ly - 13, 6, 6, 'rgba(255,227,154,0.22)'); px(lx - 1, ly - 15, 4, 4, '#ffe39a'); };
-    const benchInline = (bx: number, by: number) => { ell(bx, by + 1, 8, 2, 'rgba(0,0,0,0.20)'); px(bx - 6, by - 2, 2, 3, '#4f3419'); px(bx + 4, by - 2, 2, 3, '#4f3419'); px(bx - 7, by - 5, 14, 3, '#8a6238'); px(bx - 7, by - 5, 14, 1, '#a87a48'); px(bx - 7, by - 11, 14, 2, '#7a5530'); px(bx - 6, by - 9, 1, 4, '#6e4a2c'); px(bx - 2, by - 9, 1, 4, '#6e4a2c'); px(bx + 2, by - 9, 1, 4, '#6e4a2c'); px(bx + 5, by - 9, 1, 4, '#6e4a2c'); };
+    const benchInline = (bx: number, by: number, faceUp = false) => {
+      ell(bx, by + 1, 8, 2, 'rgba(0,0,0,0.20)');
+      if (!faceUp) {
+        px(bx - 6, by - 2, 2, 3, '#4f3419'); px(bx + 4, by - 2, 2, 3, '#4f3419');
+        px(bx - 7, by - 5, 14, 3, '#8a6238'); px(bx - 7, by - 5, 14, 1, '#a87a48');
+        px(bx - 7, by - 11, 14, 2, '#7a5530');
+        px(bx - 6, by - 9, 1, 4, '#6e4a2c'); px(bx - 2, by - 9, 1, 4, '#6e4a2c'); px(bx + 2, by - 9, 1, 4, '#6e4a2c'); px(bx + 5, by - 9, 1, 4, '#6e4a2c');
+      } else {
+        px(bx - 7, by - 9, 14, 3, '#8a6238'); px(bx - 7, by - 9, 14, 1, '#a87a48');
+        px(bx - 6, by - 7, 1, 4, '#6e4a2c'); px(bx - 2, by - 7, 1, 4, '#6e4a2c'); px(bx + 2, by - 7, 1, 4, '#6e4a2c'); px(bx + 5, by - 7, 1, 4, '#6e4a2c');
+        px(bx - 7, by - 4, 14, 2, '#7a5530');
+        px(bx - 6, by - 3, 2, 2, '#4f3419'); px(bx + 4, by - 3, 2, 2, '#4f3419');
+      }
+    };
     lampInline((ISx0 - 1) * TILE + 8, (ISy0 - 1) * TILE + 14);
     lampInline((ISx0 + ISw) * TILE + 8, (ISy0 - 1) * TILE + 14);
     lampInline((ISx0 - 1) * TILE + 8, (ISy0 + ISh) * TILE + 6);
     lampInline((ISx0 + ISw) * TILE + 8, (ISy0 + ISh) * TILE + 6);
-    benchInline(cgx, (ISy0 - 1) * TILE + 12);
-    benchInline(cgx, (ISy0 + ISh) * TILE + 6);
+    benchInline(cgx, (ISy0 - 1) * TILE + 12); // north of the green, faces down toward it
+    benchInline(cgx, (ISy0 + ISh) * TILE + 6, true); // south of the green, faces up toward it
     ell(cgx, cgy + 6, 13, 5, 'rgba(20,35,20,0.25)');
     blitFoot(PROPS.tree, cgx, cgy + 9, SPR * 1.4);
   }
@@ -874,17 +907,24 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
     px(x - 3, y - 4, 1, 2, '#9a2b20'); px(x + 2, y - 4, 1, 2, '#9a2b20');
     px(x - 2, y - 6, 4, 1, 'rgba(255,255,255,0.18)');
   };
-  // A proper little park bench (backrest + slatted seat + legs) seen slightly
-  // side-on, so it reads as furniture instead of a stray plank.
-  const bench = (x: number, y: number) => {
+  // A proper little park bench (backrest + slatted seat + legs). `faceUp` flips
+  // it so it can face the road/plaza it sits beside, instead of every bench in
+  // town facing the same way.
+  const bench = (x: number, y: number, faceUp = false) => {
     ell(x, y + 1, 8, 2, 'rgba(0,0,0,0.20)');
-    px(x - 6, y - 2, 2, 3, '#4f3419'); px(x + 4, y - 2, 2, 3, '#4f3419'); // legs
-    px(x - 7, y - 5, 14, 3, '#8a6238'); // seat slab
-    px(x - 7, y - 5, 14, 1, '#a87a48'); // seat highlight
-    px(x - 7, y - 11, 14, 2, '#7a5530'); // backrest top rail
-    // backrest slats
-    px(x - 6, y - 9, 1, 4, '#6e4a2c'); px(x - 2, y - 9, 1, 4, '#6e4a2c');
-    px(x + 2, y - 9, 1, 4, '#6e4a2c'); px(x + 5, y - 9, 1, 4, '#6e4a2c');
+    if (!faceUp) {
+      px(x - 6, y - 2, 2, 3, '#4f3419'); px(x + 4, y - 2, 2, 3, '#4f3419'); // legs (front)
+      px(x - 7, y - 5, 14, 3, '#8a6238'); px(x - 7, y - 5, 14, 1, '#a87a48'); // seat
+      px(x - 7, y - 11, 14, 2, '#7a5530'); // backrest rail (back)
+      px(x - 6, y - 9, 1, 4, '#6e4a2c'); px(x - 2, y - 9, 1, 4, '#6e4a2c');
+      px(x + 2, y - 9, 1, 4, '#6e4a2c'); px(x + 5, y - 9, 1, 4, '#6e4a2c'); // slats
+    } else {
+      px(x - 7, y - 9, 14, 3, '#8a6238'); px(x - 7, y - 9, 14, 1, '#a87a48'); // seat (back)
+      px(x - 6, y - 7, 1, 4, '#6e4a2c'); px(x - 2, y - 7, 1, 4, '#6e4a2c');
+      px(x + 2, y - 7, 1, 4, '#6e4a2c'); px(x + 5, y - 7, 1, 4, '#6e4a2c'); // slats
+      px(x - 7, y - 4, 14, 2, '#7a5530'); // backrest rail (front)
+      px(x - 6, y - 3, 2, 2, '#4f3419'); px(x + 4, y - 3, 2, 2, '#4f3419'); // legs (back)
+    }
   };
   const mailbox = (x: number, y: number) => {
     ell(x, y + 1, 2.4, 1, 'rgba(0,0,0,0.2)');
@@ -929,7 +969,7 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
       if (t < 34) lamp(x, base);
       else if (t < 64) trashCan(x, base);
       else if (t < 87) hydrant(x, base);
-      else if (t < 96) bench(x, base);
+      else if (t < 96) bench(x, base, (isRoad(tx, ty - 1) || isRoad(tx, ty - 2)) && !(isRoad(tx, ty + 1) || isRoad(tx, ty + 2)));
       else mailbox(x, base);
       propAt.add(`${tx},${ty}`);
     }

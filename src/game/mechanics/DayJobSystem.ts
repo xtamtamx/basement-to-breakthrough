@@ -367,8 +367,32 @@ export class DayJobSystem {
       jobs.push(...this.buildShopJobs(shop));
     });
 
-    this.availableJobs = jobs;
-    return jobs;
+    // Every venue/district/shop generating its own jobs floods the board with
+    // 40-90 entries. Cap to a tight, glanceable day-job menu, round-robined
+    // across categories so the cut keeps variety instead of just the first few.
+    this.availableJobs = this.capJobs(jobs, 8);
+    return this.availableJobs;
+  }
+
+  /** Trim the job board to `max`, balanced across categories (order preserved). */
+  private capJobs(jobs: DayJob[], max: number): DayJob[] {
+    if (jobs.length <= max) return jobs;
+    const byCat = new Map<JobCategory, DayJob[]>();
+    for (const j of jobs) {
+      const q = byCat.get(j.category) ?? [];
+      q.push(j);
+      byCat.set(j.category, q);
+    }
+    const queues = [...byCat.values()];
+    const out: DayJob[] = [];
+    let i = 0;
+    while (out.length < max && queues.some((q) => q.length)) {
+      const q = queues[i % queues.length];
+      const job = q.shift();
+      if (job) out.push(job);
+      i++;
+    }
+    return out;
   }
 
   private buildShopJobs(shop: CityShop): DayJob[] {
