@@ -1,1 +1,1 @@
-export { ParticleBackground } from "./ParticleBackground";
+export { MapFXLayer } from "./MapFXLayer";

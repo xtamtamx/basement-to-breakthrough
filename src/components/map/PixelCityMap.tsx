@@ -30,6 +30,8 @@ import {
   TILE,
   loadAllSheets,
 } from './townAtlas';
+import { GENERATED_SPRITES } from './generatedAtlas';
+import { MapFXLayer } from '@components/effects/MapFXLayer';
 import { getCityShops, CityShop, ShopKind } from '@game/world/cityShops';
 import { getCityLandmarks, metaProgressValue, CityLandmark, LandmarkKind } from '@game/world/landmarks';
 import { unlockedVenues } from '@game/world/venueProgression';
@@ -208,6 +210,24 @@ const LANDMARK_ACCENT: Record<CityLandmark['alignment'], string> = { diy: '#fbbf
 const fpW = (s: AtlasSprite) => Math.max(1, Math.ceil((s.rect.w * SPR) / TILE));
 const fpH = (s: AtlasSprite) => Math.max(1, Math.ceil((s.rect.h * SPR) / TILE));
 
+// Hand-authored live-music PROP sprites (art/sprites/town → generated atlas).
+// Drawn FOOT-anchored at scale 1 (crisp, no resample) as venue-adjacent dressing.
+const gp = (name: keyof typeof GENERATED_SPRITES): AtlasSprite => ({ sheet: 'generated', rect: GENERATED_SPRITES[name] });
+const TOWN_PROPS = {
+  pa: gp('town_pa_speaker_stack'),
+  amp: gp('town_floor_amp'),
+  mic: gp('town_mic_stand'),
+  roadCase: gp('town_road_case'),
+  cable: gp('town_cable_coil'),
+  lights: gp('town_string_lights'),
+  flyer: gp('town_flyer_pole'),
+  flyerB: gp('town_flyer_pole_b'),
+  board: gp('town_sandwich_board'),
+} as const;
+// Gear clusters around venues; paper/board dressing along street shoulders.
+const VENUE_GEAR = [TOWN_PROPS.pa, TOWN_PROPS.amp, TOWN_PROPS.mic, TOWN_PROPS.roadCase, TOWN_PROPS.cable, TOWN_PROPS.lights];
+const STREET_DRESS = [TOWN_PROPS.flyer, TOWN_PROPS.flyerB, TOWN_PROPS.board];
+
 function hash2(x: number, y: number): number {
   // Math.imul keeps the multiplies in 32-bit; the old plain `*` overflowed JS
   // float precision for larger inputs and biased the output into [0, 0.5],
@@ -278,11 +298,13 @@ function dgContour(ctx: CanvasRenderingContext2D, key: number, ox: number, oy: n
 interface Quarter { district: District; tx: number; ty: number; tw: number; th: number }
 interface PlacedBuilding { sprite: AtlasSprite; tx: number; ty: number; tw: number; th: number; venue?: Venue; shop?: CityShop; landmark?: CityLandmark; district?: District }
 interface PlacedTree { sprite: AtlasSprite; tx: number; ty: number; th: number }
+interface PlacedProp { sprite: AtlasSprite; tx: number; ty: number } // ty = foot row
 interface ParkingLot { tx: number; ty: number; tw: number; th: number }
 interface TownPlan {
   quarters: Quarter[];
   buildings: PlacedBuilding[];
   trees: PlacedTree[];
+  props: PlacedProp[];
   paving: { tx: number; ty: number }[];
   parkingLots: ParkingLot[];
 }
@@ -524,7 +546,53 @@ function planTown(districts: District[], venues: Venue[], roofMix: BuildingKey[]
     }
   }
 
-  return { quarters, buildings, trees, paving, parkingLots };
+  // Live-music PROP dressing: gear clusters hug each venue's frontage, and a few
+  // flyer poles / sandwich boards line the street shoulders — so the scene
+  // clutter concentrates where shows happen and the rest of town stays cozy.
+  const props: PlacedProp[] = [];
+  const propOcc = new Set<string>(trees.map((t) => `${t.tx},${t.ty}`));
+  const propFree = (tx: number, ty: number) =>
+    tx > 1 && ty > 1 && tx < WORLD_W - 2 && ty < WORLD_H - 2 && freeFor(tx, ty) && !propOcc.has(`${tx},${ty}`);
+  const placeProp = (sprite: AtlasSprite, tx: number, ty: number) => {
+    props.push({ sprite, tx, ty });
+    propOcc.add(`${tx},${ty}`);
+    propOcc.add(`${tx + 1},${ty}`); // reserve a little elbow room
+  };
+  // venue gear: 2–3 pieces on the nearest free grass around each venue foot
+  // (venues sit at the dense square, so search a small box, not just the ring).
+  for (const b of buildings) {
+    if (!b.venue) continue;
+    const cx = b.tx + b.tw / 2;
+    const fy = b.ty + b.th;
+    const cands: [number, number, number][] = [];
+    for (let dy = -2; dy <= 4; dy++)
+      for (let dx = -3; dx <= b.tw + 2; dx++) {
+        const tx = b.tx + dx;
+        const ty = fy + dy;
+        if (propFree(tx, ty)) cands.push([tx, ty, Math.hypot(tx + 0.5 - cx, ty + 0.5 - fy)]);
+      }
+    cands.sort((a, z) => a[2] - z[2]);
+    const want = 2 + Math.floor(hash2(b.tx * 7, b.ty * 5) * 2); // 2–3
+    let placed = 0;
+    for (const [tx, ty] of cands) {
+      if (placed >= want) break;
+      // per-venue seed + placed*2 so a venue gets a VARIED cluster, not dupes
+      if (propFree(tx, ty)) { placeProp(VENUE_GEAR[(b.tx * 3 + b.ty + placed * 2) % VENUE_GEAR.length], tx, ty); placed++; }
+    }
+  }
+  // street-shoulder paper: flyer poles + boards along the grass verge
+  for (const sy of STREET_H) {
+    const row = sy + 3;
+    if (row >= WORLD_H - 3) continue;
+    let tx = 6 + (Math.abs(sy * 3) % 6);
+    while (tx < WORLD_W - 3) {
+      const hv = hash2(tx * 17 + 3, sy * 13 + 1);
+      if (hv > 0.66 && propFree(tx, row)) placeProp(STREET_DRESS[Math.floor(hv * 97) % STREET_DRESS.length], tx, row);
+      tx += 5 + Math.floor(hash2(tx * 7, sy * 5) * 4);
+    }
+  }
+
+  return { quarters, buildings, trees, props, paving, parkingLots };
 }
 
 // --- Wandering townsfolk -----------------------------------------------------
@@ -633,6 +701,10 @@ function drawBuildingObj(ctx: CanvasRenderingContext2D, sheets: Sheets, b: Place
 }
 function drawTreeObj(ctx: CanvasRenderingContext2D, sheets: Sheets, t: PlacedTree) {
   spriteBlit(ctx, sheets, t.sprite, (t.tx + 1) * TILE, (t.ty + t.th) * TILE, SPR);
+}
+function drawPropObj(ctx: CanvasRenderingContext2D, sheets: Sheets, p: PlacedProp) {
+  // scale 1 = crisp (no resample); sprite bakes its own ground shadow
+  spriteBlit(ctx, sheets, p.sprite, (p.tx + 0.5) * TILE, (p.ty + 1) * TILE, 1);
 }
 
 // --- Ground bake (terrain + streets + plaza + low props; NO buildings/trees) -
@@ -868,6 +940,7 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
   };
   plan.buildings.forEach((bd) => mark(bd.tx, bd.ty, bd.tw, bd.th));
   plan.trees.forEach((t) => mark(t.tx, t.ty, 2, 2));
+  plan.props.forEach((p) => mark(p.tx, p.ty, 2, 2));
 
   // 4a. Parking lots (reserved per quarter in planTown) — asphalt + painted
   // stalls + a few parked cars; marked occupied so bushes/props avoid them.
@@ -1029,14 +1102,16 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
   const plan = useMemo(() => planTown(districts, venues, theme.roofMix, diyPoints, landmarks, themeKey), [districts, venues, theme, diyPoints, landmarks, themeKey]);
   const ground = useMemo(() => (sheets ? buildGround(plan, sheets, theme) : null), [plan, sheets, theme]);
 
-  // Static depth-sortable objects (buildings + trees); walkers merge in per-frame.
+  // Static depth-sortable objects (buildings + trees + props); walkers merge in per-frame.
   type DepthObj =
     | { footY: number; kind: 'building'; b: PlacedBuilding }
-    | { footY: number; kind: 'tree'; t: PlacedTree };
+    | { footY: number; kind: 'tree'; t: PlacedTree }
+    | { footY: number; kind: 'prop'; p: PlacedProp };
   const objects = useMemo<DepthObj[]>(() => {
     const list: DepthObj[] = [];
     plan.buildings.forEach((b) => list.push({ footY: (b.ty + b.th) * TILE, kind: 'building', b }));
     plan.trees.forEach((t) => list.push({ footY: (t.ty + t.th) * TILE, kind: 'tree', t }));
+    plan.props.forEach((p) => list.push({ footY: (p.ty + 1) * TILE, kind: 'prop', p }));
     return list;
   }, [plan]);
 
@@ -1262,7 +1337,8 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
       depth.forEach((d) => {
         if (d.w) drawPerson(ctx, d.w);
         else if (d.o!.kind === 'building') drawBuildingObj(ctx, sheets, d.o!.b);
-        else drawTreeObj(ctx, sheets, d.o!.t);
+        else if (d.o!.kind === 'tree') drawTreeObj(ctx, sheets, d.o!.t);
+        else drawPropObj(ctx, sheets, d.o!.p);
       });
 
       plan.buildings.forEach((b) => {
@@ -1502,6 +1578,8 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
         onPointerCancel={(e) => endPointer(e, false)}
         onWheel={handleWheel}
       />
+      {/* Pixi (WebGL) neon-mote overlay — floats above the map, below the CRT. */}
+      <MapFXLayer />
       {/* CRT scanlines — faint horizontal rule overlay for a premium retro feel.
           Pure CSS (zero per-frame cost), non-interactive, sits above the canvas. */}
       <div

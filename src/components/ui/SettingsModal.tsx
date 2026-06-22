@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAudio } from '@utils/audio';
+import { useFxQuality } from '@utils/fxQuality';
 import { haptics } from '@utils/mobile';
 import { useGameStore } from '@stores/gameStore';
 import { tutorialManager } from '@game/tutorial/TutorialManager';
@@ -14,6 +15,7 @@ interface SettingsModalProps {
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   const { enabled, volume, setEnabled, setVolume } = useAudio();
+  const { quality: fxQuality, cycleQuality: cycleFx } = useFxQuality();
   const { resetGame, currentRound } = useGameStore();
   const { mode: colorblindMode, setMode: setColorblindMode } = useColorblind();
 
@@ -182,6 +184,40 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                     transition: 'none'
                   }} />
                 </button>
+              </div>
+
+              {/* Visual FX quality (Pixi neon-mote overlay) */}
+              <div style={{
+                ...insetCard,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between'
+              }}>
+                <span style={{
+                  fontFamily: '"Press Start 2P", monospace',
+                  fontSize: '9px',
+                  letterSpacing: 0,
+                  color: '#ffffff'
+                }}>Visual FX</span>
+                <button
+                  onClick={() => { cycleFx(); haptics.light(); }}
+                  style={{
+                    minWidth: '64px',
+                    minHeight: '44px',
+                    padding: '0 14px',
+                    fontFamily: '"Press Start 2P", monospace',
+                    fontSize: '9px',
+                    textTransform: 'uppercase',
+                    color: fxQuality === 'high' ? '#3ad17e' : fxQuality === 'low' ? '#ffd23f' : '#6f6796',
+                    backgroundColor: '#0a0814',
+                    border: '2px solid #0a0814',
+                    borderRadius: 0,
+                    boxShadow: 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814',
+                    cursor: 'pointer',
+                    transition: 'none'
+                  }}
+                  aria-label={`Visual effects quality: ${fxQuality}. Tap to change.`}
+                >{fxQuality}</button>
               </div>
 
               {/* Volume Slider */}

@@ -41,8 +41,11 @@ const snapped = snapImageToCanvas(sourceImg, w, h, { pixelScale: 4 });
 // → export snapped.toDataURL() to a PNG, drop it in art/sprites/, re-pack.
 ```
 
-### Placeholders
+### The live-music prop set
 
-`npm run sprites:demo` writes a few on-brand neon placeholder PNGs into
-`demo/` so the pipeline always has something to pack. Delete them once you have
-real art.
+`npm run sprites:town` regenerates the hand-authored neon prop sprites
+(`scripts/makeTownProps.mjs` → `town/*.png`: PA stacks, amps, mic stands, flyer
+poles, string lights, road cases, sandwich boards, cable coils). They're drawn
+procedurally with the shared raster toolkit in `scripts/lib/png.mjs`, so tweak
+that script and re-run `sprites:town` + `pack:sprites` to iterate. PixelCityMap
+scatters them as venue-adjacent dressing.

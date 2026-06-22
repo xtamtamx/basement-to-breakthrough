@@ -22,6 +22,8 @@ export const SHEETS = {
   grass: '/assets/sprites/town/grasslands-tileset.png',
   village: '/assets/sprites/town/village-tileset.png',
   city: '/assets/sprites/town/city-tileset.png',
+  // Generated atlas (npm run pack:sprites) — hand-authored neon prop sprites.
+  generated: '/assets/sprites/generated/atlas.png',
 } as const;
 
 export type SheetName = keyof typeof SHEETS;
@@ -119,9 +121,22 @@ export function loadSheet(name: SheetName): Promise<HTMLImageElement> {
   return promise;
 }
 
+// A 1x1 transparent fallback so one missing/optional sheet can't break the map.
+let blankImg: HTMLImageElement | null = null;
+function getBlank(): HTMLImageElement {
+  if (blankImg) return blankImg;
+  const cv = document.createElement('canvas');
+  cv.width = cv.height = 1;
+  blankImg = new Image();
+  blankImg.src = cv.toDataURL();
+  return blankImg;
+}
+
 export function loadAllSheets(): Promise<Record<SheetName, HTMLImageElement>> {
   const names = Object.keys(SHEETS) as SheetName[];
-  return Promise.all(names.map(loadSheet)).then((imgs) => {
+  // Each sheet falls back to a transparent 1x1 on error rather than rejecting
+  // the whole batch — e.g. the optional generated atlas may be absent.
+  return Promise.all(names.map((n) => loadSheet(n).catch(() => getBlank()))).then((imgs) => {
     const out = {} as Record<SheetName, HTMLImageElement>;
     names.forEach((n, i) => {
       out[n] = imgs[i];

@@ -7,10 +7,15 @@ export const GENERATED_ATLAS_SRC = '/assets/sprites/generated/atlas.png';
 
 /** Sprite rects within the generated atlas, keyed by source filename. */
 export const GENERATED_SPRITES = {
-  demo_amp: { x: 1, y: 1, w: 22, h: 18 },
-  demo_diamond: { x: 1, y: 21, w: 16, h: 16 },
-  demo_orb: { x: 47, y: 1, w: 16, h: 16 },
-  demo_ring: { x: 25, y: 1, w: 20, h: 20 },
+  town_cable_coil: { x: 69, y: 1, w: 14, h: 8 },
+  town_floor_amp: { x: 19, y: 17, w: 16, h: 14 },
+  town_flyer_pole: { x: 19, y: 33, w: 14, h: 26 },
+  town_flyer_pole_b: { x: 1, y: 37, w: 14, h: 26 },
+  town_mic_stand: { x: 37, y: 17, w: 12, h: 24 },
+  town_pa_speaker_stack: { x: 51, y: 1, w: 16, h: 26 },
+  town_road_case: { x: 31, y: 1, w: 18, h: 14 },
+  town_sandwich_board: { x: 1, y: 17, w: 16, h: 18 },
+  town_string_lights: { x: 1, y: 1, w: 28, h: 14 },
 } as const;
 
 export type GeneratedSpriteName = keyof typeof GENERATED_SPRITES;

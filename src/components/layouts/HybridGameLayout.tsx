@@ -1,6 +1,5 @@
 import React, { ReactNode } from 'react';
 import { motion } from 'framer-motion';
-import { ParticleBackground } from '@components/effects/ParticleBackground';
 
 interface HybridGameLayoutProps {
   children: ReactNode;
@@ -23,9 +22,6 @@ export const HybridGameLayout: React.FC<HybridGameLayoutProps> = ({ children }) 
 
       {/* Cyber grid */}
       <div className="cyber-grid opacity-20" />
-
-      {/* Particle effects */}
-      <ParticleBackground />
 
       {/* Scanline effect (subtle) */}
       <div className="scanlines" style={{ opacity: 0.03 }} />
