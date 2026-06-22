@@ -483,7 +483,7 @@ export const ShowBuilderView: React.FC = () => {
               max="50"
               step="5"
               value={ticketPrice}
-              onChange={(e) => setTicketPrice(Number(e.target.value))}
+              onChange={(e) => { setTicketPrice(Number(e.target.value)); haptics.light(); }}
               style={{
                 width: '100%',
                 height: '12px',
@@ -496,6 +496,16 @@ export const ShowBuilderView: React.FC = () => {
                 appearance: 'none'
               }}
             />
+            {/* Live tradeoff readout — the price↔attendance relationship is the
+                key micro-decision; surface it right at the slider, not buried in
+                the preview below. */}
+            {preview && (
+              <div className="snes-pixel" style={{ marginTop: '8px', fontSize: '8px', color: '#b9b3d6', textAlign: 'center', letterSpacing: 0 }}>
+                <span style={{ color: '#c77dff' }}>~{preview.expectedAttendance}</span> in
+                <span style={{ color: '#6f6796' }}> · </span>
+                <span style={{ color: '#3ad17e' }}>${preview.grossRevenue}</span> door
+              </div>
+            )}
             <div className="snes-pixel" style={{
               display: 'flex',
               justifyContent: 'space-between',

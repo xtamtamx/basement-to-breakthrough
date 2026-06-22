@@ -49,6 +49,31 @@ const EMPTY_TURN_RESULT: TurnResult = {
   synergyEffects: [],
 };
 
+/** A HUD resource chip that flashes (green up / red down + btb-pop) when its
+ *  value changes — so a turn's payoff registers on the HUD it returns to, not
+ *  just in the results modal. Reduced-motion users get the color tint without
+ *  the pop (btb-pop is gated off in snes.css). */
+const FlashChip: React.FC<{ icon: string; color: string; value: number }> = ({ icon, color, value }) => {
+  const prev = useRef(value);
+  const [flash, setFlash] = useState<'up' | 'down' | null>(null);
+  useEffect(() => {
+    if (value === prev.current) return;
+    setFlash(value > prev.current ? 'up' : 'down');
+    prev.current = value;
+    const t = setTimeout(() => setFlash(null), 600);
+    return () => clearTimeout(t);
+  }, [value]);
+  const fc = flash === 'up' ? '#3ad17e' : '#ff5c57';
+  return (
+    <span
+      className={`snes-chip${flash ? ' btb-pop' : ''}`}
+      style={flash ? { borderColor: fc, boxShadow: `0 0 8px ${fc}66` } : undefined}
+    >
+      <span style={{ color }}>{icon}</span><span>{value}</span>
+    </span>
+  );
+};
+
 export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
   const [currentView, setCurrentView] = useState<ViewType>("city");
   const [showTurnResults, setShowTurnResults] = useState(false);
@@ -203,9 +228,9 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           {/* Resources */}
           <div data-tut="resources" style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-            <span className="snes-chip"><span style={{ color: '#3ad17e' }}>$</span><span>{money}</span></span>
-            <span className="snes-chip"><span style={{ color: '#ffd23f' }}>★</span><span>{reputation}</span></span>
-            <span className="snes-chip"><span style={{ color: '#c77dff' }}>♦</span><span>{fans}</span></span>
+            <FlashChip icon="$" color="#3ad17e" value={money} />
+            <FlashChip icon="★" color="#ffd23f" value={reputation} />
+            <FlashChip icon="♦" color="#c77dff" value={fans} />
             {/* Always-on stress gauge — burnout is a loss condition, so the trend
                 must be visible, not a surprise that pops in only at 50. */}
             <span

@@ -4,6 +4,7 @@ import { stakesManager, STAKE_TIERS } from "@game/mechanics/StakesManager";
 import { BASE_ROSTER_SLOTS } from "@game/constants/runConstants";
 import { haptics } from "@utils/mobile";
 import { X, DollarSign, Clock, Users, Trophy, Lock, Flame } from "lucide-react";
+import { useEscapeToClose } from "@hooks/useEscapeToClose";
 
 interface RunModeSelectorProps {
   onSelect: (config: RunConfig, stakeTier: number) => void;
@@ -64,6 +65,7 @@ export const RunModeSelector: React.FC<RunModeSelectorProps> = ({ onSelect, onCl
   const configs = runManager.getRunConfigs();
   // Selected stake tier per mode (defaults to Open Mic so newcomers aren't walled).
   const [tiers, setTiers] = useState<Record<string, number>>({});
+  useEscapeToClose(onClose);
 
   const pick = (config: RunConfig, tier: number) => {
     haptics.success();
@@ -75,6 +77,9 @@ export const RunModeSelector: React.FC<RunModeSelectorProps> = ({ onSelect, onCl
       <div
         className="snes-modal__sheet"
         onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Choose a run mode"
         style={{ maxWidth: "480px" }}
       >
         {/* Header */}

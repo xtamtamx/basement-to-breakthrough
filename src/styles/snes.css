@@ -262,3 +262,10 @@ input[type='range'], input[type='checkbox'], input[type='radio'], progress { acc
     animation: none !important;
   }
 }
+
+/* --- Press feedback ------------------------------------------------------ */
+/* The floating next-turn FAB used JS onMouseDown handlers that don't fire on
+   touch (the primary platform). A CSS :active depress works everywhere. */
+.mobile-bottom-nav__next-turn:active {
+  transform: scale(0.92);
+}

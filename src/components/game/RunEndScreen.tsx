@@ -95,6 +95,9 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
       }}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={`${config.title} — ${config.subtitle}`}
         style={{
           backgroundImage: config.gradient,
           border: `3px solid ${config.accent}`,

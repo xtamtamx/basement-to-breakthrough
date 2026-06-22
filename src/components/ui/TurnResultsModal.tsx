@@ -6,6 +6,7 @@ import { SATIRICAL_TURN_RESULTS } from '@game/data/satiricalText';
 import type { SynergyTriggerResult } from '@game/mechanics/SynergyManager';
 import { audio } from '@utils/simpleAudio';
 import { haptics } from '@utils/mobile';
+import { useEscapeToClose } from '@hooks/useEscapeToClose';
 import { X, Users, DollarSign, Star } from 'lucide-react';
 
 interface TurnResultsModalProps {
@@ -68,6 +69,7 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
   synergyEffects = [],
   passiveIncome
 }) => {
+  useEscapeToClose(onClose, isOpen); // active-gated so it's safe before the early return
   const allBands = useGameStore((state) => state.allBands);
   const venues = useGameStore((state) => state.venues);
   const scheduledShows = useGameStore((state) => state.scheduledShows);
@@ -181,6 +183,9 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.9, opacity: 0, y: 20 }}
           onClick={e => e.stopPropagation()}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Turn results"
           style={{
             backgroundColor: '#171327',
             borderRadius: 0,

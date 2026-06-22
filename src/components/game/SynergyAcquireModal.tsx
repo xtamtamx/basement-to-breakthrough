@@ -11,6 +11,7 @@ import {
   SynergyRarity,
 } from '@game/mechanics/SynergyManager';
 import { useGameStore } from '@stores/gameStore';
+import { useEscapeToClose } from '@hooks/useEscapeToClose';
 
 interface SynergyAcquireModalProps {
   synergy: Synergy;
@@ -41,6 +42,7 @@ export const SynergyAcquireModal: React.FC<SynergyAcquireModalProps> = ({
 }) => {
   const currentTurn = useGameStore(state => state.currentRound);
   const [selectedReplaceSlot, setSelectedReplaceSlot] = useState<number | null>(null);
+  useEscapeToClose(onClose);
 
   const isFull = synergyManager.isFull();
   const equipped = synergyManager.getEquippedSynergies();
@@ -92,6 +94,9 @@ export const SynergyAcquireModal: React.FC<SynergyAcquireModalProps> = ({
     >
       <div
         className={`btb-pop ${glow ? 'btb-glow' : ''}`}
+        role="dialog"
+        aria-modal="true"
+        aria-label={`New synergy offered: ${synergy.name}`}
         style={{
           backgroundColor: '#171327',
           maxWidth: '440px',
@@ -224,6 +229,9 @@ export const SynergyAcquireModal: React.FC<SynergyAcquireModalProps> = ({
               >
                 Slots full! Choose one to replace:
               </h3>
+              <p style={{ fontSize: '8px', color: '#6f6796', margin: '-4px 0 10px 0', lineHeight: 1.5 }}>
+                Tap one above to swap it out — or "Skip This One" to keep your current loadout.
+              </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {equipped.map((eq) => {
                   const selected = selectedReplaceSlot === eq.slotIndex;
@@ -286,7 +294,7 @@ export const SynergyAcquireModal: React.FC<SynergyAcquireModalProps> = ({
             className="snes-btn snes-btn--ghost"
             style={{ flex: 1, minHeight: '44px', fontSize: '10px', cursor: 'pointer' }}
           >
-            Discard
+            Skip This One
           </button>
           <button
             onClick={handleAcquire}

@@ -321,9 +321,6 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           transition: 'none',
           bottom: 'calc(3rem + env(safe-area-inset-bottom) + 0.5rem)'
         }}
-        onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
-        onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-        onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
         aria-label={scheduledShows.length > 0 ? `Next turn — ${scheduledShows.length} show${scheduledShows.length > 1 ? 's' : ''} booked` : 'Next turn — no shows booked'}
       >
         <ChevronRight size={20} />
