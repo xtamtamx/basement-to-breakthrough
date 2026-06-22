@@ -793,9 +793,12 @@ export const useGameStore = create<GameStore>()(
         // so the town opens with just the DIY rooms and grows from there.
         const homeVenues = venues;
         set((state) => ({
-          // Load a pool of 8 acts so the roster slot cap (base 4) is a real
-          // "who makes the cut" choice — you can only sign a subset.
-          allBands: bands.slice(0, 8),
+          // Surface the FULL authored roster as the free-agent pool — the roster
+          // slot cap (base 4) is what makes signing a "who makes the cut" choice,
+          // not an artificial pool cap. (Was slice(0,8), which silently hid 28
+          // authored bands.) Sim stays balance-neutral: it signs the first-3 by
+          // array order, which is unchanged.
+          allBands: bands,
           venues: homeVenues,
           // Start with a SINGLE signed act — signing more is the player's first
           // real decision (and the onboarding walkthrough's first hands-on step).

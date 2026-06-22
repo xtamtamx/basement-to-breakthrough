@@ -284,6 +284,55 @@ export class SynergyEngine {
       }
       return null;
     });
+
+    // --- 2026-06 content pass: +3 combos (all <= COMBO_MULT_CAP) ---
+    // DIY Purist - a deep, ultra-authentic, low-popularity bill in a raw room.
+    this.registerSynergy('diy-purist', (bands, venue) => {
+      const rawRoom =
+        venue.type === VenueType.BASEMENT ||
+        venue.type === VenueType.HOUSE_SHOW ||
+        venue.type === VenueType.DIY_SPACE;
+      const purist = bands.length >= 2 && bands.every(b => b.authenticity > 85 && b.popularity < 50);
+      if (rawRoom && purist) {
+        return {
+          id: 'diy-purist',
+          name: 'DIY Purist',
+          description: 'Everyone here would rather break even than break big.',
+          multiplier: 1.28,
+          reputationBonus: 9,
+        };
+      }
+      return null;
+    });
+
+    // Genre Riot - a focused single-genre bill in a small room.
+    this.registerSynergy('genre-riot', (bands, venue) => {
+      if (bands.length >= 3 && venue.capacity < 150 && bands.every(b => b.genre === bands[0].genre)) {
+        return {
+          id: 'genre-riot',
+          name: 'Genre Riot',
+          description: 'One sound, one room, one collective ringing in your ears for days.',
+          multiplier: 1.22,
+          reputationBonus: 7,
+        };
+      }
+      return null;
+    });
+
+    // Sweat Equity - a high-energy headliner in a tiny, no-barricade room.
+    this.registerSynergy('sweat-equity', (bands, venue) => {
+      const headliner = bands[0];
+      if (headliner && headliner.energy > 85 && venue.capacity < 60 && venue.hasSecurity === false) {
+        return {
+          id: 'sweat-equity',
+          name: 'Sweat Equity',
+          description: 'No barricade, no bouncer, no survivors — just the band and the pit.',
+          multiplier: 1.3,
+          reputationBonus: 10,
+        };
+      }
+      return null;
+    });
   }
 
   // Get synergy preview for planning
@@ -326,4 +375,7 @@ export const COMBO_CATALOG: {
   { id: 'basement-democracy', name: 'Basement Democracy', description: 'A deep bill of true believers crammed into one tiny basement.', tier: 'rare' },
   { id: 'vinyl-revival', name: 'Skipped Record Store', description: 'A live recording rig in a dive where physical media still moves.', tier: 'common' },
   { id: 'underground-rescue', name: 'Scene Savior', description: 'A high-energy band rebuilding a forgotten corner of the city.', tier: 'rare' },
+  { id: 'diy-purist', name: 'DIY Purist', description: 'A deep, ultra-authentic, low-popularity bill in a raw DIY room.', tier: 'rare' },
+  { id: 'genre-riot', name: 'Genre Riot', description: 'Three-plus bands of one genre crammed into a small room.', tier: 'common' },
+  { id: 'sweat-equity', name: 'Sweat Equity', description: 'A high-energy headliner in a tiny room with no security.', tier: 'rare' },
 ];

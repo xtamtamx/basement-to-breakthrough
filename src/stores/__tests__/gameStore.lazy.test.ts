@@ -75,7 +75,7 @@ describe('GameStore Lazy Loading', () => {
     });
     
     // Should have loaded limited data
-    expect(result.current.allBands).toHaveLength(8); // Pool of 8 signable acts
+    expect(result.current.allBands).toHaveLength(9); // Full authored pool (roster slot cap constrains signing)
     expect(result.current.venues).toHaveLength(4); // Full venue ladder loads; the rep gate decides which show
     expect(result.current.rosterBandIds).toHaveLength(1); // Start with a single signed act
   });
@@ -99,7 +99,7 @@ describe('GameStore Lazy Loading', () => {
     const loadTime = performance.now() - loadStartTime;
     
     // Loading happens asynchronously
-    expect(result.current.allBands).toHaveLength(8);
+    expect(result.current.allBands).toHaveLength(9);
     
     console.log(`Initial render: ${renderTime.toFixed(2)}ms`);
     console.log(`Lazy load time: ${loadTime.toFixed(2)}ms`);

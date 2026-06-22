@@ -346,6 +346,77 @@ export const STARTER_SYNERGIES: Synergy[] = [
     condition: { type: 'MIN_REPUTATION', value: 60, description: 'Reputation 60+' },
     icon: '🎆',
   },
+
+  // --- 2026-06 content pass: +6 jokers (magnitudes <= existing category leaders;
+  // most gated so they reward an established run, not a fragile early one) ---
+  {
+    id: 'squat_landlord',
+    name: 'Squat Landlord',
+    description: "You don't pay rent so much as negotiate occupancy",
+    rarity: 'COMMON',
+    trigger: 'PASSIVE',
+    effects: [{ type: 'COST_REDUCTION_PERCENT', value: 18, description: '-18% show costs' }],
+    icon: '🏚️',
+  },
+  {
+    id: 'slow_burn',
+    name: 'Slow Burn',
+    description: 'The years of van-floor sleeping finally compound',
+    rarity: 'UNCOMMON',
+    trigger: 'TURN_END',
+    effects: [
+      { type: 'MONEY_FLAT', value: 18, description: '+$18 each turn (turn 15+)' },
+      { type: 'FANS_FLAT', value: 6, description: '+6 fans each turn (turn 15+)' },
+    ],
+    condition: { type: 'TURN_RANGE', value: '15-35', description: 'Turns 15+' },
+    icon: '🔥',
+  },
+  {
+    id: 'all_ages_zealot',
+    name: 'All-Ages Zealot',
+    description: 'No bar, no booze, no barrier — just kids who showed up to mean it',
+    rarity: 'UNCOMMON',
+    trigger: 'SHOW_END',
+    effects: [
+      { type: 'FANS_PERCENT', value: 18, description: '+18% fans while stress < 50' },
+      { type: 'REPUTATION_PERCENT', value: 12, description: '+12% reputation while stress < 50' },
+    ],
+    condition: { type: 'MAX_STRESS', value: 50, description: 'Stress below 50' },
+    icon: '🧃',
+  },
+  {
+    id: 'festival_circuit',
+    name: 'Festival Circuit',
+    description: "Add water and a port-a-john and suddenly it's a curated experience",
+    rarity: 'UNCOMMON',
+    trigger: 'SHOW_START',
+    effects: [{ type: 'ATTENDANCE_PERCENT', value: 22, description: '+22% attendance at rep 40+' }],
+    condition: { type: 'MIN_REPUTATION', value: 40, description: 'Reputation 40+' },
+    icon: '⛺',
+  },
+  {
+    id: 'merch_table_empire',
+    name: 'Merch Table Empire',
+    description: 'Forty dollars for a t-shirt is anti-capitalist if you say it loud enough',
+    rarity: 'RARE',
+    trigger: 'SHOW_END',
+    effects: [{ type: 'MONEY_PERCENT', value: 25, description: '+25% money from shows (200+ fans)' }],
+    condition: { type: 'MIN_FANS', value: 200, description: 'At least 200 fans' },
+    icon: '👕',
+  },
+  {
+    id: 'scene_elder',
+    name: 'Scene Elder',
+    description: 'You stopped going to shows but everyone still texts you about them',
+    rarity: 'RARE',
+    trigger: 'TURN_START',
+    effects: [
+      { type: 'FANS_FLAT', value: 10, description: '+10 fans each turn (rep 50+)' },
+      { type: 'MONEY_FLAT', value: 15, description: '+$15 each turn (rep 50+)' },
+    ],
+    condition: { type: 'MIN_REPUTATION', value: 50, description: 'Reputation 50+' },
+    icon: '🧓',
+  },
 ];
 
 // ============= SynergyManager Class =============
