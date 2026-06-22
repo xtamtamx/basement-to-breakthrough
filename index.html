@@ -31,7 +31,7 @@
         -webkit-tap-highlight-color: transparent;
         overscroll-behavior: none;
       }
-      
+
       /* Allow selection for drag handles */
       [data-rfd-drag-handle-context-id] {
         -webkit-user-select: auto !important;
@@ -39,11 +39,51 @@
         -ms-user-select: auto !important;
         user-select: auto !important;
       }
+
+      /* Branded boot splash — static HTML so it paints INSTANTLY (before the JS
+         bundle downloads/parses), then App.tsx fades it out on mount. Replaces
+         the old flash-of-black void. Neon-punk palette matches snes.css. */
+      #app-splash {
+        position: fixed; inset: 0; z-index: 99999;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        gap: 22px; background: #0f0b1e;
+        font-family: 'Press Start 2P', 'Courier New', monospace;
+        transition: opacity 0.45s ease;
+      }
+      #app-splash .splash-mark {
+        text-align: center; line-height: 1.45; letter-spacing: 1px;
+        font-size: 30px; color: #f72585; text-shadow: 3px 3px 0 #0a0814;
+      }
+      #app-splash .splash-mark b { color: #ffd23f; font-weight: normal; }
+      #app-splash .splash-tag {
+        font-size: 9px; color: #6f6796; letter-spacing: 1px; text-align: center;
+        max-width: 80vw; line-height: 1.7;
+      }
+      /* Bouncing equalizer bars — on-theme for a music game, beats a spinner. */
+      #app-splash .splash-eq { display: flex; align-items: flex-end; gap: 5px; height: 30px; }
+      #app-splash .splash-eq span {
+        width: 6px; height: 100%; transform-origin: bottom;
+        animation: splash-eq 0.9s ease-in-out infinite;
+      }
+      #app-splash .splash-eq span:nth-child(1) { background: #f72585; animation-delay: 0s; }
+      #app-splash .splash-eq span:nth-child(2) { background: #4cc9f0; animation-delay: 0.15s; }
+      #app-splash .splash-eq span:nth-child(3) { background: #ffd23f; animation-delay: 0.3s; }
+      #app-splash .splash-eq span:nth-child(4) { background: #3ad17e; animation-delay: 0.45s; }
+      #app-splash .splash-eq span:nth-child(5) { background: #c77dff; animation-delay: 0.6s; }
+      @keyframes splash-eq { 0%, 100% { transform: scaleY(0.3); } 50% { transform: scaleY(1); } }
+      @media (prefers-reduced-motion: reduce) {
+        #app-splash .splash-eq span { animation: none; transform: scaleY(0.6); }
+      }
     </style>
-    
+
     <title>Settling Up</title>
   </head>
   <body>
+    <div id="app-splash">
+      <div class="splash-mark">SETTLING<br /><b>UP</b></div>
+      <div class="splash-eq"><span></span><span></span><span></span><span></span><span></span></div>
+      <div class="splash-tag">From breaking even to breaking through</div>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

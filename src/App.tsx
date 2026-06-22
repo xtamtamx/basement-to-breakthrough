@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MainGameView } from "@components/game/MainGameView";
 import { PixelArtMainMenu } from "@components/game/PixelArtMainMenu";
 import { RunModeSelector } from "@components/game/RunModeSelector";
@@ -31,7 +31,19 @@ function App() {
   const [showLazyLoadTest, setShowLazyLoadTest] = useState(false);
   const [showPerfMetrics, setShowPerfMetrics] = useState(false);
   const [showPerfTest, setShowPerfTest] = useState(false);
-  
+
+  // Fade out the static boot splash (index.html) once the app has mounted — the
+  // menu is now painted underneath, so reveal it smoothly instead of a hard cut.
+  useEffect(() => {
+    const splash = document.getElementById('app-splash');
+    if (!splash) return;
+    const t = setTimeout(() => {
+      splash.style.opacity = '0';
+      setTimeout(() => splash.remove(), 500);
+    }, 150);
+    return () => clearTimeout(t);
+  }, []);
+
   // Load colorblind mode from storage
   const savedColorblindMode = safeStorage.getItem("colorblind-mode") as ColorblindMode || ColorblindMode.OFF;
   

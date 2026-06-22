@@ -802,7 +802,7 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
     }
     for (let a = 0; a < 14; a++) { const ang = a * 2.399, rr = 10 + (a % 3) * 5; px(Math.round(cgx + Math.cos(ang) * rr), Math.round(cgy + Math.sin(ang) * rr * 0.85), 2, 2, theme.gardenFlowers[a % theme.gardenFlowers.length]); }
     const lampInline = (lx: number, ly: number) => { ell(lx + 1, ly + 1, 3, 1.4, 'rgba(20,30,18,0.25)'); px(lx, ly - 12, 2, 12, '#2f271e'); px(lx - 1, ly - 1, 4, 2, '#5a4a36'); ell(lx + 1, ly - 13, 6, 6, 'rgba(255,227,154,0.22)'); px(lx - 1, ly - 15, 4, 4, '#ffe39a'); };
-    const benchInline = (bx: number, by: number) => { ell(bx, by + 1, 7, 1.4, 'rgba(0,0,0,0.18)'); px(bx - 7, by - 7, 14, 3, '#7a5530'); px(bx - 7, by - 4, 14, 3, '#6e4a2c'); px(bx - 7, by - 1, 1, 2, '#4f3419'); px(bx + 6, by - 1, 1, 2, '#4f3419'); };
+    const benchInline = (bx: number, by: number) => { ell(bx, by + 1, 8, 2, 'rgba(0,0,0,0.20)'); px(bx - 6, by - 2, 2, 3, '#4f3419'); px(bx + 4, by - 2, 2, 3, '#4f3419'); px(bx - 7, by - 5, 14, 3, '#8a6238'); px(bx - 7, by - 5, 14, 1, '#a87a48'); px(bx - 7, by - 11, 14, 2, '#7a5530'); px(bx - 6, by - 9, 1, 4, '#6e4a2c'); px(bx - 2, by - 9, 1, 4, '#6e4a2c'); px(bx + 2, by - 9, 1, 4, '#6e4a2c'); px(bx + 5, by - 9, 1, 4, '#6e4a2c'); };
     lampInline((ISx0 - 1) * TILE + 8, (ISy0 - 1) * TILE + 14);
     lampInline((ISx0 + ISw) * TILE + 8, (ISy0 - 1) * TILE + 14);
     lampInline((ISx0 - 1) * TILE + 8, (ISy0 + ISh) * TILE + 6);
@@ -874,12 +874,17 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
     px(x - 3, y - 4, 1, 2, '#9a2b20'); px(x + 2, y - 4, 1, 2, '#9a2b20');
     px(x - 2, y - 6, 4, 1, 'rgba(255,255,255,0.18)');
   };
+  // A proper little park bench (backrest + slatted seat + legs) seen slightly
+  // side-on, so it reads as furniture instead of a stray plank.
   const bench = (x: number, y: number) => {
-    ell(x, y + 1, 7, 1.4, 'rgba(0,0,0,0.18)');
-    px(x - 7, y - 7, 14, 3, '#7a5530');
-    px(x - 7, y - 4, 14, 3, '#6e4a2c');
-    px(x - 7, y - 1, 1, 2, '#4f3419'); px(x + 6, y - 1, 1, 2, '#4f3419');
-    px(x - 7, y - 4, 14, 1, 'rgba(255,255,255,0.12)');
+    ell(x, y + 1, 8, 2, 'rgba(0,0,0,0.20)');
+    px(x - 6, y - 2, 2, 3, '#4f3419'); px(x + 4, y - 2, 2, 3, '#4f3419'); // legs
+    px(x - 7, y - 5, 14, 3, '#8a6238'); // seat slab
+    px(x - 7, y - 5, 14, 1, '#a87a48'); // seat highlight
+    px(x - 7, y - 11, 14, 2, '#7a5530'); // backrest top rail
+    // backrest slats
+    px(x - 6, y - 9, 1, 4, '#6e4a2c'); px(x - 2, y - 9, 1, 4, '#6e4a2c');
+    px(x + 2, y - 9, 1, 4, '#6e4a2c'); px(x + 5, y - 9, 1, 4, '#6e4a2c');
   };
   const mailbox = (x: number, y: number) => {
     ell(x, y + 1, 2.4, 1, 'rgba(0,0,0,0.2)');
@@ -895,10 +900,11 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
       if (hv > 0.93) { bush(tx * TILE + 8, ty * TILE + 10); occupied.add(`${tx},${ty}`); }
       else if (hv > 0.84) { px(tx * TILE + 4, ty * TILE + 6, 3, 3, theme.gardenFlowers[Math.floor(hv * 311) % theme.gardenFlowers.length]); px(tx * TILE + 9, ty * TILE + 9, 2, 2, theme.gardenFlowers[Math.floor(hv * 733) % theme.gardenFlowers.length]); }
     }
-  // lamp posts on the sidewalk corners of each intersection
+  // lamp posts on the sidewalk corners of intersections — hash-gated to ~55% so
+  // it reads as a lived-in town, not a rigid grid of a lamp at every single corner.
   for (const sy of STREET_H)
     for (const sx of STREET_V)
-      if (!(Math.abs(sx - ROAD_X) <= 2 && Math.abs(sy - ROAD_Y) <= 2))
+      if (!(Math.abs(sx - ROAD_X) <= 2 && Math.abs(sy - ROAD_Y) <= 2) && hash2(sx * 7 + 3, sy * 7 + 5) > 0.45)
         lamp((sx - 1) * TILE + 8, (sy - 1) * TILE + 13);
 
   // 4b. Street furniture scattered along the sidewalks — lamps, trash cans,
