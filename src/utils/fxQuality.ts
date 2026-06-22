@@ -8,9 +8,14 @@
 import { create } from 'zustand';
 import { safeStorage } from '@utils/safeStorage';
 
-export type FxQuality = 'high' | 'low' | 'off';
+export type FxQuality = 'ultra' | 'high' | 'low' | 'off';
 const KEY = 'fx-quality';
-const ORDER: FxQuality[] = ['high', 'low', 'off'];
+// 'ultra' is appended so it's only reachable by deliberately cycling past 'off'
+// — it's a heavy opt-in GPU-compositor tier, never a fresh-user default.
+const ORDER: FxQuality[] = ['high', 'low', 'off', 'ultra'];
+
+/** The opt-in GPU post-FX compositor tier (CRT + bloom over the whole map). */
+export const isUltra = (q: FxQuality) => q === 'ultra';
 
 const prefersReducedMotion = () =>
   typeof window !== 'undefined' &&
@@ -19,7 +24,7 @@ const prefersReducedMotion = () =>
 
 function initialQuality(): FxQuality {
   const saved = safeStorage.getItem(KEY);
-  if (saved === 'high' || saved === 'low' || saved === 'off') return saved;
+  if (saved === 'high' || saved === 'low' || saved === 'off' || saved === 'ultra') return saved;
   // First run: honour the OS reduced-motion preference, else default to high.
   return prefersReducedMotion() ? 'off' : 'high';
 }
@@ -43,5 +48,6 @@ export const useFxQuality = create<FxState>((set, get) => ({
   },
 }));
 
-/** Particle budget per tier — capped low so the overlay stays cheap on mobile. */
-export const fxParticleCount = (q: FxQuality): number => (q === 'high' ? 80 : q === 'low' ? 34 : 0);
+/** Particle budget per tier — capped low so the overlay stays cheap on mobile.
+ * Ultra keeps the high mote budget (it composites through the same Pixi path). */
+export const fxParticleCount = (q: FxQuality): number => (q === 'high' || q === 'ultra' ? 80 : q === 'low' ? 34 : 0);

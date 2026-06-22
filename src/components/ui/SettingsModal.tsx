@@ -208,7 +208,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                     fontFamily: '"Press Start 2P", monospace',
                     fontSize: '9px',
                     textTransform: 'uppercase',
-                    color: fxQuality === 'high' ? '#3ad17e' : fxQuality === 'low' ? '#ffd23f' : '#6f6796',
+                    color: fxQuality === 'ultra' ? '#f72585' : fxQuality === 'high' ? '#3ad17e' : fxQuality === 'low' ? '#ffd23f' : '#6f6796',
                     backgroundColor: '#0a0814',
                     border: '2px solid #0a0814',
                     borderRadius: 0,

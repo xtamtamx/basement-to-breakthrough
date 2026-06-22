@@ -32,6 +32,8 @@ import {
 } from './townAtlas';
 import { GENERATED_SPRITES } from './generatedAtlas';
 import { MapFXLayer } from '@components/effects/MapFXLayer';
+import { MapCompositor } from '@components/effects/MapCompositor';
+import { useFxQuality } from '@utils/fxQuality';
 import { getCityShops, CityShop, ShopKind } from '@game/world/cityShops';
 import { getCityLandmarks, metaProgressValue, CityLandmark, LandmarkKind } from '@game/world/landmarks';
 import { unlockedVenues } from '@game/world/venueProgression';
@@ -1112,6 +1114,14 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
   const themeKey = useGameStore((s) => s.cities.find((c) => c.id === s.currentCityId)?.theme ?? 'home');
   const theme = THEMES[themeKey];
 
+  // Opt-in GPU compositor tier. `ultra` skips the CPU bloom, hides the 2D canvas
+  // (it becomes the texture source), and mounts <MapCompositor>. fxFailed flips
+  // back to the plain map if the GPU path can't init.
+  const fxQuality = useFxQuality((s) => s.quality);
+  const ultra = fxQuality === 'ultra';
+  const [fxFailed, setFxFailed] = useState(false);
+  useEffect(() => { if (!ultra) setFxFailed(false); }, [ultra]);
+
   // Landmarks (Pillar B) derive from alignment + in-run discoveries + cross-run
   // meta progress; their names are city-flavored. Recompute when those change.
   const landmarks = useMemo(
@@ -1505,7 +1515,7 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
       // by itself) to keep only the brights, then add the blurred result back.
       // Makes lit windows / venue marquees / city neon bloom without any
       // per-pixel JS — just four GPU drawImage calls at 1/3 resolution.
-      if (BLOOM_ON) {
+      if (BLOOM_ON && !ultra) {
         const lw = Math.max(1, Math.round(size.w / BLOOM_SCALE));
         const lh = Math.max(1, Math.round(size.h / BLOOM_SCALE));
         let lo = fxLoRef.current;
@@ -1571,7 +1581,7 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
       ctx.fillStyle = `rgba(58, 46, 98, ${(dusk * 0.1).toFixed(3)})`;
       ctx.fillRect(0, 0, size.w, size.h);
     },
-    [ground, sheets, objects, size.w, size.h, plan, venuesWithShows, walkable, theme],
+    [ground, sheets, objects, size.w, size.h, plan, venuesWithShows, walkable, theme, ultra],
   );
 
   useEffect(() => {
@@ -1593,13 +1603,19 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
         ref={canvasRef}
         width={Math.max(1, Math.round(size.w * dpr))}
         height={Math.max(1, Math.round(size.h * dpr))}
-        style={{ width: size.w, height: size.h, imageRendering: 'pixelated', touchAction: 'none', cursor: 'grab' }}
+        style={{ width: size.w, height: size.h, imageRendering: 'pixelated', touchAction: 'none', cursor: 'grab', opacity: ultra && !fxFailed ? 0 : 1 }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={(e) => endPointer(e, true)}
         onPointerCancel={(e) => endPointer(e, false)}
         onWheel={handleWheel}
       />
+      {/* ULTRA tier only: GPU compositor (CRT + bloom) over the hidden 2D canvas.
+          Sits above the transparent canvas (z1) but pointer-through so taps still
+          reach the canvas. onFail restores the plain map if the GPU path dies. */}
+      {ultra && !fxFailed && (
+        <MapCompositor sourceCanvas={canvasRef} width={size.w} height={size.h} dpr={dpr} onFail={() => setFxFailed(true)} />
+      )}
       {/* Pixi (WebGL) neon-mote overlay — floats above the map, below the CRT.
           Tinted to the city's palette + surges on show-nights. */}
       <MapFXLayer accents={CITY_ACCENTS[themeKey]} intensity={Math.min(1, venuesWithShows.size / 3)} />
@@ -1611,7 +1627,7 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
           position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 4,
           backgroundImage:
             'repeating-linear-gradient(0deg, rgba(0,0,0,0.10) 0px, rgba(0,0,0,0.10) 1px, rgba(0,0,0,0) 1px, rgba(0,0,0,0) 3px)',
-          opacity: 0.55,
+          opacity: ultra ? 0 : 0.55, // ultra's GPU CRT owns the scanlines instead
           mixBlendMode: 'multiply',
         }}
       />
