@@ -193,7 +193,10 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
   };
 
   // Swipe navigation
-  const viewOrder: ViewType[] = ["city", "bands", "shows", "promotion", "jobs", "synergies", "progression", "tour"];
+  // Matches the bottom nav's reading order (primaries then secondaries) so
+  // swiping lands where the nav implies — they used to disagree (swipe right
+  // from Promo went to Jobs while the nav's next tab was Tour).
+  const viewOrder: ViewType[] = ["city", "bands", "shows", "promotion", "tour", "jobs", "synergies", "progression"];
   const currentIndex = viewOrder.indexOf(currentView);
   
   const swipeHandlers = useSwipeable({
@@ -332,10 +335,10 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
           {viewOrder.map((view, index) => (
             <div
               key={view}
-              className={`w-1.5 h-1.5 rounded-full transition-all ${
-                index === currentIndex 
-                  ? 'w-6 bg-pink-500' 
-                  : 'bg-gray-600'
+              className={`h-1.5 transition-all ${
+                index === currentIndex
+                  ? 'w-6 bg-pink-500'
+                  : 'w-1.5 bg-gray-600'
               }`}
             />
           ))}
