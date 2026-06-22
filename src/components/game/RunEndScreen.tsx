@@ -98,14 +98,14 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
         style={{
           backgroundImage: config.gradient,
           border: `3px solid ${config.accent}`,
-          borderRadius: '16px',
+          borderRadius: 0, // SNES frame: square corners, void outer ring + hard drop
           maxWidth: '680px',
           width: '100%',
           maxHeight: '94vh',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          boxShadow: '0 12px 48px rgba(0,0,0,0.6)',
+          boxShadow: 'inset 2px 2px 0 0 rgba(255,255,255,0.12), inset -2px -2px 0 0 rgba(0,0,0,0.5), 0 0 0 3px #0a0814, 6px 6px 0 0 #0a0814',
         }}
       >
         {/* Scrollable body — keeps the action buttons pinned on short
@@ -123,17 +123,19 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
           <div style={{ fontSize: '40px', lineHeight: 1 }}>{config.icon}</div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <h1
+              className="snes-pixel"
               style={{
-                fontSize: '26px',
-                fontWeight: 900,
+                fontSize: '16px',
                 margin: 0,
-                color: isWin ? '#fde047' : '#ffffff',
-                letterSpacing: '0.02em',
+                color: isWin ? '#ffd23f' : '#ffffff',
+                letterSpacing: 0,
+                lineHeight: 1.35,
+                textShadow: '2px 2px 0 #0a0814',
               }}
             >
               {config.title}
             </h1>
-            <p style={{ color: '#d1d5db', fontSize: '13px', margin: '2px 0 0' }}>
+            <p style={{ color: '#b9b3d6', fontSize: '13px', margin: '6px 0 0' }}>
               {config.subtitle}
             </p>
           </div>
@@ -177,7 +179,7 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
             style={{
               fontSize: '10px',
               textTransform: 'uppercase',
-              color: '#9ca3af',
+              color: '#6f6796',
               fontWeight: 700,
               marginBottom: '8px',
               letterSpacing: '0.06em',
@@ -236,7 +238,7 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
                   style={{
                     fontSize: '10px',
                     textTransform: 'uppercase',
-                    color: '#9ca3af',
+                    color: '#6f6796',
                     fontWeight: 700,
                   }}
                 >
@@ -262,7 +264,7 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
                   style={{
                     fontSize: '10px',
                     textTransform: 'uppercase',
-                    color: '#9ca3af',
+                    color: '#6f6796',
                     fontWeight: 700,
                   }}
                 >
@@ -279,7 +281,7 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
                 {ceremony.achievements.map((a) => (
                   <div key={a.id} style={{ fontSize: '12px', color: '#fef08a' }}>
                     🏆 {a.name}
-                    <span style={{ color: '#9ca3af' }}> — {a.description}</span>
+                    <span style={{ color: '#6f6796' }}> — {a.description}</span>
                   </div>
                 ))}
               </div>
@@ -287,7 +289,7 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
 
             {ceremony.completedObjectives.length > 0 && (
               <div style={{ marginTop: '8px' }}>
-                <div style={{ fontSize: '10px', textTransform: 'uppercase', color: '#9ca3af', fontWeight: 700, marginBottom: '2px' }}>
+                <div style={{ fontSize: '10px', textTransform: 'uppercase', color: '#6f6796', fontWeight: 700, marginBottom: '2px' }}>
                   Challenges Cleared (+{ceremony.objectiveBonus} fame)
                 </div>
                 {ceremony.completedObjectives.map((o) => (
@@ -327,7 +329,7 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
                 display: 'flex',
                 justifyContent: 'space-between',
                 fontSize: '11px',
-                color: '#9ca3af',
+                color: '#6f6796',
                 flexWrap: 'wrap',
                 gap: '4px',
               }}
@@ -355,7 +357,7 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
               padding: '8px 20px',
               textAlign: 'center',
               fontSize: '12px',
-              color: '#9ca3af',
+              color: '#6f6796',
             }}
           >
             Win by hitting this mode's <span style={{ color: '#fde047' }}>reputation and fan targets</span>{' '}
@@ -378,15 +380,17 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
         >
           <button
             onClick={onMainMenu}
+            className="snes-pixel"
             style={{
               flex: 1,
               padding: '12px',
-              backgroundColor: '#374151',
+              backgroundColor: '#171327',
               color: '#ffffff',
-              border: 'none',
-              borderRadius: '10px',
-              fontWeight: 700,
-              fontSize: '14px',
+              border: '2px solid #0a0814',
+              borderRadius: 0,
+              boxShadow: 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814',
+              fontSize: '10px',
+              letterSpacing: 0,
               cursor: 'pointer',
               minHeight: '44px',
             }}
@@ -395,15 +399,17 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
           </button>
           <button
             onClick={onPlayAgain}
+            className="snes-pixel"
             style={{
               flex: 1,
               padding: '12px',
-              backgroundColor: isWin ? '#ca8a04' : '#16a34a',
-              color: isWin ? '#111827' : '#ffffff',
-              border: 'none',
-              borderRadius: '10px',
-              fontWeight: 700,
-              fontSize: '14px',
+              backgroundColor: isWin ? '#ffd23f' : '#3ad17e',
+              color: isWin ? '#3a2e00' : '#062418',
+              border: '2px solid #0a0814',
+              borderRadius: 0,
+              boxShadow: 'inset 2px 2px 0 0 rgba(255,255,255,0.4), inset -2px -2px 0 0 rgba(0,0,0,0.4)',
+              fontSize: '10px',
+              letterSpacing: 0,
               cursor: 'pointer',
               minHeight: '44px',
             }}
@@ -440,15 +446,17 @@ const StatBox: React.FC<StatBoxProps> = ({
   return (
     <div
       style={{
-        backgroundColor: 'rgba(0,0,0,0.3)',
-        borderRadius: '8px',
+        backgroundColor: '#0f0b1e',
+        border: '2px solid #0a0814',
+        boxShadow: 'inset 1px 1px 0 0 #2a2350',
+        borderRadius: 0,
         padding: '8px 10px',
       }}
     >
       <div
         style={{
           fontSize: '9px',
-          color: '#9ca3af',
+          color: '#6f6796',
           textTransform: 'uppercase',
           marginBottom: '2px',
           letterSpacing: '0.05em',
