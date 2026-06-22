@@ -192,7 +192,7 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
               gap: '8px',
             }}
           >
-            <StatBox label="Turn" value={result.turn} suffix="/35" highlight={result.turn >= 31} />
+            <StatBox label="Turn" value={result.turn} suffix={`/${result.maxTurns}`} highlight={result.turn >= result.maxTurns - 4} />
             <StatBox label="Shows" value={result.finalStats.showsPlayed} icon="🎤" />
             <StatBox
               label="Reputation"
@@ -358,8 +358,8 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
               color: '#9ca3af',
             }}
           >
-            Win by reaching <span style={{ color: '#fde047' }}>80 reputation</span> and{' '}
-            <span style={{ color: '#fde047' }}>500 fans</span> before turn 35
+            Win by hitting this mode's <span style={{ color: '#fde047' }}>reputation and fan targets</span>{' '}
+            before turn <span style={{ color: '#fde047' }}>{result.maxTurns}</span>
           </div>
         )}
         </div>

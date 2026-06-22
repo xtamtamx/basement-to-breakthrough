@@ -74,6 +74,8 @@ export type RunEndReason =
 export interface RunEndState {
   reason: RunEndReason;
   turn: number;
+  /** The run's turn budget (mode + stake dependent), for the "turn X / Y" display. */
+  maxTurns: number;
   finalStats: {
     money: number;
     reputation: number;

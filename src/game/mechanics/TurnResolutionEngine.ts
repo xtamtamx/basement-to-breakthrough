@@ -979,6 +979,8 @@ export class TurnResolutionEngine {
       stress: store.stress,
       showsPlayed: store.showHistory.length,
     };
+    // The run's actual turn cap (mode + stake adjusted) for the end-screen display.
+    const maxTurns = this.getRunBounds().maxTurns;
 
     // WIN: the active run's win conditions (per-mode), falling back to the
     // default breakthrough thresholds when no formal run is active. The
@@ -995,22 +997,22 @@ export class TurnResolutionEngine {
       : store.reputation >= BREAKTHROUGH_REPUTATION_THRESHOLD &&
         store.fans >= BREAKTHROUGH_FANS_THRESHOLD;
     if (won) {
-      return { reason: 'BREAKTHROUGH_WIN', turn, finalStats };
+      return { reason: 'BREAKTHROUGH_WIN', turn, maxTurns, finalStats };
     }
 
     // LOSS: Burnout
     if (store.stress >= BURNOUT_STRESS_CAP) {
-      return { reason: 'BURNOUT_LOSS', turn, finalStats };
+      return { reason: 'BURNOUT_LOSS', turn, maxTurns, finalStats };
     }
 
     // LOSS: Eviction
     if (brokeTurns >= EVICTION_TURNS_BROKE) {
-      return { reason: 'EVICTION_LOSS', turn, finalStats };
+      return { reason: 'EVICTION_LOSS', turn, maxTurns, finalStats };
     }
 
     // LOSS: Fade Out (reached the run's turn cap without winning)
     if (turn >= this.getRunBounds().maxTurns) {
-      return { reason: 'FADE_OUT_LOSS', turn, finalStats };
+      return { reason: 'FADE_OUT_LOSS', turn, maxTurns, finalStats };
     }
 
     return null;
