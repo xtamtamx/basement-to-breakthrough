@@ -22,7 +22,14 @@ import { useEffect, useRef } from 'react';
 import type { Application, Sprite, Ticker } from 'pixi.js';
 import { useFxQuality, fxParticleCount } from '@utils/fxQuality';
 
-const NEON = [0xf72585, 0x4cc9f0, 0xffd23f, 0x3ad17e, 0xc77dff, 0xff5c57];
+const DEFAULT_ACCENTS = [0xf72585, 0x4cc9f0, 0xffd23f, 0x3ad17e, 0xc77dff, 0xff5c57];
+
+interface MapFXLayerProps {
+  /** Per-city neon tints for the motes (hex ints). Defaults to the full palette. */
+  accents?: number[];
+  /** 0..1 show-night surge — brightens + livens the motes. Default 0. */
+  intensity?: number;
+}
 
 interface Mote {
   sp: Sprite;
@@ -31,11 +38,24 @@ interface Mote {
   phase: number;
   tw: number;
   base: number;
+  ai: number; // accent index (for re-tinting on city change)
 }
 
-export const MapFXLayer: React.FC = () => {
+export const MapFXLayer: React.FC<MapFXLayerProps> = ({ accents, intensity = 0 }) => {
   const hostRef = useRef<HTMLDivElement>(null);
   const quality = useFxQuality((s) => s.quality);
+  // Reactive state read by the Pixi ticker — updated WITHOUT tearing down the app.
+  const stateRef = useRef({ accents: accents?.length ? accents : DEFAULT_ACCENTS, intensity });
+  const motesRef = useRef<Mote[]>([]);
+
+  // City accents / show-night intensity change often (travel, per turn); fold them
+  // into the ticker-read ref + re-tint live motes instead of re-initing Pixi.
+  useEffect(() => {
+    const acc = accents?.length ? accents : DEFAULT_ACCENTS;
+    stateRef.current.accents = acc;
+    stateRef.current.intensity = intensity;
+    for (const m of motesRef.current) m.sp.tint = acc[m.ai % acc.length];
+  }, [accents, intensity]);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -102,11 +122,12 @@ export const MapFXLayer: React.FC = () => {
       }
 
       const motes: Mote[] = [];
+      const accents0 = stateRef.current.accents;
       for (let i = 0; i < count; i++) {
         const sp = new PIXI.Sprite(tex);
         sp.anchor.set(0.5);
         sp.blendMode = 'add';
-        sp.tint = NEON[i % NEON.length];
+        sp.tint = accents0[i % accents0.length];
         sp.x = Math.random() * a.screen.width;
         sp.y = Math.random() * a.screen.height;
         sp.scale.set(0.22 + Math.random() * 0.5);
@@ -118,8 +139,10 @@ export const MapFXLayer: React.FC = () => {
           phase: Math.random() * Math.PI * 2,
           tw: 0.5 + Math.random() * 1.5,
           base: 0.22 + Math.random() * 0.42,
+          ai: i,
         });
       }
+      motesRef.current = motes;
 
       let t = 0;
       const tick = (ticker: Ticker) => {
@@ -127,11 +150,14 @@ export const MapFXLayer: React.FC = () => {
         t += dt;
         const w = a.screen.width;
         const h = a.screen.height;
+        const surge = stateRef.current.intensity; // show-night liveliness 0..1
+        const speed = 1 + surge * 0.7;
+        const glow = 1 + surge * 0.9;
         for (const m of motes) {
-          m.sp.y -= (m.vy / 60) * dt; // drift upward like embers
-          m.phase += 0.02 * dt;
+          m.sp.y -= ((m.vy * speed) / 60) * dt; // drift upward like embers
+          m.phase += 0.02 * speed * dt;
           m.sp.x += Math.sin(m.phase) * (m.drift / 60) * dt;
-          m.sp.alpha = m.base * (0.45 + 0.55 * Math.sin(t * 0.03 * m.tw + m.phase)); // twinkle
+          m.sp.alpha = m.base * (0.45 + 0.55 * Math.sin(t * 0.03 * m.tw + m.phase)) * glow; // twinkle + surge
           if (m.sp.y < -16) {
             m.sp.y = h + 16;
             m.sp.x = Math.random() * w;
@@ -146,6 +172,7 @@ export const MapFXLayer: React.FC = () => {
 
     return () => {
       destroyed = true;
+      motesRef.current = [];
       if (removeTicker) removeTicker();
       if (app) {
         app.destroy(true, { children: true });

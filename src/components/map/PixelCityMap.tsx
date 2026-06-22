@@ -122,6 +122,20 @@ const baseTheme: MapTheme = {
 };
 const mkTheme = (o: Partial<MapTheme>): MapTheme => ({ ...baseTheme, ...o });
 
+// Per-city neon accent palettes for the Pixi mote overlay — each town's
+// "scene energy" drifts in its own colours (newangeles magenta-purple, atlando
+// candy-tropical, chicaustin gold, etc.) so the atmosphere reads per-place.
+const CITY_ACCENTS: Record<CityThemeKey, number[]> = {
+  home: [0xf72585, 0x4cc9f0, 0xffd23f, 0x3ad17e],
+  bostland: [0x4cc9f0, 0xc4632e, 0xffd23f, 0x5a86a0],
+  detroleans: [0xffd23f, 0xc49a4a, 0xff5c57, 0x6e9460],
+  nasheattle: [0x4cc9f0, 0x447059, 0xb9b3d6, 0x557480],
+  chicaustin: [0xffd23f, 0xa4bb52, 0xff8c4d, 0x54acc4],
+  atlando: [0xff5ab0, 0x7ad0e6, 0xffd23f, 0x3ad17e],
+  santampa: [0x4a814c, 0x6a8a4e, 0x4cc9f0, 0xb9b3d6],
+  newangeles: [0xf72585, 0xc77dff, 0x4cc9f0, 0xffd23f],
+};
+
 // Each tour city gets a bespoke palette + terrain so it reads as its own place.
 const THEMES: Record<CityThemeKey, MapTheme> = {
   home: baseTheme,
@@ -220,13 +234,21 @@ const TOWN_PROPS = {
   roadCase: gp('town_road_case'),
   cable: gp('town_cable_coil'),
   lights: gp('town_string_lights'),
+  crate: gp('town_crate_stack'),
+  keg: gp('town_keg_cooler'),
+  guitar: gp('town_guitar_case'),
+  riser: gp('town_stage_riser'),
   flyer: gp('town_flyer_pole'),
   flyerB: gp('town_flyer_pole_b'),
   board: gp('town_sandwich_board'),
+  poster: gp('town_poster_wall'),
 } as const;
 // Gear clusters around venues; paper/board dressing along street shoulders.
-const VENUE_GEAR = [TOWN_PROPS.pa, TOWN_PROPS.amp, TOWN_PROPS.mic, TOWN_PROPS.roadCase, TOWN_PROPS.cable, TOWN_PROPS.lights];
-const STREET_DRESS = [TOWN_PROPS.flyer, TOWN_PROPS.flyerB, TOWN_PROPS.board];
+const VENUE_GEAR = [
+  TOWN_PROPS.pa, TOWN_PROPS.amp, TOWN_PROPS.mic, TOWN_PROPS.roadCase, TOWN_PROPS.cable,
+  TOWN_PROPS.lights, TOWN_PROPS.crate, TOWN_PROPS.keg, TOWN_PROPS.guitar, TOWN_PROPS.riser,
+];
+const STREET_DRESS = [TOWN_PROPS.flyer, TOWN_PROPS.flyerB, TOWN_PROPS.board, TOWN_PROPS.poster];
 
 function hash2(x: number, y: number): number {
   // Math.imul keeps the multiplies in 32-bit; the old plain `*` overflowed JS
@@ -1578,8 +1600,9 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
         onPointerCancel={(e) => endPointer(e, false)}
         onWheel={handleWheel}
       />
-      {/* Pixi (WebGL) neon-mote overlay — floats above the map, below the CRT. */}
-      <MapFXLayer />
+      {/* Pixi (WebGL) neon-mote overlay — floats above the map, below the CRT.
+          Tinted to the city's palette + surges on show-nights. */}
+      <MapFXLayer accents={CITY_ACCENTS[themeKey]} intensity={Math.min(1, venuesWithShows.size / 3)} />
       {/* CRT scanlines — faint horizontal rule overlay for a premium retro feel.
           Pure CSS (zero per-frame cost), non-interactive, sits above the canvas. */}
       <div

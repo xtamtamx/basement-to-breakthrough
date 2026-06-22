@@ -166,6 +166,87 @@ function cableCoil() {
   return s;
 }
 
+// --- Poster wall panel (18x20) ----------------------------------------------
+function posterWall(seed = 0) {
+  const s = makeSprite(18, 20);
+  s.shadow(9, 18, 7, 1.6);
+  s.vline(3, 12, 18, P.wood2); s.vline(14, 12, 18, P.wood2);     // legs
+  s.rect(2, 2, 14, 12, P.panel3);                                // plywood board
+  const cs = (i) => NEON[(i + seed) % NEON.length];
+  let i = 0;
+  for (let py = 3; py <= 10; py += 4)
+    for (let px = 3; px <= 11; px += 4) {
+      const c = cs(i++);
+      s.rect(px, py, 4, 4, c);
+      s.px(px + 3, py, P.white, 200);                            // torn corner
+      s.hline(px + 1, px + 2, py + 1, P.ink2, 160);              // scribble text
+      s.hline(px + 1, px + 3, py + 2, P.ink2, 120);
+    }
+  s.px(4, 13, P.white, 150); s.px(12, 13, P.white, 120);        // peeling flaps
+  return s;
+}
+
+// --- Guitar case leaning (12x20) --------------------------------------------
+function guitarCase() {
+  const s = makeSprite(12, 20);
+  s.shadow(7, 19, 4, 1.4);
+  s.fillEllipse(6, 14, 4, 4.5, P.panel);                        // lower bout
+  s.fillEllipse(6, 8, 3, 3.5, P.panel);                        // upper bout
+  s.rect(5, 4, 2, 5, P.panel);                                  // neck
+  s.rect(4, 2, 3, 2, P.wood2);                                  // headstock
+  s.vline(6, 4, 17, P.wood2, 180);                              // zipper seam
+  s.px(2, 13, P.silver); s.px(2, 14, P.silver);                // handle nub
+  s.px(8, 12, P.gold); s.px(4, 10, P.magenta); s.px(9, 15, P.cyan); // stickers
+  s.px(4, 11, P.white, 140);                                    // highlight
+  return s;
+}
+
+// --- Merch crate stack (16x18) ----------------------------------------------
+function crateStack() {
+  const s = makeSprite(16, 18);
+  s.shadow(8, 17, 6, 1.5);
+  const crate = (x, y, w, h) => {
+    s.rect(x, y, w, h, P.wood);
+    s.hline(x, x + w - 1, y, P.wood3, 200);                     // top highlight
+    for (let sx = x + 2; sx < x + w - 1; sx += 3) s.vline(sx, y + 1, y + h - 1, P.wood2, 160); // slats
+    s.hline(x, x + w - 1, y + h - 1, P.ink, 180);
+  };
+  crate(2, 9, 11, 7);                                           // lower crate
+  crate(4, 3, 9, 6);                                            // upper (offset)
+  s.rect(6, 1, 2, 3, P.gold); s.rect(9, 1, 2, 2, P.red);       // spilling tubes
+  s.rect(5, 2, 2, 2, P.magenta, 220);                          // vinyl sleeve
+  return s;
+}
+
+// --- Keg + cooler (12x16) ----------------------------------------------------
+function kegCooler() {
+  const s = makeSprite(12, 16);
+  s.shadow(6, 15, 5, 1.4);
+  s.rect(3, 4, 5, 10, P.silver);                                // keg body
+  s.fillEllipse(5, 4, 2.5, 1.2, P.silver2);                    // top rim
+  s.fillEllipse(5, 13, 2.5, 1.2, P.silver2);                   // base rim
+  s.hline(3, 7, 8, P.silver2, 200);                            // banding ring
+  s.vline(4, 5, 12, P.white, 160);                             // specular
+  s.px(8, 11, P.green); s.px(8, 12, P.green);                  // tap spout
+  s.rect(7, 9, 4, 5, P.red);                                   // cooler box
+  s.hline(7, 10, 9, P.white, 200);                             // cooler lid
+  return s;
+}
+
+// --- Busker stage riser (20x12) ---------------------------------------------
+function stageRiser() {
+  const s = makeSprite(20, 12);
+  s.shadow(10, 11, 8, 1.4);
+  s.rect(3, 3, 14, 4, P.wood);                                  // deck top
+  for (let sx = 4; sx < 17; sx += 3) s.vline(sx, 3, 6, P.wood3, 150); // plank seams
+  s.rect(3, 7, 14, 4, P.wood2);                                 // front skirt
+  s.rect(6, 8, 2, 2, P.ink); s.rect(12, 8, 2, 2, P.ink);       // vent cutouts
+  s.rect(3, 10, 2, 2, P.ink2); s.rect(15, 10, 2, 2, P.ink2);   // feet
+  s.rect(15, 6, 3, 1, P.cyan);                                  // gaffer tape
+  s.line(17, 6, 19, 9, P.ink, 200);                            // trailing cable
+  return s;
+}
+
 export const SPRITES = {
   pa_speaker_stack: paSpeakerStack(),
   floor_amp: floorAmp(),
@@ -176,6 +257,11 @@ export const SPRITES = {
   sandwich_board: sandwichBoard(),
   string_lights: stringLights(),
   cable_coil: cableCoil(),
+  poster_wall: posterWall(1),
+  guitar_case: guitarCase(),
+  crate_stack: crateStack(),
+  keg_cooler: kegCooler(),
+  stage_riser: stageRiser(),
 };
 
 // Only write PNGs when run directly (not when imported for previewing).
