@@ -307,7 +307,8 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           right: '12px',
           width: '48px',
           height: '48px',
-          background: '#f72585',
+          // Amber when nothing's booked (pairs with the no-shows confirm), pink when ready.
+          background: scheduledShows.length > 0 ? '#f72585' : '#ffd23f',
           color: '#1a0a14',
           borderRadius: '0',
           border: '2px solid #0a0814',
@@ -323,9 +324,22 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
         onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
         onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-        aria-label="Next turn"
+        aria-label={scheduledShows.length > 0 ? `Next turn — ${scheduledShows.length} show${scheduledShows.length > 1 ? 's' : ''} booked` : 'Next turn — no shows booked'}
       >
         <ChevronRight size={20} />
+        {scheduledShows.length > 0 && (
+          <span
+            aria-hidden
+            style={{
+              position: 'absolute', top: '-6px', left: '-6px', minWidth: '18px', height: '18px',
+              padding: '0 3px', background: '#3ad17e', color: '#062418', border: '2px solid #0a0814',
+              fontFamily: '"Press Start 2P", monospace', fontSize: '8px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1,
+            }}
+          >
+            {scheduledShows.length}
+          </span>
+        )}
       </button>
 
       {/* Turn Indicator */}

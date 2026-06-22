@@ -111,6 +111,14 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
 
   const handleNextTurn = async () => {
     if (resolvingRef.current) return; // ignore re-entrant taps
+    // Guard the most common run-ending mistake: advancing with nothing booked
+    // silently burns a finite turn (you just pay rent). Confirm first.
+    if (useGameStore.getState().scheduledShows.length === 0) {
+      haptics.warning();
+      if (!window.confirm('End the turn with no shows booked?\nYou\'ll just pay rent and lose ground.')) {
+        return;
+      }
+    }
     resolvingRef.current = true;
     const results = await turnResolutionEngine.executeFullTurn();
     setTurnResults(results);
@@ -198,11 +206,16 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
             <span className="snes-chip"><span style={{ color: '#3ad17e' }}>$</span><span>{money}</span></span>
             <span className="snes-chip"><span style={{ color: '#ffd23f' }}>★</span><span>{reputation}</span></span>
             <span className="snes-chip"><span style={{ color: '#c77dff' }}>♦</span><span>{fans}</span></span>
-            {stress > 50 && (
-              <span className="snes-chip" style={{ borderColor: stress > 80 ? '#ff5c57' : '#ffd23f' }}>
-                <span style={{ color: stress > 80 ? '#ff5c57' : '#ffd23f' }}>⚠</span><span>{stress}</span>
-              </span>
-            )}
+            {/* Always-on stress gauge — burnout is a loss condition, so the trend
+                must be visible, not a surprise that pops in only at 50. */}
+            <span
+              className="snes-chip"
+              style={{ borderColor: stress > 80 ? '#ff5c57' : stress > 50 ? '#ffd23f' : '#2a2350' }}
+              title={`Stress ${stress}/100 — band burns out at 100`}
+            >
+              <span style={{ color: stress > 80 ? '#ff5c57' : stress > 50 ? '#ffd23f' : '#6f6796' }}>⚠</span>
+              <span style={{ color: stress > 50 ? undefined : '#9b94c0' }}>{stress}</span>
+            </span>
           </div>
 
           {/* Current city — always know where you're touring */}

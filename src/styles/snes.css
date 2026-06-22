@@ -243,3 +243,22 @@ input[type='range'], input[type='checkbox'], input[type='radio'], progress { acc
   75%      { transform: translateX(-2px); }
 }
 .btb-shake { animation: btb-shake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
+
+/* --- Accessibility ------------------------------------------------------- */
+/* Visible keyboard/switch focus on the many inline-styled buttons (none had
+   any focus ring before — keyboard users were lost on the dark panels). */
+*:focus-visible {
+  outline: 2px solid var(--snes-cyan);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Respect reduced-motion: kill the perpetual loops (glow/twinkle/float/glitch)
+   and soften the one-shot juice so it never triggers vestibular discomfort. */
+@media (prefers-reduced-motion: reduce) {
+  .btb-glow,
+  .btb-shake,
+  .btb-pop {
+    animation: none !important;
+  }
+}

@@ -681,7 +681,7 @@ export const ShowBuilderView: React.FC = () => {
           <Calendar size={20} />
           {!selectedBands.length ? 'Pick a Band First' :
            !selectedVenue ? 'Pick a Venue' :
-           money < selectedVenue.rent ? 'Not Enough Cash' :
+           (preview && money < preview.venueCost + preview.bandCost) ? 'Not Enough Cash' :
            'Book This Show'}
         </button>
       </div>

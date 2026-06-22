@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShowResult } from '@game/types';
 import { useGameStore } from '@stores/gameStore';
@@ -34,6 +34,29 @@ interface TurnResultsModalProps {
   /** Per-turn passive payout from owned gear + sellout landmarks. */
   passiveIncome?: { money: number; fans: number };
 }
+
+/** Animated count-up for the payoff numbers — tweens 0→value (ease-out) on mount.
+ *  Mounts/unmounts with the modal, so its hooks are always rules-of-hooks safe.
+ *  Honors prefers-reduced-motion by snapping straight to the value. */
+const CountUp: React.FC<{ value: number; plus?: boolean; duration?: number }> = ({ value, plus, duration = 550 }) => {
+  const [v, setV] = useState(0);
+  useEffect(() => {
+    const reduce = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (reduce || value === 0) { setV(value); return; }
+    let raf = 0;
+    let start: number | null = null;
+    const tick = (t: number) => {
+      if (start === null) start = t;
+      const p = Math.min(1, (t - start) / duration);
+      setV(Math.round(value * (1 - Math.pow(1 - p, 3)))); // ease-out cubic
+      if (p < 1) raf = requestAnimationFrame(tick);
+      else setV(value);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [value, duration]);
+  return <>{plus && value >= 0 ? '+' : ''}{v}</>;
+};
 
 export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
   isOpen,
@@ -305,7 +328,7 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
                     fontSize: '11px',
                     letterSpacing: 0
                   }}>
-                    {totalProfit >= 0 ? '+' : ''}{totalProfit}
+                    <CountUp value={totalProfit} plus />
                   </span>
                 </div>
               </div>
@@ -331,7 +354,7 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
                 <div>
                   <div className="snes-pixel" style={{ color: '#b9b3d6', fontSize: '7px', letterSpacing: 0, marginBottom: '6px' }}>Fans</div>
                   <div className="snes-pixel" style={{ color: '#ffffff', fontSize: '10px', letterSpacing: 0 }}>
-                    {totalFans > 0 ? '+' : ''}{totalFans}
+                    <CountUp value={totalFans} plus />
                   </div>
                 </div>
               </div>
@@ -349,7 +372,7 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
                 <div>
                   <div className="snes-pixel" style={{ color: '#b9b3d6', fontSize: '7px', letterSpacing: 0, marginBottom: '6px' }}>Reputation</div>
                   <div className="snes-pixel" style={{ color: '#ffffff', fontSize: '10px', letterSpacing: 0 }}>
-                    {totalRep > 0 ? '+' : ''}{totalRep}
+                    <CountUp value={totalRep} plus />
                   </div>
                 </div>
               </div>
