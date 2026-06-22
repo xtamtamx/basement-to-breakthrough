@@ -56,12 +56,18 @@ export const MapCompositor: React.FC<MapCompositorProps> = ({ sourceCanvas, widt
       const filters = await import('pixi-filters').catch(() => null);
       if (destroyed) return;
 
+      // The source 2D canvas is `size * dpr` px. Tagging the CanvasSource with the
+      // SAME dpr makes its texture map 1:1 to CSS units, so a CSS-sized sprite
+      // renders crisp (no soft downscale). Render is capped at 2x for perf.
+      const srcRes = window.devicePixelRatio || 1;
+      const renderRes = Math.min(srcRes, 2);
+
       const app = new PIXI.Application();
       try {
         await app.init({
           backgroundAlpha: 0, // motes + CSS scanlines above still composite
           antialias: false,
-          resolution: Math.min(window.devicePixelRatio || 1, 1.5), // clamp upload + filter cost
+          resolution: renderRes,
           autoDensity: true,
           preference: 'webgl', // WebGL2 = broadest low-end coverage
           resizeTo: host,
@@ -84,7 +90,7 @@ export const MapCompositor: React.FC<MapCompositorProps> = ({ sourceCanvas, widt
       let source: import('pixi.js').CanvasSource;
       let mapTexture: import('pixi.js').Texture;
       try {
-        source = new PIXI.CanvasSource({ resource: srcCanvas, resolution: 1 });
+        source = new PIXI.CanvasSource({ resource: srcCanvas, resolution: srcRes });
         mapTexture = new PIXI.Texture({ source });
       } catch {
         app.destroy(true);
@@ -101,11 +107,11 @@ export const MapCompositor: React.FC<MapCompositorProps> = ({ sourceCanvas, widt
       if (filters) {
         try {
           const bloom = new filters.AdvancedBloomFilter({
-            threshold: 0.6, bloomScale: 0.7, brightness: 1, blur: 4, quality: 4, pixelSize: { x: 1, y: 1 },
+            threshold: 0.65, bloomScale: 0.6, brightness: 1, blur: 2, quality: 5, pixelSize: { x: 1, y: 1 },
           });
           crt = new filters.CRTFilter({
-            curvature: 1.5, lineWidth: 1.1, lineContrast: 0.18, verticalLine: false,
-            noise: 0.06, noiseSize: 1, vignetting: 0.5, vignettingAlpha: 0.4, vignettingBlur: 0.5, time: 0,
+            curvature: 1.0, lineWidth: 1.0, lineContrast: 0.16, verticalLine: false,
+            noise: 0.05, noiseSize: 1, vignetting: 0.55, vignettingAlpha: 0.35, vignettingBlur: 0.5, time: 0,
           });
           sprite.filters = [bloom, crt];
         } catch {
@@ -131,12 +137,12 @@ export const MapCompositor: React.FC<MapCompositorProps> = ({ sourceCanvas, widt
             // React swapped the <canvas> element identity → rebuild the source
             srcCanvas = canvas;
             const old = mapTexture;
-            source = new PIXI.CanvasSource({ resource: srcCanvas, resolution: 1 });
+            source = new PIXI.CanvasSource({ resource: srcCanvas, resolution: srcRes });
             mapTexture = new PIXI.Texture({ source });
             sprite.texture = mapTexture;
             old.destroy(true);
           } else {
-            try { source.resize(srcCanvas.width, srcCanvas.height, 1); } catch { /* noop */ }
+            try { source.resize(srcCanvas.width, srcCanvas.height, srcRes); } catch { /* noop */ }
           }
           sprite.width = w;
           sprite.height = h;
