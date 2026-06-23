@@ -881,6 +881,186 @@ class EventCardSystem {
       flavorText: 'A real DIY space is one bad extension cord away from legend or disaster.',
       artStyle: 'tour_flyer',
     });
+
+    this.addEventCard({
+      id: 'split_release_argument',
+      name: 'Two Bands Agree To Split a 7-Inch, Immediately Disagree On Whose Logo Goes On Top',
+      description: 'The split is recorded, mixed, and mastered. The only remaining obstacle to its release is a four-hour text thread about hierarchy, kerning, and whose cousin did the layout.',
+      icon: '💽',
+      type: 'wildcard',
+      rarity: 'common',
+      duration: 'instant',
+      effects: [],
+      choices: [
+        {
+          id: 'flip_a_coin',
+          text: 'Flip a coin, press it tonight',
+          effects: [
+            { type: 'modify_stat', target: 'all_bands', value: { energy: 8 }, description: 'Momentum restored' },
+            { type: 'resource_change', target: 'player', value: { fans: 20 }, description: 'A record exists' },
+          ],
+        },
+        {
+          id: 'both_logos',
+          text: 'Both logos, both upside down, very art',
+          effects: [
+            { type: 'modify_stat', target: 'all_bands', value: { authenticity: 12 }, description: 'Annoyingly principled' },
+          ],
+        },
+      ],
+      flavorText: 'No money was made and no friendships survived, but the sleeve is gorgeous.',
+      artStyle: 'concert_poster',
+    });
+
+    this.addEventCard({
+      id: 'borrowed_van_returns_empty',
+      name: 'Tour Van You Lent Out Comes Back With An Empty Tank And A New Dent',
+      description: 'They returned it. That is the good news. The bad news is the check-engine light, the unfamiliar smell, and a single sock that belongs to no one you know.',
+      icon: '🚐',
+      type: 'crisis',
+      rarity: 'common',
+      duration: 'instant',
+      effects: [],
+      choices: [
+        {
+          id: 'eat_it',
+          text: 'Eat it — scene karma is real',
+          effects: [
+            { type: 'resource_change', target: 'player', value: { money: -90, reputation: 10 }, description: 'You\'re a real one' },
+          ],
+        },
+        {
+          id: 'invoice_them',
+          text: 'Invoice them in the group chat (passive-aggressively)',
+          effects: [
+            { type: 'resource_change', target: 'player', value: { money: 40, reputation: -8, stress: 5 }, description: 'Reimbursed, resented' },
+          ],
+        },
+      ],
+      flavorText: 'The van remembers everything you have done to it.',
+      artStyle: 'tour_flyer',
+    });
+
+    this.addEventCard({
+      id: 'community_radio_session',
+      name: 'College Radio DJ At 2AM Offers Your Band A Live Session (Audience: Possibly Nobody)',
+      description: 'The signal reaches roughly four counties and zero confirmed listeners. The DJ has a soul patch and absolute conviction. This is how careers do and do not start.',
+      icon: '📻',
+      type: 'opportunity',
+      rarity: 'uncommon',
+      duration: 'instant',
+      effects: [],
+      choices: [
+        {
+          id: 'show_up',
+          text: 'Show up exhausted, play your hearts out',
+          effects: [
+            { type: 'resource_change', target: 'player', value: { fans: 35, reputation: 10 }, description: 'Someone was listening' },
+            { type: 'trigger_synergy', target: 'all_bands', value: 'underground-network', description: 'Scene ties deepen' },
+          ],
+        },
+        {
+          id: 'send_demo',
+          text: 'Send a pre-recorded demo instead (efficient, soulless)',
+          effects: [
+            { type: 'resource_change', target: 'player', value: { fans: 12 }, description: 'Fine. It was fine.' },
+          ],
+        },
+      ],
+      flavorText: 'The best show you ever played might have been heard by a security guard and an owl.',
+      artStyle: 'press_release',
+    });
+
+    this.addEventCard({
+      id: 'all_ages_xed_hands',
+      name: 'All-Ages Show Means The Whole Front Row Has Sharpie X\'s And Strong Opinions',
+      description: 'They cannot buy a drink and they would not if they could. They have, however, read everything, formed positions, and brought a friend who is filming for "documentation."',
+      icon: '❌',
+      type: 'wildcard',
+      rarity: 'uncommon',
+      duration: 'instant',
+      effects: [],
+      choices: [
+        {
+          id: 'lean_in',
+          text: 'Lean into it: no bar, all heart',
+          effects: [
+            { type: 'modify_stat', target: 'all_bands', value: { authenticity: 15 }, description: 'The kids are the scene' },
+            { type: 'resource_change', target: 'player', value: { money: -40 }, description: 'No bar tab to lean on' },
+          ],
+        },
+        {
+          id: 'serve_the_back',
+          text: 'Quietly serve the 21+ in the back (rent is rent)',
+          effects: [
+            { type: 'resource_change', target: 'player', value: { money: 70, reputation: -8 }, description: 'The front row noticed' },
+          ],
+        },
+      ],
+      flavorText: 'An all-ages show is a promise. The X is the receipt.',
+      artStyle: 'concert_poster',
+    });
+
+    this.addEventCard({
+      id: 'genre_purist_zine_review',
+      name: 'Local Zine Gives You 2/5, Calls Your Sound "Posthumously Derivative"',
+      description: 'The review is 600 words, cut-and-paste collaged, and printed on a copier that was clearly low on toner. It will be read by everyone you have ever met.',
+      icon: '📰',
+      type: 'crisis',
+      rarity: 'uncommon',
+      duration: 'instant',
+      effects: [],
+      choices: [
+        {
+          id: 'frame_it',
+          text: 'Frame the review, wear it as a badge',
+          effects: [
+            { type: 'modify_stat', target: 'all_bands', value: { authenticity: 10, energy: 8 }, description: 'Spite is a renewable resource' },
+          ],
+        },
+        {
+          id: 'rebuttal',
+          text: 'Write a 4-paragraph rebuttal nobody asked for',
+          effects: [
+            { type: 'resource_change', target: 'player', value: { stress: 10, reputation: -5 }, description: 'You did not have to do that' },
+          ],
+        },
+      ],
+      flavorText: 'A bad review in a zine that 40 people read is still a review in a zine that 40 people read.',
+      artStyle: 'press_release',
+    });
+
+    this.addEventCard({
+      id: 'reunion_basement_pilgrimage',
+      name: 'Legendary Broken-Up Band Quietly Plays The Basement Where They Started, 40 People Know',
+      description: 'No flyer, no announcement, one whispered location. The room that should hold sixty holds the entire weight of a scene\'s history and one fire hazard\'s worth of people.',
+      icon: '🕯️',
+      type: 'legendary',
+      rarity: 'rare',
+      duration: 'instant',
+      requirements: [{ type: 'turn_number', value: 18, operator: 'greater_than' }],
+      effects: [],
+      choices: [
+        {
+          id: 'open_for_them',
+          text: 'Open for them, soak up the history',
+          effects: [
+            { type: 'modify_stat', target: 'all_bands', value: { popularity: 18, energy: 15 }, description: 'You shared the riser with legends' },
+            { type: 'resource_change', target: 'player', value: { reputation: 22, fans: 50 }, description: 'The story follows you forever' },
+          ],
+        },
+        {
+          id: 'keep_the_secret',
+          text: 'Keep the secret, let the legend grow',
+          effects: [
+            { type: 'resource_change', target: 'player', value: { reputation: 10 }, description: 'You can keep a secret' },
+            { type: 'trigger_synergy', target: 'all_bands', value: 'underground-network', description: 'The inner circle remembers' },
+          ],
+        },
+      ],
+      flavorText: 'Some shows you were at. This is a show you were AT.',
+      artStyle: 'backstage_pass',
+    });
   }
 
   private addEventCard(card: EventCard) {

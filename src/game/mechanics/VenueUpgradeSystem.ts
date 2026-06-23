@@ -321,6 +321,115 @@ export const EQUIPMENT_CATALOG: Equipment[] = [
       reputationMultiplier: 1.08,
       incidentReduction: -10, // open-air gamble: cops + weather raise the odds
     }
+  },
+  // --- 2026-06 content pass: +6 equipment (effects in-band; cheap/mid first) ---
+  {
+    id: 'cassette-dubbing-deck',
+    name: 'Dual-Deck Cassette Dubbing Tower',
+    description: 'Runs hot, eats one tape in twenty, and turns a basement set into a real release by morning. The hiss is a feature.',
+    type: EquipmentType.RECORDING,
+    quality: 1,
+    condition: 100,
+    maintenanceCost: 6,
+    purchasePrice: 450,
+    rentalPrice: 0,
+    owned: false,
+    effects: {
+      passiveIncome: 45,
+      passiveFame: 3,
+      atmosphereBonus: 3,
+    }
+  },
+  {
+    id: 'foldback-monitors',
+    name: 'Decent Floor Monitors (Finally)',
+    description: 'The band can hear themselves for the first time, and it shows. The sound guy is, for once, almost content.',
+    type: EquipmentType.PA_SYSTEM,
+    quality: 2,
+    condition: 100,
+    maintenanceCost: 12,
+    purchasePrice: 800,
+    rentalPrice: 70,
+    owned: false,
+    effects: {
+      acousticsBonus: 15,
+      stressReduction: 10,
+    },
+    requirements: { minCapacity: 50 }
+  },
+  {
+    id: 'house-fog-machine',
+    name: 'Temperamental Fog Machine',
+    description: 'Atmosphere by the cloud. Occasionally sets off the smoke alarm, which is itself a kind of atmosphere.',
+    type: EquipmentType.LIGHTING,
+    quality: 2,
+    condition: 100,
+    maintenanceCost: 8,
+    purchasePrice: 550,
+    rentalPrice: 45,
+    owned: false,
+    effects: {
+      atmosphereBonus: 18,
+      reputationMultiplier: 1.04,
+      incidentReduction: -5, // the smoke alarm gamble
+    }
+  },
+  {
+    id: 'merch-distro-shelf',
+    name: 'Distro Shelf (Other Bands\' Records On Consignment)',
+    description: 'You sell their tapes, they sell yours, everyone pretends the math works out. It mostly does.',
+    type: EquipmentType.RECORDING,
+    quality: 2,
+    condition: 100,
+    maintenanceCost: 10,
+    purchasePrice: 1100,
+    rentalPrice: 0,
+    owned: false,
+    effects: {
+      passiveIncome: 90,
+      passiveFame: 5,
+      atmosphereBonus: 5,
+      reputationMultiplier: 1.05,
+    },
+    requirements: { minCapacity: 80 }
+  },
+  {
+    id: 'riser-and-barricade',
+    name: 'Modular Riser + Crowd Barricade',
+    description: 'Sightlines for the crowd, a gap for the photographers, and one fewer way for the night to go sideways.',
+    type: EquipmentType.STAGE,
+    quality: 3,
+    condition: 100,
+    maintenanceCost: 18,
+    purchasePrice: 2000,
+    rentalPrice: 130,
+    owned: false,
+    effects: {
+      capacityBonus: 15,
+      atmosphereBonus: 8,
+      incidentReduction: 15,
+      reputationMultiplier: 1.06,
+    },
+    requirements: { minCapacity: 120 }
+  },
+  {
+    id: 'in-ear-monitor-rig',
+    name: 'Pro In-Ear Monitor Rig',
+    description: 'There is no in-ear monitor mix in punk — but there is in everything punk grows up to become. Pristine, clinical, expensive.',
+    type: EquipmentType.PA_SYSTEM,
+    quality: 4,
+    condition: 100,
+    maintenanceCost: 45,
+    purchasePrice: 3200,
+    rentalPrice: 240,
+    owned: false,
+    effects: {
+      acousticsBonus: 30,
+      stressReduction: 25,
+      reputationMultiplier: 1.12,
+      incidentReduction: 10,
+    },
+    requirements: { minCapacity: 150, powerRequirements: 3 }
   }
 ];
 

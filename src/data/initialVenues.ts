@@ -48,6 +48,27 @@ export const initialVenues: Venue[] = [
     unlockReputation: 0,
   },
 
+  {
+    id: "the-rec-center",
+    name: "The Rec Center (Insurance Lapsed In '09)",
+    type: VenueType.HOUSE_SHOW,
+    capacity: 90,
+    acoustics: 30,
+    authenticity: 95,
+    atmosphere: 80,
+    modifiers: [],
+    traits: [],
+    location: DISTRICTS.UNIVERSITY,
+    rent: 60,
+    equipment: [],
+    allowsAllAges: true,
+    hasBar: false,
+    hasSecurity: false,
+    isPermanent: true,
+    bookingDifficulty: 2,
+    unlockReputation: 5,
+  },
+
   // ── Tier 1: dive bars (~15 rep) ────────────────────────────────────────────
   {
     id: "mr-brewskis",
@@ -90,6 +111,27 @@ export const initialVenues: Venue[] = [
     unlockReputation: 15,
   },
 
+  {
+    id: "metro-bowl-lanes",
+    name: "Metro Bowl-A-Rama (Lanes 7-12 Are 'The Stage')",
+    type: VenueType.DIVE_BAR,
+    capacity: 200,
+    acoustics: 65,
+    authenticity: 68,
+    atmosphere: 88,
+    modifiers: [],
+    traits: [],
+    location: DISTRICTS.DOWNTOWN,
+    rent: 370,
+    equipment: [],
+    allowsAllAges: false,
+    hasBar: true,
+    hasSecurity: false,
+    isPermanent: true,
+    bookingDifficulty: 4,
+    unlockReputation: 25,
+  },
+
   // ── Tier 2: the rock club you earn your way into (~35 rep) ──────────────────
   {
     id: "looney-burro",
@@ -110,6 +152,27 @@ export const initialVenues: Venue[] = [
     isPermanent: true,
     bookingDifficulty: 5,
     unlockReputation: 35,
+  },
+
+  {
+    id: "the-elks-lodge",
+    name: "Elks Lodge #420 (They Don't Ask Questions)",
+    type: VenueType.UNDERGROUND,
+    capacity: 300,
+    acoustics: 60,
+    authenticity: 75,
+    atmosphere: 90,
+    modifiers: [],
+    traits: [],
+    location: DISTRICTS.INDUSTRIAL,
+    rent: 600,
+    equipment: [],
+    allowsAllAges: false,
+    hasBar: true,
+    hasSecurity: true,
+    isPermanent: true,
+    bookingDifficulty: 5,
+    unlockReputation: 45,
   },
 
   // ── Tier 3: the legendary theater (~55 rep) ────────────────────────────────
