@@ -117,6 +117,7 @@ describe('TurnResolutionEngine', () => {
     completedFestivals: [],
     districts: [],
     walkers: [],
+    factionStandings: {},
     nextRound: vi.fn(),
     addMoney: vi.fn(),
     addFans: vi.fn(),
@@ -125,6 +126,7 @@ describe('TurnResolutionEngine', () => {
     completeShow: vi.fn(),
     discoverSynergy: vi.fn(),
     setPhase: vi.fn(),
+    setFactionStandings: vi.fn(),
     resetGame: vi.fn(),
     ...overrides,
   });

@@ -24,6 +24,9 @@ import { metaProgressionManager } from './MetaProgressionManager';
 import { objectiveManager } from './ObjectiveManager';
 import { stakesManager, STAKE_TIERS } from './StakesManager';
 import { gentrificationSystem } from './GentrificationSystem';
+import { factionSystem } from './FactionSystem';
+import { bandRelationships } from './BandRelationships';
+import { computeLineupChemistry } from './lineupChemistry';
 import {
   getCityLandmarks,
   districtLandmarkMods,
@@ -216,6 +219,17 @@ export class TurnResolutionEngine {
           result.financials.profit > 0 &&
           result.attendance > venue.capacity * 0.5;
         walkerSystem.spawnShowResultWalkers(venue, result.attendance, success);
+
+        // Scene politics: the bill's faction(s) react to how the show went, and
+        // the bands on the bill drift closer/apart. Persist the new standings so
+        // they survive refresh + feed next turn's faction show-modifiers.
+        factionSystem.updateStandingsFromShow(band, venue, success);
+        const billIds = scheduledShow.lineup
+          ?? [scheduledShow.bandId, ...(scheduledShow.bill?.openers ?? [])];
+        if (billIds.length > 1) {
+          bandRelationships.updateRelationshipsFromShow(billIds, success, store.currentRound);
+        }
+        store.setFactionStandings(Object.fromEntries(factionSystem.getPlayerStandings()));
       }
 
       // Tally objective progress for this (non-cancelled) show.
@@ -646,6 +660,23 @@ export class TurnResolutionEngine {
       if (band) allShowBands.push(band);
     });
 
+    // --- Scene politics: faction standing + bill chemistry -------------------
+    // Hydrate the stateless faction calculator from the persisted store standings,
+    // then read this bill's faction show-modifiers. Every term below is EXACTLY
+    // identity when standings are neutral (run start), so this can't move the
+    // early game; each is also double-bounded (swing-compressed AND clamped) so
+    // even a maxed faction stays a side-grade smaller than a single co-billed band.
+    Object.entries(store.factionStandings ?? {}).forEach(([id, v]) =>
+      factionSystem.setStanding(id, v),
+    );
+    const fMods = factionSystem.getShowModifiers(mainBand, venue);
+    const factionAttendanceMult = Math.max(0.92, Math.min(1.08, 1 + (fMods.fanBonus - 1) * 0.4));
+    const factionRepMult = Math.max(0.95, Math.min(1.05, 1 + (fMods.reputationMultiplier - 1) * 0.3));
+    const factionMoneyMult = 1 + Math.max(-0.05, Math.min(0.05, fMods.moneyModifier));
+    // Bill chemistry: faction affinity (same scene = friendly, rivals = bad blood)
+    // plus co-billing drift, as a compressed+clamped crowd multiplier. 1 for solo.
+    const lineupChem = computeLineupChemistry(allShowBands);
+
     // Band+venue COMBO synergies (the "discover powerful combos" pillar): the
     // SAME calculator the ShowBuilder preview shows, now ACTUALLY applied to the
     // result. The product is capped (COMBO_MULT_CAP) so it can't balloon when it
@@ -759,7 +790,9 @@ export class TurnResolutionEngine {
           gentrificationAttendance *
           sceneFit.multiplier *
           comboMult *
-          (sig?.attendanceMult ?? 1),
+          (sig?.attendanceMult ?? 1) *
+          factionAttendanceMult *
+          lineupChem.mult,
       ),
       effectiveCapacity,
     );
@@ -781,7 +814,7 @@ export class TurnResolutionEngine {
     );
     const revenueMultiplier = 1 + moneyBonus / 100;
     const finalRevenue = Math.floor(
-      totalRevenue * revenueMultiplier * runMods.moneyMultiplier * (sig?.revenueMult ?? 1),
+      totalRevenue * revenueMultiplier * runMods.moneyMultiplier * (sig?.revenueMult ?? 1) * factionMoneyMult,
     );
 
     // Calculate costs with difficulty scaling; escalation turns raise costs.
@@ -832,7 +865,7 @@ export class TurnResolutionEngine {
     );
     fanGain = Math.floor(fanGain * (1 + fansBonus / 100) * runMods.fansMultiplier * (sig?.fanMult ?? 1));
     reputationGain = Math.floor(
-      reputationGain * (1 + repBonus / 100) * runMods.reputationMultiplier * (sig?.repMult ?? 1),
+      reputationGain * (1 + repBonus / 100) * runMods.reputationMultiplier * (sig?.repMult ?? 1) * factionRepMult,
     );
     // Flat reputation from band+venue combos (e.g. True DIY +10).
     reputationGain += comboRep;
@@ -906,6 +939,15 @@ export class TurnResolutionEngine {
       combosDiscovered: combos
         .filter((c) => !prevDiscovered.has(c.id))
         .map((c) => c.id),
+      politics: (() => {
+        const factionAttendancePct = Math.round((factionAttendanceMult - 1) * 100);
+        const factionRepPct = Math.round((factionRepMult - 1) * 100);
+        const lineupPct = Math.round((lineupChem.mult - 1) * 100);
+        if (factionAttendancePct === 0 && factionRepPct === 0 && lineupPct === 0 && lineupChem.conflicts.length === 0) {
+          return null;
+        }
+        return { factionAttendancePct, factionRepPct, lineupPct, conflicts: lineupChem.conflicts };
+      })(),
     };
   }
 

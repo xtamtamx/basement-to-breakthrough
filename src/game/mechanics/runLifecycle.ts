@@ -11,6 +11,8 @@ import { useGameStore } from '@stores/gameStore';
 import { runManager, RunState } from './RunManager';
 import { metaProgressionManager } from './MetaProgressionManager';
 import { turnResolutionEngine } from './TurnResolutionEngine';
+import { factionSystem } from './FactionSystem';
+import { bandRelationships } from './BandRelationships';
 import { dayJobSystem } from './DayJobSystem';
 import { synergyManager, STARTER_SYNERGIES } from './SynergyManager';
 import { objectiveManager } from './ObjectiveManager';
@@ -42,6 +44,10 @@ export async function startNewRun(
   useGameStore.getState().resetGame();
   turnResolutionEngine.reset();
   progressionPathSystem.reset(); // run-scoped path must not bleed into the new run
+  // The faction + band-relationship singletons accrue standings/memberBands/drift
+  // across runs; the store field auto-resets via resetGame() but these don't.
+  factionSystem.reset();
+  bandRelationships.clearRelationships();
 
   const run = runManager.startRun(configId, stakeTier);
   const bonuses = metaProgressionManager.getRunStartBonuses();

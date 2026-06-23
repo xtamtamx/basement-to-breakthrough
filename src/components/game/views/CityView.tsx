@@ -14,6 +14,7 @@ import { CityLandmark } from '@game/world/landmarks';
 import { unlockedVenues } from '@game/world/venueProgression';
 import { dayJobSystem } from '@game/mechanics/DayJobSystem';
 import { SceneIdentityMeter } from '../SceneIdentityMeter';
+import { FactionStandingsMeter } from '../FactionStandingsMeter';
 
 // Maps store district ids onto the core DistrictType used by DistrictInfo.
 const STORE_DISTRICT_TYPE: Record<string, CoreDistrictType> = {
@@ -206,6 +207,9 @@ export const CityView: React.FC = () => {
             {/* Scene Identity — surfaces the sellout↔DIY axis (diyPoints) that
                 also drives how this very city evolves. Top-left, tap to expand. */}
             <SceneIdentityMeter />
+            {/* Scene Politics — where you stand with the five factions. Read-only;
+                stacks under Scene Identity. Tap to expand the ladder. */}
+            <FactionStandingsMeter />
 
             {/* Compact Stats Overlay */}
             <div style={{

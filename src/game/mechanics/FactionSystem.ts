@@ -204,12 +204,12 @@ class FactionSystem {
       const alignment = this.calculateBandAlignment(band, factionId);
       
       // Apply modifiers based on standing and alignment
-      if (standing > 50 && alignment > 70) {
+      if (standing > 50 && alignment > 60) {
         // Strong positive relationship
         combinedModifiers.fanBonus *= faction.modifiers.fanBonus * 1.2;
         combinedModifiers.reputationMultiplier *= faction.modifiers.reputationMultiplier * 1.1;
         combinedModifiers.moneyModifier += faction.modifiers.moneyModifier * 0.5;
-      } else if (standing < -50 && alignment > 70) {
+      } else if (standing < -50 && alignment > 60) {
         // Negative relationship with aligned faction
         combinedModifiers.fanBonus *= 0.7;
         combinedModifiers.reputationMultiplier *= 0.8;
@@ -226,7 +226,7 @@ class FactionSystem {
       const alignment = this.calculateBandAlignment(band, factionId);
       let standingChange = 0;
 
-      if (alignment > 70) {
+      if (alignment > 60) {
         // Faction likes this band
         standingChange = showSuccess ? 5 : -2;
       } else if (alignment < 30) {
@@ -487,7 +487,7 @@ class FactionSystem {
   // Check if a band is favored by a faction
   isBandFavored(band: Band, factionId: string): boolean {
     const alignment = this.calculateBandAlignment(band, factionId);
-    return alignment > 70;
+    return alignment > 60;
   }
 
   // Check if a venue is favored by a faction
@@ -535,10 +535,10 @@ class FactionSystem {
       
       switch (action) {
         case 'successful_show':
-          change = alignment > 70 ? 3 : alignment < 30 ? -2 : 0;
+          change = alignment > 60 ? 3 : alignment < 30 ? -2 : 0;
           break;
         case 'failed_show':
-          change = alignment > 70 ? -2 : alignment < 30 ? 1 : 0;
+          change = alignment > 60 ? -2 : alignment < 30 ? 1 : 0;
           break;
       }
       
@@ -598,6 +598,46 @@ class FactionSystem {
 
   restoreEvents(events: FactionEvent[]): void {
     this.factionEvents = [...events];
+  }
+
+  // Wipe all run-scoped state so a new run starts neutral. This singleton bleeds
+  // across runs — memberBands accrue via assignBandToFaction (BandGenerator) and
+  // standings via updateStandingsFromShow — so startNewRun MUST call this.
+  reset(): void {
+    this.factions.clear();
+    this.playerStandings.clear();
+    this.factionEvents = [];
+    this.initializeFactions();
+  }
+
+  // The faction a band belongs to: an explicit faction-<id> membership trait
+  // (procedural bands get one in BandGenerator) ELSE the best-aligned faction
+  // over the membership threshold (authored bands carry no faction trait). Pure —
+  // no mutation, so it's safe to call from React render and the show preview.
+  getBandFaction(band: Band): string | null {
+    const trait = band.traits.find((t) => t.id.startsWith('faction-'));
+    if (trait) return trait.id.slice('faction-'.length);
+    let best: string | null = null;
+    let bestAlignment = 0;
+    this.factions.forEach((_f, id) => {
+      const a = this.calculateBandAlignment(band, id);
+      if (a > bestAlignment && a > 60) { best = id; bestAlignment = a; }
+    });
+    return best;
+  }
+
+  // How two bands get along based PURELY on their factions: same scene = friendly,
+  // rival factions = bad blood, allied factions = friendly. The live co-billing
+  // drift (BandRelationships) is layered on top in lineupChemistry. Pure.
+  factionPairAffinity(band1: Band, band2: Band): number {
+    const f1 = this.getBandFaction(band1);
+    const f2 = this.getBandFaction(band2);
+    if (!f1 || !f2) return 0;
+    if (f1 === f2) return 40;
+    const rel = this.factions.get(f1)?.relationships[f2] ?? 0;
+    if (rel < -50) return -50;
+    if (rel > 50) return 25;
+    return 0;
   }
 }
 

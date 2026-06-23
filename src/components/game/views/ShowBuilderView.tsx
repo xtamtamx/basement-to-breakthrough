@@ -4,6 +4,7 @@ import { Venue, Show } from '@game/types';
 import { haptics } from '@utils/mobile';
 import { audio } from '@utils/simpleAudio';
 import { synergyEngine } from '@game/mechanics/SynergyEngine';
+import { computeLineupChemistry } from '@game/mechanics/lineupChemistry';
 import { difficultySystem } from '@game/mechanics/DifficultySystem';
 import { cityGenreFit } from '@game/world/citySynergy';
 import { isVenueUnlocked } from '@game/world/venueProgression';
@@ -118,8 +119,11 @@ export const ShowBuilderView: React.FC = () => {
     const avgPopularity = selectedBands.reduce((sum, b) => sum + b.popularity, 0) / selectedBands.length;
     const venueBonus = selectedVenue.atmosphere / 100;
     const billMultiplier = 1 + 0.2 * Math.max(0, selectedBands.length - 1);
+    // Bill chemistry — how the bands get along (faction affinity + co-billing
+    // drift). Pure, so this preview matches what executeShow applies.
+    const lineupChem = computeLineupChemistry(selectedBands);
     const baseAttendance = Math.floor(selectedVenue.capacity * (avgPopularity / 100) * venueBonus);
-    const expectedAttendance = Math.floor(baseAttendance * billMultiplier * totalMultiplier * sceneFit.multiplier);
+    const expectedAttendance = Math.floor(baseAttendance * billMultiplier * totalMultiplier * sceneFit.multiplier * lineupChem.mult);
     const finalAttendance = Math.min(expectedAttendance, selectedVenue.capacity);
 
     // Revenue includes bar sales where the venue has a bar (matches the engine).
@@ -136,6 +140,7 @@ export const ShowBuilderView: React.FC = () => {
       totalMultiplier,
       reputationBonus,
       sceneFit,
+      lineupChem,
       expectedAttendance: finalAttendance,
       grossRevenue,
       venueCost,
@@ -550,6 +555,24 @@ export const ShowBuilderView: React.FC = () => {
                   <span className="snes-pixel" style={{ fontSize: '8px', color: preview.sceneFit.tier === 'perfect' ? '#ffd23f' : '#4cc9f0', letterSpacing: 0 }}>
                     🔥 {preview.sceneFit.label} in {currentCity?.name} (+{Math.round((preview.sceneFit.multiplier - 1) * 100)}% crowd)
                   </span>
+                </div>
+              )}
+
+              {/* Bill chemistry — how the bands on the bill get along (their
+                  scenes/factions + shared history). Drama or tight bonds shift
+                  the crowd; hostile pairs glow red. */}
+              {(preview.lineupChem.mult !== 1 || preview.lineupChem.conflicts.length > 0) && (
+                <div className="snes-panel-inset" style={{
+                  border: `2px solid ${preview.lineupChem.hostile ? '#ff5c57' : '#3ad17e'}`,
+                  padding: '8px 10px',
+                  marginBottom: '16px',
+                }}>
+                  <div className="snes-pixel" style={{ fontSize: '8px', color: preview.lineupChem.hostile ? '#ff5c57' : '#3ad17e', letterSpacing: 0, marginBottom: preview.lineupChem.conflicts.length ? '6px' : 0 }}>
+                    🎸 Bill Chemistry {Math.round((preview.lineupChem.mult - 1) * 100) >= 0 ? '+' : ''}{Math.round((preview.lineupChem.mult - 1) * 100)}% crowd
+                  </div>
+                  {preview.lineupChem.conflicts.map((c, i) => (
+                    <div key={i} className="snes-pixel" style={{ fontSize: '7px', color: '#b9b3d6', letterSpacing: 0, lineHeight: 1.6 }}>{c}</div>
+                  ))}
                 </div>
               )}
 

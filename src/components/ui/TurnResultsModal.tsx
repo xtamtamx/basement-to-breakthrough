@@ -469,6 +469,28 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
                           ))}
                         </div>
                       )}
+                      {result.politics && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '8px' }}>
+                          {(result.politics.factionAttendancePct !== 0 || result.politics.factionRepPct !== 0) && (
+                            <span className="snes-pixel" style={{
+                              fontSize: '7px', letterSpacing: 0, color: '#c77dff',
+                              border: '2px solid #c77dff', backgroundColor: '#160f24', padding: '3px 5px'
+                            }}>🎭 Faction{result.politics.factionAttendancePct !== 0 ? ` ${result.politics.factionAttendancePct >= 0 ? '+' : ''}${result.politics.factionAttendancePct}% crowd` : ''}{result.politics.factionRepPct !== 0 ? ` ${result.politics.factionRepPct >= 0 ? '+' : ''}${result.politics.factionRepPct}% rep` : ''}</span>
+                          )}
+                          {result.politics.lineupPct !== 0 && (
+                            <span className="snes-pixel" style={{
+                              fontSize: '7px', letterSpacing: 0, color: '#3ad17e',
+                              border: '2px solid #3ad17e', backgroundColor: '#0a1410', padding: '3px 5px'
+                            }}>🎸 Bill {result.politics.lineupPct >= 0 ? '+' : ''}{result.politics.lineupPct}% crowd</span>
+                          )}
+                          {result.politics.conflicts.map((c, i) => (
+                            <span key={i} className="snes-pixel" style={{
+                              fontSize: '7px', letterSpacing: 0, color: '#ff5c57',
+                              border: '2px solid #ff5c57', backgroundColor: '#1f0f0f', padding: '3px 5px'
+                            }}>⚡ {c}</span>
+                          ))}
+                        </div>
+                      )}
                       {result.combosDiscovered && result.combosDiscovered.length > 0 && (
                         <div className="snes-pixel btb-pop btb-glow" style={{
                           fontSize: '8px', letterSpacing: 0, color: '#ffd23f', marginTop: '8px'

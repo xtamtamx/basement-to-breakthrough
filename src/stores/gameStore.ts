@@ -135,6 +135,9 @@ interface GameStore {
 
   // Faction state
   currentFactionEvent: FactionEvent | null;
+  /** Player standing (-100..100) per faction id; empty = all neutral. Persisted;
+   *  the FactionSystem singleton is a stateless calculator hydrated from this. */
+  factionStandings: Record<string, number>;
 
   // Discovery state
   discoveredSynergies: string[]; // List of discovered synergy IDs
@@ -196,6 +199,7 @@ interface GameStore {
 
   // Faction actions
   setFactionEvent: (event: FactionEvent | null) => void;
+  setFactionStandings: (standings: Record<string, number>) => void;
   applyFactionChoice: (eventId: string, choiceId: string) => void;
 
   // Discovery actions
@@ -693,6 +697,7 @@ const getInitialState = () => ({
   phase: GamePhase.MENU,
   difficulty: Difficulty.NORMAL,
   currentFactionEvent: null,
+  factionStandings: {},
   districts: initialDistricts,
   venues: [], // Will be loaded lazily
   cities: CITIES,
@@ -1094,6 +1099,7 @@ export const useGameStore = create<GameStore>()(
 
       // Faction actions
       setFactionEvent: (event) => set({ currentFactionEvent: event }),
+      setFactionStandings: (standings) => set({ factionStandings: standings }),
 
       applyFactionChoice: (eventId, choiceId) => {
         const effects = factionSystem.applyEventChoice(eventId, choiceId);
@@ -1313,6 +1319,7 @@ export const useGameStore = create<GameStore>()(
         diyPoints: state.diyPoints,
         pathChoices: state.pathChoices,
         pathAlignment: state.pathAlignment,
+        factionStandings: state.factionStandings,
         // Don't persist: walkers, lastTurnResults, currentFactionEvent (transient state)
       }),
       // On page refresh, rebuild the run's in-memory singletons from the

@@ -170,8 +170,8 @@ describe('FactionSystem', () => {
       const alignment = factionSystem.calculateBandAlignment(band, 'diy-purists');
       const modifiers = factionSystem.getShowModifiers(band, venue);
       
-      // If alignment > 70 and standing > 50, modifiers should be applied
-      if (alignment > 70) {
+      // If alignment > 60 (the membership gate) and standing > 50, modifiers apply
+      if (alignment > 60) {
         expect(modifiers.fanBonus).toBeCloseTo(0.96, 2); // 0.8 * 1.2
         expect(modifiers.reputationMultiplier).toBeCloseTo(1.65, 2); // 1.5 * 1.1
         expect(modifiers.moneyModifier).toBeCloseTo(-0.15, 2); // -0.3 * 0.5
@@ -266,11 +266,11 @@ describe('FactionSystem', () => {
       const favoredAlignment = factionSystem.calculateBandAlignment(favoredBand, 'diy-purists');
       const unfavoredAlignment = factionSystem.calculateBandAlignment(unfavoredBand, 'diy-purists');
       
-      // isBandFavored uses > 70 threshold
+      // isBandFavored uses the > 60 membership threshold
       expect(favoredAlignment).toBeGreaterThan(60); // Should be relatively high
       expect(unfavoredAlignment).toBeLessThan(50); // Should be low
-      
-      expect(factionSystem.isBandFavored(favoredBand, 'diy-purists')).toBe(favoredAlignment > 70);
+
+      expect(factionSystem.isBandFavored(favoredBand, 'diy-purists')).toBe(favoredAlignment > 60);
       expect(factionSystem.isBandFavored(unfavoredBand, 'diy-purists')).toBe(false);
     });
   });

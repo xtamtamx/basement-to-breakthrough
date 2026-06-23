@@ -543,6 +543,18 @@ export interface ShowResult {
     type: DistrictType;
     description: string;
   };
+  /** Scene-politics effects on this show, surfaced in the results modal. Null/omitted
+   *  when neutral (no faction standing built + solo/neutral bill). */
+  politics?: {
+    /** Net faction-standing effect on the crowd, as a signed % (e.g. +6, -4). */
+    factionAttendancePct: number;
+    /** Net faction-standing effect on reputation, as a signed %. */
+    factionRepPct: number;
+    /** Bill-chemistry effect on the crowd, as a signed % (0 for solo bills). */
+    lineupPct: number;
+    /** Hostile-pair warnings for this bill (drama brewing). */
+    conflicts: string[];
+  } | null;
 }
 
 export interface Incident {
