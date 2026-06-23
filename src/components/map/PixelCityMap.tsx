@@ -54,7 +54,7 @@ interface PixelCityMapProps {
 // and a master toggle (perf escape hatch for low-end devices).
 const BLOOM_ON = true;
 const BLOOM_SCALE = 3;
-const BLOOM_STRENGTH = 1.1;
+const BLOOM_STRENGTH = 0.85;
 
 // --- World layout (in 16px tiles) -------------------------------------------
 const WORLD_W = 60;
@@ -128,14 +128,14 @@ interface MapTheme {
 const baseTheme: MapTheme = {
   grass: ['#57933f', '#66a54c', '#77b65a', '#8ac66a'], grassBlade: '#9ad277', grassShade: '#3f7232',
   path: '#c79a5e', pathLight: '#d8ac6e', pathSpeck: '#a8814c', pathDark: '#a07843',
-  cobble: '#bcae90', cobbleLight: '#ccc0a4', cobbleDark: '#a3957a', cobbleGrout: '#7a6f58',
+  cobble: '#c8ccd2', cobbleLight: '#dfe3e8', cobbleDark: '#9aa0aa', cobbleGrout: '#6f7480',
   soil: '#7a4d2d', soilDark: '#5f3c23',
   gardenFlowers: ['#ef5a8a', '#f4cf4f', '#ffffff', '#b072e0', '#ff8c4d'], wildFlowers: ['#f4d04f', '#ffffff', '#ef6f9c', '#9c7be0'],
   tree: { bark: '#6e4a2c', barkDark: '#4f3419', leafDark: '#2f7a38', leaf: '#46974c', leafLight: '#69bb60' },
   roofMix: ['tudor', 'cottage', 'townhouse', 'stone', 'manor', 'shopAwning', 'tudor', 'cottage'], void: '#21331f',
   streetPaved: false, shore: 'none', water: '#3f9bd6', waterLight: '#62b6e6', waterDark: '#2a7cb4', sand: '#e6d3a0',
   dock: '#6b4f34', dockLight: '#8a6743', dockDark: '#4a3520',
-  tint: 'rgba(255,236,182,0.05)',
+  tint: 'rgba(255,236,182,0.02)',
 };
 const mkTheme = (o: Partial<MapTheme>): MapTheme => ({ ...baseTheme, ...o });
 
@@ -236,6 +236,14 @@ const LANDMARK_BUILDINGS: Record<LandmarkKind, BuildingKey> = {
 // Per-alignment landmark marker colour (gold DIY anchor / red sellout / white history).
 const LANDMARK_ACCENT: Record<CityLandmark['alignment'], string> = { diy: '#fbbf24', corporate: '#ef4444', history: '#e5e7eb' };
 
+// District "anchors" — promote ONE building in a flavor-named quarter to a wide,
+// distinct sprite so the name actually reads on the map. e.g. the home city's
+// "The Strip Mall" quarter gets a big-box anchor fronting its parking lot,
+// instead of a cluster of identical small storefronts.
+const DISTRICT_ANCHORS: Partial<Record<CityThemeKey, Record<string, BuildingKey>>> = {
+  home: { downtown: 'glassHall' }, // glass-arch market hall — reads as a mall
+};
+
 // CEIL (not round): the footprint must fully contain the drawn sprite, else the
 // sprite spills past its reserved tiles and overlaps the neighbouring building.
 const fpW = (s: AtlasSprite) => Math.max(1, Math.ceil((s.rect.w * SPR) / TILE));
@@ -289,7 +297,7 @@ function valueNoise(x: number, y: number): number {
 // --- Dual-grid terrain transitions (rounded SNES-style seams) ---------------
 // Materials, low→high priority. Each higher material is painted over the lower
 // with rounded edges so two terrains never meet on a straight grid line.
-const M_SIDEWALK = 1, M_ROAD = 2, M_SAND = 3, M_WATER = 4;
+const M_SIDEWALK = 1, M_ROAD = 2, M_SAND = 3, M_WATER = 4, M_DOCK = 5;
 
 // The display grid is offset half a tile from the logical grid; each display
 // tile reads the 4 logical cell-centres at its corners (bits TL=1 TR=2 BL=4
@@ -335,7 +343,7 @@ function dgContour(ctx: CanvasRenderingContext2D, key: number, ox: number, oy: n
 }
 
 interface Quarter { district: District; tx: number; ty: number; tw: number; th: number }
-interface PlacedBuilding { sprite: AtlasSprite; tx: number; ty: number; tw: number; th: number; venue?: Venue; shop?: CityShop; landmark?: CityLandmark; district?: District }
+interface PlacedBuilding { sprite: AtlasSprite; tx: number; ty: number; tw: number; th: number; venue?: Venue; shop?: CityShop; landmark?: CityLandmark; district?: District; mallAnchor?: boolean }
 interface PlacedTree { sprite: AtlasSprite; tx: number; ty: number; th: number }
 interface PlacedProp { sprite: AtlasSprite; tx: number; ty: number } // ty = foot row
 interface PlacedBench { tx: number; ty: number; faceUp: boolean }
@@ -373,9 +381,9 @@ const DISTRICT_KIND: Record<string, keyof typeof DISTRICT_POOLS> = {
 // (home keeps the verified look that way).
 const CITY_ARCHITECTURE: Partial<Record<CityThemeKey, Record<string, BuildingKey[]>>> = {
   // Home: the downtown quarter is literally named "The Strip Mall", so give it
-  // low retail storefronts + a big-box anchor (it already gets a parking lot) so
-  // it reads as a strip mall, not a cluster of glass high-rises. Other home
-  // quarters fall through to the verified DISTRICT_POOLS look.
+  // low retail storefronts. DISTRICT_ANCHORS then promotes one of them to a wide
+  // big-box anchor fronting the parking lot so it reads as a strip mall, not a
+  // cluster of glass high-rises. Other home quarters fall through to DISTRICT_POOLS.
   home: {
     downtown: ['greyShop', 'shopAwning', 'teal', 'greyShop', 'modern', 'shopAwning'],
   },
@@ -564,6 +572,25 @@ function planTown(districts: District[], venues: Venue[], roofMix: BuildingKey[]
     b.ty = b.ty + b.th - nh; // keep the same foot row
     b.tw = nw;
     b.th = nh;
+  }
+
+  // District anchors: give a flavor-named quarter one wide landmark building so
+  // its name reads (e.g. "The Strip Mall" gets a big-box). Runs LAST so it only
+  // claims a building no venue/landmark/shop wanted — never hijacks them.
+  const anchors = DISTRICT_ANCHORS[themeKey];
+  if (anchors) {
+    for (const [districtId, key] of Object.entries(anchors)) {
+      const b = buildings
+        .filter((bd) => !bd.venue && !bd.shop && !bd.landmark && bd.district?.id === districtId)
+        .sort((a, z) => Math.hypot(a.tx - cx, a.ty - cy) - Math.hypot(z.tx - cx, z.ty - cy))[0];
+      if (!b) continue;
+      b.sprite = BUILDINGS[key];
+      b.mallAnchor = true; // gets a neon marquee so it reads as THE mall
+      const nw = fpW(b.sprite), nh = fpH(b.sprite);
+      b.ty = b.ty + b.th - nh; // keep the same foot row
+      b.tw = nw;
+      b.th = nh;
+    }
   }
 
   // Street trees on the grass shoulder south of each street — IRREGULARLY spaced
@@ -789,6 +816,17 @@ function drawBuildingObj(ctx: CanvasRenderingContext2D, sheets: Sheets, b: Place
     ctx.fillStyle = FLYER[(b.tx + b.ty) % FLYER.length]; ctx.fillRect(fx, fy, 3, 4);
     ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(fx, fy, 3, 1);
   }
+  if (b.mallAnchor) {
+    // A neon marquee perched on the roof so the strip-mall anchor reads as THE
+    // mall, not just a bigger building. Pure pixel fill, neon-punk SNES tone.
+    const mw = Math.min(Math.max(20, b.tw * TILE - 10), 44);
+    const mx = Math.round(footCx - mw / 2), my = b.ty * TILE + 3;
+    ctx.fillStyle = 'rgba(247,37,133,0.22)'; ctx.fillRect(mx - 2, my - 2, mw + 4, 13); // glow
+    ctx.fillStyle = '#1a0a14'; ctx.fillRect(mx, my, mw, 9); // sign body
+    ctx.fillStyle = '#f72585'; ctx.fillRect(mx, my, mw, 2); // top neon bar
+    ctx.fillStyle = '#4cc9f0'; ctx.fillRect(mx, my + 7, mw, 2); // bottom neon bar
+    for (let i = 3; i < mw - 2; i += 4) { ctx.fillStyle = ((i >> 2) & 1) ? '#ffd23f' : '#ffffff'; ctx.fillRect(mx + i, my + 4, 1, 1); } // bulbs
+  }
   if (b.venue) {
     // park the tour van on the nearest ROAD below the venue (never the sidewalk)
     const cxr = b.tx + (b.tw >> 1);
@@ -951,6 +989,17 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
           (south ? ty >= WORLD_H - 3 : ty < 3);
         setMat(tx, ty, nearEdge && !built.has(`${tx},${ty}`) ? M_WATER : M_SAND);
       }
+    // Lay a wood-plank promenade where the sand meets the surf — that's what makes
+    // "The Boardwalk" an actual boardwalk and not just a beach. Any sand tile
+    // touching water (not under a building) becomes decking.
+    for (let ty = y0; ty < y1; ty++)
+      for (let tx = x0; tx < x1; tx++) {
+        if (matAt(tx, ty) !== M_SAND || built.has(`${tx},${ty}`)) continue;
+        if (matAt(tx - 1, ty) === M_WATER || matAt(tx + 1, ty) === M_WATER ||
+            matAt(tx, ty - 1) === M_WATER || matAt(tx, ty + 1) === M_WATER) {
+          setMat(tx, ty, M_DOCK);
+        }
+      }
   }
 
   // Building front walks + venue driveways become sidewalk so they round & bevel
@@ -1032,10 +1081,12 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
   // The plaza is part of the SIDEWALK field now, so its edges round + bevel like
   // the corridors and the garden island gets a rounded sidewalk surround.
   paintLayer({ field: (tx, ty) => isMat(tx, ty, M_SIDEWALK, M_ROAD), fill: theme.cobble, kerb: true, highSide: 'material', rim: theme.cobbleLight, frontShadow: theme.cobbleDark });
-  paintLayer({ field: (tx, ty) => isMat(tx, ty, M_ROAD), matTile: TERRAIN.road, kerb: true, highSide: 'lower', rim: theme.cobbleLight, frontShadow: 'rgba(0,0,0,0.28)', tint: 'rgba(140,110,70,0.06)' });
+  paintLayer({ field: (tx, ty) => isMat(tx, ty, M_ROAD), matTile: TERRAIN.road, kerb: true, highSide: 'lower', rim: theme.cobbleLight, frontShadow: 'rgba(0,0,0,0.28)', tint: 'rgba(60,66,80,0.10)' });
   if (theme.shore !== 'none' || beachDist) {
     const dock = theme.shore === 'harbor'; // wooden wharf decking vs warm sand
-    paintLayer({ field: (tx, ty) => isMat(tx, ty, M_SAND, M_WATER), fill: dock ? theme.dock : theme.sand, kerb: true, highSide: 'material', rim: dock ? theme.dockLight : theme.sand, frontShadow: dock ? theme.dockDark : theme.soilDark, planks: dock, plankLine: theme.dockLight, plankSeam: theme.dockDark });
+    paintLayer({ field: (tx, ty) => isMat(tx, ty, M_SAND, M_DOCK, M_WATER), fill: dock ? theme.dock : theme.sand, kerb: true, highSide: 'material', rim: dock ? theme.dockLight : theme.sand, frontShadow: dock ? theme.dockDark : theme.soilDark, planks: dock, plankLine: theme.dockLight, plankSeam: theme.dockDark });
+    // Boardwalk promenade — wood decking along the sand→surf seam (the "Boardwalk" quarter).
+    paintLayer({ field: (tx, ty) => isMat(tx, ty, M_DOCK), fill: theme.dock, kerb: true, highSide: 'material', rim: theme.dockLight, frontShadow: theme.dockDark, planks: true, plankLine: theme.dockLight, plankSeam: theme.dockDark });
     paintLayer({ field: (tx, ty) => isMat(tx, ty, M_WATER), matTile: TERRAIN.water, kerb: true, highSide: 'material', rim: theme.waterLight, frontShadow: theme.waterDark, varies: false });
   }
 
@@ -1659,22 +1710,43 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
 
       // golden-hour grade: warm top light → cooler base, plus soft vignette
       const grade = ctx.createLinearGradient(0, 0, 0, size.h);
-      grade.addColorStop(0, 'rgba(255, 212, 148, 0.10)');
-      grade.addColorStop(0.55, 'rgba(255, 208, 150, 0.035)');
-      grade.addColorStop(1, 'rgba(70, 46, 92, 0.07)');
+      grade.addColorStop(0, 'rgba(255, 210, 150, 0.05)');
+      grade.addColorStop(0.55, 'rgba(255, 208, 150, 0.015)');
+      grade.addColorStop(1, 'rgba(60, 40, 86, 0.10)');
       ctx.fillStyle = grade;
       ctx.fillRect(0, 0, size.w, size.h);
       const vg = ctx.createRadialGradient(size.w / 2, size.h / 2, Math.min(size.w, size.h) * 0.45, size.w / 2, size.h / 2, Math.max(size.w, size.h) * 0.8);
       vg.addColorStop(0, 'rgba(0, 0, 0, 0)');
-      vg.addColorStop(1, 'rgba(12, 10, 22, 0.24)');
+      vg.addColorStop(1, 'rgba(10, 8, 20, 0.30)');
       ctx.fillStyle = vg;
       ctx.fillRect(0, 0, size.w, size.h);
 
       // gentle day↔dusk breathing — a very slow cool wash drifts in and out
       // (~2 min cycle, capped low so the scene never actually goes dark).
       const dusk = 0.5 + Math.sin(time / 19000) * 0.5;
-      ctx.fillStyle = `rgba(58, 46, 98, ${(dusk * 0.1).toFixed(3)})`;
+      ctx.fillStyle = `rgba(58, 46, 98, ${(dusk * 0.05).toFixed(3)})`;
       ctx.fillRect(0, 0, size.w, size.h);
+
+      // World-edge fade — wherever the town's rectangular boundary is on screen,
+      // dissolve the ground into the city's void colour over a short band so roads
+      // and terrain read as fading into the distance instead of stopping dead at a
+      // hard rectangular cut. Screen-space only; no world/coord math is touched.
+      const FADE = 30;
+      const wpx = WORLD_W * TILE * z, hpx = WORLD_H * TILE * z;
+      const sL = -cameraRef.current.x, sR = wpx - cameraRef.current.x;
+      const sT = -cameraRef.current.y, sB = hpx - cameraRef.current.y;
+      const vh = (theme.void || '#000000').replace('#', '');
+      const vr = parseInt(vh.slice(0, 2), 16) || 0, vgc = parseInt(vh.slice(2, 4), 16) || 0, vb = parseInt(vh.slice(4, 6), 16) || 0;
+      const vSolid = `rgba(${vr},${vgc},${vb},1)`, vClear = `rgba(${vr},${vgc},${vb},0)`;
+      const fadeEdge = (gx0: number, gy0: number, gx1: number, gy1: number, rx: number, ry: number, rw: number, rh: number) => {
+        const g = ctx.createLinearGradient(gx0, gy0, gx1, gy1);
+        g.addColorStop(0, vSolid); g.addColorStop(1, vClear);
+        ctx.fillStyle = g; ctx.fillRect(rx, ry, rw, rh);
+      };
+      if (sL > -FADE && sL < size.w) fadeEdge(sL, 0, sL + FADE, 0, sL, 0, FADE, size.h);            // left
+      if (sR > 0 && sR < size.w + FADE) fadeEdge(sR, 0, sR - FADE, 0, sR - FADE, 0, FADE, size.h);  // right
+      if (sT > -FADE && sT < size.h) fadeEdge(0, sT, 0, sT + FADE, 0, sT, size.w, FADE);            // top
+      if (sB > 0 && sB < size.h + FADE) fadeEdge(0, sB, 0, sB - FADE, 0, sB - FADE, size.w, FADE);  // bottom
     },
     [ground, sheets, staticDepth, size.w, size.h, plan, venuesWithShows, walkable, theme, ultra],
   );
