@@ -5,7 +5,8 @@ import { audio } from '@utils/simpleAudio';
 import { useGameStore } from '@stores/gameStore';
 import { runManager } from '@game/mechanics/RunManager';
 import { nextBookingManagerCost } from '@game/constants/runConstants';
-import { UserPlus, UserMinus, Star, Zap, Briefcase, ChevronDown } from 'lucide-react';
+import { UserPlus, UserMinus, Star, Zap, Shield, Wrench, Briefcase, ChevronDown } from 'lucide-react';
+import { bandFactionBadge } from '@game/world/factionDisplay';
 
 type Filter = 'all' | 'available' | 'roster';
 
@@ -307,13 +308,31 @@ export const BandsView: React.FC = () => {
                               overflow: 'hidden',
                               textOverflow: 'ellipsis'
                             }}>{band.name}</h3>
-                            <p style={{
+                            <div style={{
                               fontSize: '11px',
                               color: '#b9b3d6',
-                              margin: '5px 0 0 0'
+                              margin: '5px 0 0 0',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              flexWrap: 'wrap'
                             }}>
-                              {band.genre}{band.hometown ? ` • ${band.hometown}` : ''}
-                            </p>
+                              <span>{band.genre}{band.hometown ? ` • ${band.hometown}` : ''}</span>
+                              {/* Faction allegiance — drives scene politics + bill chemistry */}
+                              {(() => {
+                                const fb = bandFactionBadge(band);
+                                return fb ? (
+                                  <span className="snes-pixel" style={{
+                                    display: 'inline-flex', alignItems: 'center', gap: '4px',
+                                    fontSize: '7px', letterSpacing: 0, color: fb.color,
+                                    border: `2px solid ${fb.color}`, borderRadius: 0, padding: '2px 5px'
+                                  }}>
+                                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: fb.color }} />
+                                    {fb.name}
+                                  </span>
+                                ) : null;
+                              })()}
+                            </div>
                           </div>
 
                           {/* Badges */}
@@ -345,11 +364,12 @@ export const BandsView: React.FC = () => {
                           </div>
                         </div>
 
-                        {/* Stats Preview */}
+                        {/* Stats Preview — Pop, Energy, and Authenticity (the
+                            DIY-ethics stat that drives factions + combos) */}
                         <div style={{
                           display: 'grid',
-                          gridTemplateColumns: '1fr 1fr',
-                          gap: '10px',
+                          gridTemplateColumns: '1fr 1fr 1fr',
+                          gap: '8px',
                           marginTop: '8px'
                         }}>
                           <div>
@@ -414,6 +434,15 @@ export const BandsView: React.FC = () => {
                                   transition: 'none'
                                 }}
                               />
+                            </div>
+                          </div>
+                          <div>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                              <span className="snes-pixel" style={{ fontSize: '7px', color: '#6f6796', textTransform: 'uppercase', letterSpacing: 0 }}>Auth</span>
+                              <span className="snes-pixel" style={{ fontSize: '8px', color: '#3ad17e', letterSpacing: 0 }}>{band.authenticity}</span>
+                            </div>
+                            <div style={{ height: '6px', backgroundColor: '#0f0b1e', border: '2px solid #0a0814', borderRadius: 0, overflow: 'hidden' }}>
+                              <div style={{ height: '100%', backgroundColor: '#3ad17e', width: `${band.authenticity}%`, transition: 'none' }} />
                             </div>
                           </div>
                         </div>
@@ -482,6 +511,20 @@ export const BandsView: React.FC = () => {
                             }}>Energy</span>
                           </div>
                           <div className="snes-pixel" style={{ fontSize: '16px', color: '#ffffff', lineHeight: 1, letterSpacing: 0 }}>{band.energy}</div>
+                        </div>
+                        <div className="snes-panel-inset" style={{ borderRadius: 0, padding: '10px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+                            <Shield size={12} color="#3ad17e" />
+                            <span className="snes-pixel" style={{ fontSize: '7px', color: '#b9b3d6', textTransform: 'uppercase', letterSpacing: 0 }}>Authenticity</span>
+                          </div>
+                          <div className="snes-pixel" style={{ fontSize: '16px', color: '#ffffff', lineHeight: 1, letterSpacing: 0 }}>{band.authenticity}</div>
+                        </div>
+                        <div className="snes-panel-inset" style={{ borderRadius: 0, padding: '10px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+                            <Wrench size={12} color="#4cc9f0" />
+                            <span className="snes-pixel" style={{ fontSize: '7px', color: '#b9b3d6', textTransform: 'uppercase', letterSpacing: 0 }}>Technical</span>
+                          </div>
+                          <div className="snes-pixel" style={{ fontSize: '16px', color: '#ffffff', lineHeight: 1, letterSpacing: 0 }}>{band.technicalSkill}</div>
                         </div>
                       </div>
 

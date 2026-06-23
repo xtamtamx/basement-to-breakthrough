@@ -148,6 +148,7 @@ const STEPS: TutorialStep[] = [
     title: "That's the loop! 🤘",
     body:
       'Your damage report: crowd, cash, cred and new fans. ' +
+      'Thin crowd? Hit the Promo tab to hype a show BEFORE the night — promotion packs the room. ' +
       'Keep booking smarter shows to grow the scene — and when you can, hit the road on the Tour tab. ' +
       "Have fun out there.",
     placement: 'screen-top',

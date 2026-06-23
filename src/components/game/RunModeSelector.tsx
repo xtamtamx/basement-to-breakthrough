@@ -172,6 +172,8 @@ export const RunModeSelector: React.FC<RunModeSelectorProps> = ({ onSelect, onCl
                           key={s.tier}
                           disabled={!unlocked}
                           onClick={() => { setTiers((t) => ({ ...t, [config.id]: s.tier })); haptics.light(); }}
+                          title={unlocked ? s.blurb : `${s.name} — locked. Win the previous stake on this mode to unlock it.`}
+                          aria-label={unlocked ? s.name : `${s.name}, locked. Win the previous stake to unlock.`}
                           className="snes-pixel"
                           style={{
                             fontSize: "7px",

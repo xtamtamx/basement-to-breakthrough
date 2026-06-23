@@ -2,6 +2,7 @@ import React from 'react';
 import { useGameStore } from '@stores/gameStore';
 import { haptics } from '@utils/mobile';
 import { factionSystem } from '@game/mechanics/FactionSystem';
+import { FACTION_DISPLAY_COLOR } from '@game/world/factionDisplay';
 
 /**
  * Read-only surface for the "Manage Politics" pillar: where the player stands
@@ -10,16 +11,6 @@ import { factionSystem } from '@game/mechanics/FactionSystem';
  * Tap to expand the full ladder. Pure read — no gameplay logic. Sits under the
  * Scene Identity meter over the city map.
  */
-
-// The authored iconColors include near-black / deep indigo that vanish on the
-// void background — map each faction to a display tint that actually reads.
-const DISPLAY_COLOR: Record<string, string> = {
-  'diy-purists': '#d08a4f',
-  'metal-elite': '#c2c2cc',
-  'indie-crowd': '#ff79c0',
-  'old-guard': '#a07ce0',
-  'new-wave': '#3ad7dd',
-};
 
 const standingColor = (s: number): string => (s > 0 ? '#3ad17e' : s < 0 ? '#ff5c57' : '#6f6796');
 
@@ -33,7 +24,7 @@ export const FactionStandingsMeter: React.FC<{ open: boolean; onToggle: () => vo
   const rows = factions.map((f) => ({
     id: f.id,
     name: f.name,
-    color: DISPLAY_COLOR[f.id] ?? '#b9b3d6',
+    color: FACTION_DISPLAY_COLOR[f.id] ?? '#b9b3d6',
     standing: Math.round(standings[f.id] ?? 0),
   }));
 

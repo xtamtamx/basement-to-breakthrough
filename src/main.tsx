@@ -1,4 +1,5 @@
 import { createRoot } from 'react-dom/client'
+import { MotionConfig } from 'framer-motion'
 import './index.css'
 import './styles/pixel-art.css'
 import './styles/glassmorphism.css'
@@ -28,5 +29,10 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 createRoot(document.getElementById('root')!).render(
-  <App />
+  // Respect the OS "Reduce Motion" setting globally: framer-motion drops
+  // transform/layout animations (page slides, scale-ins) for users who ask
+  // for it, keeping only gentle opacity fades. No effect for everyone else.
+  <MotionConfig reducedMotion="user">
+    <App />
+  </MotionConfig>
 )

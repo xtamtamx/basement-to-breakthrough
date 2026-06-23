@@ -5,6 +5,7 @@ import { haptics } from '@utils/mobile';
 import { audio } from '@utils/simpleAudio';
 import { synergyEngine } from '@game/mechanics/SynergyEngine';
 import { computeLineupChemistry } from '@game/mechanics/lineupChemistry';
+import { bandFactionBadge } from '@game/world/factionDisplay';
 import { difficultySystem } from '@game/mechanics/DifficultySystem';
 import { cityGenreFit } from '@game/world/citySynergy';
 import { isVenueUnlocked } from '@game/world/venueProgression';
@@ -320,18 +321,28 @@ export const ShowBuilderView: React.FC = () => {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
                       <div style={{ minWidth: 0 }}>
                         <div className="snes-pixel" style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
                           fontSize: '10px',
                           color: '#ffffff',
                           marginBottom: '6px',
                           letterSpacing: 0
-                        }}>{band.name}</div>
+                        }}>
+                          {/* Faction allegiance dot — scene politics at a glance */}
+                          {(() => {
+                            const fb = bandFactionBadge(band);
+                            return fb ? <span title={fb.name} style={{ width: '8px', height: '8px', borderRadius: '50%', background: fb.color, flexShrink: 0 }} /> : null;
+                          })()}
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{band.name}</span>
+                        </div>
                         <div style={{
                           fontSize: '11px',
                           color: isUnavailable ? '#ff5c57' : isSelected ? '#f72585' : '#b9b3d6'
                         }}>
                           {isUnavailable
                             ? 'On a drama break this turn'
-                            : `${band.genre} • Pop ${band.popularity}`}
+                            : `${band.genre} • Pop ${band.popularity} • Auth ${band.authenticity}`}
                         </div>
                       </div>
                       <span style={{ flexShrink: 0, display: 'flex', alignItems: 'center' }}>
