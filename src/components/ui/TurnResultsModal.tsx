@@ -7,6 +7,7 @@ import type { SynergyTriggerResult } from '@game/mechanics/SynergyManager';
 import { audio } from '@utils/simpleAudio';
 import { haptics } from '@utils/mobile';
 import { useEscapeToClose } from '@hooks/useEscapeToClose';
+import { mapFx } from '@components/effects/mapFxBus';
 import { X, Users, DollarSign, Star } from 'lucide-react';
 
 interface TurnResultsModalProps {
@@ -139,6 +140,15 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
   const anyIncident = showResults.some((r) => r.incidentOccurred);
   const bigNight = anySoldOut || anyDiscovery || totalProfit > 100;
 
+  // Closing reveals the map behind this overlay — so fire the celebratory burst
+  // HERE (not while open + hidden). Discovery = spark, a big night = confetti;
+  // both can co-fire. No-op when the FX layer is off (mapFx bus is null).
+  const closeWithBurst = () => {
+    if (anyDiscovery) mapFx.burst(null, null, { kind: 'spark', colors: [0xffd23f, 0xc77dff] });
+    if (anySoldOut || totalProfit > 100) mapFx.burst(null, null, { kind: 'confetti' });
+    onClose();
+  };
+
   // The turn used to resolve in silence. Fire one outcome-tiered stinger + a
   // matching haptic when the report opens, so a great night actually lands.
   useEffect(() => {
@@ -176,7 +186,7 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
           padding: '16px',
           overflowY: 'auto'
         }}
-        onClick={onClose}
+        onClick={closeWithBurst}
       >
         <motion.div
           initial={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -218,7 +228,7 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
               lineHeight: 1.5
             }}>{anySoldOut ? '🎉 Sold-Out Night!' : 'Post-Show Damage Report'}</h2>
             <button
-              onClick={onClose}
+              onClick={closeWithBurst}
               style={{
                 width: '32px',
                 height: '32px',
@@ -535,7 +545,7 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
             backgroundColor: '#0f0b1e'
           }}>
             <button
-              onClick={onClose}
+              onClick={closeWithBurst}
               className="snes-btn"
               style={{
                 width: '100%',

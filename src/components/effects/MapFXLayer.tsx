@@ -20,8 +20,9 @@
  */
 import { useEffect, useRef } from 'react';
 import type { Application, Sprite, Ticker } from 'pixi.js';
-import { useFxQuality, fxParticleCount } from '@utils/fxQuality';
+import { useFxQuality, fxParticleCount, fxBurstCap } from '@utils/fxQuality';
 import { audio } from '@utils/simpleAudio';
+import { setBurstHandler, type BurstOpts } from './mapFxBus';
 
 const DEFAULT_ACCENTS = [0xf72585, 0x4cc9f0, 0xffd23f, 0x3ad17e, 0xc77dff, 0xff5c57];
 
@@ -46,6 +47,16 @@ interface Mote {
   base: number;
   ai: number; // accent index (for re-tinting on city change)
   streamer: boolean; // a fraction of motes stream toward the playing venue
+}
+
+// A pooled burst particle (confetti/spark). Recycled — never allocated per burst.
+interface BurstP {
+  sp: Sprite;
+  vx: number;
+  vy: number;
+  g: number; // gravity (confetti falls; sparks ~0)
+  life: number;
+  ttl: number;
 }
 
 export const MapFXLayer: React.FC<MapFXLayerProps> = ({ accents, intensity = 0, surgeRef }) => {
@@ -129,6 +140,23 @@ export const MapFXLayer: React.FC<MapFXLayerProps> = ({ accents, intensity = 0, 
         }
       }
 
+      // Big-moment burst pool (confetti/sparks) — pre-allocated, recycled, capped
+      // by tier. Shares the glow tex + additive blend (batches with the motes).
+      // Deliberately on its OWN container with NO GlowFilter (the filter is the
+      // expensive pass; a churning pool through it would blow the budget).
+      const burstLayer = new PIXI.Container();
+      a.stage.addChild(burstLayer);
+      const burstCap = fxBurstCap(quality);
+      const bursts: BurstP[] = [];
+      for (let i = 0; i < burstCap; i++) {
+        const sp = new PIXI.Sprite(tex);
+        sp.anchor.set(0.5);
+        sp.blendMode = 'add';
+        sp.visible = false;
+        burstLayer.addChild(sp);
+        bursts.push({ sp, vx: 0, vy: 0, g: 0, life: 0, ttl: 1 });
+      }
+
       const motes: Mote[] = [];
       const accents0 = stateRef.current.accents;
       for (let i = 0; i < count; i++) {
@@ -152,6 +180,38 @@ export const MapFXLayer: React.FC<MapFXLayerProps> = ({ accents, intensity = 0, 
         });
       }
       motesRef.current = motes;
+
+      // Fire a burst from a pooled set of dead particles (never allocates). A null
+      // point falls back to the playing-venue surge point, else upper-centre.
+      const burst = (px: number | null, py: number | null, o?: BurstOpts) => {
+        if (burstCap === 0) return;
+        const kind = o?.kind ?? 'spark';
+        const low = quality === 'low';
+        const cnt = o?.count ?? (kind === 'confetti' ? (low ? 8 : 18) : (low ? 10 : 24));
+        const cols = o?.colors ?? DEFAULT_ACCENTS;
+        const sx = px ?? surgeRef?.current?.x ?? a.screen.width / 2;
+        const sy = py ?? surgeRef?.current?.y ?? a.screen.height / 3;
+        let placed = 0;
+        for (const b of bursts) {
+          if (placed >= cnt) break;
+          if (b.life > 0) continue; // still alive — skip
+          const ang = Math.random() * Math.PI * 2;
+          const spd = kind === 'confetti' ? 1 + Math.random() * 2.5 : 2.5 + Math.random() * 4;
+          b.vx = Math.cos(ang) * spd;
+          b.vy = kind === 'confetti' ? -Math.abs(Math.sin(ang)) * spd - 1 : Math.sin(ang) * spd;
+          b.g = kind === 'confetti' ? 0.12 : 0;
+          b.ttl = kind === 'confetti' ? 70 + Math.random() * 30 : 30 + Math.random() * 20; // frames
+          b.life = b.ttl;
+          b.sp.x = sx;
+          b.sp.y = sy;
+          b.sp.tint = cols[(Math.random() * cols.length) | 0];
+          b.sp.scale.set(kind === 'confetti' ? 0.3 + Math.random() * 0.3 : 0.4 + Math.random() * 0.3);
+          b.sp.alpha = 1;
+          b.sp.visible = true;
+          placed++;
+        }
+      };
+      setBurstHandler(burst);
 
       let t = 0;
       const tick = (ticker: Ticker) => {
@@ -197,6 +257,18 @@ export const MapFXLayer: React.FC<MapFXLayerProps> = ({ accents, intensity = 0, 
           if (m.sp.x < -16) m.sp.x = w + 16;
           else if (m.sp.x > w + 16) m.sp.x = -16;
         }
+        // advance burst particles (same loop, capped pool, recycle on death)
+        for (const b of bursts) {
+          if (b.life <= 0) continue;
+          b.vy += b.g * dt;
+          b.sp.x += b.vx * dt;
+          b.sp.y += b.vy * dt;
+          b.life -= dt;
+          b.sp.alpha = Math.max(0, b.life / b.ttl) * Math.min(1.4, glow);
+          const s = b.sp.scale.x * (1 - 0.008 * dt);
+          b.sp.scale.set(s);
+          if (b.life <= 0) b.sp.visible = false;
+        }
       };
       a.ticker.add(tick);
       removeTicker = () => a.ticker.remove(tick);
@@ -205,6 +277,7 @@ export const MapFXLayer: React.FC<MapFXLayerProps> = ({ accents, intensity = 0, 
     return () => {
       destroyed = true;
       motesRef.current = [];
+      setBurstHandler(null); // bus no-ops after teardown
       if (removeTicker) removeTicker();
       if (app) {
         app.destroy(true, { children: true });

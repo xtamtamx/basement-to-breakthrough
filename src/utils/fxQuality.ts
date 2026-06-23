@@ -51,3 +51,7 @@ export const useFxQuality = create<FxState>((set, get) => ({
 /** Particle budget per tier — capped low so the overlay stays cheap on mobile.
  * Ultra keeps the high mote budget (it composites through the same Pixi path). */
 export const fxParticleCount = (q: FxQuality): number => (q === 'high' || q === 'ultra' ? 80 : q === 'low' ? 34 : 0);
+
+/** Burst-particle pool cap per tier (big-moment confetti/sparks). 0 = off, so
+ * reduced-motion / off-tier users never see bursts (the layer early-returns). */
+export const fxBurstCap = (q: FxQuality): number => (q === 'high' || q === 'ultra' ? 64 : q === 'low' ? 28 : 0);
