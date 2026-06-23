@@ -90,6 +90,18 @@ function inPlaza(tx: number, ty: number): boolean {
   return Math.abs(tx - (ROAD_X + 0.5)) <= PLAZA_R && Math.abs(ty - (ROAD_Y + 0.5)) <= PLAZA_R;
 }
 
+// Central roundabout garden island (the decorative tree sits on it) plus the two
+// benches + four lamps flanking it N/S. These are scenery, NOT pedestrian space —
+// they're carved out of the walkable plaza so townsfolk circle the roundabout
+// instead of strolling straight through the tree and the benches.
+const ISLAND_X0 = 29, ISLAND_Y0 = 26, ISLAND_W = 4, ISLAND_H = 4;
+function isPlazaScenery(tx: number, ty: number): boolean {
+  if (tx >= ISLAND_X0 && tx < ISLAND_X0 + ISLAND_W && ty >= ISLAND_Y0 && ty < ISLAND_Y0 + ISLAND_H) return true; // garden island
+  const flankRow = ty === ISLAND_Y0 - 1 || ty === ISLAND_Y0 + ISLAND_H; // the lamp/bench row N & S of the island
+  const flankCol = tx === ISLAND_X0 - 1 || tx === ISLAND_X0 + ISLAND_W || tx === ISLAND_X0 + ISLAND_W / 2; // lamp cols + bench col
+  return flankRow && flankCol;
+}
+
 interface TreePalette { bark: string; barkDark: string; leafDark: string; leaf: string; leafLight: string }
 // Per-locale coastline character: a warm sand BEACH, a working wooden HARBOR
 // wharf, a muddy RIVER bank, or landlocked NONE. Keeps Detroit off the ocean
@@ -324,6 +336,8 @@ interface PlacedBuilding { sprite: AtlasSprite; tx: number; ty: number; tw: numb
 interface PlacedTree { sprite: AtlasSprite; tx: number; ty: number; th: number }
 interface PlacedProp { sprite: AtlasSprite; tx: number; ty: number } // ty = foot row
 interface PlacedBench { tx: number; ty: number; faceUp: boolean }
+type FurnitureKind = 'lamp' | 'trashCan' | 'hydrant' | 'mailbox';
+interface PlacedFurniture { tx: number; ty: number; kind: FurnitureKind }
 interface ParkingLot { tx: number; ty: number; tw: number; th: number }
 interface TownPlan {
   quarters: Quarter[];
@@ -331,6 +345,7 @@ interface TownPlan {
   trees: PlacedTree[];
   props: PlacedProp[];
   benches: PlacedBench[];
+  furniture: PlacedFurniture[];
   paving: { tx: number; ty: number }[];
   parkingLots: ParkingLot[];
 }
@@ -645,7 +660,35 @@ function planTown(districts: District[], venues: Venue[], roofMix: BuildingKey[]
     }
   }
 
-  return { quarters, buildings, trees, props, benches, paving, parkingLots };
+  // Street furniture (lamps / trash cans / hydrants / mailboxes) — SAME rule as
+  // benches: on the grass VERGE beside every street (both the H-street rows and
+  // the V-street columns), never on the 1-tile sidewalk lane, dropping into the
+  // gaps between buildings. So no walker ever clips through a lamp or hydrant;
+  // they depth-sort with the townsfolk at draw time.
+  const furniture: PlacedFurniture[] = [];
+  const furnAt = new Set<string>(benches.map((b) => `${b.tx},${b.ty}`));
+  const furnNear = (tx: number, ty: number) => {
+    for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) if (furnAt.has(`${tx + dx},${ty + dy}`)) return true;
+    return false;
+  };
+  const placeFurn = (tx: number, ty: number) => {
+    if (!propFree(tx, ty) || furnNear(tx, ty)) return; // open grass gap, spaced out
+    if (hash2(tx * 13 + 7, ty * 11 + 3) < 0.45) return; // sparse
+    const t = Math.floor(hash2(tx * 17 + 9, ty * 5 + 1) * 100);
+    const kind: FurnitureKind = t < 40 ? 'lamp' : t < 66 ? 'trashCan' : t < 88 ? 'hydrant' : 'mailbox';
+    furniture.push({ tx, ty, kind });
+    furnAt.add(`${tx},${ty}`);
+  };
+  for (const sy of STREET_H)
+    for (const vy of [sy - 2, sy + 3])
+      if (vy >= 2 && vy < WORLD_H - 2)
+        for (let tx = 3; tx < WORLD_W - 3; tx++) placeFurn(tx, vy);
+  for (const sx of STREET_V)
+    for (const vx of [sx - 2, sx + 3])
+      if (vx >= 2 && vx < WORLD_W - 2)
+        for (let ty = 3; ty < WORLD_H - 3; ty++) placeFurn(vx, ty);
+
+  return { quarters, buildings, trees, props, benches, furniture, paving, parkingLots };
 }
 
 // --- Wandering townsfolk -----------------------------------------------------
@@ -778,6 +821,48 @@ function drawBench(ctx: CanvasRenderingContext2D, x: number, y: number, faceUp: 
     px(x - 7, y - 4, 14, 2, '#7a5530'); // backrest rail (front)
     px(x - 6, y - 3, 2, 2, '#4f3419'); px(x + 4, y - 3, 2, 2, '#4f3419'); // legs (back)
   }
+}
+
+// Street furniture — drawn PER-FRAME (depth-sorted) so townsfolk are occluded by
+// anything standing in front of them, just like benches. Shared px/ell helpers
+// keep the four little props terse. All sit on the grass verge (off the lane).
+const fpx = (ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, c: string) => { ctx.fillStyle = c; ctx.fillRect(Math.round(x), Math.round(y), w, h); };
+const fell = (ctx: CanvasRenderingContext2D, x: number, y: number, rx: number, ry: number, c: string) => { ctx.fillStyle = c; ctx.beginPath(); ctx.ellipse(Math.round(x), Math.round(y), rx, ry, 0, 0, Math.PI * 2); ctx.fill(); };
+function drawLampM(ctx: CanvasRenderingContext2D, x: number, y: number) {
+  fell(ctx, x + 1, y + 1, 3, 1.4, 'rgba(20,30,18,0.25)');
+  fpx(ctx, x, y - 12, 2, 12, '#2f271e');
+  fpx(ctx, x - 1, y - 1, 4, 2, '#5a4a36');
+  fell(ctx, x + 1, y - 13, 6, 6, 'rgba(255,227,154,0.22)');
+  fpx(ctx, x - 1, y - 15, 4, 4, '#ffe39a');
+}
+function drawTrashCanM(ctx: CanvasRenderingContext2D, x: number, y: number) {
+  fell(ctx, x, y + 1, 3, 1.2, 'rgba(0,0,0,0.2)');
+  fpx(ctx, x - 3, y - 7, 6, 7, '#3a4a3a');
+  fpx(ctx, x - 3, y - 8, 6, 2, '#2a352a');
+  fpx(ctx, x - 1, y - 9, 2, 1, '#2a352a');
+  fpx(ctx, x - 3, y - 7, 6, 1, '#586a55');
+  fpx(ctx, x - 2, y - 5, 1, 4, 'rgba(255,255,255,0.08)');
+}
+function drawHydrantM(ctx: CanvasRenderingContext2D, x: number, y: number) {
+  fell(ctx, x, y + 1, 2.4, 1, 'rgba(0,0,0,0.2)');
+  fpx(ctx, x - 2, y - 6, 4, 6, '#c0392b');
+  fpx(ctx, x - 2, y - 7, 4, 1, '#e05545');
+  fpx(ctx, x - 3, y - 4, 1, 2, '#9a2b20'); fpx(ctx, x + 2, y - 4, 1, 2, '#9a2b20');
+  fpx(ctx, x - 2, y - 6, 4, 1, 'rgba(255,255,255,0.18)');
+}
+function drawMailboxM(ctx: CanvasRenderingContext2D, x: number, y: number) {
+  fell(ctx, x, y + 1, 2.4, 1, 'rgba(0,0,0,0.2)');
+  fpx(ctx, x - 1, y - 6, 2, 6, '#2f271e');
+  fpx(ctx, x - 3, y - 10, 6, 4, '#2a6ad0');
+  fpx(ctx, x - 3, y - 10, 6, 1, '#4a8ae0');
+  fpx(ctx, x + 3, y - 9, 1, 2, '#c0392b');
+}
+function drawFurnitureM(ctx: CanvasRenderingContext2D, f: PlacedFurniture) {
+  const x = f.tx * TILE + 8, y = f.ty * TILE + 14;
+  if (f.kind === 'lamp') drawLampM(ctx, x, y);
+  else if (f.kind === 'trashCan') drawTrashCanM(ctx, x, y);
+  else if (f.kind === 'hydrant') drawHydrantM(ctx, x, y);
+  else drawMailboxM(ctx, x, y);
 }
 
 // --- Ground bake (terrain + streets + plaza + low props; NO buildings/trees) -
@@ -973,7 +1058,7 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
   // 3. Town square garden — the cobble plaza + the rounded island surround are
   //    painted by the dual-grid (mat). Here we only dress the central grass island.
   {
-    const ISx0 = 29, ISy0 = 26, ISw = 4, ISh = 4;     // central garden island
+    const ISx0 = ISLAND_X0, ISy0 = ISLAND_Y0, ISw = ISLAND_W, ISh = ISLAND_H; // central garden island (carved from walkable — see isPlazaScenery)
     const cgx = (ISx0 + ISw / 2) * TILE, cgy = (ISy0 + ISh / 2) * TILE;
     for (let ty = ISy0; ty < ISy0 + ISh; ty++) for (let tx = ISx0; tx < ISx0 + ISw; tx++) {
       const hk = hash2(tx * 7 + 3, ty * 11 + 5);
@@ -1014,6 +1099,10 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
   plan.buildings.forEach((bd) => mark(bd.tx, bd.ty, bd.tw, bd.th));
   plan.trees.forEach((t) => mark(t.tx, t.ty, 2, 2));
   plan.props.forEach((p) => mark(p.tx, p.ty, 2, 2));
+  // Depth-sorted verge furniture/benches own their tiles too — keep baked bushes
+  // and garden flowers from sprouting on top of a lamp, hydrant or bench.
+  plan.benches.forEach((b) => occupied.add(`${b.tx},${b.ty}`));
+  plan.furniture.forEach((f) => occupied.add(`${f.tx},${f.ty}`));
 
   // 4a. Parking lots (reserved per quarter in planTown) — asphalt + painted
   // stalls + a few parked cars; marked occupied so bushes/props avoid them.
@@ -1045,35 +1134,6 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
     ell(cx + 3, cy - 1, 4, 3, theme.tree.leaf);
     ell(cx, cy - 2, 3, 2, theme.tree.leafLight);
   };
-  const lamp = (x: number, y: number) => {
-    ell(x + 1, y + 1, 3, 1.4, 'rgba(20,30,18,0.25)');
-    px(x, y - 12, 2, 12, '#2f271e');
-    px(x - 1, y - 1, 4, 2, '#5a4a36');
-    ell(x + 1, y - 13, 6, 6, 'rgba(255,227,154,0.22)');
-    px(x - 1, y - 15, 4, 4, '#ffe39a');
-  };
-  const trashCan = (x: number, y: number) => {
-    ell(x, y + 1, 3, 1.2, 'rgba(0,0,0,0.2)');
-    px(x - 3, y - 7, 6, 7, '#3a4a3a');
-    px(x - 3, y - 8, 6, 2, '#2a352a');
-    px(x - 1, y - 9, 2, 1, '#2a352a');
-    px(x - 3, y - 7, 6, 1, '#586a55');
-    px(x - 2, y - 5, 1, 4, 'rgba(255,255,255,0.08)');
-  };
-  const hydrant = (x: number, y: number) => {
-    ell(x, y + 1, 2.4, 1, 'rgba(0,0,0,0.2)');
-    px(x - 2, y - 6, 4, 6, '#c0392b');
-    px(x - 2, y - 7, 4, 1, '#e05545');
-    px(x - 3, y - 4, 1, 2, '#9a2b20'); px(x + 2, y - 4, 1, 2, '#9a2b20');
-    px(x - 2, y - 6, 4, 1, 'rgba(255,255,255,0.18)');
-  };
-  const mailbox = (x: number, y: number) => {
-    ell(x, y + 1, 2.4, 1, 'rgba(0,0,0,0.2)');
-    px(x - 1, y - 6, 2, 6, '#2f271e');
-    px(x - 3, y - 10, 6, 4, '#2a6ad0');
-    px(x - 3, y - 10, 6, 1, '#4a8ae0');
-    px(x + 3, y - 9, 1, 2, '#c0392b');
-  };
   for (let ty = 1; ty < WORLD_H - 1; ty++)
     for (let tx = 1; tx < WORLD_W - 1; tx++) {
       if (isStreet(tx, ty) || inPlaza(tx, ty) || occupied.has(`${tx},${ty}`)) continue;
@@ -1081,40 +1141,9 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
       if (hv > 0.93) { bush(tx * TILE + 8, ty * TILE + 10); occupied.add(`${tx},${ty}`); }
       else if (hv > 0.84) { px(tx * TILE + 4, ty * TILE + 6, 3, 3, theme.gardenFlowers[Math.floor(hv * 311) % theme.gardenFlowers.length]); px(tx * TILE + 9, ty * TILE + 9, 2, 2, theme.gardenFlowers[Math.floor(hv * 733) % theme.gardenFlowers.length]); }
     }
-  // lamp posts on the sidewalk corners of intersections — hash-gated to ~55% so
-  // it reads as a lived-in town, not a rigid grid of a lamp at every single corner.
-  for (const sy of STREET_H)
-    for (const sx of STREET_V)
-      if (!(Math.abs(sx - ROAD_X) <= 2 && Math.abs(sy - ROAD_Y) <= 2) && hash2(sx * 7 + 3, sy * 7 + 5) > 0.45)
-        lamp((sx - 1) * TILE + 8, (sy - 1) * TILE + 13);
-
-  // 4b. Street furniture scattered along the sidewalks — lamps, trash cans,
-  // hydrants, mailboxes. Spaced out (>=2 tiles apart) so it reads as tidy town
-  // clutter, not a junkyard. (Benches are NOT baked here — they're depth-sorted
-  // placed objects, drawn per-frame, so seed their tiles to keep furniture clear.)
-  const propAt = new Set<string>();
-  plan.benches.forEach((b) => propAt.add(`${b.tx},${b.ty}`));
-  const nearProp = (tx: number, ty: number) => {
-    for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) if (propAt.has(`${tx + dx},${ty + dy}`)) return true;
-    return false;
-  };
-  for (let ty = 1; ty < WORLD_H - 1; ty++)
-    for (let tx = 1; tx < WORLD_W - 1; tx++) {
-      // sidewalk tiles are never building/lot footprints (those sit at sy-2 and
-      // above), so don't gate on `occupied` — its building padding covers the
-      // sidewalk in front of every building and would block almost all furniture.
-      if (!isSidewalk(tx, ty) || inPlaza(tx, ty)) continue;
-      const h = hash2(tx * 11 + 2, ty * 13 + 7);
-      if (h < 0.62 || nearProp(tx, ty)) continue;
-      const x = tx * TILE + 8, base = ty * TILE + 13;
-      // weighted mix — mostly lamps/cans/hydrants, benches & mailboxes are rare
-      const t = Math.floor(hash2(tx * 17 + 9, ty * 5 + 1) * 100);
-      if (t < 34) lamp(x, base);
-      else if (t < 64) trashCan(x, base);
-      else if (t < 88) hydrant(x, base);
-      else mailbox(x, base);
-      propAt.add(`${tx},${ty}`);
-    }
+  // Street furniture (lamps / cans / hydrants / mailboxes) is no longer baked
+  // here — it's depth-sorted verge objects (plan.furniture), placed off the
+  // 1-tile sidewalk so townsfolk never clip through it. See drawFurnitureM.
 
   // (Buildings, trees and their props are drawn PER-FRAME, depth-sorted with the
   // walkers, so townsfolk are correctly occluded by anything in front of them.)
@@ -1170,13 +1199,15 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
     | { footY: number; kind: 'building'; b: PlacedBuilding }
     | { footY: number; kind: 'tree'; t: PlacedTree }
     | { footY: number; kind: 'prop'; p: PlacedProp }
-    | { footY: number; kind: 'bench'; bn: PlacedBench };
+    | { footY: number; kind: 'bench'; bn: PlacedBench }
+    | { footY: number; kind: 'furniture'; f: PlacedFurniture };
   const objects = useMemo<DepthObj[]>(() => {
     const list: DepthObj[] = [];
     plan.buildings.forEach((b) => list.push({ footY: (b.ty + b.th) * TILE, kind: 'building', b }));
     plan.trees.forEach((t) => list.push({ footY: (t.ty + t.th) * TILE, kind: 'tree', t }));
     plan.props.forEach((p) => list.push({ footY: (p.ty + 1) * TILE, kind: 'prop', p }));
     plan.benches.forEach((bn) => list.push({ footY: bn.ty * TILE + 14, kind: 'bench', bn }));
+    plan.furniture.forEach((f) => list.push({ footY: f.ty * TILE + 14, kind: 'furniture', f }));
     return list;
   }, [plan]);
 
@@ -1191,10 +1222,14 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
     const list: { tx: number; ty: number }[] = [];
     const add = (tx: number, ty: number) => { const k = `${tx},${ty}`; if (!set.has(k)) { set.add(k); list.push({ tx, ty }); } };
     // Streets + plaza only — one connected network, no dead-end doorstep spurs.
-    // (Benches live on the grass verge, off this network, so nothing to exclude.)
+    // Verge furniture/benches live off this network already; the only carve-out
+    // is the roundabout garden island + its flanking benches/lamps, so townsfolk
+    // circle the centre instead of strolling through the tree and the benches.
     for (let ty = 1; ty < WORLD_H - 1; ty++)
-      for (let tx = 1; tx < WORLD_W - 1; tx++)
+      for (let tx = 1; tx < WORLD_W - 1; tx++) {
+        if (isPlazaScenery(tx, ty)) continue;
         if (isStreet(tx, ty) || inPlaza(tx, ty)) add(tx, ty);
+      }
     return { set, list };
   }, []);
 
@@ -1407,7 +1442,8 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
         else if (d.o!.kind === 'building') drawBuildingObj(ctx, sheets, d.o!.b);
         else if (d.o!.kind === 'tree') drawTreeObj(ctx, sheets, d.o!.t);
         else if (d.o!.kind === 'prop') drawPropObj(ctx, sheets, d.o!.p);
-        else drawBench(ctx, d.o!.bn.tx * TILE + 8, d.o!.bn.ty * TILE + (d.o!.bn.faceUp ? 6 : 14), d.o!.bn.faceUp);
+        else if (d.o!.kind === 'bench') drawBench(ctx, d.o!.bn.tx * TILE + 8, d.o!.bn.ty * TILE + (d.o!.bn.faceUp ? 6 : 14), d.o!.bn.faceUp);
+        else drawFurnitureM(ctx, d.o!.f);
       });
 
       surgeRef.current = null; // recomputed below if a show is on tonight
