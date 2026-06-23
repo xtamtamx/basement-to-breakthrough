@@ -2,13 +2,13 @@
   "name": "Settling Up",
   "short_name": "Settling Up",
   "description": "Underground music scene builder - From basement shows to sold-out stadiums",
-  "theme_color": "#EC4899",
-  "background_color": "#0A0A0A",
+  "theme_color": "#0a0814",
+  "background_color": "#0a0814",
   "display": "standalone",
   "orientation": "landscape",
   "scope": "/",
   "start_url": "/",
-  "id": "com.basementtobreakthrough.diy",
+  "id": "com.settlingup.app",
   "categories": ["games", "music", "strategy"],
   "icons": [
     {
@@ -28,20 +28,6 @@
       "sizes": "1024x1024",
       "type": "image/png",
       "purpose": "any"
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "/screenshots/gameplay-1.png",
-      "sizes": "1080x1920",
-      "type": "image/png",
-      "label": "Main game view"
-    },
-    {
-      "src": "/screenshots/gameplay-2.png",
-      "sizes": "1080x1920",
-      "type": "image/png",
-      "label": "Band management"
     }
   ],
   "shortcuts": [

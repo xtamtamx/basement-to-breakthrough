@@ -9,41 +9,16 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
-      manifest: {
-        name: 'Basement to Breakthrough',
-        short_name: 'B2B',
-        description: 'Underground music scene builder - From basement shows to sold-out stadiums',
-        theme_color: '#000000',
-        background_color: '#000000',
-        display: 'standalone',
-        orientation: 'landscape',
-        categories: ['games', 'music'],
-        icons: [
-          {
-            src: 'pwa-64x64.png',
-            sizes: '64x64',
-            type: 'image/png'
-          },
-          {
-            src: 'pwa-192x192.png',
-            sizes: '192x192',
-            type: 'image/png'
-          },
-          {
-            src: 'pwa-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'any'
-          },
-          {
-            src: 'maskable-icon-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'maskable'
-          }
-        ]
-      },
+      // src/utils/serviceWorker.ts registers /sw.js manually (with its own update
+      // prompt + persistent-storage request), so don't ALSO auto-inject a
+      // registration — that double-registered the same SW.
+      injectRegister: false,
+      includeAssets: ['favicon.png', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png'],
+      // Single source of truth is the static public/manifest.json (linked from
+      // index.html) — it carries the full Settling Up manifest (shortcuts,
+      // launch_handler, maskable icons). Disable generation here so we don't ship
+      // a second, conflicting manifest. The plugin still builds the service worker.
+      manifest: false,
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
         cleanupOutdatedCaches: true,

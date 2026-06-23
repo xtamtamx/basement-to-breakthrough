@@ -352,7 +352,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
               lineHeight: '1.6'
             }}>
               <p style={{ margin: '0 0 4px 0' }}>Settling Up v0.1.0</p>
-              <p style={{ margin: 0 }}>A roguelike underground music scene builder</p>
+              <p style={{ margin: '0 0 8px 0' }}>A roguelike underground music scene builder</p>
+              <a
+                href="/privacy.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: '#3ad17e', fontSize: '12px', textDecoration: 'underline' }}
+              >
+                Privacy Policy
+              </a>
             </div>
           </section>
 

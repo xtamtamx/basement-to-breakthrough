@@ -29,8 +29,11 @@ import type { CapacitorConfig } from '@capacitor/cli';
  * landscape before JS runs and the OS never offers portrait. See DEVICE.md.
  */
 const config: CapacitorConfig = {
-  appId: 'com.basementtobreakthrough.app',
-  appName: 'Basement to Breakthrough',
+  // NOTE: appId is the permanent native bundle identifier. Set to match the
+  // "Settling Up" branding; change the reverse-domain to one you control before
+  // generating the native projects / submitting to the stores.
+  appId: 'com.settlingup.app',
+  appName: 'Settling Up',
   webDir: 'dist',
   server: {
     androidScheme: 'https',
