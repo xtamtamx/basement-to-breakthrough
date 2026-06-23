@@ -149,6 +149,7 @@ export const CityView: React.FC = () => {
               backgroundColor: '#0a0814'
             }}>
               <PixelCityMap
+                paused={!!(selectedTileData || selectedShop || selectedLandmark || showVenueUpgrade)}
                 onDistrictClick={(district) => {
                   setSelectedDistrictId(district.id);
                   setSelectedDistrictInfo({

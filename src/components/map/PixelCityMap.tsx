@@ -44,6 +44,9 @@ interface PixelCityMapProps {
   onVenueClick?: (venue: Venue) => void;
   onShopClick?: (shop: CityShop) => void;
   onLandmarkClick?: (landmark: CityLandmark) => void;
+  /** Skip the per-frame render (depth sort + walker sim + bloom) while a blocking
+   *  modal covers the map — no point burning the frame budget on hidden pixels. */
+  paused?: boolean;
 }
 
 // --- Post-FX ----------------------------------------------------------------
@@ -1151,7 +1154,7 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
   return cv;
 }
 
-export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onVenueClick, onShopClick, onLandmarkClick }) => {
+export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onVenueClick, onShopClick, onLandmarkClick, paused }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   // Offscreen buffers for the neon-bloom post-FX (downsampled bright-pass).
@@ -1210,6 +1213,15 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
     plan.furniture.forEach((f) => list.push({ footY: f.ty * TILE + 14, kind: 'furniture', f }));
     return list;
   }, [plan]);
+
+  // Pre-built + pre-SORTED depth wrappers for the STATIC objects. Their footY
+  // never changes between frames, so the rAF loop reuses these instead of
+  // allocating a wrapper per object (hundreds) every frame just to re-attach an
+  // unchanging footY — only the ~20 moving walkers get fresh wrappers each frame.
+  const staticDepth = useMemo<Array<{ y: number; o?: DepthObj; w?: Walker }>>(
+    () => objects.map((o) => ({ y: o.footY, o })).sort((a, b) => a.y - b.y),
+    [objects],
+  );
 
   const venuesWithShows = useMemo(() => {
     const ids = new Set<string>();
@@ -1434,7 +1446,7 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
 
       // depth-sorted draw: buildings, trees and townsfolk by foot Y so walkers
       // are correctly occluded by anything standing in front of them.
-      const depth: Array<{ y: number; o?: DepthObj; w?: Walker }> = objects.map((o) => ({ y: o.footY, o }));
+      const depth: Array<{ y: number; o?: DepthObj; w?: Walker }> = staticDepth.slice();
       walkersRef.current.forEach((w) => depth.push({ y: w.y, w }));
       depth.sort((a, b) => a.y - b.y);
       depth.forEach((d) => {
@@ -1664,12 +1676,19 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
       ctx.fillStyle = `rgba(58, 46, 98, ${(dusk * 0.1).toFixed(3)})`;
       ctx.fillRect(0, 0, size.w, size.h);
     },
-    [ground, sheets, objects, size.w, size.h, plan, venuesWithShows, walkable, theme, ultra],
+    [ground, sheets, staticDepth, size.w, size.h, plan, venuesWithShows, walkable, theme, ultra],
   );
+
+  // Read `paused` through a ref so toggling it doesn't tear down + restart the loop.
+  const pausedRef = useRef(false);
+  useEffect(() => { pausedRef.current = !!paused; }, [paused]);
 
   useEffect(() => {
     let raf = 0;
-    const loop = (t: number) => { render(t); raf = requestAnimationFrame(loop); };
+    const loop = (t: number) => {
+      if (!pausedRef.current) render(t); // skip the heavy draw while a modal covers the map
+      raf = requestAnimationFrame(loop);
+    };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
   }, [render]);
