@@ -19,7 +19,7 @@ describe('TutorialManager', () => {
     tm.startTutorial();
     expect(tm.isActive()).toBe(true);
     expect(tm.getCurrentStep()?.id).toBe('welcome');
-    expect(tm.getCurrentProgress()).toEqual({ current: 1, total: 10 });
+    expect(tm.getCurrentProgress()).toEqual({ current: 1, total: 11 });
   });
 
   it("'button' steps advance only via advance()", () => {
@@ -78,7 +78,10 @@ describe('TutorialManager', () => {
     tm.evaluateState(slice({ scheduledShows: [] })); // no shows yet — stays
     expect(tm.getCurrentStep()?.id).toBe('build-show');
 
-    tm.evaluateState(slice({ scheduledShows: [{ id: 's1' }] })); // booked — advances
+    tm.evaluateState(slice({ scheduledShows: [{ id: 's1' }] })); // booked — advances to combos
+    expect(tm.getCurrentStep()?.id).toBe('combos');
+
+    tm.advance(); // combos (button) → next-turn
     expect(tm.getCurrentStep()?.id).toBe('next-turn');
   });
 
@@ -93,8 +96,9 @@ describe('TutorialManager', () => {
     tm.tapAdvance(); // sign-band
     tm.evaluateState(slice({ rosterBandIds: ['a', 'b'] })); // go-shows
     tm.tapAdvance(); // build-show
-    tm.evaluateState(slice({ scheduledShows: [{}] })); // next-turn
-    tm.tapAdvance(); // results
+    tm.evaluateState(slice({ scheduledShows: [{}] })); // build-show → combos
+    tm.advance(); // combos (button) → next-turn
+    tm.tapAdvance(); // next-turn → results
     expect(tm.getCurrentStep()?.id).toBe('results');
 
     tm.advance(); // Finish

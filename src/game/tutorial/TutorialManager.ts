@@ -66,9 +66,9 @@ const STEPS: TutorialStep[] = [
     id: 'jokers',
     title: 'These are your jokers 🃏',
     body:
-      'You start with one passive perk down here. It fires every show. ' +
-      "You'll be offered more as your scene grows — and matching the right bands to the right " +
-      'venues triggers bonus combos on top. This is where the real strategy lives.',
+      'You start with one passive perk down here — it fires automatically every show. ' +
+      "You'll be offered more at turn milestones (5, 12, 20, 28); slot the ones that fit your run. " +
+      'Persistent, stackable, build-defining.',
     target: '[data-tut="jokers"]',
     placement: 'below',
     gate: { kind: 'button', label: 'Nice' },
@@ -122,6 +122,17 @@ const STEPS: TutorialStep[] = [
     placement: 'screen-top',
     gate: { kind: 'state', when: (s) => s.scheduledShows.length > 0 },
     hint: 'Book a show to continue',
+  },
+  {
+    id: 'combos',
+    title: 'Combos fire on the bill 🔥',
+    body:
+      "Jokers are always on — combos are situational. Match the right BANDS to the right VENUE and " +
+      'bonus multipliers stack on top, shown in "Synergies Firing". Tap any 🔥 chip to see what it did. ' +
+      'Discover them all in the Synergies tab.',
+    target: '[data-tut="combos"]',
+    placement: 'above',
+    gate: { kind: 'button', label: 'Got it' },
   },
   {
     id: 'next-turn',

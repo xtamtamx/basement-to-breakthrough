@@ -68,6 +68,7 @@ export const ShowBuilderView: React.FC = () => {
   const [selectedBandIds, setSelectedBandIds] = useState<string[]>([]);
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
   const [ticketPrice, setTicketPrice] = useState(15);
+  const [expandedCombo, setExpandedCombo] = useState<string | null>(null); // tap-to-reveal explainer
 
   const rosterBands = allBands.filter(b => rosterBandIds.includes(b.id));
   const selectedBands = allBands.filter(b => selectedBandIds.includes(b.id));
@@ -521,7 +522,7 @@ export const ShowBuilderView: React.FC = () => {
 
         {/* Show Preview */}
         {preview && (
-          <section style={{ marginBottom: '16px' }}>
+          <section data-tut="combos" style={{ marginBottom: '16px' }}>
             <h3 className="snes-pixel" style={{
               fontSize: '10px',
               color: '#ffffff',
@@ -563,24 +564,47 @@ export const ShowBuilderView: React.FC = () => {
                     letterSpacing: 0
                   }}>Synergies Firing 🔥</h4>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                    {preview.synergies.map((synergy, idx) => (
-                      <span
-                        key={synergy.id ?? idx}
-                        className="snes-pixel btb-pop"
-                        style={{
-                          padding: '5px 8px',
-                          backgroundColor: '#0f0b1e',
-                          border: '2px solid #3ad17e',
-                          color: '#3ad17e',
-                          fontSize: '8px',
-                          letterSpacing: 0,
-                          borderRadius: 0
-                        }}
-                      >
-                        {synergy.name} (+{Math.round((synergy.multiplier - 1) * 100)}%)
-                      </span>
-                    ))}
+                    {preview.synergies.map((synergy, idx) => {
+                      const id = synergy.id ?? String(idx);
+                      const open = expandedCombo === id;
+                      return (
+                        <button
+                          key={id}
+                          className="snes-pixel btb-pop"
+                          onClick={() => { setExpandedCombo(open ? null : id); haptics.light(); }}
+                          aria-expanded={open}
+                          title={synergy.description}
+                          style={{
+                            padding: '6px 9px',
+                            minHeight: '32px',
+                            backgroundColor: open ? '#13301f' : '#0f0b1e',
+                            border: '2px solid #3ad17e',
+                            color: '#3ad17e',
+                            fontSize: '8px',
+                            letterSpacing: 0,
+                            borderRadius: 0,
+                            cursor: 'pointer'
+                          }}
+                        >
+                          {synergy.name} (+{Math.round((synergy.multiplier - 1) * 100)}%)
+                        </button>
+                      );
+                    })}
                   </div>
+                  {/* Tap-to-reveal explainer — teaches what each combo did + why it fired */}
+                  {expandedCombo && (() => {
+                    const s = preview.synergies.find((x, i) => (x.id ?? String(i)) === expandedCombo);
+                    if (!s) return null;
+                    return (
+                      <div className="snes-pixel" style={{ marginTop: '8px', padding: '8px 10px', backgroundColor: '#0a1410', border: '2px solid #1f3a28', fontSize: '8px', lineHeight: 1.6, letterSpacing: 0 }}>
+                        <div style={{ color: '#b9b3d6' }}>{s.description}</div>
+                        <div style={{ marginTop: '6px', color: '#3ad17e' }}>
+                          +{Math.round((s.multiplier - 1) * 100)}% crowd
+                          {s.reputationBonus > 0 && <span style={{ color: '#ffd23f' }}> · +{s.reputationBonus} ★ rep</span>}
+                        </div>
+                      </div>
+                    );
+                  })()}
                   {preview.reputationBonus > 0 && (
                     <div className="snes-pixel" style={{ fontSize: '8px', color: '#ffd23f', letterSpacing: 0, marginTop: '6px' }}>
                       +{preview.reputationBonus} ★ rep from combos
