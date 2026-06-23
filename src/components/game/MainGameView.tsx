@@ -109,7 +109,12 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
     setSynergyVersion((v) => v + 1);
   };
 
-  const { money, reputation, fans, stress } = useGameStore();
+  // Atomic selectors — subscribing without a selector re-renders this root shell
+  // (and its whole subtree) on ANY store write; these only fire on the 4 HUD numbers.
+  const money = useGameStore((s) => s.money);
+  const reputation = useGameStore((s) => s.reputation);
+  const fans = useGameStore((s) => s.fans);
+  const stress = useGameStore((s) => s.stress);
   const currentCityName = useGameStore(
     (s) => s.cities.find((c) => c.id === s.currentCityId)?.name ?? "",
   );
@@ -285,7 +290,7 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
                 onClick={() => setShowObjectives(true)}
                 aria-label="Challenges"
                 data-tut="challenges"
-                style={{ height: 32, minWidth: 32, padding: '0 7px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', background: '#1f1a3a', color: objectivesDone > 0 ? '#3ad17e' : '#c77dff', border: '2px solid #0a0814', boxShadow: 'inset 1px 1px 0 #3a2f5c', cursor: 'pointer', borderRadius: 0 }}
+                style={{ height: 44, minWidth: 44, padding: '0 9px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', background: '#1f1a3a', color: objectivesDone > 0 ? '#3ad17e' : '#c77dff', border: '2px solid #0a0814', boxShadow: 'inset 1px 1px 0 #3a2f5c', cursor: 'pointer', borderRadius: 0 }}
               >
                 <Target size={14} />
                 <span className="snes-pixel" style={{ fontSize: '8px', letterSpacing: 0 }}>{objectivesDone}/{objectivesTotal}</span>
@@ -294,14 +299,14 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
             <button
               onClick={() => setShowSaveLoad(true)}
               aria-label="Save/Load"
-              style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1f1a3a', color: '#b9b3d6', border: '2px solid #0a0814', boxShadow: 'inset 1px 1px 0 #3a2f5c', cursor: 'pointer', borderRadius: 0 }}
+              style={{ width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1f1a3a', color: '#b9b3d6', border: '2px solid #0a0814', boxShadow: 'inset 1px 1px 0 #3a2f5c', cursor: 'pointer', borderRadius: 0 }}
             >
               <Save size={15} />
             </button>
             <button
               onClick={() => setShowSettings(true)}
               aria-label="Settings"
-              style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1f1a3a', color: '#b9b3d6', border: '2px solid #0a0814', boxShadow: 'inset 1px 1px 0 #3a2f5c', cursor: 'pointer', borderRadius: 0 }}
+              style={{ width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1f1a3a', color: '#b9b3d6', border: '2px solid #0a0814', boxShadow: 'inset 1px 1px 0 #3a2f5c', cursor: 'pointer', borderRadius: 0 }}
             >
               <Settings size={15} />
             </button>

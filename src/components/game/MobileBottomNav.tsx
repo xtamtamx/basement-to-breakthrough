@@ -170,11 +170,15 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           {/* More Menu */}
           <button
             className="mobile-bottom-nav__btn"
+            aria-label="More"
+            aria-haspopup="menu"
+            aria-expanded={showMoreMenu}
             onClick={() => {
               setShowMoreMenu(!showMoreMenu);
               haptics.light();
             }}
             style={{
+              position: 'relative',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
@@ -200,6 +204,19 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
               fontSize: '7px',
               letterSpacing: '0'
             }}>More</span>
+            {/* Roll a dot up to the collapsed button when a hidden secondary view
+                needs attention (e.g. an unmade progression-path choice), so the
+                player sees there's something to act on without opening the menu. */}
+            {!showMoreMenu && secondaryViews.some((v) => v.badge) && (
+              <span
+                aria-hidden
+                style={{
+                  position: 'absolute', top: '3px', right: 'calc(50% - 16px)',
+                  width: '8px', height: '8px', borderRadius: '50%',
+                  background: '#f72585', boxShadow: '0 0 0 1px #0a0814',
+                }}
+              />
+            )}
           </button>
         </div>
       </nav>

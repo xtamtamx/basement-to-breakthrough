@@ -3,6 +3,9 @@ import { Achievement, UnlockableContent } from '@game/types';
 interface GameStateProps {
   money: number;
   reputation: number;
+  /** Live player following (store.fans). The 'fans' win condition reads this — the
+   *  same number the HUD shows — not the cumulative show-draw stat. */
+  fans?: number;
   stress?: number;
   connections?: number;
 }
@@ -282,7 +285,9 @@ class RunManager {
         case 'money':
           return gameState.money >= condition.target;
         case 'fans':
-          return run.stats.totalFans >= condition.target;
+          // Use the live following (matches the HUD + the breakthrough fallback);
+          // fall back to cumulative show-draw only if the caller didn't pass it.
+          return (gameState.fans ?? run.stats.totalFans) >= condition.target;
         case 'shows':
           return run.stats.totalShows >= condition.target;
         default:

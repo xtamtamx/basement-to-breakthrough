@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useGameStore } from '@stores/gameStore';
 import { haptics } from '@utils/mobile';
 import { factionSystem } from '@game/mechanics/FactionSystem';
@@ -26,9 +26,8 @@ const standingColor = (s: number): string => (s > 0 ? '#3ad17e' : s < 0 ? '#ff5c
 // −100..100 → 0..1 for the bar marker.
 const pct = (s: number): number => (Math.max(-100, Math.min(100, s)) + 100) / 200;
 
-export const FactionStandingsMeter: React.FC = () => {
+export const FactionStandingsMeter: React.FC<{ open: boolean; onToggle: () => void }> = ({ open, onToggle }) => {
   const standings = useGameStore((s) => s.factionStandings);
-  const [open, setOpen] = useState(false);
 
   const factions = factionSystem.getAllFactions();
   const rows = factions.map((f) => ({
@@ -41,7 +40,7 @@ export const FactionStandingsMeter: React.FC = () => {
   return (
     <button
       type="button"
-      onClick={() => { setOpen((v) => !v); haptics.light(); }}
+      onClick={() => { onToggle(); haptics.light(); }}
       aria-expanded={open}
       aria-label="Faction standings. Tap to expand."
       className="snes-panel"

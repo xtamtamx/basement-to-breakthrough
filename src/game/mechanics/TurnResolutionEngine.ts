@@ -50,6 +50,7 @@ import {
   LIVING_COSTS_PER_TURN,
   SHOW_STRESS_BASE,
   STRESS_RECOVERY_PER_TURN,
+  ESCALATION_RECOVERY_PENALTY,
   COMBO_MULT_CAP,
   SYNERGY_REWARD_TURNS,
   EVENT_CARD_TURNS,
@@ -280,8 +281,10 @@ export class TurnResolutionEngine {
     if (passiveFans > 0) store.addFans(passiveFans);
 
     // Rest between shows sheds some stress (clamped at 0 by addStress), so
-    // Burnout is a paced resource, not an inevitable death timer.
-    store.addStress(-STRESS_RECOVERY_PER_TURN);
+    // Burnout is a paced resource, not an inevitable death timer. In the endgame
+    // escalation turns rest is less effective (the previously-dead
+    // ESCALATION_RECOVERY_PENALTY), so the stress vector finally bites when it matters.
+    store.addStress(-Math.round(STRESS_RECOVERY_PER_TURN * (isEscalation ? ESCALATION_RECOVERY_PENALTY : 1)));
 
     const jobResult = dayJobSystem.processJobIncome();
     if (jobResult) {
@@ -742,6 +745,10 @@ export class TurnResolutionEngine {
     // venue could otherwise reach ~1.8x and trivialize rep-farming. Cap it at the
     // same 1.4x ceiling the attendance/quality bonus uses below.
     equipmentReputationMultiplier = Math.min(1.4, equipmentReputationMultiplier);
+    // Capacity gear stacks the same way (PA + lasers + riser + parking lot…) and
+    // feeds the hard attendance ceiling, so cap it at the same 1.4x as its siblings
+    // rather than letting a fully-kitted room inflate the room without bound.
+    equipmentCapacityBonus = Math.min(1.4, equipmentCapacityBonus);
 
     // Apply venue upgrades to capacity
     const upgradeCapacityBonus =
@@ -1047,6 +1054,7 @@ export class TurnResolutionEngine {
       ? runManager.checkWinConditions({
           money: store.money,
           reputation: store.reputation,
+          fans: store.fans, // the 'fans' win reads the live following, matching the HUD
           stress: store.stress,
           connections: store.connections,
         })

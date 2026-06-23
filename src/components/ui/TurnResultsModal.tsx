@@ -80,7 +80,6 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
   synergyEffects = [],
   passiveIncome
 }) => {
-  useEscapeToClose(onClose, isOpen); // active-gated so it's safe before the early return
   const allBands = useGameStore((state) => state.allBands);
   const venues = useGameStore((state) => state.venues);
   const scheduledShows = useGameStore((state) => state.scheduledShows);
@@ -158,6 +157,9 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
     if (anySoldOut || totalProfit > 100) mapFx.burst(null, null, { kind: 'confetti' });
     onClose();
   };
+  // Escape closes via the SAME celebratory path as the button/X/backdrop (active-
+  // gated so it's safe before the early return below).
+  useEscapeToClose(closeWithBurst, isOpen);
 
   // The turn used to resolve in silence. Fire one outcome-tiered stinger + a
   // matching haptic when the report opens, so a great night actually lands.

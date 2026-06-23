@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useGameStore } from '@stores/gameStore';
 import { haptics } from '@utils/mobile';
 import {
@@ -15,10 +15,13 @@ import {
  * Pure read of store state — no gameplay effect. Lives over the city map
  * because the town evolves along this same axis (DIY blooms indie shops; a
  * sellout invites the chains), so this is the legend for what the player sees.
+ *
+ * Expand state is lifted to the parent so this and the Faction meter (stacked
+ * just below) are mutually exclusive — only one can be open, so they never
+ * overlap or steal each other's taps.
  */
-export const SceneIdentityMeter: React.FC = () => {
+export const SceneIdentityMeter: React.FC<{ open: boolean; onToggle: () => void }> = ({ open, onToggle }) => {
   const diyPoints = useGameStore((s) => s.diyPoints);
-  const [open, setOpen] = useState(false);
 
   const tier = getSceneIdentityTier(diyPoints);
   const pct = sceneIdentityPct(diyPoints);
@@ -27,7 +30,7 @@ export const SceneIdentityMeter: React.FC = () => {
     <button
       type="button"
       onClick={() => {
-        setOpen((v) => !v);
+        onToggle();
         haptics.light();
       }}
       aria-expanded={open}

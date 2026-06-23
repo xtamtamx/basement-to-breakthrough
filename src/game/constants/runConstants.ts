@@ -60,9 +60,10 @@ export const LIVING_COSTS_PER_TURN = 14;
 export const SHOW_STRESS_BASE = 4;
 
 // Stress shed each turn from simply resting (the scene breathes between shows).
-// Without this, stress only ever climbs and Burnout was a near-certainty in
-// longer runs; with it, stress is a resource you pace rather than a death timer.
-export const STRESS_RECOVERY_PER_TURN = 5;
+// Kept strictly BELOW SHOW_STRESS_BASE so single-show play still trends stress
+// upward — otherwise stress pinned at 0, making Burnout unreachable and every
+// "when calm" joker a free always-on bonus. Net ~+2/turn before day jobs/escalation.
+export const STRESS_RECOVERY_PER_TURN = 2;
 
 // Run End Reasons
 export type RunEndReason =

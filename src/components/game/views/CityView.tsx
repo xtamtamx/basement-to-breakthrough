@@ -54,6 +54,8 @@ export const CityView: React.FC = () => {
   const [selectedShop, setSelectedShop] = useState<CityShop | null>(null);
   const [selectedLandmark, setSelectedLandmark] = useState<CityLandmark | null>(null);
   const [jobRefresh, setJobRefresh] = useState(0);
+  // Which top-left meter is expanded (mutually exclusive so they never overlap).
+  const [openMeter, setOpenMeter] = useState<'scene' | 'factions' | null>(null);
 
   // Ensure initial data is loaded (run once on mount via getState to avoid
   // depending on the ever-changing store snapshot)
@@ -204,12 +206,17 @@ export const CityView: React.FC = () => {
               />
             </div>
 
-            {/* Scene Identity — surfaces the sellout↔DIY axis (diyPoints) that
-                also drives how this very city evolves. Top-left, tap to expand. */}
-            <SceneIdentityMeter />
-            {/* Scene Politics — where you stand with the five factions. Read-only;
-                stacks under Scene Identity. Tap to expand the ladder. */}
-            <FactionStandingsMeter />
+            {/* Scene Identity (sellout↔DIY axis) + Scene Politics (faction standings),
+                stacked top-left. Mutually exclusive expand so the panels never
+                overlap or steal each other's taps. */}
+            <SceneIdentityMeter
+              open={openMeter === 'scene'}
+              onToggle={() => setOpenMeter((m) => (m === 'scene' ? null : 'scene'))}
+            />
+            <FactionStandingsMeter
+              open={openMeter === 'factions'}
+              onToggle={() => setOpenMeter((m) => (m === 'factions' ? null : 'factions'))}
+            />
 
             {/* Compact Stats Overlay */}
             <div style={{
