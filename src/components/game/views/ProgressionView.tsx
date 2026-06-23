@@ -6,6 +6,7 @@ import {
 } from '../../../game/mechanics/ProgressionPathSystem';
 import { useGameStore } from '@stores/gameStore';
 import { haptics } from '@utils/mobile';
+import { gameAudio } from '@utils/gameAudio';
 
 export const ProgressionView: React.FC = () => {
   const { fans, reputation, showHistory } = useGameStore();
@@ -37,6 +38,7 @@ export const ProgressionView: React.FC = () => {
   const confirmChoice = () => {
     if (selectedChoice && progressionPathSystem.makeChoice(selectedChoice.id)) {
       haptics.success();
+      gameAudio.pathChoice(); // the sellout↔DIY fork deserves a decision sting
       setShowConfirmation(false);
       setSelectedChoice(null);
     }

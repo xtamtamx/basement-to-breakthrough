@@ -114,10 +114,15 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
     (s) => s.cities.find((c) => c.id === s.currentCityId)?.name ?? "",
   );
 
+  // The bed intensifies as the scene grows: chill basements → driving punk →
+  // a bright festival singalong near breakthrough. Recomputed as rep climbs.
+  const musicTrack: "chill" | "intense" | "festival" =
+    reputation >= 70 ? "festival" : reputation >= 30 ? "intense" : "chill";
+
   // Start background music + auto-save. (New-player onboarding is the
   // interactive TutorialOverlay, auto-started from App on a fresh run.)
   useEffect(() => {
-    gameAudio.startBackgroundMusic("chill");
+    gameAudio.startBackgroundMusic(musicTrack);
 
     // Initialize save manager and start auto-save
     saveGameManager.initialize().then(() => {
@@ -128,7 +133,14 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
       gameAudio.stopBackgroundMusic();
       saveGameManager.stopAutoSave();
     };
+    // Initial track only; tier changes are handled by the effect below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Swap the bed when the scene crosses a tier (no-op within a tier).
+  useEffect(() => {
+    gameAudio.setMusicTrack(musicTrack);
+  }, [musicTrack]);
 
   const handleViewChange = (view: ViewType) => {
     setCurrentView(view);

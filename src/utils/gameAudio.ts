@@ -56,6 +56,7 @@ class GameAudioManager {
   private nextStepTime = 0;
   private stepIndex = 0;
   private isPlayingMusic = false;
+  private currentTrackType: "chill" | "intense" | "festival" | null = null;
   private musicVolume = env.defaultMusicVolume;
   private enabled = env.enableAudio;
 
@@ -203,6 +204,7 @@ class GameAudioManager {
 
     const track = MUSIC_TRACKS[type];
     this.isPlayingMusic = true;
+    this.currentTrackType = type;
     this.stepIndex = 0;
     this.nextStepTime = this.context.currentTime + 0.12;
     const secPerStep = 60 / track.bpm / 4; // 16th notes
@@ -296,6 +298,17 @@ class GameAudioManager {
   private trackVoice(node: AudioScheduledSourceNode) {
     this.musicVoices.add(node);
     node.onended = () => this.musicVoices.delete(node);
+  }
+
+  /** Switch the looping bed to a different track as the run heats up (chill →
+   *  intense → festival). No-op if already on that track; otherwise restarts the
+   *  scheduler on the new chord loop (a brief seam, fine for an infrequent swap). */
+  setMusicTrack(type: "chill" | "intense" | "festival") {
+    if (!this.enabled) return;
+    if (this.isPlayingMusic && this.currentTrackType === type) return;
+    const wasPlaying = this.isPlayingMusic;
+    if (wasPlaying) this.stopBackgroundMusic();
+    this.startBackgroundMusic(type);
   }
 
   stopBackgroundMusic() {

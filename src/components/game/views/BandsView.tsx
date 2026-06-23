@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Band, Genre } from '@game/types';
 import { haptics } from '@utils/mobile';
+import { audio } from '@utils/simpleAudio';
 import { useGameStore } from '@stores/gameStore';
 import { runManager } from '@game/mechanics/RunManager';
 import { nextBookingManagerCost } from '@game/constants/runConstants';
@@ -52,6 +53,7 @@ export const BandsView: React.FC = () => {
     }
     addBandToRoster(bandId);
     haptics.success();
+    audio.achievement(); // signing a band is an acquire beat — give it a flourish
   };
 
   const handleRemoveFromRoster = (bandId: string) => {
