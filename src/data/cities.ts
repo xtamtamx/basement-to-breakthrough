@@ -105,6 +105,10 @@ const VENUE_ARCHETYPES: VenueSpec[] = [
   { key: "club", type: VenueType.PUNK_CLUB, districtId: "downtown", capacity: 220, acoustics: 70, authenticity: 60, atmosphere: 78, rent: 340, bookingDifficulty: 5, hasBar: true, hasSecurity: true, isPermanent: true },
   { key: "theater", type: VenueType.THEATER, districtId: "downtown", capacity: 500, acoustics: 90, authenticity: 40, atmosphere: 55, rent: 800, bookingDifficulty: 6, hasBar: true, hasSecurity: true, hasStage: true, allowsAllAges: true, isPermanent: true },
   { key: "special", type: VenueType.UNDERGROUND, districtId: "university", capacity: 60, acoustics: 55, authenticity: 100, atmosphere: 95, rent: 120, bookingDifficulty: 3, allowsAllAges: true, isPermanent: true },
+  // The canonical missing DIY rung — a garage/house show between basement (30) and
+  // diy (80). Activates the unused GARAGE enum. Margin 55*4−30=190 sits well below
+  // every higher tier, so it can't raise any city's frontier (sim-validated).
+  { key: "garage", type: VenueType.GARAGE, districtId: "eastside", capacity: 55, acoustics: 30, authenticity: 95, atmosphere: 90, rent: 30, bookingDifficulty: 2, allowsAllAges: true, isPermanent: false },
 ];
 
 function makeVenues(
@@ -215,6 +219,7 @@ export const CITIES: City[] = [
       club: "Misissi-Pit Studios",
       theater: "The Crystal Ballgown",
       special: "The Rathskellah",
+      garage: "The Wickah Pahk Garage",
     }),
     unlock: { type: "reputation", value: 15, label: "Reach 15 reputation" },
   },
@@ -234,6 +239,7 @@ export const CITIES: City[] = [
       club: "The Magic Drumstick",
       theater: "The Saenger Soul Palace",
       special: "Reservation Hall",
+      garage: "The Carport Second-Line",
     }),
     unlock: { type: "reputation", value: 25, label: "Reach 25 reputation" },
   },
@@ -253,6 +259,7 @@ export const CITIES: City[] = [
       club: "Robert's Wrong-Side Room",
       theater: "The Grand Ole Showbox",
       special: "The Station Hideaway",
+      garage: "The Carport Opry",
     }),
     unlock: { type: "reputation", value: 40, label: "Reach 40 reputation" },
   },
@@ -272,6 +279,7 @@ export const CITIES: City[] = [
       club: "Emoji's",
       theater: "Dahlia Hall",
       special: "The Hidey-Hole",
+      garage: "The Two-Car Taproom",
     }),
     unlock: { type: "reputation", value: 55, label: "Reach 55 reputation" },
   },
@@ -291,6 +299,7 @@ export const CITIES: City[] = [
       club: "The Masquerave",
       theater: "The Beauchamp Vaudeville",
       special: "The Clermont Underground",
+      garage: "Auntie's Carport Cookout",
     }),
     unlock: { type: "reputation", value: 70, label: "Reach 70 reputation" },
   },
@@ -310,6 +319,7 @@ export const CITIES: City[] = [
       club: "The Crowbar Pressed",
       theater: "The Glitz Ybor",
       special: "Ruthie's Out",
+      garage: "The Carport Swamp",
     }),
     unlock: { type: "reputation", value: 85, label: "Reach 85 reputation" },
   },
@@ -329,6 +339,7 @@ export const CITIES: City[] = [
       club: "Whisky a No-No",
       theater: "The Wilteria",
       special: "CB's & OMFUG Annex",
+      garage: "The Valet-Parked Garage",
     }),
     unlock: { type: "reputation", value: 100, label: "Reach 100 reputation" },
   },
