@@ -323,12 +323,14 @@ interface Quarter { district: District; tx: number; ty: number; tw: number; th: 
 interface PlacedBuilding { sprite: AtlasSprite; tx: number; ty: number; tw: number; th: number; venue?: Venue; shop?: CityShop; landmark?: CityLandmark; district?: District }
 interface PlacedTree { sprite: AtlasSprite; tx: number; ty: number; th: number }
 interface PlacedProp { sprite: AtlasSprite; tx: number; ty: number } // ty = foot row
+interface PlacedBench { tx: number; ty: number; faceUp: boolean }
 interface ParkingLot { tx: number; ty: number; tw: number; th: number }
 interface TownPlan {
   quarters: Quarter[];
   buildings: PlacedBuilding[];
   trees: PlacedTree[];
   props: PlacedProp[];
+  benches: PlacedBench[];
   paving: { tx: number; ty: number }[];
   parkingLots: ParkingLot[];
 }
@@ -616,7 +618,29 @@ function planTown(districts: District[], venues: Venue[], roofMix: BuildingKey[]
     }
   }
 
-  return { quarters, buildings, trees, props, paving, parkingLots };
+  // Park benches — only on sidewalk tiles that BORDER the road (so they face it
+  // sensibly, not random middle-of-pavement), sparse + spaced. Tracked in the
+  // plan so they depth-sort with walkers + block those tiles (no more townsfolk
+  // strolling straight through a bench).
+  const benches: PlacedBench[] = [];
+  const benchAt = new Set<string>();
+  const benchNear = (tx: number, ty: number) => {
+    for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) if (benchAt.has(`${tx + dx},${ty + dy}`)) return true;
+    return false;
+  };
+  for (let ty = 2; ty < WORLD_H - 2; ty++)
+    for (let tx = 2; tx < WORLD_W - 2; tx++) {
+      if (!isSidewalk(tx, ty) || inPlaza(tx, ty)) continue;
+      const roadAbove = isRoad(tx, ty - 1);
+      const roadBelow = isRoad(tx, ty + 1);
+      if (!roadAbove && !roadBelow) continue; // only road-facing sidewalk edges
+      if (hash2(tx * 23 + 5, ty * 19 + 11) < 0.86) continue; // sparse
+      if (benchNear(tx, ty)) continue;
+      benches.push({ tx, ty, faceUp: roadAbove && !roadBelow });
+      benchAt.add(`${tx},${ty}`);
+    }
+
+  return { quarters, buildings, trees, props, benches, paving, parkingLots };
 }
 
 // --- Wandering townsfolk -----------------------------------------------------
@@ -729,6 +753,26 @@ function drawTreeObj(ctx: CanvasRenderingContext2D, sheets: Sheets, t: PlacedTre
 function drawPropObj(ctx: CanvasRenderingContext2D, sheets: Sheets, p: PlacedProp) {
   // scale 1 = crisp (no resample); sprite bakes its own ground shadow
   spriteBlit(ctx, sheets, p.sprite, (p.tx + 0.5) * TILE, (p.ty + 1) * TILE, 1);
+}
+// A little park bench, drawn PER-FRAME (depth-sorted) so townsfolk pass behind/in
+// front of it correctly instead of clipping through a baked-in sprite. `faceUp`
+// flips it to face the road it sits beside.
+function drawBench(ctx: CanvasRenderingContext2D, x: number, y: number, faceUp: boolean) {
+  const px = (px0: number, py0: number, w: number, h: number, c: string) => { ctx.fillStyle = c; ctx.fillRect(Math.round(px0), Math.round(py0), w, h); };
+  ctx.fillStyle = 'rgba(0,0,0,0.20)'; ctx.beginPath(); ctx.ellipse(Math.round(x), Math.round(y + 1), 8, 2, 0, 0, Math.PI * 2); ctx.fill();
+  if (!faceUp) {
+    px(x - 6, y - 2, 2, 3, '#4f3419'); px(x + 4, y - 2, 2, 3, '#4f3419'); // legs (front)
+    px(x - 7, y - 5, 14, 3, '#8a6238'); px(x - 7, y - 5, 14, 1, '#a87a48'); // seat
+    px(x - 7, y - 11, 14, 2, '#7a5530'); // backrest rail (back)
+    px(x - 6, y - 9, 1, 4, '#6e4a2c'); px(x - 2, y - 9, 1, 4, '#6e4a2c');
+    px(x + 2, y - 9, 1, 4, '#6e4a2c'); px(x + 5, y - 9, 1, 4, '#6e4a2c'); // slats
+  } else {
+    px(x - 7, y - 9, 14, 3, '#8a6238'); px(x - 7, y - 9, 14, 1, '#a87a48'); // seat (back)
+    px(x - 6, y - 7, 1, 4, '#6e4a2c'); px(x - 2, y - 7, 1, 4, '#6e4a2c');
+    px(x + 2, y - 7, 1, 4, '#6e4a2c'); px(x + 5, y - 7, 1, 4, '#6e4a2c'); // slats
+    px(x - 7, y - 4, 14, 2, '#7a5530'); // backrest rail (front)
+    px(x - 6, y - 3, 2, 2, '#4f3419'); px(x + 4, y - 3, 2, 2, '#4f3419'); // legs (back)
+  }
 }
 
 // --- Ground bake (terrain + streets + plaza + low props; NO buildings/trees) -
@@ -1018,25 +1062,6 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
     px(x - 3, y - 4, 1, 2, '#9a2b20'); px(x + 2, y - 4, 1, 2, '#9a2b20');
     px(x - 2, y - 6, 4, 1, 'rgba(255,255,255,0.18)');
   };
-  // A proper little park bench (backrest + slatted seat + legs). `faceUp` flips
-  // it so it can face the road/plaza it sits beside, instead of every bench in
-  // town facing the same way.
-  const bench = (x: number, y: number, faceUp = false) => {
-    ell(x, y + 1, 8, 2, 'rgba(0,0,0,0.20)');
-    if (!faceUp) {
-      px(x - 6, y - 2, 2, 3, '#4f3419'); px(x + 4, y - 2, 2, 3, '#4f3419'); // legs (front)
-      px(x - 7, y - 5, 14, 3, '#8a6238'); px(x - 7, y - 5, 14, 1, '#a87a48'); // seat
-      px(x - 7, y - 11, 14, 2, '#7a5530'); // backrest rail (back)
-      px(x - 6, y - 9, 1, 4, '#6e4a2c'); px(x - 2, y - 9, 1, 4, '#6e4a2c');
-      px(x + 2, y - 9, 1, 4, '#6e4a2c'); px(x + 5, y - 9, 1, 4, '#6e4a2c'); // slats
-    } else {
-      px(x - 7, y - 9, 14, 3, '#8a6238'); px(x - 7, y - 9, 14, 1, '#a87a48'); // seat (back)
-      px(x - 6, y - 7, 1, 4, '#6e4a2c'); px(x - 2, y - 7, 1, 4, '#6e4a2c');
-      px(x + 2, y - 7, 1, 4, '#6e4a2c'); px(x + 5, y - 7, 1, 4, '#6e4a2c'); // slats
-      px(x - 7, y - 4, 14, 2, '#7a5530'); // backrest rail (front)
-      px(x - 6, y - 3, 2, 2, '#4f3419'); px(x + 4, y - 3, 2, 2, '#4f3419'); // legs (back)
-    }
-  };
   const mailbox = (x: number, y: number) => {
     ell(x, y + 1, 2.4, 1, 'rgba(0,0,0,0.2)');
     px(x - 1, y - 6, 2, 6, '#2f271e');
@@ -1059,9 +1084,11 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
         lamp((sx - 1) * TILE + 8, (sy - 1) * TILE + 13);
 
   // 4b. Street furniture scattered along the sidewalks — lamps, trash cans,
-  // hydrants, benches, mailboxes. Spaced out (>=2 tiles apart) so it reads as
-  // tidy town clutter, not a junkyard.
+  // hydrants, mailboxes. Spaced out (>=2 tiles apart) so it reads as tidy town
+  // clutter, not a junkyard. (Benches are NOT baked here — they're depth-sorted
+  // placed objects, drawn per-frame, so seed their tiles to keep furniture clear.)
   const propAt = new Set<string>();
+  plan.benches.forEach((b) => propAt.add(`${b.tx},${b.ty}`));
   const nearProp = (tx: number, ty: number) => {
     for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) if (propAt.has(`${tx + dx},${ty + dy}`)) return true;
     return false;
@@ -1079,8 +1106,7 @@ function buildGround(plan: TownPlan, sheets: Sheets, theme: MapTheme): HTMLCanva
       const t = Math.floor(hash2(tx * 17 + 9, ty * 5 + 1) * 100);
       if (t < 34) lamp(x, base);
       else if (t < 64) trashCan(x, base);
-      else if (t < 87) hydrant(x, base);
-      else if (t < 96) bench(x, base, (isRoad(tx, ty - 1) || isRoad(tx, ty - 2)) && !(isRoad(tx, ty + 1) || isRoad(tx, ty + 2)));
+      else if (t < 88) hydrant(x, base);
       else mailbox(x, base);
       propAt.add(`${tx},${ty}`);
     }
@@ -1138,12 +1164,14 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
   type DepthObj =
     | { footY: number; kind: 'building'; b: PlacedBuilding }
     | { footY: number; kind: 'tree'; t: PlacedTree }
-    | { footY: number; kind: 'prop'; p: PlacedProp };
+    | { footY: number; kind: 'prop'; p: PlacedProp }
+    | { footY: number; kind: 'bench'; bn: PlacedBench };
   const objects = useMemo<DepthObj[]>(() => {
     const list: DepthObj[] = [];
     plan.buildings.forEach((b) => list.push({ footY: (b.ty + b.th) * TILE, kind: 'building', b }));
     plan.trees.forEach((t) => list.push({ footY: (t.ty + t.th) * TILE, kind: 'tree', t }));
     plan.props.forEach((p) => list.push({ footY: (p.ty + 1) * TILE, kind: 'prop', p }));
+    plan.benches.forEach((bn) => list.push({ footY: bn.ty * TILE + 14, kind: 'bench', bn }));
     return list;
   }, [plan]);
 
@@ -1156,13 +1184,15 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
   const walkable = useMemo(() => {
     const set = new Set<string>();
     const list: { tx: number; ty: number }[] = [];
-    const add = (tx: number, ty: number) => { const k = `${tx},${ty}`; if (!set.has(k)) { set.add(k); list.push({ tx, ty }); } };
+    // Bench tiles are obstacles — townsfolk route AROUND them, not through them.
+    const blocked = new Set(plan.benches.map((b) => `${b.tx},${b.ty}`));
+    const add = (tx: number, ty: number) => { const k = `${tx},${ty}`; if (!set.has(k) && !blocked.has(k)) { set.add(k); list.push({ tx, ty }); } };
     // Streets + plaza only — one connected network, no dead-end doorstep spurs.
     for (let ty = 1; ty < WORLD_H - 1; ty++)
       for (let tx = 1; tx < WORLD_W - 1; tx++)
         if (isStreet(tx, ty) || inPlaza(tx, ty)) add(tx, ty);
     return { set, list };
-  }, []);
+  }, [plan]);
 
   const zoomRef = useRef(ZOOM_DEFAULT);
   const cameraRef = useRef({ x: 0, y: 0 });
@@ -1372,7 +1402,8 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
         if (d.w) drawPerson(ctx, d.w);
         else if (d.o!.kind === 'building') drawBuildingObj(ctx, sheets, d.o!.b);
         else if (d.o!.kind === 'tree') drawTreeObj(ctx, sheets, d.o!.t);
-        else drawPropObj(ctx, sheets, d.o!.p);
+        else if (d.o!.kind === 'prop') drawPropObj(ctx, sheets, d.o!.p);
+        else drawBench(ctx, d.o!.bn.tx * TILE + 8, d.o!.bn.ty * TILE + 13, d.o!.bn.faceUp);
       });
 
       surgeRef.current = null; // recomputed below if a show is on tonight
