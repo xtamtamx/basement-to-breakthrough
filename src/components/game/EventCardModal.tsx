@@ -22,6 +22,25 @@ const TYPE_COLOR: Record<EventCard['type'], string> = {
   legendary: '#c77dff',
 };
 
+const RES_ICON: Record<string, string> = { money: '$', reputation: '★', fans: '♦', stress: '⚠', connections: '🔗' };
+// A choice's NET resource deltas — its resource_change effects, summed. The cost
+// is already baked in here as a negative (e.g. -$100), so this shows the WHOLE
+// trade (what you pay AND what you get), not just the cost.
+type ChoiceLike = { effects?: Array<{ type: string; value?: unknown }>; cost?: { amount: number; type: string } };
+function choiceOutcomes(choice: ChoiceLike): Array<{ res: string; delta: number }> {
+  const acc: Record<string, number> = {};
+  (choice.effects || []).forEach((e) => {
+    if (e.type === 'resource_change' && e.value && typeof e.value === 'object') {
+      Object.entries(e.value as Record<string, unknown>).forEach(([k, v]) => {
+        if (typeof v === 'number' && v !== 0) acc[k] = (acc[k] || 0) + v;
+      });
+    }
+  });
+  return Object.entries(acc).map(([res, delta]) => ({ res, delta }));
+}
+// A delta helps the player if positive — except stress, where less is better.
+const isGood = (res: string, delta: number) => (res === 'stress' ? delta < 0 : delta > 0);
+
 export const EventCardModal: React.FC<EventCardModalProps> = ({ event, onClose }) => {
   const applyEventCardChoice = useGameStore((s) => s.applyEventCardChoice);
   const accent = TYPE_COLOR[event.type];
@@ -160,11 +179,25 @@ export const EventCardModal: React.FC<EventCardModalProps> = ({ event, onClose }
                 }}
               >
                 {choice.text}
-                {choice.cost && (
-                  <span style={{ color: '#ff5c57', marginLeft: '6px' }}>
-                    (−{choice.cost.amount} {choice.cost.type})
-                  </span>
-                )}
+                {(() => {
+                  const outs = choiceOutcomes(choice);
+                  if (outs.length > 0) {
+                    return (
+                      <span style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '7px' }}>
+                        {outs.map(({ res, delta }) => (
+                          <span key={res} className="snes-pixel" style={{ fontSize: '8px', letterSpacing: 0, color: isGood(res, delta) ? '#3ad17e' : '#ff5c57' }}>
+                            {delta > 0 ? '+' : ''}{delta} {RES_ICON[res] || res}
+                          </span>
+                        ))}
+                      </span>
+                    );
+                  }
+                  // Fallback: a gate-only cost with no resource effects to display.
+                  if (choice.cost) {
+                    return <span style={{ color: '#ff5c57', marginLeft: '6px' }}>(−{choice.cost.amount} {choice.cost.type})</span>;
+                  }
+                  return null;
+                })()}
               </button>
             ))
           ) : (
