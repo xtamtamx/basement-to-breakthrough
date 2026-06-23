@@ -13,6 +13,7 @@ import { CityShop, SHOP_DEFS } from '@game/world/cityShops';
 import { CityLandmark } from '@game/world/landmarks';
 import { unlockedVenues } from '@game/world/venueProgression';
 import { dayJobSystem } from '@game/mechanics/DayJobSystem';
+import { SceneIdentityMeter } from '../SceneIdentityMeter';
 
 // Maps store district ids onto the core DistrictType used by DistrictInfo.
 const STORE_DISTRICT_TYPE: Record<string, CoreDistrictType> = {
@@ -201,7 +202,11 @@ export const CityView: React.FC = () => {
                 onLandmarkClick={(lm) => { setSelectedLandmark(lm); haptics.light(); }}
               />
             </div>
-            
+
+            {/* Scene Identity — surfaces the sellout↔DIY axis (diyPoints) that
+                also drives how this very city evolves. Top-left, tap to expand. */}
+            <SceneIdentityMeter />
+
             {/* Compact Stats Overlay */}
             <div style={{
               position: 'absolute',
