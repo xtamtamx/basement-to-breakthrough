@@ -618,27 +618,32 @@ function planTown(districts: District[], venues: Venue[], roofMix: BuildingKey[]
     }
   }
 
-  // Park benches — only on sidewalk tiles that BORDER the road (so they face it
-  // sensibly, not random middle-of-pavement), sparse + spaced. Tracked in the
-  // plan so they depth-sort with walkers + block those tiles (no more townsfolk
-  // strolling straight through a bench).
+  // Park benches — set BACK on the grass VERGE (the tile just beyond the 1-wide
+  // sidewalk, on the building line), never on the sidewalk lane itself. A bench
+  // in a 1-tile walkway would wall off the single-file path; on the verge it
+  // drops into the gaps BETWEEN buildings (propFree = open grass only) and faces
+  // the road across the walkway. Because the verge is off the pedestrian network
+  // already, benches need NOT block any walkable tile — walkers stroll the clear
+  // sidewalk in front and depth-sort past the bench correctly.
   const benches: PlacedBench[] = [];
   const benchAt = new Set<string>();
   const benchNear = (tx: number, ty: number) => {
-    for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) if (benchAt.has(`${tx + dx},${ty + dy}`)) return true;
+    for (let dy = -3; dy <= 3; dy++) for (let dx = -5; dx <= 5; dx++) if (benchAt.has(`${tx + dx},${ty + dy}`)) return true;
     return false;
   };
-  for (let ty = 2; ty < WORLD_H - 2; ty++)
-    for (let tx = 2; tx < WORLD_W - 2; tx++) {
-      if (!isSidewalk(tx, ty) || inPlaza(tx, ty)) continue;
-      const roadAbove = isRoad(tx, ty - 1);
-      const roadBelow = isRoad(tx, ty + 1);
-      if (!roadAbove && !roadBelow) continue; // only road-facing sidewalk edges
-      if (hash2(tx * 23 + 5, ty * 19 + 11) < 0.86) continue; // sparse
-      if (benchNear(tx, ty)) continue;
-      benches.push({ tx, ty, faceUp: roadAbove && !roadBelow });
-      benchAt.add(`${tx},${ty}`);
+  for (const sy of STREET_H) {
+    // north verge (sy-2) faces DOWN toward the road below; south verge (sy+3) faces UP.
+    for (const [vy, faceUp] of [[sy - 2, false], [sy + 3, true]] as const) {
+      if (vy < 2 || vy >= WORLD_H - 2) continue;
+      for (let tx = 3; tx < WORLD_W - 3; tx++) {
+        if (!propFree(tx, vy)) continue; // open grass gap between buildings only
+        if (hash2(tx * 23 + 5, vy * 19 + 11) < 0.55) continue; // sparse
+        if (benchNear(tx, vy)) continue;
+        benches.push({ tx, ty: vy, faceUp });
+        benchAt.add(`${tx},${vy}`);
+      }
     }
+  }
 
   return { quarters, buildings, trees, props, benches, paving, parkingLots };
 }
@@ -1184,15 +1189,14 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
   const walkable = useMemo(() => {
     const set = new Set<string>();
     const list: { tx: number; ty: number }[] = [];
-    // Bench tiles are obstacles — townsfolk route AROUND them, not through them.
-    const blocked = new Set(plan.benches.map((b) => `${b.tx},${b.ty}`));
-    const add = (tx: number, ty: number) => { const k = `${tx},${ty}`; if (!set.has(k) && !blocked.has(k)) { set.add(k); list.push({ tx, ty }); } };
+    const add = (tx: number, ty: number) => { const k = `${tx},${ty}`; if (!set.has(k)) { set.add(k); list.push({ tx, ty }); } };
     // Streets + plaza only — one connected network, no dead-end doorstep spurs.
+    // (Benches live on the grass verge, off this network, so nothing to exclude.)
     for (let ty = 1; ty < WORLD_H - 1; ty++)
       for (let tx = 1; tx < WORLD_W - 1; tx++)
         if (isStreet(tx, ty) || inPlaza(tx, ty)) add(tx, ty);
     return { set, list };
-  }, [plan]);
+  }, []);
 
   const zoomRef = useRef(ZOOM_DEFAULT);
   const cameraRef = useRef({ x: 0, y: 0 });
@@ -1403,7 +1407,7 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
         else if (d.o!.kind === 'building') drawBuildingObj(ctx, sheets, d.o!.b);
         else if (d.o!.kind === 'tree') drawTreeObj(ctx, sheets, d.o!.t);
         else if (d.o!.kind === 'prop') drawPropObj(ctx, sheets, d.o!.p);
-        else drawBench(ctx, d.o!.bn.tx * TILE + 8, d.o!.bn.ty * TILE + 13, d.o!.bn.faceUp);
+        else drawBench(ctx, d.o!.bn.tx * TILE + 8, d.o!.bn.ty * TILE + (d.o!.bn.faceUp ? 6 : 14), d.o!.bn.faceUp);
       });
 
       surgeRef.current = null; // recomputed below if a show is on tonight
