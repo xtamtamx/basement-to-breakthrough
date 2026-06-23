@@ -14,6 +14,8 @@ interface EventApplyResult {
   triggeredSynergies: string[];
   /** Scene-state nudges (consumed by the store -> diyPoints via makePathChoice). */
   sceneChanges: SceneModification[];
+  /** Faction standing deltas (consumed by the store -> factionStandings). */
+  factionChanges: Record<string, number>;
   spawnedCards: unknown[];
 }
 
@@ -107,6 +109,14 @@ export type EventEffect =
       type: 'resource_change';
       target: 'player';
       value: ResourceModification;
+      duration?: number;
+      description: string;
+    }
+  | {
+      type: 'faction_change';
+      target: 'player';
+      /** faction id -> standing delta (applied to the persisted factionStandings). */
+      value: Record<string, number>;
       duration?: number;
       description: string;
     };
@@ -1061,12 +1071,111 @@ class EventCardSystem {
       flavorText: 'Some shows you were at. This is a show you were AT.',
       artStyle: 'backstage_pass',
     });
+
+    // --- Faction "pick a side" cards (the deferred faction-conflict events,
+    // folded into this one modal instead of a second system). Each shifts where
+    // you stand with two rival tribes — see FactionSystem's relationship web. ---
+    this.addEventCard({
+      id: 'faction_purity_test',
+      name: 'A Sponsor Wants Their Logo On The Basement',
+      description: 'An energy drink will fund the whole tour — they just need a banner, a hashtag, and your soul. The purists are watching. So is everyone with a marketing budget.',
+      icon: '🥤',
+      type: 'crisis',
+      rarity: 'uncommon',
+      duration: 'instant',
+      effects: [],
+      choices: [
+        {
+          id: 'take_the_check',
+          text: 'Take the check, hang the banner',
+          effects: [
+            { type: 'resource_change', target: 'player', value: { money: 160 }, description: '+$160' },
+            { type: 'faction_change', target: 'player', value: { 'new-wave': 16, 'diy-purists': -18 }, description: 'New Wave nods, the Purists spit' },
+          ],
+        },
+        {
+          id: 'tear_it_down',
+          text: 'Tear it down on principle',
+          effects: [
+            { type: 'resource_change', target: 'player', value: { money: -40, reputation: 6 }, description: '-$40, +6 rep' },
+            { type: 'faction_change', target: 'player', value: { 'diy-purists': 18, 'new-wave': -10 }, description: 'The Purists salute, the New Wave shrugs' },
+          ],
+        },
+      ],
+      flavorText: 'The banner said "STAY WILD." It was for a bank.',
+      artStyle: 'press_release',
+    });
+
+    this.addEventCard({
+      id: 'faction_shred_wars',
+      name: 'Two Bands, One Headline Slot, Zero Chill',
+      description: 'The shredders say the art-rockers can\'t play. The art-rockers say the shredders can\'t feel. Both are kind of right. You hold the slot.',
+      icon: '🎸',
+      type: 'wildcard',
+      rarity: 'uncommon',
+      duration: 'instant',
+      effects: [],
+      choices: [
+        {
+          id: 'give_it_to_metal',
+          text: 'Give it to the shredders',
+          effects: [
+            { type: 'faction_change', target: 'player', value: { 'metal-elite': 16, 'indie-crowd': -12 }, description: 'Metal Elite up, Indie Crowd down' },
+            { type: 'resource_change', target: 'player', value: { fans: 25 }, description: '+25 fans' },
+          ],
+        },
+        {
+          id: 'give_it_to_indie',
+          text: 'Give it to the art kids',
+          effects: [
+            { type: 'faction_change', target: 'player', value: { 'indie-crowd': 16, 'metal-elite': -12 }, description: 'Indie Crowd up, Metal Elite down' },
+            { type: 'resource_change', target: 'player', value: { reputation: 8 }, description: '+8 rep' },
+          ],
+        },
+      ],
+      flavorText: 'The compromise slot (a 4am ambient set) pleased no one.',
+    });
+
+    this.addEventCard({
+      id: 'faction_generational_clash',
+      name: 'The Old Heads Are Mad About The Merch Again',
+      description: 'A scene elder corners you about "kids these days" and their QR codes. A teenager livestreams the lecture. The future and the past both want a word.',
+      icon: '📼',
+      type: 'wildcard',
+      rarity: 'uncommon',
+      duration: 'instant',
+      effects: [],
+      choices: [
+        {
+          id: 'honor_elders',
+          text: 'Honor the old heads',
+          effects: [
+            { type: 'faction_change', target: 'player', value: { 'old-guard': 16, 'new-wave': -14 }, description: 'Old Guard up, New Wave down' },
+            { type: 'resource_change', target: 'player', value: { reputation: 8 }, description: '+8 rep' },
+          ],
+        },
+        {
+          id: 'platform_youth',
+          text: 'Platform the new blood',
+          effects: [
+            { type: 'faction_change', target: 'player', value: { 'new-wave': 16, 'old-guard': -14 }, description: 'New Wave up, Old Guard down' },
+            { type: 'resource_change', target: 'player', value: { fans: 30 }, description: '+30 fans' },
+          ],
+        },
+      ],
+      flavorText: 'Both sides agreed the sound guy was the real problem.',
+    });
   }
 
   private addEventCard(card: EventCard) {
     this.eventCards.set(card.id, card);
   }
-  
+
+  /** Look up a card definition by id (for tooling/tests). */
+  getCardById(id: string): EventCard | undefined {
+    return this.eventCards.get(id);
+  }
+
   // Draw a random event card based on current game state
   drawEventCard(gameState: EventGameState): EventCard | null {
     const availableCards = Array.from(this.eventCards.values()).filter(card => {
@@ -1125,6 +1234,7 @@ class EventCardSystem {
       resourceChanges: {},
       triggeredSynergies: [],
       sceneChanges: [],
+      factionChanges: {},
       spawnedCards: []
     };
 
@@ -1157,6 +1267,12 @@ class EventCardSystem {
 
         case 'scene_change':
           results.sceneChanges.push(effect.value);
+          break;
+
+        case 'faction_change':
+          Object.entries(effect.value).forEach(([fid, v]) => {
+            results.factionChanges[fid] = (results.factionChanges[fid] ?? 0) + v;
+          });
           break;
       }
     });

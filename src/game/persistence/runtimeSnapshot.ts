@@ -24,6 +24,7 @@ import {
 import { difficultySystem } from '../mechanics/DifficultySystem';
 import { synergyManager, SynergyState } from '../mechanics/SynergyManager';
 import { progressionPathSystem } from '../mechanics/ProgressionPathSystem';
+import { bandRelationships, BandRelationship } from '../mechanics/BandRelationships';
 
 export interface RuntimeSnapshot {
   run: RunState | null;
@@ -32,6 +33,10 @@ export interface RuntimeSnapshot {
   synergy: SynergyState;
   /** Chosen progression path (run-scoped singleton state). Optional for old saves. */
   progression?: string;
+  /** Co-billing relationship drift (run-scoped singleton). Optional for old saves.
+   *  Faction standings persist separately as a store field; this is the band-pair
+   *  drift that feeds bill chemistry. */
+  bandRelationships?: [string, BandRelationship][];
 }
 
 export function captureRuntimeSnapshot(): RuntimeSnapshot {
@@ -41,6 +46,7 @@ export function captureRuntimeSnapshot(): RuntimeSnapshot {
     difficultyBlocks: difficultySystem.serializeBlocks(),
     synergy: synergyManager.serialize(),
     progression: progressionPathSystem.serialize(),
+    bandRelationships: bandRelationships.serialize(),
   };
 }
 
@@ -64,4 +70,5 @@ export function restoreRuntimeSnapshot(snap?: RuntimeSnapshot | null): void {
   difficultySystem.restoreBlocks(snap.difficultyBlocks);
   if (snap.synergy) synergyManager.deserialize(snap.synergy);
   if (snap.progression) progressionPathSystem.deserialize(snap.progression);
+  if (snap.bandRelationships) bandRelationships.restore(snap.bandRelationships);
 }

@@ -1,6 +1,6 @@
 import { Band } from '@game/types';
 
-interface BandRelationship {
+export interface BandRelationship {
   band1Id: string;
   band2Id: string;
   relationship: number; // -100 to 100
@@ -191,6 +191,16 @@ class BandRelationshipSystem {
   // Clear all relationships (for new game)
   clearRelationships() {
     this.relationships.clear();
+  }
+
+  // --- Durable resume: the co-billing drift Map is run-scoped singleton state,
+  // so it must ride the RuntimeSnapshot or it resets to neutral on refresh/load. ---
+  serialize(): [string, BandRelationship][] {
+    return Array.from(this.relationships.entries());
+  }
+
+  restore(entries?: [string, BandRelationship][]): void {
+    this.relationships = new Map(entries ?? []);
   }
 }
 

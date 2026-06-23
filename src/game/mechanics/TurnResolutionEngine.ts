@@ -910,6 +910,20 @@ export class TurnResolutionEngine {
       reputationGain -= 5;
     }
 
+    // Relationship-gated band drama: a bill with a HOSTILE pair (rival factions
+    // or soured co-billing history) risks a backstage blowup. Small, bounded, and
+    // only possible when the player deliberately books enemies together — so the
+    // typical/sim bill (friendly or neutral) never triggers it.
+    if (lineupChem.hostile && Math.random() < 0.15) {
+      incidents.push({
+        type: IncidentType.BAND_DRAMA,
+        severity: 4,
+        description: lineupChem.conflicts[0] ?? 'The bands clashed backstage',
+        consequences: [{ type: ConsequenceType.REPUTATION_LOSS, value: 5 }],
+      });
+      reputationGain -= 5;
+    }
+
     // Record any combos this bill+venue triggered (idempotent + persisted for
     // free via store.discoveredSynergies); flag the ones first found TONIGHT for
     // the results modal's "NEW SYNERGY DISCOVERED" beat.

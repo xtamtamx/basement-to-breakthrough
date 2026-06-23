@@ -1190,6 +1190,18 @@ export const useGameStore = create<GameStore>()(
           else if (sc.exposure === 'underground') s.makePathChoice('event_exposure', 10);
         });
 
+        // Faction-flavored choices shift where the player stands with the scene's
+        // tribes — the persisted factionStandings the show engine reads each turn.
+        if (Object.keys(result.factionChanges).length) {
+          set((state) => {
+            const next = { ...state.factionStandings };
+            Object.entries(result.factionChanges).forEach(([fid, v]) => {
+              next[fid] = clamp((next[fid] ?? 0) + v, -100, 100);
+            });
+            return { factionStandings: next };
+          });
+        }
+
         // The marquee sell-out vs stay-true fork moves the Living City axis.
         if (choiceId === 'sell_out') s.makePathChoice('event_sellout', -30);
         else if (choiceId === 'stay_true') s.makePathChoice('event_staytrue', 20);
