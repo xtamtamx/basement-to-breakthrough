@@ -3,7 +3,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ShowResult } from '@game/types';
 import { useGameStore } from '@stores/gameStore';
 import { SATIRICAL_TURN_RESULTS } from '@game/data/satiricalText';
-import type { SynergyTriggerResult } from '@game/mechanics/SynergyManager';
+import { STARTER_SYNERGIES, type SynergyTriggerResult } from '@game/mechanics/SynergyManager';
+
+// Maps a joker id → a player-readable "fires at" label, so the results modal can
+// teach WHEN/WHY a joker fired (not just what it did).
+const TRIGGER_LABEL: Record<string, string> = {
+  TURN_START: 'turn start', TURN_END: 'turn end', SHOW_START: 'show start', SHOW_END: 'show end', PASSIVE: 'always on',
+};
+const jokerTriggerLabel = (id: string): string | null => {
+  const j = STARTER_SYNERGIES.find((s) => s.id === id);
+  return j ? (TRIGGER_LABEL[j.trigger] ?? j.trigger.toLowerCase()) : null;
+};
 import { audio } from '@utils/simpleAudio';
 import { haptics } from '@utils/mobile';
 import { useEscapeToClose } from '@hooks/useEscapeToClose';
@@ -489,6 +499,14 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
                       <div style={{ color: '#b9b3d6', fontSize: '11px', marginTop: '3px' }}>
                         {s.effects.map((e) => e.description).join(' · ')}
                       </div>
+                      {(() => {
+                        const t = jokerTriggerLabel(s.synergyId);
+                        return (t || s.conditionDescription) ? (
+                          <div style={{ color: '#6f6796', fontSize: '9px', marginTop: '4px' }}>
+                            {t && `fires at ${t}`}{t && s.conditionDescription ? ' · ' : ''}{s.conditionDescription}
+                          </div>
+                        ) : null;
+                      })()}
                     </div>
                   ))}
                 </div>

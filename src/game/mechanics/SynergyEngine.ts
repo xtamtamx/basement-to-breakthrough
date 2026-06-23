@@ -362,20 +362,26 @@ export const COMBO_CATALOG: {
   name: string;
   description: string;
   tier: 'common' | 'rare' | 'legendary';
+  /** Attendance multiplier (mirrors the calculator above) — for the codex. */
+  multiplier: number;
+  /** Flat reputation bonus (mirrors the calculator). */
+  reputationBonus: number;
+  /** Player-facing paraphrase of the recipe — what bill+venue makes it fire. */
+  recipe: string;
 }[] = [
-  { id: 'diy-authentic', name: 'True DIY', description: 'All-DIY bands in an authentic underground space pack the room.', tier: 'legendary' },
-  { id: 'legendary-pairing', name: 'Legendary Performance', description: 'Master musicians in a proper theater or hall.', tier: 'legendary' },
-  { id: 'chaos-reigns', name: 'Controlled Chaos', description: 'A high-energy band crammed into a tiny room makes legend.', tier: 'rare' },
-  { id: 'genre-match', name: 'Perfect Fit', description: "A band that matches the venue's specialty thrives.", tier: 'rare' },
-  { id: 'underground-network', name: 'Scene Unity', description: 'A bill of underground bands supporting each other.', tier: 'rare' },
-  { id: 'basement-magic', name: 'Basement Magic', description: 'Nothing says real like a low ceiling and one working outlet.', tier: 'rare' },
-  { id: 'hometown-heroes', name: 'Hometown Heroes', description: 'Local support packs the room.', tier: 'common' },
-  { id: 'real-artist', name: 'Authentic Experience', description: 'Featuring a real underground artist.', tier: 'common' },
-  { id: 'bar-boost', name: 'Thirsty Crowd', description: 'An older crowd at a bar venue drinks the place dry.', tier: 'common' },
-  { id: 'basement-democracy', name: 'Basement Democracy', description: 'A deep bill of true believers crammed into one tiny basement.', tier: 'rare' },
-  { id: 'vinyl-revival', name: 'Skipped Record Store', description: 'A live recording rig in a dive where physical media still moves.', tier: 'common' },
-  { id: 'underground-rescue', name: 'Scene Savior', description: 'A high-energy band rebuilding a forgotten corner of the city.', tier: 'rare' },
-  { id: 'diy-purist', name: 'DIY Purist', description: 'A deep, ultra-authentic, low-popularity bill in a raw DIY room.', tier: 'rare' },
-  { id: 'genre-riot', name: 'Genre Riot', description: 'Three-plus bands of one genre crammed into a small room.', tier: 'common' },
-  { id: 'sweat-equity', name: 'Sweat Equity', description: 'A high-energy headliner in a tiny room with no security.', tier: 'rare' },
+  { id: 'diy-authentic', name: 'True DIY', description: 'All-DIY bands in an authentic underground space pack the room.', tier: 'legendary', multiplier: 1.5, reputationBonus: 10, recipe: 'Every band on the bill at 90+ authenticity, in a Basement or DIY space.' },
+  { id: 'legendary-pairing', name: 'Legendary Performance', description: 'Master musicians in a proper theater or hall.', tier: 'legendary', multiplier: 1.4, reputationBonus: 15, recipe: 'A virtuoso headliner (skill 80+, popularity 70+) in a Concert Hall or Theater.' },
+  { id: 'chaos-reigns', name: 'Controlled Chaos', description: 'A high-energy band crammed into a tiny room makes legend.', tier: 'rare', multiplier: 1.35, reputationBonus: 8, recipe: 'A high-energy headliner (energy 85+) in a room under 50 capacity.' },
+  { id: 'genre-match', name: 'Perfect Fit', description: "A band that matches the venue's specialty thrives.", tier: 'rare', multiplier: 1.3, reputationBonus: 5, recipe: 'A band on its home turf — punk→club/DIY, metal→warehouse, hardcore→basement.' },
+  { id: 'underground-network', name: 'Scene Unity', description: 'A bill of underground bands supporting each other.', tier: 'rare', multiplier: 1.25, reputationBonus: 6, recipe: '2+ bands, all underground (authenticity 70+, popularity under 30).' },
+  { id: 'basement-magic', name: 'Basement Magic', description: 'Nothing says real like a low ceiling and one working outlet.', tier: 'rare', multiplier: 1.25, reputationBonus: 6, recipe: 'Your headliner at 80+ authenticity in a Basement or House show.' },
+  { id: 'hometown-heroes', name: 'Hometown Heroes', description: 'Local support packs the room.', tier: 'common', multiplier: 1.2, reputationBonus: 3, recipe: 'A band playing a venue in its own hometown.' },
+  { id: 'real-artist', name: 'Authentic Experience', description: 'Featuring a real underground artist.', tier: 'common', multiplier: 1.15, reputationBonus: 7, recipe: 'Any real artist on the bill.' },
+  { id: 'bar-boost', name: 'Thirsty Crowd', description: 'An older crowd at a bar venue drinks the place dry.', tier: 'common', multiplier: 1.15, reputationBonus: 0, recipe: 'A draw (popularity 40+, not youth-crew) at a venue with a bar — pays in cash.' },
+  { id: 'basement-democracy', name: 'Basement Democracy', description: 'A deep bill of true believers crammed into one tiny basement.', tier: 'rare', multiplier: 1.2, reputationBonus: 8, recipe: '3+ bands, all 75+ authenticity, in a Basement/House under 75 capacity.' },
+  { id: 'vinyl-revival', name: 'Skipped Record Store', description: 'A live recording rig in a dive where physical media still moves.', tier: 'common', multiplier: 1.15, reputationBonus: 4, recipe: 'Owned recording gear at a Dive Bar or Punk Club, headliner 60+ authenticity.' },
+  { id: 'underground-rescue', name: 'Scene Savior', description: 'A high-energy band rebuilding a forgotten corner of the city.', tier: 'rare', multiplier: 1.25, reputationBonus: 12, recipe: 'A high-energy band (85+) in a low-scene-strength neighborhood.' },
+  { id: 'diy-purist', name: 'DIY Purist', description: 'A deep, ultra-authentic, low-popularity bill in a raw DIY room.', tier: 'rare', multiplier: 1.28, reputationBonus: 9, recipe: '2+ bands, all 85+ authenticity and under 50 popularity, in a raw room.' },
+  { id: 'genre-riot', name: 'Genre Riot', description: 'Three-plus bands of one genre crammed into a small room.', tier: 'common', multiplier: 1.22, reputationBonus: 7, recipe: '3+ bands of the SAME genre, in a room under 150 capacity.' },
+  { id: 'sweat-equity', name: 'Sweat Equity', description: 'A high-energy headliner in a tiny room with no security.', tier: 'rare', multiplier: 1.3, reputationBonus: 10, recipe: 'A high-energy headliner (85+) in a tiny room (<60) with no security.' },
 ];

@@ -12,10 +12,14 @@ interface ComboViewModel {
   description: string;
   tier: Tier;
   discovered: boolean;
+  multiplier: number;
+  reputationBonus: number;
+  recipe: string;
 }
 
 export const SynergyView: React.FC = () => {
   const [filter, setFilter] = useState<'all' | 'discovered'>('all');
+  const [expanded, setExpanded] = useState<string | null>(null); // tap-to-reveal recipe
   // The single canonical discovery namespace (persisted + idempotent). Combos
   // are recorded here by TurnResolutionEngine.executeShow as they fire.
   const discoveredIds = useGameStore((s) => s.discoveredSynergies);
@@ -26,6 +30,9 @@ export const SynergyView: React.FC = () => {
     description: c.description,
     tier: c.tier,
     discovered: discoveredIds.includes(c.id),
+    multiplier: c.multiplier,
+    reputationBonus: c.reputationBonus,
+    recipe: c.recipe,
   }));
   const discoveredSynergies = allSynergies.filter((s) => s.discovered);
   const undiscoveredCount = allSynergies.length - discoveredSynergies.length;
@@ -161,6 +168,9 @@ export const SynergyView: React.FC = () => {
                       return (
                         <div
                           key={synergy.id}
+                          onClick={() => isDiscovered && setExpanded(expanded === synergy.id ? null : synergy.id)}
+                          role={isDiscovered ? 'button' : undefined}
+                          aria-expanded={isDiscovered ? expanded === synergy.id : undefined}
                           style={{
                             backgroundColor: getTierFill(synergy.tier),
                             border: `2px solid ${getTierHex(synergy.tier)}`,
@@ -168,6 +178,7 @@ export const SynergyView: React.FC = () => {
                             padding: '12px',
                             opacity: isDiscovered ? 1 : 0.6,
                             boxShadow: 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814',
+                            cursor: isDiscovered ? 'pointer' : 'default',
                             transition: 'none'
                           }}
                         >
@@ -189,9 +200,23 @@ export const SynergyView: React.FC = () => {
                               </h4>
 
                               {isDiscovered ? (
-                                <p style={{ fontSize: '12px', color: '#b9b3d6', margin: 0, lineHeight: 1.5 }}>
-                                  {synergy.description}
-                                </p>
+                                <>
+                                  <p style={{ fontSize: '12px', color: '#b9b3d6', margin: 0, lineHeight: 1.5 }}>
+                                    {synergy.description}
+                                  </p>
+                                  {expanded === synergy.id && (
+                                    <div style={{ marginTop: '8px', fontSize: '11px', lineHeight: 1.6 }}>
+                                      <div style={{ color: '#3ad17e' }}>
+                                        +{Math.round((synergy.multiplier - 1) * 100)}% crowd
+                                        {synergy.reputationBonus > 0 && <span style={{ color: '#ffd23f' }}> · +{synergy.reputationBonus} ★ rep</span>}
+                                      </div>
+                                      <div style={{ color: '#b9b3d6', marginTop: '4px' }}><span style={{ color: '#6f6796' }}>How: </span>{synergy.recipe}</div>
+                                    </div>
+                                  )}
+                                  <div style={{ fontSize: '9px', color: '#6f6796', marginTop: '6px' }}>
+                                    {expanded === synergy.id ? '▲ hide' : '▼ how it fires'}
+                                  </div>
+                                </>
                               ) : (
                                 <p style={{ fontSize: '12px', color: '#6f6796', fontStyle: 'italic', margin: 0 }}>
                                   Find the right band + venue pairing to discover this synergy…
