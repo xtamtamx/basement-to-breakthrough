@@ -183,14 +183,24 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
         .pixel-main-menu {
           position: relative;
           min-height: 100vh;
+          min-height: 100dvh;
           background: linear-gradient(180deg, #0a0814 0%, #160b28 48%, #24123f 100%);
           display: flex;
           align-items: center;
           justify-content: center;
-          overflow: hidden;
+          /* Scroll rather than clip — a short landscape viewport must never hide
+             the title or buttons outright. */
+          overflow-x: hidden;
+          overflow-y: auto;
           font-family: 'Press Start 2P', ui-monospace, monospace;
           -webkit-font-smoothing: none;
-          padding: 40px 20px;
+          /* Respect the notch / Dynamic Island / home indicator. On the iPhone in
+             landscape these insets are on the LEFT/RIGHT edges, so pad all four. */
+          padding:
+            max(24px, env(safe-area-inset-top))
+            max(20px, env(safe-area-inset-right))
+            max(24px, env(safe-area-inset-bottom))
+            max(20px, env(safe-area-inset-left));
         }
 
         .sky { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
@@ -282,8 +292,22 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
           .menu-content { padding: 20px 16px; }
         }
         @media (max-height: 700px) {
-          .game-title { margin-bottom: 26px; }
-          .menu-content { margin-bottom: 10vh; }
+          .game-title { margin-bottom: 22px; }
+          .menu-content { margin-bottom: 8vh; }
+        }
+        /* Landscape phones: a very short viewport (~360–430px tall, as the game is
+           landscape-locked on device). Drop the upward float entirely, shrink the
+           title stack, shorten + dim the skyline, and hide the footer so the title
+           AND every button fit on screen without clipping. */
+        @media (max-height: 540px) {
+          .menu-content { margin-bottom: 0; padding: 8px 12px; max-width: 460px; }
+          .game-title { margin-bottom: 12px; }
+          .title-text { font-size: 20px; letter-spacing: 1px; }
+          .subtitle-text { font-size: 30px; margin-top: 2px; }
+          .tagline { font-size: 7px; margin: 8px 0 0; line-height: 1.5; }
+          .menu-buttons { gap: 9px; margin-bottom: 12px; }
+          .skyline { height: 32vh; min-height: 0; opacity: 0.7; }
+          .menu-footer { display: none; }
         }
       `}</style>
     </div>
