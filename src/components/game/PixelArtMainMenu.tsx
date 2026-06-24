@@ -70,6 +70,20 @@ const PixelPerson: React.FC<{ hair: string; shirt: string; skin?: string; pose?:
     );
   };
 
+// Real Fantasy-Dreamland character (24x24 frame in a 96x96 / 4-dir x 4-frame
+// sheet). dir 0 = facing the viewer. The art pack's cohesive style — replaces the
+// procedural rect people on the stage.
+const CHAR_SRC = '/assets/sprites/characters';
+const FdSprite: React.FC<{ id: string; s?: number; dir?: number; className?: string }> = ({ id, s = 3, dir = 0, className }) => (
+  <div aria-hidden className={className} style={{
+    width: 24 * s, height: 24 * s, imageRendering: 'pixelated',
+    backgroundImage: `url(${CHAR_SRC}/FD_Character_${id}_Idle.png)`,
+    backgroundSize: `${96 * s}px ${96 * s}px`,
+    backgroundPosition: `0px ${-dir * 24 * s}px`,
+    backgroundRepeat: 'no-repeat',
+  }} />
+);
+
 export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
   onStartGame, onContinueGame, onSettings, onUpgrades, hasSavedGame = false,
 }) => {
@@ -125,11 +139,11 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
         <div className="backline">
           <Prop name="pa_speaker_stack" s={5} className="prop pa pa-l" />
           <div className="band">
-            <span className="player p-sing"><PixelPerson hair="#ffd23f" shirt="#b3245e" pose="sing" s={6} /></span>
-            <span className="player p-guitar"><PixelPerson hair="#4cc9f0" shirt="#243a6e" pose="play" s={5.4} /></span>
-            <span className="player p-drum"><PixelPerson hair="#7cf06a" shirt="#2a2a35" pose="cheer" s={4.8} /></span>
-            <Prop name="mic_stand" s={5} className="prop mic" />
-            <Prop name="floor_amp" s={4.6} className="prop amp" />
+            <span className="player p-guitar"><FdSprite id="003" s={3.1} /></span>
+            <span className="player p-sing"><FdSprite id="004" s={3.4} /></span>
+            <span className="player p-drum"><FdSprite id="021" s={2.9} /></span>
+            <Prop name="mic_stand" s={4.2} className="prop mic" />
+            <Prop name="floor_amp" s={4.4} className="prop amp" />
           </div>
           <Prop name="pa_speaker_stack" s={5} className="prop pa pa-r" />
           <Prop name="stage_riser" s={9} className="prop riser" />
@@ -233,15 +247,15 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
             linear-gradient(0deg, rgba(255,150,90,.22), transparent 60%);
           opacity: 0; transition: opacity .9s ease .5s; mix-blend-mode: screen; }
         [data-revealed="true"] .floor-glow { opacity: .85; }
-        .backline { position: relative; display: flex; align-items: flex-end; gap: 0; }
-        .riser { position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); z-index: -1; filter: drop-shadow(0 6px 0 rgba(0,0,0,.45)); }
-        .band { display: flex; align-items: flex-end; gap: 8px; padding: 0 6px 10px; }
-        .player { animation: bob 1.4s ease-in-out infinite; }
-        .p-guitar { animation-delay: .2s; } .p-drum { animation-delay: .4s; }
+        .backline { position: relative; display: flex; align-items: flex-end; justify-content: center; gap: 22px; }
+        .riser { position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); z-index: 0; filter: drop-shadow(0 6px 0 rgba(0,0,0,.45)); }
+        .band { position: relative; z-index: 2; display: flex; align-items: flex-end; gap: 16px; padding: 0 18px 10px; }
+        .player { position: relative; z-index: 2; animation: bob 1.4s ease-in-out infinite; }
+        .p-sing { animation-delay: .15s; } .p-drum { animation-delay: .4s; }
         @keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-3px)} }
-        .pa { align-self: flex-end; filter: drop-shadow(0 5px 0 rgba(0,0,0,.4)); }
-        .mic { position: absolute; left: 4px; bottom: 8px; }
-        .amp { position: absolute; right: 8px; bottom: 8px; }
+        .pa { align-self: flex-end; z-index: 1; filter: drop-shadow(0 5px 0 rgba(0,0,0,.4)); }
+        .mic { position: absolute; left: 50%; transform: translateX(-50%); bottom: 4px; z-index: 3; }
+        .amp { position: absolute; right: -18px; bottom: 6px; z-index: 1; }
 
         /* ---- crowd ---- */
         .crowd { position: absolute; left: 0; right: 0; bottom: 6%; height: 22%; z-index: 5; pointer-events: none; }

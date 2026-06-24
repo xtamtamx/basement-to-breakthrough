@@ -1,0 +1,1 @@
+Drop your purchased asset pack(s) in this folder (unzipped is best, but zips are fine too). Tell Claude 'done' and it'll catalog everything and propose an art plan.
