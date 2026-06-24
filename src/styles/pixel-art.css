@@ -1,8 +1,7 @@
 /* SNES JRPG Pixel Art Theme */
 
-/* Import pixel fonts */
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@400;700&display=swap');
+/* Pixel + display fonts are now bundled locally — see src/styles/fonts.css
+ * (the old Google Fonts @import did not load offline in the native WebView). */
 
 /* Base pixel art styles */
 :root {

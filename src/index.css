@@ -1,4 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;700&display=swap');
+/* Bebas Neue is bundled locally (src/styles/fonts.css). Inter + JetBrains Mono
+ * stay on the CDN as a progressive enhancement for the web build; offline/native
+ * they fall back to system-ui / ui-monospace, fine for body + mono text. */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;700&display=swap');
 @import './styles/gameUI.css';
 @tailwind base;
 @tailwind components;

@@ -20,10 +20,17 @@
     <!-- Android specific -->
     <meta name="mobile-web-app-capable" content="yes" />
     
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <!-- Pixel + display fonts ship in the app bundle (offline-first; the native
+         WebView can't rely on a CDN). Preload the hero pixel font so the splash +
+         title render in it immediately, with no flash of system monospace. -->
+    <link rel="preload" href="/fonts/pressstart2p.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/fonts/bebasneue.woff2" as="font" type="font/woff2" crossorigin>
+    <style>
+      @font-face {
+        font-family: 'Press Start 2P'; font-style: normal; font-weight: 400;
+        font-display: block; src: url('/fonts/pressstart2p.woff2') format('woff2');
+      }
+    </style>
     
     <!-- Prevent text selection on mobile -->
     <style>

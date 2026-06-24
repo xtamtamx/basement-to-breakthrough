@@ -1,0 +1,27 @@
+/* Locally-bundled fonts. The native app is offline-first and served from the
+ * capacitor:// scheme, where the old Google Fonts `@import` did NOT reliably load
+ * — so the pixel typeface silently fell back to system monospace on-device (a big
+ * reason the title looked wrong). Shipping the woff2 in the app bundle makes the
+ * identity render instantly, offline, every launch. Files live in /public/fonts.
+ */
+@font-face {
+  font-family: 'Press Start 2P';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/pressstart2p.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Bebas Neue';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/bebasneue.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Oswald';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/oswald.woff2') format('woff2');
+}

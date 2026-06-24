@@ -1,5 +1,6 @@
 import { createRoot } from 'react-dom/client'
 import { MotionConfig } from 'framer-motion'
+import './styles/fonts.css'
 import './index.css'
 import './styles/pixel-art.css'
 import './styles/glassmorphism.css'
