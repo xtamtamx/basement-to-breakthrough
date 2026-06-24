@@ -81,6 +81,8 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
           </>
         )}
         {!tier.outdoor && <div className="wall" />}
+        <div className="floor" />
+        <div className="wallbase" />
         {/* back-wall DIY dressing */}
         <Prop name="poster_wall" s={3.4} className="prop poster" />
         <Prop name="flyer_pole" s={3.2} className="prop flyerpole" />
@@ -95,17 +97,17 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
       <div className="stage">
         <div className="spotlight" />
         <div className="backline">
-          <Prop name="pa_speaker_stack" s={5} className="prop pa pa-l" />
+          <Prop name="pa_speaker_stack" s={4.4} className="prop pa pa-l" />
           <div className="band">
-            <span className="player p-guitar"><FdSprite id="003" s={3.1} /></span>
-            <span className="player p-sing"><FdSprite id="004" s={3.4} /></span>
-            <span className="player p-drum"><FdSprite id="021" s={2.9} /></span>
-            <Prop name="mic_stand" s={4.2} className="prop mic" />
-            <Prop name="floor_amp" s={4.4} className="prop amp" />
+            <span className="player p-guitar"><FdSprite id="003" s={3} /></span>
+            <span className="player p-sing"><FdSprite id="004" s={3.3} /></span>
+            <span className="player p-drum"><FdSprite id="021" s={2.8} /></span>
+            <Prop name="mic_stand" s={4} className="prop mic" />
+            <Prop name="floor_amp" s={4} className="prop amp" />
           </div>
-          <Prop name="pa_speaker_stack" s={5} className="prop pa pa-r" />
-          <Prop name="stage_riser" s={9} className="prop riser" />
+          <Prop name="pa_speaker_stack" s={4.4} className="prop pa pa-r" />
         </div>
+        <div className="stage-platform"><span className="stage-edge" /></div>
       </div>
 
       {/* ---- CROWD (foreground, backlit by the floor wash) ---- */}
@@ -177,13 +179,30 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
           opacity: 0; transition: opacity 0.6s ease 0.1s;
         }
         [data-revealed="true"] .wall { opacity: 1; }
+        /* the room's floor + the shadowed seam where it meets the back wall */
+        .floor {
+          position: absolute; left: 0; right: 0; bottom: 0; height: 27%; z-index: 1;
+          background:
+            repeating-linear-gradient(90deg, rgba(0,0,0,.10) 0 1px, transparent 1px 26px),
+            repeating-linear-gradient(0deg, rgba(0,0,0,.13) 0 1px, transparent 1px 8px),
+            linear-gradient(180deg, #3b2a20 0%, #30221a 55%, #241712 100%);
+          opacity: 0; transition: opacity .6s ease .1s;
+        }
+        [data-revealed="true"] .floor { opacity: 1; }
+        .wallbase { position: absolute; left: 0; right: 0; bottom: 27%; height: 14px; z-index: 1; pointer-events: none;
+          background: linear-gradient(180deg, rgba(0,0,0,0), rgba(0,0,0,.5)); opacity: 0; transition: opacity .6s ease .1s; }
+        [data-revealed="true"] .wallbase { opacity: 1; }
+        [data-outdoor="true"] .floor { background:
+          repeating-linear-gradient(0deg, rgba(0,0,0,.10) 0 1px, transparent 1px 7px),
+          linear-gradient(180deg, #6a4636 0%, #4a3022 100%); }
+        [data-outdoor="true"] .wallbase { display: none; }
         .dusk-stars span { position: absolute; width: 2px; height: 2px; background: #fff; opacity: .8; animation: twinkle 3s ease-in-out infinite; }
         @keyframes twinkle { 0%,100%{opacity:.2} 50%{opacity:.95} }
         .fest-skyline { position: absolute; left: 0; right: 0; bottom: 28%; width: 100%; height: 34vh; image-rendering: pixelated; opacity: .9; }
 
         .prop { position: absolute; image-rendering: pixelated; pointer-events: none; }
-        .poster { bottom: 38%; left: 7%; opacity: 0; transition: opacity .5s ease .3s; filter: drop-shadow(0 4px 0 rgba(0,0,0,.4)); }
-        .flyerpole { bottom: 30%; right: 9%; opacity: 0; transition: opacity .5s ease .4s; }
+        .poster { bottom: 50%; left: 6%; opacity: 0; transition: opacity .5s ease .3s; filter: drop-shadow(0 3px 0 rgba(0,0,0,.4)); }
+        .flyerpole { bottom: 23%; right: 7%; opacity: 0; transition: opacity .5s ease .4s; }
         [data-revealed="true"] .poster, [data-revealed="true"] .flyerpole { opacity: 1; }
         [data-outdoor="true"] .poster, [data-outdoor="true"] .flyerpole { display: none; }
 
@@ -193,38 +212,41 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
         [data-revealed="true"] .lights-row { transform: translateY(0); }
         .lights { flex: 0 0 auto; }
 
-        /* ---- stage ---- */
-        .stage { position: absolute; left: 0; right: 0; bottom: 8%; z-index: 2; display: flex; justify-content: center; align-items: flex-end; pointer-events: none; }
-        .spotlight { position: absolute; bottom: -20%; left: 50%; transform: translateX(-50%); width: 80%; height: 170%;
-          background: radial-gradient(58% 82% at 50% 100%, color-mix(in srgb, var(--accent) 60%, transparent) 0%, transparent 72%);
+        /* ---- stage: band on a raised platform at the back of the room ---- */
+        .stage { position: absolute; left: 0; right: 0; bottom: 25%; z-index: 3;
+          display: flex; flex-direction: column; align-items: center; justify-content: flex-end; pointer-events: none; }
+        .spotlight { position: absolute; bottom: -30%; left: 50%; transform: translateX(-50%); width: 60%; height: 150%;
+          background: radial-gradient(52% 76% at 50% 88%, color-mix(in srgb, var(--accent) 52%, transparent) 0%, transparent 70%);
           opacity: 0; transition: opacity .9s ease .5s; mix-blend-mode: screen; }
         [data-revealed="true"] .spotlight { opacity: 1; }
-        .floor-glow { position: absolute; left: 0; right: 0; bottom: 0; height: 42%; z-index: 4; pointer-events: none;
-          background:
-            radial-gradient(90% 120% at 50% 100%, color-mix(in srgb, var(--accent) 38%, transparent) 0%, transparent 68%),
-            linear-gradient(0deg, rgba(255,150,90,.22), transparent 60%);
+        .floor-glow { position: absolute; left: 0; right: 0; bottom: 20%; height: 16%; z-index: 2; pointer-events: none;
+          background: radial-gradient(46% 100% at 50% 100%, color-mix(in srgb, var(--accent) 28%, transparent) 0%, transparent 72%);
           opacity: 0; transition: opacity .9s ease .5s; mix-blend-mode: screen; }
-        [data-revealed="true"] .floor-glow { opacity: .85; }
-        .backline { position: relative; display: flex; align-items: flex-end; justify-content: center; gap: 22px; }
-        .riser { position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); z-index: 0; filter: drop-shadow(0 6px 0 rgba(0,0,0,.45)); }
-        .band { position: relative; z-index: 2; display: flex; align-items: flex-end; gap: 16px; padding: 0 18px 10px; }
+        [data-revealed="true"] .floor-glow { opacity: .7; }
+        .backline { position: relative; display: flex; align-items: flex-end; justify-content: center; gap: 12px; z-index: 2; }
+        .stage-platform { position: relative; width: clamp(170px, 30%, 290px); height: clamp(15px, 3.6vh, 24px); margin-top: -3px;
+          background: linear-gradient(180deg, #4a3526 0%, #38271b 55%, #281a11 100%);
+          border-top: 3px solid #5e4430; box-shadow: 0 4px 0 rgba(0,0,0,.4); }
+        .stage-edge { position: absolute; left: -3%; right: -3%; top: 100%; height: 7px;
+          background: linear-gradient(180deg, #190f08, rgba(0,0,0,0)); }
+        .band { position: relative; z-index: 2; display: flex; align-items: flex-end; gap: 13px; padding: 0 16px 2px; }
         .player { position: relative; z-index: 2; animation: bob 1.4s ease-in-out infinite; }
         .p-sing { animation-delay: .15s; } .p-drum { animation-delay: .4s; }
         @keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-3px)} }
-        .pa { align-self: flex-end; z-index: 1; filter: drop-shadow(0 5px 0 rgba(0,0,0,.4)); }
-        .mic { position: absolute; left: 50%; transform: translateX(-50%); bottom: 4px; z-index: 3; }
-        .amp { position: absolute; right: -18px; bottom: 6px; z-index: 1; }
+        .pa { align-self: flex-end; z-index: 1; filter: drop-shadow(0 3px 0 rgba(0,0,0,.4)); }
+        .mic { position: absolute; left: 50%; transform: translateX(-50%); bottom: 2px; z-index: 3; }
+        .amp { position: absolute; right: -14px; bottom: 2px; z-index: 1; }
 
         /* ---- crowd ---- */
-        .crowd { position: absolute; left: 0; right: 0; bottom: 6%; height: 22%; z-index: 5; pointer-events: none; }
+        .crowd { position: absolute; left: 0; right: 0; bottom: 1%; height: 23%; z-index: 5; pointer-events: none; }
         .fan { position: absolute; transform-origin: bottom; animation: jump 0.7s ease-in-out infinite;
           opacity: 0; transition: opacity .4s ease; }
         [data-revealed="true"] .fan { opacity: 1; }
         @keyframes jump { 0%,100%{transform:translateY(0)} 45%{transform:translateY(-5px)} }
 
-        .crates { bottom: 7%; left: 4%; z-index: 6; opacity:0; transition:opacity .5s ease .5s; }
-        .keg { bottom: 7%; left: 12%; z-index: 6; opacity:0; transition:opacity .5s ease .55s; }
-        .gcase { bottom: 7%; right: 5%; z-index: 6; opacity:0; transition:opacity .5s ease .6s; }
+        .crates { bottom: 3%; left: 3%; z-index: 6; opacity:0; transition:opacity .5s ease .5s; }
+        .keg { bottom: 3%; left: 11%; z-index: 6; opacity:0; transition:opacity .5s ease .55s; }
+        .gcase { bottom: 3%; right: 3%; z-index: 6; opacity:0; transition:opacity .5s ease .6s; }
         [data-revealed="true"] .crates, [data-revealed="true"] .keg, [data-revealed="true"] .gcase { opacity: 1; }
 
         .haze { position: absolute; inset: 0; z-index: 7; pointer-events: none;
@@ -290,8 +312,8 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
           .menu-col { flex: 0 0 auto; max-width: 300px; }
           .menu-buttons { gap: 10px; }
           .menu-footer { display: none; }
-          .stage { bottom: 4%; }
-          .crowd { bottom: 2%; height: 26%; }
+          .stage { bottom: 25%; right: 34%; }
+          .crowd { bottom: 1%; height: 23%; }
         }
 
         @media (prefers-reduced-motion: reduce) {
