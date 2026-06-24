@@ -729,7 +729,13 @@ function planTown(districts: District[], venues: Venue[], roofMix: BuildingKey[]
 const WALKER_HAIR = ['#f72585', '#4cc9f0', '#7cf06a', '#ffd23f', '#b072e0', '#ff7a4d'];
 const WALKER_SHIRT = ['#1f2430', '#2a2a35', '#3a2a3f', '#26303a', '#33283a'];
 const WALKER_SKIN = ['#e0b58a', '#c98a5a', '#8a5a3a', '#f0c9a0'];
-interface Walker { x: number; y: number; tx: number; ty: number; ptx: number; pty: number; ntx: number; nty: number; hair: string; shirt: string; skin: string; speed: number; phase: number }
+// Real townsfolk: a roster of Fantasy Dreamland characters (24x24 cells in a 96x96
+// 4-dir x 4-frame walk sheet). Distinct, on-style picks; walkers cycle through them.
+const WALKER_CHARS = ['001', '002', '004', '007', '009', '011', '012', '015', '016', '020', '022', '024'];
+const CHAR_SRC = '/assets/sprites/characters';
+const CHAR_CELL = 24;            // sheet cell size
+const CHAR_DRAW = 30;            // on-map draw size (px) — visible, town-scaled
+interface Walker { x: number; y: number; tx: number; ty: number; ptx: number; pty: number; ntx: number; nty: number; hair: string; shirt: string; skin: string; speed: number; phase: number; ci: number; dir: number }
 function pickNextTile(w: Walker, walkable: Set<string>): void {
   const cands = [[1, 0], [-1, 0], [0, 1], [0, -1]]
     .map(([dx, dy]) => ({ tx: w.tx + dx, ty: w.ty + dy }))
@@ -743,9 +749,28 @@ function pickNextTile(w: Walker, walkable: Set<string>): void {
   const next = finalPool[Math.floor(Math.random() * finalPool.length)];
   w.ptx = w.tx; w.pty = w.ty; w.ntx = next.tx; w.nty = next.ty;
 }
-function drawPerson(ctx: CanvasRenderingContext2D, w: Walker): void {
+function drawPerson(ctx: CanvasRenderingContext2D, w: Walker, imgs?: HTMLImageElement[]): void {
   const x = Math.round(w.x);
   const y = Math.round(w.y);
+  // Real character sprite (once its sheet has loaded).
+  const img = imgs && imgs[w.ci];
+  if (img && img.complete && img.naturalWidth) {
+    // soft contact shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.20)';
+    ctx.beginPath();
+    ctx.ellipse(x, y + 1, CHAR_DRAW * 0.22, CHAR_DRAW * 0.09, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // row = facing direction (down/left/right/up), col = walk frame from the cycle
+    const row = w.dir & 3;
+    const col = ((Math.floor(w.phase / 1.6) % 4) + 4) % 4;
+    const prev = ctx.imageSmoothingEnabled;
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(img, col * CHAR_CELL, row * CHAR_CELL, CHAR_CELL, CHAR_CELL,
+      x - CHAR_DRAW / 2, y - CHAR_DRAW + 3, CHAR_DRAW, CHAR_DRAW);
+    ctx.imageSmoothingEnabled = prev;
+    return;
+  }
+  // Procedural fallback (rect person) until the sheet loads.
   const walk = Math.sin(w.phase);
   const bob = walk > 0 ? -1 : 0;
   const headTop = y - 9 + bob;
@@ -1315,12 +1340,22 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
 
   useEffect(() => { loadAllSheets().then(setSheets).catch(console.error); }, []);
 
+  // Townsfolk character sheets (loaded once; drawPerson blits a frame when ready).
+  const charImgsRef = useRef<HTMLImageElement[]>([]);
+  useEffect(() => {
+    charImgsRef.current = WALKER_CHARS.map((id) => {
+      const im = new Image();
+      im.src = `${CHAR_SRC}/FD_Character_${id}.png`;
+      return im;
+    });
+  }, []);
+
   useEffect(() => {
     const { list } = walkable;
     const swList = list.filter((t) => isSidewalk(t.tx, t.ty));
     const spawn = swList.length ? swList : list;
     if (spawn.length === 0) { walkersRef.current = []; return; }
-    const count = Math.max(14, Math.min(32, Math.floor(spawn.length / 6)));
+    const count = Math.max(18, Math.min(40, Math.floor(spawn.length / 5)));
     const ws: Walker[] = [];
     for (let i = 0; i < count; i++) {
       const t = spawn[Math.floor(Math.random() * spawn.length)];
@@ -1328,6 +1363,7 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
         x: (t.tx + 0.5) * TILE, y: (t.ty + 0.9) * TILE, tx: t.tx, ty: t.ty, ptx: t.tx, pty: t.ty, ntx: t.tx, nty: t.ty,
         hair: WALKER_HAIR[i % WALKER_HAIR.length], shirt: WALKER_SHIRT[i % WALKER_SHIRT.length], skin: WALKER_SKIN[i % WALKER_SKIN.length],
         speed: 11 + Math.random() * 9, phase: Math.random() * 6.28,
+        ci: Math.floor(Math.random() * WALKER_CHARS.length), dir: 0,
       });
     }
     walkersRef.current = ws;
@@ -1498,7 +1534,11 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
           const dx = tgx - w.x, dy = tgy - w.y;
           const d = Math.hypot(dx, dy);
           if (d < 0.7) { w.tx = w.ntx; w.ty = w.nty; pickNextTile(w, wset); }
-          else { const v = w.speed * dt; w.x += (dx / d) * v; w.y += (dy / d) * v; w.phase += v * 0.6; }
+          else {
+            const v = w.speed * dt; w.x += (dx / d) * v; w.y += (dy / d) * v; w.phase += v * 0.6;
+            // facing → FD sheet row: down 0, left 1, right 2, up 3
+            w.dir = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 1 : 2) : (dy < 0 ? 3 : 0);
+          }
         });
       }
 
@@ -1508,7 +1548,7 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
       walkersRef.current.forEach((w) => depth.push({ y: w.y, w }));
       depth.sort((a, b) => a.y - b.y);
       depth.forEach((d) => {
-        if (d.w) drawPerson(ctx, d.w);
+        if (d.w) drawPerson(ctx, d.w, charImgsRef.current);
         else if (d.o!.kind === 'building') drawBuildingObj(ctx, sheets, d.o!.b);
         else if (d.o!.kind === 'tree') drawTreeObj(ctx, sheets, d.o!.t);
         else if (d.o!.kind === 'prop') drawPropObj(ctx, sheets, d.o!.p);
