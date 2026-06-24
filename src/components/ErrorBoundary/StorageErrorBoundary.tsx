@@ -42,7 +42,25 @@ export class StorageErrorBoundary extends Component<Props, State> {
         console.warn('Could not estimate storage:', error);
       }
     }
+    // safeZustandStorage SWALLOWS quota-exceeded writes (returns false, never
+    // throws) and dispatches this event. A React error boundary can't catch a
+    // non-throw, so without this listener the player gets NO warning and silently
+    // loses progress. Surface the recovery UI (export / clear) instead.
+    window.addEventListener('storage-error', this.onStorageError);
   }
+
+  override componentWillUnmount() {
+    window.removeEventListener('storage-error', this.onStorageError);
+  }
+
+  private onStorageError = () => {
+    if (this.state.hasError) return; // already showing the recovery UI
+    haptics.error();
+    this.setState({
+      hasError: true,
+      error: new Error('Storage write failed — your device may be out of space. Export your save, then clear space.'),
+    });
+  };
 
   static getDerivedStateFromError(error: Error): Partial<State> | null {
     // Detect storage-related errors
@@ -148,7 +166,15 @@ export class StorageErrorBoundary extends Component<Props, State> {
             })
           );
         }
-        
+
+        // Unregister the service worker too — otherwise the still-registered SW
+        // re-serves its precached (possibly corrupt) bundle after the reload,
+        // undermining the "clean slate" the user asked for.
+        if ('serviceWorker' in navigator) {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map(r => r.unregister()));
+        }
+
         haptics.success();
         window.location.reload();
       } catch (error) {

@@ -163,15 +163,28 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
       }
     }
     resolvingRef.current = true;
-    const results = await turnResolutionEngine.executeFullTurn();
-    setTurnResults(results);
-    setShowTurnResults(true);
-    // Announce the new state to screen readers (the visual HUD/modal say nothing
-    // to assistive tech otherwise).
-    const s = useGameStore.getState();
-    setAnnouncement(`Turn resolved. Money $${s.money}, reputation ${s.reputation}, ${s.fans} fans, stress ${s.stress} of 100.`);
-    // Outcome-tiered audio + haptics are owned by TurnResultsModal's open effect
-    // (single source of truth — this block used to double-fire the same stinger).
+    try {
+      const results = await turnResolutionEngine.executeFullTurn();
+      setTurnResults(results);
+      setShowTurnResults(true);
+      // Announce the new state to screen readers (the visual HUD/modal say nothing
+      // to assistive tech otherwise).
+      const s = useGameStore.getState();
+      setAnnouncement(`Turn resolved. Money $${s.money}, reputation ${s.reputation}, ${s.fans} fans, stress ${s.stress} of 100.`);
+      // Outcome-tiered audio + haptics are owned by TurnResultsModal's open effect
+      // (single source of truth — this block used to double-fire the same stinger).
+    } catch (err) {
+      // A throw mid-resolution must NEVER brick the run. Without this, resolvingRef
+      // would stay true forever and every future "Next Turn" tap would no-op.
+      console.error('Turn resolution failed:', err);
+      haptics.error();
+      setAnnouncement('Something went wrong resolving the turn. Your progress is safe — please try again.');
+      window.alert('Something went wrong resolving the turn.\nYour progress is safe — please try the turn again.');
+    } finally {
+      // Always clear the guard so the player can retry (success path also clears
+      // it on results-close, which is now redundant but harmless).
+      resolvingRef.current = false;
+    }
   };
 
   // The run-end screen appears once the player closes the final turn's results
