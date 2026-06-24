@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { PixelButton } from '@components/ui/PixelButton';
 import { haptics } from '@utils/mobile';
+import { getTitleTier } from '@game/world/titleStage';
 
 interface PixelArtMainMenuProps {
   onStartGame: () => void;
@@ -10,361 +11,321 @@ interface PixelArtMainMenuProps {
   hasSavedGame?: boolean;
 }
 
-// Drifting pixel music notes for the menu backdrop (CSS-animated, transform-only).
-const NOTES = [
-  { glyph: '♪', left: '10%', size: '18px', dur: 13, delay: 0, color: '#f72585' },
-  { glyph: '♫', left: '24%', size: '14px', dur: 17, delay: 3, color: '#4cc9f0' },
-  { glyph: '♩', left: '44%', size: '22px', dur: 15, delay: 6, color: '#ffd23f' },
-  { glyph: '♬', left: '63%', size: '16px', dur: 19, delay: 2, color: '#c77dff' },
-  { glyph: '♪', left: '80%', size: '14px', dur: 14, delay: 8, color: '#3ad17e' },
-  { glyph: '♫', left: '91%', size: '18px', dur: 21, delay: 5, color: '#f72585' },
-];
+const PROP_BASE = '/title/props';
+// native px sizes of the source sprites (see public/title/props)
+const PROP_SIZE: Record<string, [number, number]> = {
+  string_lights: [28, 14], stage_riser: [20, 12], floor_amp: [16, 14],
+  pa_speaker_stack: [16, 26], mic_stand: [12, 24], poster_wall: [18, 20],
+  guitar_case: [12, 20], keg_cooler: [12, 16], crate_stack: [16, 18], flyer_pole: [14, 26],
+};
 
-// A few twinkling stars up in the night sky.
-const STARS = [
-  { l: '8%', t: '14%', d: 0 }, { l: '22%', t: '26%', d: 1.4 }, { l: '37%', t: '10%', d: 0.7 },
-  { l: '54%', t: '20%', d: 2.1 }, { l: '69%', t: '12%', d: 1.0 }, { l: '83%', t: '28%', d: 0.4 },
-  { l: '91%', t: '17%', d: 1.8 }, { l: '15%', t: '36%', d: 2.4 }, { l: '78%', t: '40%', d: 0.9 },
-  { l: '46%', t: '34%', d: 1.6 }, { l: '30%', t: '8%', d: 3.0 }, { l: '62%', t: '30%', d: 2.7 },
-];
+/** A real game prop sprite, nearest-neighbour scaled. */
+const Prop: React.FC<{ name: keyof typeof PROP_SIZE; s?: number; className?: string; style?: React.CSSProperties }> =
+  ({ name, s = 4, className, style }) => {
+    const [w, h] = PROP_SIZE[name];
+    return (
+      <img src={`${PROP_BASE}/${name}.png`} alt="" aria-hidden className={className}
+        style={{ width: w * s, height: h * s, imageRendering: 'pixelated', ...style }} />
+    );
+  };
 
-// The neon-town skyline (the hero backdrop). Each building: x, width, height (px up
-// from the 220 baseline). `marquee` = the venue with a glowing sign.
-const BUILDINGS = [
-  { x: -4, w: 40, h: 64 }, { x: 38, w: 28, h: 104 }, { x: 68, w: 34, h: 78 },
-  { x: 104, w: 24, h: 132 }, { x: 130, w: 44, h: 70, marquee: true }, { x: 176, w: 30, h: 110 },
-  { x: 208, w: 38, h: 86 }, { x: 248, w: 26, h: 150 }, { x: 276, w: 40, h: 72 },
-  { x: 318, w: 30, h: 116 }, { x: 350, w: 32, h: 80 },
-];
-const WIN = ['#ffd23f', '#f72585', '#4cc9f0', '#3ad17e'];
-// Marquee bulb chase — 7 bulbs along the sign's top edge.
-const BULBS = [0, 1, 2, 3, 4, 5, 6];
+// Cute pixel person — mirrors the town walkers' drawPerson() recipe. `cheer` raises
+// the arms (audience), `play`/`sing` are the band poses.
+const HAIR = ['#f72585', '#4cc9f0', '#7cf06a', '#ffd23f', '#b072e0', '#ff7a4d', '#ff5da2', '#5ad1c4'];
+const PixelPerson: React.FC<{ hair: string; shirt: string; skin?: string; pose?: 'cheer' | 'idle' | 'play' | 'sing'; s?: number; silhouette?: boolean }> =
+  ({ hair, shirt, skin = '#e0b58a', pose = 'idle', s = 4, silhouette = false }) => {
+    const body = silhouette ? '#0c0a16' : shirt;
+    const head = silhouette ? '#15101f' : skin;
+    const legs = silhouette ? '#0c0a16' : '#2a2330';
+    const armsUp = pose === 'cheer';
+    return (
+      <svg width={7 * s} height={13 * s} viewBox="0 0 7 13" style={{ imageRendering: 'pixelated', display: 'block', overflow: 'visible' }} aria-hidden>
+        {/* legs */}
+        <rect x="2" y="9" width="1" height="3" fill={legs} />
+        <rect x="4" y="9" width="1" height="3" fill={legs} />
+        {/* arms */}
+        {armsUp ? (
+          <>
+            <rect x="0" y="3" width="1" height="3" fill={body} />
+            <rect x="6" y="3" width="1" height="3" fill={body} />
+            <rect x="0" y="2" width="1" height="1" fill={head} />
+            <rect x="6" y="2" width="1" height="1" fill={head} />
+          </>
+        ) : (
+          <>
+            <rect x="0" y="6" width="1" height="3" fill={body} />
+            <rect x="6" y="6" width="1" height="3" fill={body} />
+          </>
+        )}
+        {/* torso */}
+        <rect x="1" y="5" width="5" height="4" fill={body} />
+        {/* head + hair */}
+        <rect x="2" y="2" width="3" height="3" fill={head} />
+        <rect x="2" y="1" width="3" height="1" fill={hair} />
+        <rect x="3" y="0" width="1" height="1" fill={hair} />
+        {/* sing: a little mic dot; play: a guitar slab */}
+        {pose === 'sing' && <rect x="6" y="4" width="1" height="2" fill="#cfd3df" />}
+        {pose === 'play' && <rect x="5" y="6" width="3" height="2" fill="#7a3df0" />}
+      </svg>
+    );
+  };
 
 export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
-  onStartGame,
-  onContinueGame,
-  onSettings,
-  onUpgrades,
-  hasSavedGame = false,
+  onStartGame, onContinueGame, onSettings, onUpgrades, hasSavedGame = false,
 }) => {
-  // Reveal state machine. The static boot splash (index.html) is crossfading out
-  // right now; flipping `revealed` a beat after mount fires the CSS "power-on" of
-  // the marquee + the staggered rise of the skyline and buttons, so the splash
-  // reads as morphing INTO the title rather than a hard cut.
   const [revealed, setRevealed] = useState(false);
+  const tier = getTitleTier();
+
   useEffect(() => {
-    const t = requestAnimationFrame(() => setTimeout(() => setRevealed(true), 80));
-    return () => cancelAnimationFrame(t);
+    const id = requestAnimationFrame(() => setTimeout(() => setRevealed(true), 80));
+    return () => cancelAnimationFrame(id);
   }, []);
 
+  // Crowd: deterministic colours by index so it's stable across renders.
+  const crowd = Array.from({ length: tier.crowd }, (_, i) => ({
+    hair: HAIR[i % HAIR.length],
+    // spread along the front, two rows for bigger tiers
+    left: 2 + ((i * 137) % 94),
+    row: i % 2,
+    delay: (i % 7) * 0.13,
+    s: 4.8 + ((i * 7) % 5) * 0.4,
+  }));
+
   return (
-    <div className="pixel-main-menu" data-revealed={revealed}>
-      {/* Night sky: moon + twinkling stars */}
-      <div className="sky">
-        <div className="moon" />
-        {STARS.map((s, i) => (
-          <span key={i} className="star" style={{ left: s.l, top: s.t, animationDelay: `${s.d}s` }} />
-        ))}
+    <div className="pixel-main-menu" data-revealed={revealed} data-tier={tier.id} data-outdoor={tier.outdoor}>
+      {/* ---- BACKDROP: interior wall (basement→theater) or dusk sky + skyline (festival) ---- */}
+      <div className="backdrop">
+        {tier.outdoor && (
+          <>
+            <div className="dusk-stars">{Array.from({ length: 14 }, (_, i) => <span key={i} style={{ left: `${(i * 67) % 100}%`, top: `${(i * 23) % 38}%`, animationDelay: `${(i % 5) * 0.6}s` }} />)}</div>
+            <svg className="fest-skyline" viewBox="0 0 375 120" preserveAspectRatio="none" aria-hidden>
+              {Array.from({ length: 16 }, (_, i) => {
+                const w = 18 + (i % 4) * 6, x = i * 24 - 4, h = 40 + ((i * 37) % 70);
+                return <g key={i}><rect x={x} y={120 - h} width={w} height={h} fill="#120c22" />
+                  {Array.from({ length: 8 }, (_, j) => (j + i) % 2 === 0 && <rect key={j} x={x + 3 + (j % 3) * 5} y={120 - h + 6 + j * 6} width="3" height="4" fill={['#ffd23f', '#f72585', '#4cc9f0'][j % 3]} opacity="0.85" />)}
+                </g>;
+              })}
+            </svg>
+          </>
+        )}
+        {!tier.outdoor && <div className="wall" />}
+        {/* back-wall DIY dressing */}
+        <Prop name="poster_wall" s={3.4} className="prop poster" />
+        <Prop name="flyer_pole" s={3.2} className="prop flyerpole" />
       </div>
 
-      {/* Neon-town skyline silhouette at the horizon */}
-      <svg className="skyline" viewBox="0 0 375 220" preserveAspectRatio="none" aria-hidden="true">
-        <defs>
-          <linearGradient id="glow" x1="0" y1="1" x2="0" y2="0">
-            <stop offset="0%" stopColor="#ff2e8f" stopOpacity="0.72" />
-            <stop offset="45%" stopColor="#9b2566" stopOpacity="0.22" />
-            <stop offset="100%" stopColor="#7b1d52" stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        <rect x="0" y="20" width="375" height="200" fill="url(#glow)" />
-        {BUILDINGS.map((b, bi) => {
-          const top = 220 - b.h;
-          const cells: React.ReactNode[] = [];
-          for (let wy = top + 7; wy < 217; wy += 8) {
-            for (let wx = b.x + 4; wx < b.x + b.w - 4; wx += 7) {
-              if ((wx + wy + bi) % 2 === 0) {
-                cells.push(
-                  <rect key={`${wx}-${wy}`} x={wx} y={wy} width="4" height="5"
-                    fill={WIN[(wx + wy) % WIN.length]} opacity="0.92" />,
-                );
-              }
-            }
-          }
-          return (
-            <g key={bi}>
-              <rect x={b.x} y={top} width={b.w} height={b.h} fill="#0b0918" />
-              <rect x={b.x} y={top} width={b.w} height="2" fill="#6a45a8" />
-              <rect x={b.x} y={top} width="2" height={b.h} fill="#3a2360" opacity="0.8" />
-              {cells}
-              {b.marquee && (
-                <>
-                  <rect x={b.x + 4} y={top + 6} width={b.w - 8} height="7" fill="#f72585" />
-                  <rect x={b.x + 4} y={top + 6} width={b.w - 8} height="7" fill="#ff7ab8" opacity="0.5" />
-                  <rect x={b.x + 6} y={top - 2} width="2" height="8" fill="#3a2350" />
-                  <rect x={b.x + b.w - 8} y={top - 2} width="2" height="8" fill="#3a2350" />
-                </>
-              )}
-            </g>
-          );
-        })}
-      </svg>
+      {/* ---- STRING LIGHTS across the top ---- */}
+      <div className="lights-row">
+        {Array.from({ length: 8 }, (_, i) => <Prop key={i} name="string_lights" s={3.4} className="lights" />)}
+      </div>
 
-      {/* Drifting music notes */}
-      <div className="floating-notes">
-        {NOTES.map((n, i) => (
-          <span key={i} className="note"
-            style={{ left: n.left, fontSize: n.size, color: n.color, animationDuration: `${n.dur}s`, animationDelay: `${n.delay}s` }}>
-            {n.glyph}
+      {/* ---- STAGE: spotlight + backline + band ---- */}
+      <div className="stage">
+        <div className="spotlight" />
+        <div className="backline">
+          <Prop name="pa_speaker_stack" s={5} className="prop pa pa-l" />
+          <div className="band">
+            <span className="player p-sing"><PixelPerson hair="#ffd23f" shirt="#b3245e" pose="sing" s={6} /></span>
+            <span className="player p-guitar"><PixelPerson hair="#4cc9f0" shirt="#243a6e" pose="play" s={5.4} /></span>
+            <span className="player p-drum"><PixelPerson hair="#7cf06a" shirt="#2a2a35" pose="cheer" s={4.8} /></span>
+            <Prop name="mic_stand" s={5} className="prop mic" />
+            <Prop name="floor_amp" s={4.6} className="prop amp" />
+          </div>
+          <Prop name="pa_speaker_stack" s={5} className="prop pa pa-r" />
+          <Prop name="stage_riser" s={9} className="prop riser" />
+        </div>
+      </div>
+
+      {/* ---- CROWD (foreground, backlit by the floor wash) ---- */}
+      <div className="floor-glow" />
+      <div className="crowd">
+        {crowd.map((c, i) => (
+          <span key={i} className="fan" style={{ left: `${c.left}%`, bottom: c.row ? '34%' : '0', animationDelay: `${c.delay}s`, zIndex: c.row ? 3 : 4 }}>
+            <PixelPerson hair={c.hair} shirt="#0c0a16" pose="cheer" s={c.s} silhouette />
           </span>
         ))}
       </div>
 
-      <div className="crt-scanlines" />
-      <div className="vignette" />
+      {/* side props */}
+      <Prop name="crate_stack" s={3.4} className="prop crates" />
+      <Prop name="keg_cooler" s={3.4} className="prop keg" />
+      <Prop name="guitar_case" s={3.2} className="prop gcase" />
 
-      {/* Stage: hero + menu. Two columns in landscape, stacked in portrait. */}
+      <div className="haze" />
+
+      {/* ---- LOGO BANNER + MENU ---- */}
       <div className="menu-stage">
         <div className="hero-col">
-          {/* The marquee: a neon venue sign that powers on with the reveal. */}
-          <div className="title-marquee">
-            <div className="marquee-bulbs marquee-bulbs--top">
-              {BULBS.map((b) => <span key={b} className="bulb" style={{ animationDelay: `${b * 0.12}s` }} />)}
-            </div>
+          <div className="banner">
+            <span className="banner-pin pin-l" />
+            <span className="banner-pin pin-r" />
             <h1 className="title-text">SETTLING</h1>
             <h2 className="subtitle-text">UP</h2>
-            <div className="marquee-bulbs marquee-bulbs--bottom">
-              {BULBS.map((b) => <span key={b} className="bulb" style={{ animationDelay: `${b * 0.12 + 0.06}s` }} />)}
-            </div>
           </div>
-          <p className="tagline">From breaking even to breaking through</p>
+          <p className="tagline"><span className="venue">{tier.venue}</span> — {tier.blurb}</p>
         </div>
 
         <div className="menu-col">
           <div className="menu-buttons">
             {hasSavedGame && onContinueGame && (
-              <PixelButton variant="primary" size="lg" fullWidth onClick={() => { haptics.medium(); onContinueGame(); }} icon="▶️">
-                Continue
-              </PixelButton>
+              <PixelButton variant="primary" size="lg" fullWidth onClick={() => { haptics.medium(); onContinueGame(); }} icon="▶️">Continue</PixelButton>
             )}
-            <PixelButton variant={hasSavedGame ? 'secondary' : 'primary'} size="lg" fullWidth onClick={() => { haptics.medium(); onStartGame(); }} icon="🎸">
-              New Game
-            </PixelButton>
+            <PixelButton variant={hasSavedGame ? 'secondary' : 'primary'} size="lg" fullWidth onClick={() => { haptics.medium(); onStartGame(); }} icon="🎸">New Game</PixelButton>
             {onUpgrades && (
-              <PixelButton variant="secondary" size="lg" fullWidth onClick={() => { haptics.light(); onUpgrades(); }} icon="⭐">
-                Scene Cred
-              </PixelButton>
+              <PixelButton variant="secondary" size="lg" fullWidth onClick={() => { haptics.light(); onUpgrades(); }} icon="⭐">Scene Cred</PixelButton>
             )}
             {onSettings && (
-              <PixelButton variant="ghost" size="lg" fullWidth onClick={() => { haptics.light(); onSettings(); }} icon="⚙️">
-                Settings
-              </PixelButton>
+              <PixelButton variant="ghost" size="lg" fullWidth onClick={() => { haptics.light(); onSettings(); }} icon="⚙️">Settings</PixelButton>
             )}
           </div>
-          <div className="menu-footer">
-            <p className="credits">DIY ethics vs. selling out</p>
-            <p className="version">v1.0.0 • Made with ❤ and 🤘</p>
-          </div>
+          <div className="menu-footer"><p className="version">v1.0.0 • Made with ❤ and 🤘</p></div>
         </div>
       </div>
 
+      <div className="crt-scanlines" />
+
       <style>{`
         .pixel-main-menu {
-          position: relative;
-          min-height: 100vh;
-          min-height: 100dvh;
+          position: relative; min-height: 100vh; min-height: 100dvh; overflow: hidden;
+          display: flex; align-items: center; justify-content: center;
+          font-family: 'Press Start 2P', ui-monospace, monospace; -webkit-font-smoothing: none;
+          background: linear-gradient(180deg, #0a0814 0%, #150b27 60%, #1d1338 100%);
+          padding: max(16px, env(safe-area-inset-top)) max(22px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(22px, env(safe-area-inset-left));
+        }
+        .pixel-main-menu[data-outdoor="true"] { background: linear-gradient(180deg, #241140 0%, #5a2b66 42%, #b5556a 78%, #e88a6a 100%); }
+
+        /* ---- backdrop ---- */
+        .backdrop { position: absolute; inset: 0; z-index: 1; overflow: hidden; }
+        .wall {
+          position: absolute; inset: 0;
           background:
-            radial-gradient(120% 80% at 50% -10%, #2a1450 0%, rgba(42,20,80,0) 55%),
-            linear-gradient(180deg, #0a0814 0%, #150b27 50%, #20103a 100%);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          overflow-x: hidden;
-          overflow-y: auto;
-          font-family: 'Press Start 2P', ui-monospace, monospace;
-          -webkit-font-smoothing: none;
-          padding:
-            max(20px, env(safe-area-inset-top))
-            max(28px, env(safe-area-inset-right))
-            max(20px, env(safe-area-inset-bottom))
-            max(28px, env(safe-area-inset-left));
+            repeating-linear-gradient(90deg, rgba(0,0,0,0.18) 0 2px, transparent 2px 46px),
+            repeating-linear-gradient(0deg, rgba(0,0,0,0.22) 0 2px, transparent 2px 24px),
+            linear-gradient(180deg, #2c1d33 0%, #241629 60%, #160e1d 100%);
+          opacity: 0; transition: opacity 0.6s ease 0.1s;
         }
+        [data-revealed="true"] .wall { opacity: 1; }
+        .dusk-stars span { position: absolute; width: 2px; height: 2px; background: #fff; opacity: .8; animation: twinkle 3s ease-in-out infinite; }
+        @keyframes twinkle { 0%,100%{opacity:.2} 50%{opacity:.95} }
+        .fest-skyline { position: absolute; left: 0; right: 0; bottom: 28%; width: 100%; height: 34vh; image-rendering: pixelated; opacity: .9; }
 
-        .sky { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
-        .moon {
-          position: absolute; top: 7%; left: 9%;
-          width: 38px; height: 38px; border-radius: 50%;
-          background: #fff3c4; box-shadow: 0 0 30px 8px rgba(255, 243, 196, 0.4);
-          opacity: 0; transition: opacity 1s ease 0.5s;
-        }
-        .moon::after {
-          content: ''; position: absolute; top: -7px; left: 11px;
-          width: 32px; height: 32px; border-radius: 50%; background: #120a24;
-        }
-        [data-revealed="true"] .moon { opacity: 1; }
-        .star {
-          position: absolute; width: 2px; height: 2px; background: #fff;
-          opacity: 0.85; animation: twinkle 3.2s ease-in-out infinite;
-        }
-        @keyframes twinkle { 0%, 100% { opacity: 0.16; } 50% { opacity: 0.95; } }
+        .prop { position: absolute; image-rendering: pixelated; pointer-events: none; }
+        .poster { bottom: 38%; left: 7%; opacity: 0; transition: opacity .5s ease .3s; filter: drop-shadow(0 4px 0 rgba(0,0,0,.4)); }
+        .flyerpole { bottom: 30%; right: 9%; opacity: 0; transition: opacity .5s ease .4s; }
+        [data-revealed="true"] .poster, [data-revealed="true"] .flyerpole { opacity: 1; }
+        [data-outdoor="true"] .poster, [data-outdoor="true"] .flyerpole { display: none; }
 
-        .skyline {
-          position: absolute; left: 0; right: 0; bottom: 0;
-          width: 100%; height: 42vh; min-height: 180px; max-height: 280px;
-          z-index: 2; pointer-events: none; image-rendering: pixelated;
-          transform: translateY(28px); opacity: 0;
-          transition: transform 0.9s cubic-bezier(0.18,0.9,0.3,1) 0.15s, opacity 0.9s ease 0.15s;
-        }
-        [data-revealed="true"] .skyline { transform: translateY(0); opacity: 1; }
+        /* ---- string lights ---- */
+        .lights-row { position: absolute; top: max(8px, env(safe-area-inset-top)); left: -2%; right: -2%; z-index: 8; display: flex; justify-content: space-between; pointer-events: none;
+          transform: translateY(-120%); transition: transform .7s cubic-bezier(.2,.9,.3,1) .15s; filter: drop-shadow(0 0 7px rgba(255,210,120,.5)); }
+        [data-revealed="true"] .lights-row { transform: translateY(0); }
+        .lights { flex: 0 0 auto; }
 
-        .floating-notes { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 3; }
-        .note {
-          position: absolute; bottom: 20%; opacity: 0;
-          image-rendering: pixelated; text-shadow: 2px 2px 0 #0a0814;
-          animation-name: float-up; animation-iteration-count: infinite; animation-timing-function: linear;
-        }
-        @keyframes float-up {
-          0%   { transform: translateY(0) translateX(0) rotate(0deg); opacity: 0; }
-          12%  { opacity: 0.6; }
-          88%  { opacity: 0.6; }
-          100% { transform: translateY(-86vh) translateX(24px) rotate(12deg); opacity: 0; }
-        }
+        /* ---- stage ---- */
+        .stage { position: absolute; left: 0; right: 0; bottom: 8%; z-index: 2; display: flex; justify-content: center; align-items: flex-end; pointer-events: none; }
+        .spotlight { position: absolute; bottom: -20%; left: 50%; transform: translateX(-50%); width: 80%; height: 170%;
+          background: radial-gradient(58% 82% at 50% 100%, color-mix(in srgb, var(--accent) 60%, transparent) 0%, transparent 72%);
+          opacity: 0; transition: opacity .9s ease .5s; mix-blend-mode: screen; }
+        [data-revealed="true"] .spotlight { opacity: 1; }
+        .floor-glow { position: absolute; left: 0; right: 0; bottom: 0; height: 42%; z-index: 4; pointer-events: none;
+          background:
+            radial-gradient(90% 120% at 50% 100%, color-mix(in srgb, var(--accent) 38%, transparent) 0%, transparent 68%),
+            linear-gradient(0deg, rgba(255,150,90,.22), transparent 60%);
+          opacity: 0; transition: opacity .9s ease .5s; mix-blend-mode: screen; }
+        [data-revealed="true"] .floor-glow { opacity: .85; }
+        .backline { position: relative; display: flex; align-items: flex-end; gap: 0; }
+        .riser { position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); z-index: -1; filter: drop-shadow(0 6px 0 rgba(0,0,0,.45)); }
+        .band { display: flex; align-items: flex-end; gap: 8px; padding: 0 6px 10px; }
+        .player { animation: bob 1.4s ease-in-out infinite; }
+        .p-guitar { animation-delay: .2s; } .p-drum { animation-delay: .4s; }
+        @keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-3px)} }
+        .pa { align-self: flex-end; filter: drop-shadow(0 5px 0 rgba(0,0,0,.4)); }
+        .mic { position: absolute; left: 4px; bottom: 8px; }
+        .amp { position: absolute; right: 8px; bottom: 8px; }
 
-        .crt-scanlines {
-          position: absolute; inset: 0; pointer-events: none; z-index: 6;
-          background: repeating-linear-gradient(0deg, rgba(0,0,0,0.22) 0px, rgba(0,0,0,0.22) 1px, transparent 1px, transparent 3px);
-          opacity: 0.35;
-        }
-        .vignette {
-          position: absolute; inset: 0; pointer-events: none; z-index: 7;
-          background: radial-gradient(135% 115% at 50% 36%, transparent 62%, rgba(6,4,14,0.42) 100%);
-        }
+        /* ---- crowd ---- */
+        .crowd { position: absolute; left: 0; right: 0; bottom: 6%; height: 22%; z-index: 5; pointer-events: none; }
+        .fan { position: absolute; transform-origin: bottom; animation: jump 0.7s ease-in-out infinite;
+          opacity: 0; transition: opacity .4s ease; }
+        [data-revealed="true"] .fan { opacity: 1; }
+        @keyframes jump { 0%,100%{transform:translateY(0)} 45%{transform:translateY(-5px)} }
 
-        /* ---- Stage layout ---- */
-        .menu-stage {
-          position: relative; z-index: 10;
-          width: 100%; max-width: 1000px;
-          display: flex; flex-direction: column; align-items: center; justify-content: center;
-          gap: clamp(18px, 5vh, 44px);
-          padding-bottom: 8vh; /* float above the skyline */
-        }
+        .crates { bottom: 7%; left: 4%; z-index: 6; opacity:0; transition:opacity .5s ease .5s; }
+        .keg { bottom: 7%; left: 12%; z-index: 6; opacity:0; transition:opacity .5s ease .55s; }
+        .gcase { bottom: 7%; right: 5%; z-index: 6; opacity:0; transition:opacity .5s ease .6s; }
+        [data-revealed="true"] .crates, [data-revealed="true"] .keg, [data-revealed="true"] .gcase { opacity: 1; }
+
+        .haze { position: absolute; inset: 0; z-index: 7; pointer-events: none;
+          background: radial-gradient(130% 90% at 50% 36%, transparent 56%, rgba(8,5,16,.5) 100%); }
+
+        /* ---- logo banner + menu ---- */
+        .menu-stage { position: relative; z-index: 10; width: 100%; max-width: 1000px;
+          display: flex; flex-direction: column; align-items: center; gap: clamp(14px,4vh,30px); }
         .hero-col { text-align: center; }
-        .menu-col { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 18px; }
 
-        /* ---- Marquee + title ---- */
-        .title-marquee {
-          position: relative; display: inline-block;
-          padding: clamp(14px, 3vh, 22px) clamp(26px, 6vw, 48px);
-          border: 3px solid rgba(247, 37, 133, 0.65);
-          box-shadow:
-            0 0 0 3px #0a0814,
-            0 0 22px rgba(247, 37, 133, 0.4),
-            inset 0 0 34px rgba(247, 37, 133, 0.1);
-          background: rgba(10, 8, 22, 0.35);
-          opacity: 0.18;
+        .banner {
+          position: relative; display: inline-block; padding: 14px clamp(28px,7vw,60px) 16px;
+          background: linear-gradient(180deg, #fbe9c8 0%, #f3d6a0 100%);
+          color: #2a1020; border-radius: 2px;
+          box-shadow: 0 0 0 3px #3a210f, 0 10px 22px rgba(0,0,0,.5);
+          clip-path: polygon(0 6%, 3% 0, 97% 0, 100% 6%, 100% 88%, 96% 100%, 4% 100%, 0 88%);
+          transform: translateY(-18px) rotate(-1deg); opacity: 0;
+          transition: transform .7s cubic-bezier(.2,1.3,.4,1) .25s, opacity .5s ease .25s;
         }
-        [data-revealed="true"] .title-marquee { animation: power-on 1.1s ease-out forwards; }
-        @keyframes power-on {
-          0% { opacity: 0.18; }
-          8% { opacity: 0.95; } 11% { opacity: 0.28; }
-          16% { opacity: 1; } 20% { opacity: 0.4; }
-          27% { opacity: 1; } 33% { opacity: 0.72; }
-          40% { opacity: 1; } 100% { opacity: 1; }
-        }
+        [data-revealed="true"] .banner { transform: translateY(0) rotate(-1deg); opacity: 1; }
+        .banner-pin { position: absolute; top: -7px; width: 9px; height: 9px; border-radius: 50%;
+          background: radial-gradient(circle at 35% 30%, #ff5da2, #b3245e); box-shadow: 0 0 5px rgba(247,37,133,.8); }
+        .pin-l { left: 10px; } .pin-r { right: 10px; }
 
-        .marquee-bulbs {
-          position: absolute; left: 8px; right: 8px;
-          display: flex; justify-content: space-between; pointer-events: none;
-        }
-        .marquee-bulbs--top { top: -5px; }
-        .marquee-bulbs--bottom { bottom: -5px; }
-        .bulb {
-          width: 6px; height: 6px; border-radius: 50%;
-          background: #ffd23f; box-shadow: 0 0 6px 1px rgba(255, 210, 63, 0.9);
-          animation: bulb-blink 1.1s steps(1, end) infinite;
-        }
-        @keyframes bulb-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        .title-text { margin: 0; line-height: 1; color: #c81e63; text-transform: uppercase;
+          font-size: clamp(17px, 3.6vw, 34px); letter-spacing: clamp(2px,.8vw,6px);
+          text-shadow: 2px 2px 0 #fbe9c8, 3px 3px 0 #7a1540; }
+        .subtitle-text { margin: 2px 0 0; line-height: .95; color: #e23b18; text-transform: uppercase;
+          font-size: clamp(36px, 9vw, 78px); letter-spacing: clamp(3px,1.4vw,10px);
+          text-shadow: 2px 2px 0 #fbe9c8, 4px 4px 0 #7a1540; }
 
-        .title-text {
-          font-size: clamp(20px, 4.6vw, 46px); font-weight: 400; color: #ff4da3;
-          text-transform: uppercase; letter-spacing: clamp(2px, 1vw, 8px);
-          margin: 0; padding: 0; line-height: 1; image-rendering: pixelated;
-          text-shadow:
-            0 0 4px #fff0f7,
-            3px 3px 0 #0a0814,
-            0 0 16px #f72585,
-            0 0 38px rgba(247, 37, 133, 0.8),
-            0 0 74px rgba(247, 37, 133, 0.45);
-        }
-        .subtitle-text {
-          font-size: clamp(48px, 12.5vw, 108px); font-weight: 400; color: #ffe45e;
-          text-transform: uppercase; letter-spacing: clamp(4px, 2vw, 14px);
-          margin: clamp(6px, 1.5vh, 14px) 0 0; line-height: 0.95;
-          text-shadow:
-            0 0 5px #fff7e0,
-            4px 4px 0 #0a0814,
-            0 0 22px #ffd23f,
-            0 0 48px rgba(255, 210, 63, 0.8),
-            0 0 96px rgba(255, 210, 63, 0.45);
-        }
-        [data-revealed="true"] .title-text,
-        [data-revealed="true"] .subtitle-text { animation: neon-flicker 6s ease-in-out 1.2s infinite; }
-        @keyframes neon-flicker {
-          0%, 100% { filter: brightness(1); }
-          48% { filter: brightness(1); } 50% { filter: brightness(1.12); } 52% { filter: brightness(1); }
-          92% { filter: brightness(0.92); } 94% { filter: brightness(1.14); } 96% { filter: brightness(1); }
-        }
+        .tagline { margin: clamp(12px,3vh,20px) 0 0; font-family: 'Bebas Neue','Oswald','Press Start 2P',sans-serif;
+          font-size: clamp(12px,1.7vw,17px); letter-spacing: 2px; color: #f0d9b8; text-transform: uppercase;
+          text-shadow: 1px 1px 2px #000; opacity: 0; transition: opacity .6s ease .7s; }
+        [data-revealed="true"] .tagline { opacity: .96; }
+        .venue { color: var(--accent); }
 
-        .tagline {
-          font-family: 'Bebas Neue', 'Oswald', 'Press Start 2P', sans-serif;
-          font-size: clamp(13px, 1.8vw, 19px); color: #c9c2e6; letter-spacing: 3px;
-          margin: clamp(14px, 3vh, 26px) 0 0; text-transform: uppercase;
-          opacity: 0; transform: translateY(6px);
-          transition: opacity 0.6s ease 0.7s, transform 0.6s ease 0.7s;
-        }
-        [data-revealed="true"] .tagline { opacity: 0.92; transform: translateY(0); }
-
-        /* ---- Buttons ---- */
-        .menu-buttons { display: flex; flex-direction: column; gap: 14px; }
-        .menu-buttons > * {
-          opacity: 0; transform: translateY(14px);
-          transition: opacity 0.5s ease, transform 0.5s ease;
-        }
+        .menu-col { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 14px; }
+        .menu-buttons { display: flex; flex-direction: column; gap: 13px; }
+        .menu-buttons > * { opacity: 0; transform: translateY(12px); transition: opacity .5s ease, transform .5s ease; }
         [data-revealed="true"] .menu-buttons > * { opacity: 1; transform: translateY(0); }
-        [data-revealed="true"] .menu-buttons > *:nth-child(1) { transition-delay: 0.55s; }
-        [data-revealed="true"] .menu-buttons > *:nth-child(2) { transition-delay: 0.66s; }
-        [data-revealed="true"] .menu-buttons > *:nth-child(3) { transition-delay: 0.77s; }
-        [data-revealed="true"] .menu-buttons > *:nth-child(4) { transition-delay: 0.88s; }
-
-        .menu-footer { text-align: center; margin-top: 4px;
-          opacity: 0; transition: opacity 0.6s ease 1s; }
+        [data-revealed="true"] .menu-buttons > *:nth-child(1){transition-delay:.55s}
+        [data-revealed="true"] .menu-buttons > *:nth-child(2){transition-delay:.65s}
+        [data-revealed="true"] .menu-buttons > *:nth-child(3){transition-delay:.75s}
+        [data-revealed="true"] .menu-buttons > *:nth-child(4){transition-delay:.85s}
+        .menu-footer { text-align: center; opacity: 0; transition: opacity .6s ease 1s; }
         [data-revealed="true"] .menu-footer { opacity: 1; }
-        .credits { font-size: 8px; color: #8079a6; margin: 0 0 9px; letter-spacing: 1px; line-height: 1.7; text-transform: uppercase; }
-        .version { font-size: 7px; color: #6f6796; margin: 0; letter-spacing: 1px; line-height: 1.7; text-transform: uppercase; }
+        .version { font-size: 7px; color: #b9a9c9; margin: 0; letter-spacing: 1px; text-transform: uppercase; text-shadow: 1px 1px 1px #000; }
 
-        /* ---- Landscape (the device default): two columns so the hero can be huge ---- */
+        .crt-scanlines { position: absolute; inset: 0; z-index: 11; pointer-events: none;
+          background: repeating-linear-gradient(0deg, rgba(0,0,0,.16) 0 1px, transparent 1px 3px); opacity: .3; }
+
+        /* accent var per tier */
+        .pixel-main-menu { --accent: #f72585; }
+        .pixel-main-menu[data-tier="dive"] { --accent: #4cc9f0; }
+        .pixel-main-menu[data-tier="theater"] { --accent: #ffd23f; }
+        .pixel-main-menu[data-tier="festival"] { --accent: #3ad17e; }
+
+        /* ---- landscape: hero + menu side by side; show fills the floor ---- */
         @media (min-aspect-ratio: 13/10) and (max-height: 600px) {
-          .menu-stage {
-            flex-direction: row; align-items: center; justify-content: center;
-            gap: clamp(28px, 6vw, 72px); padding-bottom: 16vh;
-          }
-          .hero-col { flex: 0 1 auto; }
-          .menu-col { flex: 0 0 auto; max-width: 320px; }
-          .menu-buttons { gap: 11px; }
-          .tagline { margin-top: 14px; }
-          /* The skyline is the bottom hero in landscape; the footer would overlap
-             its lit windows and become unreadable, so drop it here (kept in portrait). */
+          .menu-stage { flex-direction: row; align-items: center; justify-content: space-between; gap: clamp(20px,4vw,56px); padding: 0 clamp(8px,3vw,40px); }
+          .hero-col { flex: 1 1 auto; }
+          .menu-col { flex: 0 0 auto; max-width: 300px; }
+          .menu-buttons { gap: 10px; }
           .menu-footer { display: none; }
-        }
-
-        /* Portrait phones / narrow web: tighten the title a touch. */
-        @media (max-width: 560px) and (min-aspect-ratio: 10/13) {
-          .menu-col { max-width: 340px; }
+          .stage { bottom: 4%; }
+          .crowd { bottom: 2%; height: 26%; }
         }
 
         @media (prefers-reduced-motion: reduce) {
-          .skyline, .title-marquee, .tagline, .menu-buttons > *, .menu-footer, .moon { transition: none !important; animation: none !important; opacity: 1 !important; transform: none !important; }
-          .title-marquee { opacity: 1 !important; }
-          .note, .bulb, .star { animation: none !important; }
+          .wall,.poster,.flyerpole,.lights-row,.spotlight,.fan,.crates,.keg,.gcase,.banner,.tagline,.menu-buttons>*,.menu-footer { transition: none !important; opacity: 1 !important; transform: none !important; }
+          .player,.fan,.dusk-stars span { animation: none !important; }
+          .lights-row { transform: none !important; }
         }
       `}</style>
     </div>
