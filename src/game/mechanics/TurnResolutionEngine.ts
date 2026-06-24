@@ -14,7 +14,6 @@ import { useGameStore } from '@stores/gameStore';
 import { synergyManager, SynergyTriggerResult } from './SynergyManager';
 import { synergyEngine } from './SynergyEngine';
 import { eventCardSystem } from './EventCardSystem';
-import { walkerSystem } from './WalkerSystem';
 import { dayJobSystem } from './DayJobSystem';
 import { difficultySystem } from './DifficultySystem';
 import { showPromotionSystem } from './ShowPromotionSystem';
@@ -192,6 +191,10 @@ export class TurnResolutionEngine {
         const cancelled = this.createRaidedShowResult(scheduledShow.id);
         showResults.push(cancelled);
         store.completeShow(scheduledShow.id, cancelled);
+        // A police shutdown IS a disaster — count it for objectives too (run-stats
+        // already counts it via incidentOccurred), so zero_disasters / "Flawless Run"
+        // can't be falsely awarded. Not a played show, so objDelta.shows is left alone.
+        objDelta.incidents += 1;
         return;
       }
 
@@ -213,13 +216,9 @@ export class TurnResolutionEngine {
       const band = store.allBands.find((b) => b.id === scheduledShow.bandId);
       if (venue) activeDistrictIds.add(venue.location.id);
       if (venue && band) {
-        if (store.venues[0]) {
-          walkerSystem.createMusicianWalker(band, store.venues[0], venue);
-        }
         const success =
           result.financials.profit > 0 &&
           result.attendance > venue.capacity * 0.5;
-        walkerSystem.spawnShowResultWalkers(venue, result.attendance, success);
 
         // Scene politics: the bill's faction(s) react to how the show went, and
         // the bands on the bill drift closer/apart. Persist the new standings so
@@ -424,6 +423,9 @@ export class TurnResolutionEngine {
     useGameStore.setState({
       lastTurnResults: showResults,
       runtimeSnapshot: captureRuntimeSnapshot(),
+      // The crisis capacity penalty was a one-turn effect — consumed by the shows
+      // just resolved above, so clear it. Any new crisis drawn below sets its own.
+      eventCapacityPenalty: 0,
     });
 
     return {
@@ -759,8 +761,16 @@ export class TurnResolutionEngine {
         return total + (upgrade.effects.capacity || 0);
       }, 0) || 0;
 
-    const effectiveCapacity = Math.floor(
-      (venue.capacity + upgradeCapacityBonus) * equipmentCapacityBonus,
+    // A crisis event (e.g. police_crackdown) can impose a transient, single-turn
+    // capacity penalty on every venue. It's applied here as an EFFECTIVE reduction
+    // (never written into base capacity) and floored so a room stays bookable.
+    const eventCapacityPenalty = store.eventCapacityPenalty ?? 0;
+    const effectiveCapacity = Math.max(
+      1,
+      Math.floor(
+        (venue.capacity + upgradeCapacityBonus) * equipmentCapacityBonus -
+          eventCapacityPenalty,
+      ),
     );
 
     // Calculate base attendance

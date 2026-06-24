@@ -138,6 +138,12 @@ interface GameStore {
   /** Player standing (-100..100) per faction id; empty = all neutral. Persisted;
    *  the FactionSystem singleton is a stateless calculator hydrated from this. */
   factionStandings: Record<string, number>;
+  /** Transient, single-turn capacity penalty (>=0) applied to ALL venues by a
+   *  crisis event (e.g. police_crackdown). Read at show resolution as an EFFECTIVE
+   *  reduction — never written into base venue capacity — then cleared after the
+   *  turn resolves, so it can't compound a venue toward 0. Mirrors the
+   *  gentrification multiplier pattern. */
+  eventCapacityPenalty: number;
 
   // Discovery state
   discoveredSynergies: string[]; // List of discovered synergy IDs
@@ -751,6 +757,7 @@ const getInitialState = () => ({
   difficulty: Difficulty.NORMAL,
   currentFactionEvent: null,
   factionStandings: {},
+  eventCapacityPenalty: 0,
   districts: initialDistricts,
   venues: [], // Will be loaded lazily
   cities: CITIES,
@@ -1237,14 +1244,17 @@ export const useGameStore = create<GameStore>()(
             });
             if (modifications.stress) s.addStress(modifications.stress);
           } else if (target === 'all_venues' || target === 'random_venue') {
-            const pool = target === 'random_venue' && s.venues.length
-              ? [s.venues[Math.floor(Math.random() * s.venues.length)]]
-              : s.venues;
-            pool.forEach((v) => {
-              if (modifications.capacity !== undefined) {
-                s.updateVenue({ ...v, capacity: Math.max(0, v.capacity + modifications.capacity) });
-              }
-            });
+            // A crisis event's capacity hit (e.g. police_crackdown) is a single-turn
+            // EFFECTIVE penalty read at show resolution — never written into base
+            // venue capacity — so repeat crises can't compound a venue down to 0 /
+            // unbookable. Cleared once the turn resolves; positive deltas pay it back
+            // down. (All authored capacity events target all_venues.)
+            if (modifications.capacity !== undefined) {
+              const capDelta = modifications.capacity;
+              set((state) => ({
+                eventCapacityPenalty: Math.max(0, state.eventCapacityPenalty - capDelta),
+              }));
+            }
           }
         });
 
@@ -1396,6 +1406,9 @@ export const useGameStore = create<GameStore>()(
         pathChoices: state.pathChoices,
         pathAlignment: state.pathAlignment,
         factionStandings: state.factionStandings,
+        // Persisted so a mid-turn save/load (after a crisis event fires, before its
+        // turn resolves) keeps the pending one-turn venue penalty.
+        eventCapacityPenalty: state.eventCapacityPenalty,
         // Don't persist: walkers, lastTurnResults, currentFactionEvent (transient state)
       }),
       // On page refresh, rebuild the run's in-memory singletons from the

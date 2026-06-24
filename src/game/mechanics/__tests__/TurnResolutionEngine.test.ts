@@ -6,7 +6,6 @@ import { GamePhase, VenueType, Genre } from '@game/types';
 // Mock dependencies
 vi.mock('@stores/gameStore');
 vi.mock('../SynergyManager');
-vi.mock('../WalkerSystem');
 vi.mock('../DayJobSystem');
 vi.mock('../DifficultySystem');
 vi.mock('../ShowPromotionSystem');
@@ -20,7 +19,6 @@ import { showPromotionSystem, ScheduledShow, PromotionType } from '../ShowPromot
 import { difficultySystem } from '../DifficultySystem';
 import { dayJobSystem } from '../DayJobSystem';
 import { synergyManager } from '../SynergyManager';
-import { walkerSystem } from '../WalkerSystem';
 import { venueUpgradeSystem } from '../VenueUpgradeSystem';
 import { runManager } from '../RunManager';
 import { metaProgressionManager } from '../MetaProgressionManager';
@@ -175,9 +173,6 @@ describe('TurnResolutionEngine', () => {
     vi.mocked(gentrificationSystem).applyTurnGentrification = vi
       .fn()
       .mockReturnValue({ notices: [] });
-
-    vi.mocked(walkerSystem).createMusicianWalker = vi.fn();
-    vi.mocked(walkerSystem).spawnShowResultWalkers = vi.fn();
 
     vi.mocked(dayJobSystem).processJobIncome = vi.fn().mockReturnValue(null);
 

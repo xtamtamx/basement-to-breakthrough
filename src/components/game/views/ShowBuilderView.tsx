@@ -64,6 +64,7 @@ export const ShowBuilderView: React.FC = () => {
     cities,
     currentCityId,
     factionStandings,
+    eventCapacityPenalty,
   } = useGameStore();
   const currentCity = cities.find((c) => c.id === currentCityId);
   // Only venues the scene has unlocked are bookable (scene-growth ladder).
@@ -133,9 +134,13 @@ export const ShowBuilderView: React.FC = () => {
     const factionAttMult = Math.max(0.92, Math.min(1.08, 1 + (fMods.fanBonus - 1) * 0.4));
     const factionMoneyMult = 1 + Math.max(-0.05, Math.min(0.05, fMods.moneyModifier));
     const factionAttPct = Math.round((factionAttMult - 1) * 100);
-    const baseAttendance = Math.floor(selectedVenue.capacity * (avgPopularity / 100) * venueBonus);
+    // A live crisis (e.g. police_crackdown) shrinks every room's effective capacity
+    // THIS turn — mirror the engine's floored reduction so the preview doesn't
+    // oversell a room the cops just capped.
+    const effectiveCapacity = Math.max(1, selectedVenue.capacity - (eventCapacityPenalty ?? 0));
+    const baseAttendance = Math.floor(effectiveCapacity * (avgPopularity / 100) * venueBonus);
     const expectedAttendance = Math.floor(baseAttendance * billMultiplier * totalMultiplier * sceneFit.multiplier * lineupChem.mult * factionAttMult);
-    const finalAttendance = Math.min(expectedAttendance, selectedVenue.capacity);
+    const finalAttendance = Math.min(expectedAttendance, effectiveCapacity);
 
     // Revenue includes bar sales where the venue has a bar (matches the engine),
     // times the faction money modifier.
@@ -159,7 +164,7 @@ export const ShowBuilderView: React.FC = () => {
       venueCost,
       bandCost,
       netRevenue,
-      capacity: selectedVenue.capacity
+      capacity: effectiveCapacity
     };
   };
 
