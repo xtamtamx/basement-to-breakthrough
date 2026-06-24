@@ -5,6 +5,7 @@ import {
   progressionPathSystem
 } from '../../../game/mechanics/ProgressionPathSystem';
 import { useGameStore } from '@stores/gameStore';
+import { captureRuntimeSnapshot } from '@game/persistence/runtimeSnapshot';
 import { haptics } from '@utils/mobile';
 import { gameAudio } from '@utils/gameAudio';
 
@@ -26,6 +27,10 @@ export const ProgressionView: React.FC = () => {
   const handlePathChoice = (path: ProgressionPath) => {
     if (progressionPathSystem.choosePath(path)) {
       haptics.success();
+      // Persist the singleton change NOW — choosePath mutates an off-store
+      // singleton; without re-snapshotting, a refresh reverts the path while any
+      // granted resources stay spent (re-collectable = exploit).
+      useGameStore.setState({ runtimeSnapshot: captureRuntimeSnapshot() });
     }
   };
 
@@ -39,6 +44,9 @@ export const ProgressionView: React.FC = () => {
     if (selectedChoice && progressionPathSystem.makeChoice(selectedChoice.id)) {
       haptics.success();
       gameAudio.pathChoice(); // the sellout↔DIY fork deserves a decision sting
+      // makeChoice grants persisted resources AND mutates the singleton — snapshot
+      // now so a refresh can't revert the choice while keeping the granted bonus.
+      useGameStore.setState({ runtimeSnapshot: captureRuntimeSnapshot() });
       setShowConfirmation(false);
       setSelectedChoice(null);
     }

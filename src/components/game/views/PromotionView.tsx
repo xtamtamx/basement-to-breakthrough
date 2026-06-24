@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useGameStore } from '@stores/gameStore';
 import { showPromotionSystem, PromotionType, PROMOTION_ACTIVITIES } from '@game/mechanics/ShowPromotionSystem';
+import { captureRuntimeSnapshot } from '@game/persistence/runtimeSnapshot';
 import { haptics } from '@utils/mobile';
 import { Megaphone, Radio, Globe, Users, TrendingUp, Clock, Star, Handshake } from 'lucide-react';
 
@@ -27,6 +28,10 @@ export const PromotionView: React.FC<PromotionViewProps> = ({ onNavigate }) => {
 
     if (showPromotionSystem.promoteShow(showId, promotionType)) {
       haptics.success();
+      // promoteShow debits persisted money but mutates only the in-memory show
+      // (hype/effectiveness). Snapshot now, or a refresh reverts the promotion the
+      // player just paid for while the money stays gone.
+      useGameStore.setState({ runtimeSnapshot: captureRuntimeSnapshot() });
     } else {
       haptics.error();
     }

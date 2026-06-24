@@ -51,6 +51,13 @@ export function captureRuntimeSnapshot(): RuntimeSnapshot {
 }
 
 export function restoreRuntimeSnapshot(snap?: RuntimeSnapshot | null): void {
+  // Reset run-scoped singletons FIRST so a save-load never INHERITS the previously
+  // active run's state. loadGame (unlike startNewRun) doesn't reset these, and an
+  // older save's snapshot can lack the progression/bandRelationships fields — the
+  // guarded restores below would then silently keep the prior run's path + co-billing
+  // drift. (On page-refresh rehydrate these singletons are already empty → no-op.)
+  progressionPathSystem.reset();
+  bandRelationships.clearRelationships();
   if (!snap) return;
   runManager.restoreRun(snap.run);
 
