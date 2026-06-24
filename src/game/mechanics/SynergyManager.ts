@@ -288,7 +288,11 @@ export const STARTER_SYNERGIES: Synergy[] = [
     trigger: 'SHOW_END',
     effects: [
       { type: 'REPUTATION_PERCENT', value: 20, description: '+20% rep when calm' },
-      { type: 'STRESS_PERCENT', value: -25, description: '-25% stress when calm' },
+      // STRESS_FLAT (not STRESS_PERCENT) — the engine only consumes the flat type,
+      // so the percent variant was inert. A flat -10, gated by already being calm,
+      // keeps the "stay level-headed" loop and sits between the other two relief
+      // synergies (-5 / -15).
+      { type: 'STRESS_FLAT', value: -10, description: '-10 stress when calm' },
     ],
     condition: { type: 'MAX_STRESS', value: 40, description: 'Stress below 40' },
     icon: '🧃',

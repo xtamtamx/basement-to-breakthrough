@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useGameStore } from "@stores/gameStore";
 import { isCityUnlocked, unlockRequirement } from "@game/world/cityUnlocks";
 import { getCitySignature } from "@game/world/citySignatures";
@@ -43,8 +43,13 @@ export const TourView: React.FC<TourViewProps> = ({ onNavigate }) => {
 
   const [dest, setDest] = useState<City | null>(null);
   const [offer, setOffer] = useState<TravelOffer[]>([]);
+  // Re-entry guard: pick() applies resources + switches city, so a same-tick
+  // double-tap would double-apply. setDest is async so the `if (!dest)` check
+  // can't catch it; this ref does. Reset each time a fresh destination is opened.
+  const committing = useRef(false);
 
   const openTravel = (city: City) => {
+    committing.current = false;
     setDest(city);
     setOffer(rollTravelOffer({ reputation }));
     haptics.light();
@@ -56,7 +61,8 @@ export const TourView: React.FC<TourViewProps> = ({ onNavigate }) => {
   };
 
   const pick = (mode: TravelOffer) => {
-    if (!dest) return;
+    if (!dest || committing.current) return;
+    committing.current = true;
     // Leaving town cancels any shows booked here (deposits refunded) so they
     // don't dangle against this city's venues after you've gone.
     if (bookedShowCount > 0) cancelAllScheduledShows();

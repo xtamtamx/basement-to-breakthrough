@@ -132,7 +132,11 @@ export class DifficultySystem {
     
     // Band drama — the band takes the next turn off (can't be booked)
     if (Math.random() < difficulty.bandDrama && state.rosterBandIds.length > 1) {
-      const band = state.allBands.find(b => state.rosterBandIds.includes(b.id));
+      // Pick a RANDOM roster band (like the police-crackdown venue pick above) —
+      // .find() always returned the first band in allBands order, so drama hit the
+      // same band every time.
+      const rosterBands = state.allBands.filter(b => state.rosterBandIds.includes(b.id));
+      const band = rosterBands[Math.floor(Math.random() * rosterBands.length)];
       if (band) {
         this.unavailableBandIds.add(band.id);
         events.push(`${band.name} is having internal conflicts — they're sitting out next turn.`);

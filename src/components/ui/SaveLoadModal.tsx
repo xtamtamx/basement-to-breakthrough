@@ -163,6 +163,7 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ isOpen, onClose })
           }}>Save & Load</h2>
           <button
             onClick={onClose}
+            aria-label="Close save and load"
             style={{
               width: '32px',
               height: '32px',
@@ -437,6 +438,7 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ isOpen, onClose })
                           </button>
                           <button
                             onClick={() => handleDelete(save.id)}
+                            aria-label={`Delete save ${save.name}`}
                             style={{
                               width: '44px',
                               height: '44px',

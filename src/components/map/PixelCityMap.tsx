@@ -1238,9 +1238,12 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
 
   // Landmarks (Pillar B) derive from alignment + in-run discoveries + cross-run
   // meta progress; their names are city-flavored. Recompute when those change.
+  // metaProgress is read into a scalar and kept in deps so cross-run progress
+  // (banked at run-end without unmounting the map) actually refreshes landmarks.
+  const metaProgress = metaProgressValue(metaProgressionManager.getProgression());
   const landmarks = useMemo(
-    () => getCityLandmarks(districts, { diyPoints, discoveredCount, cityId: currentCityId, metaProgress: metaProgressValue(metaProgressionManager.getProgression()) }),
-    [districts, diyPoints, discoveredCount, currentCityId],
+    () => getCityLandmarks(districts, { diyPoints, discoveredCount, cityId: currentCityId, metaProgress }),
+    [districts, diyPoints, discoveredCount, currentCityId, metaProgress],
   );
 
   // diyPoints + district state (scene/gentrification) drive which establishments
