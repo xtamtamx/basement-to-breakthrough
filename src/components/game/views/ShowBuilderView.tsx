@@ -6,6 +6,7 @@ import { audio } from '@utils/simpleAudio';
 import { synergyEngine } from '@game/mechanics/SynergyEngine';
 import { computeLineupChemistry } from '@game/mechanics/lineupChemistry';
 import { bandFactionBadge } from '@game/world/factionDisplay';
+import { factionSystem } from '@game/mechanics/FactionSystem';
 import { difficultySystem } from '@game/mechanics/DifficultySystem';
 import { cityGenreFit } from '@game/world/citySynergy';
 import { isVenueUnlocked } from '@game/world/venueProgression';
@@ -62,6 +63,7 @@ export const ShowBuilderView: React.FC = () => {
     scheduleShow,
     cities,
     currentCityId,
+    factionStandings,
   } = useGameStore();
   const currentCity = cities.find((c) => c.id === currentCityId);
   // Only venues the scene has unlocked are bookable (scene-growth ladder).
@@ -123,12 +125,21 @@ export const ShowBuilderView: React.FC = () => {
     // Bill chemistry — how the bands get along (faction affinity + co-billing
     // drift). Pure, so this preview matches what executeShow applies.
     const lineupChem = computeLineupChemistry(selectedBands);
+    // Faction show-modifier (your standing with the headliner's faction). Computed
+    // PURELY from store standings via the same getShowModifiersFrom + clamps the
+    // engine uses, so the previewed crowd/payoff matches resolution (identity at
+    // neutral standings → no early-game effect).
+    const fMods = factionSystem.getShowModifiersFrom(selectedBands[0], factionStandings);
+    const factionAttMult = Math.max(0.92, Math.min(1.08, 1 + (fMods.fanBonus - 1) * 0.4));
+    const factionMoneyMult = 1 + Math.max(-0.05, Math.min(0.05, fMods.moneyModifier));
+    const factionAttPct = Math.round((factionAttMult - 1) * 100);
     const baseAttendance = Math.floor(selectedVenue.capacity * (avgPopularity / 100) * venueBonus);
-    const expectedAttendance = Math.floor(baseAttendance * billMultiplier * totalMultiplier * sceneFit.multiplier * lineupChem.mult);
+    const expectedAttendance = Math.floor(baseAttendance * billMultiplier * totalMultiplier * sceneFit.multiplier * lineupChem.mult * factionAttMult);
     const finalAttendance = Math.min(expectedAttendance, selectedVenue.capacity);
 
-    // Revenue includes bar sales where the venue has a bar (matches the engine).
-    const grossRevenue = finalAttendance * ticketPrice + (selectedVenue.hasBar ? finalAttendance * 5 : 0);
+    // Revenue includes bar sales where the venue has a bar (matches the engine),
+    // times the faction money modifier.
+    const grossRevenue = Math.floor((finalAttendance * ticketPrice + (selectedVenue.hasBar ? finalAttendance * 5 : 0)) * factionMoneyMult);
     // Costs: the scaled venue rent PLUS the per-band fee paid to every act on the
     // bill. The old preview omitted band fees, so it promised a profit on bills
     // that actually lose money — the most misleading number in the game.
@@ -142,6 +153,7 @@ export const ShowBuilderView: React.FC = () => {
       reputationBonus,
       sceneFit,
       lineupChem,
+      factionAttPct,
       expectedAttendance: finalAttendance,
       grossRevenue,
       venueCost,
@@ -586,6 +598,19 @@ export const ShowBuilderView: React.FC = () => {
                   {preview.lineupChem.conflicts.map((c, i) => (
                     <div key={i} className="snes-pixel" style={{ fontSize: '7px', color: '#b9b3d6', letterSpacing: 0, lineHeight: 1.6 }}>{c}</div>
                   ))}
+                </div>
+              )}
+
+              {/* Faction standing — your headliner's scene pulls (or repels) a crowd */}
+              {preview.factionAttPct !== 0 && (
+                <div className="snes-panel-inset" style={{
+                  border: `2px solid ${preview.factionAttPct >= 0 ? '#c77dff' : '#ff5c57'}`,
+                  padding: '8px 10px',
+                  marginBottom: '16px',
+                }}>
+                  <div className="snes-pixel" style={{ fontSize: '8px', color: preview.factionAttPct >= 0 ? '#c77dff' : '#ff5c57', letterSpacing: 0 }}>
+                    🎭 Faction Standing {preview.factionAttPct >= 0 ? '+' : ''}{preview.factionAttPct}% crowd
+                  </div>
                 </div>
               )}
 

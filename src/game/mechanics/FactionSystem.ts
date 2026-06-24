@@ -189,8 +189,10 @@ class FactionSystem {
     return Math.max(0, Math.min(100, alignment));
   }
 
-  // Get faction modifiers for a show
-  getShowModifiers(band: Band, _venue: Venue): FactionModifiers {
+  // Get faction modifiers for a show from an EXPLICIT standings map — pure, no
+  // singleton read. Shared by executeShow and the ShowBuilder preview so the
+  // previewed crowd/payoff matches what resolution actually applies.
+  getShowModifiersFrom(band: Band, standings: Record<string, number>): FactionModifiers {
     const combinedModifiers: FactionModifiers = {
       fanBonus: 1,
       reputationMultiplier: 1,
@@ -201,9 +203,9 @@ class FactionSystem {
 
     // Check each faction's influence
     this.factions.forEach((faction, factionId) => {
-      const standing = this.playerStandings.get(factionId) || 0;
+      const standing = standings[factionId] || 0;
       const alignment = this.calculateBandAlignment(band, factionId);
-      
+
       // Apply modifiers based on standing and alignment
       if (standing > 50 && alignment > 60) {
         // Strong positive relationship
@@ -219,6 +221,11 @@ class FactionSystem {
     });
 
     return combinedModifiers;
+  }
+
+  // Get faction modifiers for a show, reading the live singleton standings.
+  getShowModifiers(band: Band, _venue: Venue): FactionModifiers {
+    return this.getShowModifiersFrom(band, Object.fromEntries(this.playerStandings));
   }
 
   // Update standings based on show results
