@@ -54,7 +54,11 @@ interface PixelCityMapProps {
 // and a master toggle (perf escape hatch for low-end devices).
 const BLOOM_ON = true;
 const BLOOM_SCALE = 3;
-const BLOOM_STRENGTH = 0.85;
+// Subtle daytime glow only. The map is a BRIGHT cozy town, not a neon-night city —
+// a strong additive bloom over bright grass/pavement hazes the whole scene out
+// ("washed out"). Keep it low + use a tight bright-pass (scene^4) so only real
+// lights/neon signs glow.
+const BLOOM_STRENGTH = 0.34;
 
 // --- World layout (in 16px tiles) -------------------------------------------
 const WORLD_W = 60;
@@ -1695,6 +1699,7 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
           l2ctx.globalCompositeOperation = 'multiply';
           l2ctx.drawImage(lo, 0, 0);
           l2ctx.drawImage(lo, 0, 0);
+          l2ctx.drawImage(lo, 0, 0); // scene^4 — crush mid-bright pavement, keep only real lights
           l2ctx.globalCompositeOperation = 'source-over';
           // 3. add it back, upscaled (= blurred) and additive
           ctx.globalCompositeOperation = 'lighter';
