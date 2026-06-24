@@ -618,7 +618,10 @@ export class TurnResolutionEngine {
       const totalFans = showResults.reduce((sum, r) => sum + r.fansGained, 0);
 
       if (pctMoney > 0) store.addMoney(Math.floor((totalRevenue * pctMoney) / 100));
-      if (pctRep > 0) store.addReputation(Math.floor((totalRep * pctRep) / 100));
+      // Guard the BASE too: a net-negative rep turn (small crowd + incidents) would
+      // otherwise turn a positive REPUTATION_PERCENT instinct into a rep PENALTY.
+      // (Money/fans bases are never negative, so they only need the multiplier guard.)
+      if (pctRep > 0 && totalRep > 0) store.addReputation(Math.floor((totalRep * pctRep) / 100));
       if (pctFans > 0) store.addFans(Math.floor((totalFans * pctFans) / 100));
     }
 

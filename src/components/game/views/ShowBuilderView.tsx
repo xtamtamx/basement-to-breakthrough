@@ -177,9 +177,11 @@ export const ShowBuilderView: React.FC = () => {
   const handleBookShow = () => {
     if (!canBook) return;
 
-    // Create show object
+    // Create show object. Timestamp + random suffix so two shows booked in the same
+    // millisecond can't collide — the id is the key in the promotion Map, the
+    // completeShow filter, and the snapshot dedup, all of which assume uniqueness.
     const show: Show = {
-      id: `show-${Date.now()}`,
+      id: `show-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
       venueId: selectedVenue!.id,
       bandId: selectedBands[0].id,
       lineup: selectedBands.map(b => b.id),

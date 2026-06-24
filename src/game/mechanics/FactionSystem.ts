@@ -178,12 +178,13 @@ class FactionSystem {
       alignment += (100 - Math.abs(band.popularity - faction.values.popularity)) * 0.2;
     }
     
-    // Check for matching traits
-    band.traits.forEach(trait => {
-      if (faction.traits.includes(trait.type.toLowerCase())) {
-        alignment += 10;
-      }
-    });
+    // (Trait-affinity removed: the old `faction.traits.includes(trait.type...)`
+    // compared the TraitType ENUM — personality/performance/social/technical —
+    // against the factions' semantic tags ('authentic','anti-commercial',…), so it
+    // only ever fired a spurious +10 for TECHNICAL→metal-elite and never the
+    // intended tags. Alignment is driven purely by the authenticity/skill/popularity
+    // match above + the >60 membership gate. A real trait-affinity axis would key on
+    // trait.id and needs its own balance pass, so it's deliberately not wired here.)
 
     return Math.max(0, Math.min(100, alignment));
   }
@@ -259,9 +260,14 @@ class FactionSystem {
           const standing2 = this.playerStandings.get(faction2Id) || 0;
           const relationship = faction1.relationships[faction2Id] || 0;
 
-          // Conflict event if supporting opposing factions
+          // Conflict event if supporting opposing factions. Dedup: this runs every
+          // show, so without a guard the same pending conflict piles up unbounded.
+          // Skip if an untriggered conflict for this exact pair already exists.
           if (relationship < -50 && standing1 > 30 && standing2 > 30) {
-            events.push(this.createConflictEvent(faction1, faction2));
+            const pending = this.factionEvents.some(
+              (e) => !e.triggered && e.id.startsWith(`conflict-${faction1Id}-${faction2Id}-`),
+            );
+            if (!pending) events.push(this.createConflictEvent(faction1, faction2));
           }
         }
       });
