@@ -895,7 +895,7 @@ export interface UnlockableContent {
   description?: string;
 }
 
-// ============= Optional Run Objectives (Balatro-style challenges) =============
+// ============= Optional Run Objectives (optional roguelike challenges) =============
 // Optional, run-specific goals. Rewards are META FAME ONLY (cross-run currency)
 // granted at run end — they never touch in-run resources, so the 4-mode balance
 // is provably unchanged.

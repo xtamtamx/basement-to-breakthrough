@@ -42,7 +42,7 @@ export interface RunModifier {
     stressMultiplier?: number;
     startingBandQuality?: number;
     venueRentMultiplier?: number;
-    /** +/- to the base roster slot cap for this mode (Balatro-joker style). */
+    /** +/- to the base roster slot cap for this mode. */
     rosterSlotDelta?: number;
   };
 }

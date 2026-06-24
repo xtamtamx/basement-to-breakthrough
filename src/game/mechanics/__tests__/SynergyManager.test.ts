@@ -29,7 +29,7 @@ describe('SynergyManager', () => {
   });
 
   it('calculateEffectTotal sums only TRIGGERED results — passives are NOT re-added', () => {
-    // A SHOW_END money joker (fires) + a PASSIVE money joker (does NOT fire on
+    // A SHOW_END money instinct (fires) + a PASSIVE money instinct (does NOT fire on
     // SHOW_END). The old bug rolled passives into every calculateEffectTotal call,
     // so this returned 50 instead of 20.
     const showEndMoney: Synergy = {

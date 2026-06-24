@@ -397,7 +397,7 @@ export class TurnResolutionEngine {
       store.nextRound();
     }
 
-    // Milestone reward: offer a new equipped synergy ("joker") on reward turns,
+    // Milestone reward: offer a new equipped synergy ("instinct") on reward turns,
     // as long as the run continues and the pool isn't exhausted. The UI shows the
     // SynergyAcquireModal; the offer is transient (re-derives next milestone).
     if (!runEnd && SYNERGY_REWARD_TURNS.includes(turn)) {
@@ -683,7 +683,7 @@ export class TurnResolutionEngine {
     // Band+venue COMBO synergies (the "discover powerful combos" pillar): the
     // SAME calculator the ShowBuilder preview shows, now ACTUALLY applied to the
     // result. The product is capped (COMBO_MULT_CAP) so it can't balloon when it
-    // stacks on top of the joker/scene-fit/hype/bill/gentrification multipliers.
+    // stacks on top of the instinct/scene-fit/hype/bill/gentrification multipliers.
     const combos = synergyEngine.calculateSynergies(allShowBands, venue);
     const comboMult = Math.min(
       synergyEngine.getTotalMultiplier(combos),
@@ -845,7 +845,7 @@ export class TurnResolutionEngine {
     if (isEscalation) {
       totalCosts = Math.floor(totalCosts * ESCALATION_COST_MULTIPLIER);
     }
-    // Budget Booker (PASSIVE joker) trims show costs.
+    // Budget Booker (PASSIVE instinct) trims show costs.
     const costReduction = synergyManager
       .getPassiveEffects()
       .filter((e) => e.type === 'COST_REDUCTION_PERCENT')

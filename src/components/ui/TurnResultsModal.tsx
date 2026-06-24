@@ -5,12 +5,12 @@ import { useGameStore } from '@stores/gameStore';
 import { SATIRICAL_TURN_RESULTS } from '@game/data/satiricalText';
 import { STARTER_SYNERGIES, type SynergyTriggerResult } from '@game/mechanics/SynergyManager';
 
-// Maps a joker id → a player-readable "fires at" label, so the results modal can
-// teach WHEN/WHY a joker fired (not just what it did).
+// Maps an instinct id → a player-readable "fires at" label, so the results modal
+// can teach WHEN/WHY an instinct kicked in (not just what it did).
 const TRIGGER_LABEL: Record<string, string> = {
   TURN_START: 'turn start', TURN_END: 'turn end', SHOW_START: 'show start', SHOW_END: 'show end', PASSIVE: 'always on',
 };
-const jokerTriggerLabel = (id: string): string | null => {
+const instinctTriggerLabel = (id: string): string | null => {
   const j = STARTER_SYNERGIES.find((s) => s.id === id);
   return j ? (TRIGGER_LABEL[j.trigger] ?? j.trigger.toLowerCase()) : null;
 };
@@ -41,7 +41,7 @@ interface TurnResultsModalProps {
     message: string;
     reputationLost: number;
   };
-  /** Equipped-synergy ("joker") triggers that fired this turn, for feedback. */
+  /** Equipped-synergy (player-facing: "instinct") triggers that fired this turn. */
   synergyEffects?: SynergyTriggerResult[];
   /** Per-turn passive payout from owned gear + sellout landmarks. */
   passiveIncome?: { money: number; fans: number };
@@ -505,12 +505,12 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
               </div>
             )}
 
-            {/* Equipped synergies ("jokers") that fired this turn */}
+            {/* Equipped synergies (player-facing: "instincts") that kicked in this turn */}
             {synergyEffects.filter((s) => s.triggered).length > 0 && (
               <div style={{ marginBottom: '20px' }}>
                 <h3 className="snes-pixel" style={{
                   fontSize: '10px', color: '#c77dff', marginTop: 0, marginBottom: '12px', letterSpacing: 0
-                }}>Jokers Fired 🃏</h3>
+                }}>Instincts That Kicked In 🧠</h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   {synergyEffects.filter((s) => s.triggered).map((s, i) => (
                     <div key={i} style={{
@@ -524,7 +524,7 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
                         {s.effects.map((e) => e.description).join(' · ')}
                       </div>
                       {(() => {
-                        const t = jokerTriggerLabel(s.synergyId);
+                        const t = instinctTriggerLabel(s.synergyId);
                         return (t || s.conditionDescription) ? (
                           <div style={{ color: '#6f6796', fontSize: '9px', marginTop: '4px' }}>
                             {t && `fires at ${t}`}{t && s.conditionDescription ? ' · ' : ''}{s.conditionDescription}

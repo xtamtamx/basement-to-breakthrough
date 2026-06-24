@@ -2,7 +2,7 @@ import { Band, Venue, Genre, VenueType, EquipmentType } from '@game/types';
 
 /**
  * A band+venue COMBO synergy: a situational bonus activated by a specific
- * bill+venue combination. (Distinct from SynergyManager's equipped "joker"
+ * bill+venue combination. (Distinct from SynergyManager's equipped "instinct"
  * Synergy — that's a persistent run-long slot modifier.)
  */
 export interface ComboSynergy {

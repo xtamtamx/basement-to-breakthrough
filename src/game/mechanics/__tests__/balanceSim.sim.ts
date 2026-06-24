@@ -19,7 +19,7 @@ import { dayJobSystem } from '../DayJobSystem';
 import { synergyManager } from '../SynergyManager';
 import { rollTravelOffer } from '@game/world/travelModes';
 
-// Greedy "keep the best joker" rank for milestone replacement.
+// Greedy "keep the best instinct" rank for milestone replacement.
 const RARITY_RANK: Record<string, number> = { COMMON: 0, UNCOMMON: 1, RARE: 2, LEGENDARY: 3 };
 
 // Accept a milestone synergy offer the way a player would: equip it, replacing

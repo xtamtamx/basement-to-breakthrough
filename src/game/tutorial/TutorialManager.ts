@@ -63,13 +63,13 @@ const STEPS: TutorialStep[] = [
     gate: { kind: 'button', label: 'Got it' },
   },
   {
-    id: 'jokers',
-    title: 'These are your jokers 🃏',
+    id: 'instincts',
+    title: 'These are your instincts 🧠',
     body:
-      'You start with one passive perk down here — it fires automatically every show. ' +
-      "You'll be offered more at turn milestones (5, 12, 20, 28); slot the ones that fit your run. " +
+      'You start with one scene instinct down here — it kicks in automatically every show. ' +
+      "You'll earn more at turn milestones (5, 12, 20, 28); slot the ones that fit your run. " +
       'Persistent, stackable, build-defining.',
-    target: '[data-tut="jokers"]',
+    target: '[data-tut="instincts"]',
     placement: 'below',
     gate: { kind: 'button', label: 'Nice' },
   },
@@ -127,7 +127,7 @@ const STEPS: TutorialStep[] = [
     id: 'combos',
     title: 'Combos fire on the bill 🔥',
     body:
-      "Jokers are always on — combos are situational. Match the right BANDS to the right VENUE and " +
+      "Instincts are always on — combos are situational. Match the right BANDS to the right VENUE and " +
       'bonus multipliers stack on top, shown in "Synergies Firing". Tap any 🔥 chip to see what it did. ' +
       'Discover them all in the Synergies tab.',
     target: '[data-tut="combos"]',

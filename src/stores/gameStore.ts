@@ -114,7 +114,7 @@ interface GameStore {
   // Band state
   allBands: Band[];
   rosterBandIds: string[];
-  /** Roster slot cap (Balatro-joker style); set at run start from
+  /** Roster slot cap; set at run start from
    *  base + per-mode delta + meta upgrades + city unlocks, then bumped
    *  in-run by each Booking Manager hire. */
   maxRosterSize: number;
@@ -143,7 +143,7 @@ interface GameStore {
   discoveredSynergies: string[]; // List of discovered synergy IDs
   runObjectives: RunObjectives; // Optional run challenges (meta-fame rewards)
 
-  // Transient: a milestone-offered equipped synergy ("joker") awaiting the
+  // Transient: a milestone-offered equipped synergy ("instinct") awaiting the
   // player's accept/replace decision. The reactive bridge to the off-Zustand
   // synergyManager singleton; NOT persisted (re-derives at the next milestone).
   pendingSynergyOffer: Synergy | null;
@@ -989,7 +989,7 @@ export const useGameStore = create<GameStore>()(
       // Band actions
       addBandToRoster: (bandId) =>
         set((state) => {
-          // Roster slot cap (Balatro-joker style): silently no-op when full or
+          // Roster slot cap: silently no-op when full or
           // already signed. UI disables the Sign button + shows X/Y, so this is
           // the safety net for any non-UI caller.
           if (

@@ -120,7 +120,7 @@ export const BandsView: React.FC = () => {
             color: '#b9b3d6',
             margin: '3px 0 0'
           }}>Scout the scene, sign the legends.</p>
-          {/* Roster slot cap (Balatro-joker style) — how many acts you can keep.
+          {/* Roster slot cap — how many acts you can keep.
               Tap the chip to see where the slots come from. */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px', flexWrap: 'wrap' }}>
             <button

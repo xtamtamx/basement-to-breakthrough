@@ -1,5 +1,5 @@
 /**
- * StakesManager — Balatro-Ante-style opt-in difficulty ladder.
+ * StakesManager — Ante-style opt-in difficulty ladder.
  *
  * The base game (Stake I) is winnable by a competent player in every mode. Higher
  * stakes layer harder economics on top — pricier rent, colder scene (lower

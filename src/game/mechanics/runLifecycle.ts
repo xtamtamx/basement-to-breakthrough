@@ -76,7 +76,7 @@ export async function startNewRun(
   await store.loadInitialGameData();
   dayJobSystem.refreshJobs();
 
-  // Roster slot cap (Balatro-joker style) = base + this mode's delta
+  // Roster slot cap = base + this mode's delta
   // (Hardcore −1, Festival +1) + permanent Scene Expansion meta upgrade +
   // city-unlock bonuses. Floored at the per-show bill cap so you can always
   // field a full lineup.
@@ -108,7 +108,7 @@ export async function startNewRun(
     });
   }
 
-  // Grant a starter equipped synergy ("joker") so the Balatro loop is live from
+  // Grant a starter equipped synergy ("instinct") so the synergy loop is live from
   // turn 1. synergyManager was just cleared by turnResolutionEngine.reset(); a
   // deterministic gentle COMMON (DIY Hustle, +$10/turn) keeps onboarding stable.
   synergyManager.acquireSynergy(STARTER_SYNERGIES[0], 1);

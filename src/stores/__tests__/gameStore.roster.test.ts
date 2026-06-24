@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useGameStore } from '../gameStore';
 
-// Roster slot cap (Balatro-joker style): addBandToRoster is the safety net for
+// Roster slot cap: addBandToRoster is the safety net for
 // any non-UI caller — it must honor maxRosterSize and never double-sign.
 describe('gameStore roster slot cap', () => {
   beforeEach(() => {

@@ -33,7 +33,7 @@ describe('TutorialManager', () => {
     const tm = new TutorialManager();
     tm.startTutorial();
     tm.advance(); // -> resources (button)
-    tm.advance(); // -> jokers (button)
+    tm.advance(); // -> instincts (button)
     tm.advance(); // -> challenges (button)
     tm.advance(); // -> go-bands (tap)
     expect(tm.getCurrentStep()?.id).toBe('go-bands');
@@ -49,7 +49,7 @@ describe('TutorialManager', () => {
     const tm = new TutorialManager();
     tm.startTutorial();
     tm.advance(); // resources
-    tm.advance(); // jokers
+    tm.advance(); // instincts
     tm.advance(); // challenges
     tm.advance(); // go-bands
     tm.tapAdvance(); // sign-band
@@ -65,9 +65,9 @@ describe('TutorialManager', () => {
   it("the build-show 'state' gate advances only once a show is booked", () => {
     const tm = new TutorialManager();
     tm.startTutorial();
-    // welcome, resources, jokers, challenges, go-bands, sign-band, go-shows, build-show
+    // welcome, resources, instincts, challenges, go-bands, sign-band, go-shows, build-show
     tm.advance(); // resources
-    tm.advance(); // jokers
+    tm.advance(); // instincts
     tm.advance(); // challenges
     tm.advance(); // go-bands
     tm.tapAdvance(); // sign-band
@@ -90,7 +90,7 @@ describe('TutorialManager', () => {
     tm.startTutorial();
     // walk to the final 'results' step
     tm.advance(); // resources
-    tm.advance(); // jokers
+    tm.advance(); // instincts
     tm.advance(); // challenges
     tm.advance(); // go-bands
     tm.tapAdvance(); // sign-band

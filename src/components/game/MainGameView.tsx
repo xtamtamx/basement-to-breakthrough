@@ -314,10 +314,10 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
         </div>
       </header>
 
-      {/* Equipped synergies ("jokers") — always visible just under the HUD.
-          Keyed on version+round so the singleton-backed bar re-renders on
-          acquire and after each turn (trigger counts). */}
-      <div data-tut="jokers" style={{ flexShrink: 0, padding: '6px 10px 0' }}>
+      {/* Equipped synergies (player-facing: "instincts") — always visible just
+          under the HUD. Keyed on version+round so the singleton-backed bar
+          re-renders on acquire and after each turn (trigger counts). */}
+      <div data-tut="instincts" style={{ flexShrink: 0, padding: '6px 10px 0' }}>
         <SynergyBar
           key={`${synergyVersion}-${currentRound}`}
           onSlotClick={() => handleViewChange('synergies')}
@@ -381,7 +381,7 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
         passiveIncome={turnResults.passiveIncome}
       />
 
-      {/* Milestone synergy offer ("joker" reward). Gated behind the turn-results
+      {/* Milestone synergy offer ("instinct" reward). Gated behind the turn-results
           modal so the two never stack (both are z-9999) and their entrance audio
           plays in sequence, not on top of each other. */}
       {!showTurnResults && pendingSynergyOffer && (

@@ -1,5 +1,5 @@
 /**
- * travelModes - how you get to the next city (the Balatro-style travel CHOICE).
+ * travelModes - how you get to the next city (the roguelike travel CHOICE).
  *
  * Travel isn't a button: each trip offers a few travel-mode cards with
  * trade-offs scaled by your fame. The DIY options (van, hitchhike) cost money

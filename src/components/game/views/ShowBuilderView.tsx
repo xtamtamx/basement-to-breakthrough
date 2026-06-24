@@ -153,7 +153,7 @@ export const ShowBuilderView: React.FC = () => {
 
   const preview = calculateShowPreview();
 
-  // The Balatro "ooh!" beat: when tweaking the bill lights up a NEW combo, ding +
+  // The "ooh!" beat: when tweaking the bill lights up a NEW combo, ding +
   // buzz so build-craft feels alive. Only fires on an increase (not on un-picks
   // or ticket-price tweaks), tracked across renders by a ref.
   const synergyCount = preview?.synergies.length ?? 0;

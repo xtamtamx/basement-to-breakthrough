@@ -2,7 +2,7 @@
  * cityUnlocks - which tour cities are reachable.
  *
  * Cities unlock by hitting their reputation threshold, and the unlock is
- * recorded in MetaProgression so it PERSISTS ACROSS RUNS (Balatro-style): once
+ * recorded in MetaProgression so it PERSISTS ACROSS RUNS: once
  * you've reached, say, 40 rep in any run, Nasheattle stays on the map forever.
  * Home (unlock.type === 'default') is always open.
  */
@@ -14,7 +14,7 @@ export const cityUnlockId = (cityId: string): string => `city_${cityId}`;
 /**
  * Cities that, once unlocked (cross-run), permanently grant +1 roster slot —
  * breaking into a bigger market expands your operation. Reaching these in ANY
- * run is a lasting Balatro-style upgrade applied at the next run's start.
+ * run is a lasting cross-run upgrade applied at the next run's start.
  * (Chicaustin = the mid-game leap; New Angeles = the industry-town endgame.)
  */
 const SLOT_GRANTING_CITIES = ["chicaustin", "newangeles"] as const;

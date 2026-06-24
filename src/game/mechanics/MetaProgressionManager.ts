@@ -40,7 +40,7 @@ export interface MetaUpgrade {
 }
 
 export interface MetaUpgradeEffect {
-  // NOTE: 'roster_slot' = permanent +N band roster slots (the Balatro-joker
+  // NOTE: 'roster_slot' = permanent +N band roster slots (the slot-cap
   // cap). Distinct from 'unlock_slot' (legacy synergy-slot unlock).
   type: 'starting_money' | 'starting_reputation' | 'starting_fans' | 'band_quality' | 'venue_discount' | 'stress_reduction' | 'unlock_slot' | 'roster_slot';
   value: number;

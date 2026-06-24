@@ -251,7 +251,7 @@ export const STARTER_SYNERGIES: Synergy[] = [
     icon: '🚐',
   },
 
-  // ===== Expansion jokers (2026-06-21): more slot-fill decisions + new builds =====
+  // ===== Expansion instincts (2026-06-21): more slot-fill decisions + new builds =====
   {
     id: 'merch_maven',
     name: 'Merch Maven',
@@ -347,7 +347,7 @@ export const STARTER_SYNERGIES: Synergy[] = [
     icon: '🎆',
   },
 
-  // --- 2026-06 content pass: +6 jokers (magnitudes <= existing category leaders;
+  // --- 2026-06 content pass: +6 instincts (magnitudes <= existing category leaders;
   // most gated so they reward an established run, not a fragile early one) ---
   {
     id: 'squat_landlord',

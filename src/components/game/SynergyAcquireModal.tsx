@@ -49,7 +49,7 @@ export const SynergyAcquireModal: React.FC<SynergyAcquireModalProps> = ({
   const accent = RARITY_COLOR[synergy.rarity];
   const glow = RARITY_GLOW[synergy.rarity];
 
-  // A milestone joker offer is a celebration — ring it in on open.
+  // A milestone instinct offer is a celebration — ring it in on open.
   useEffect(() => {
     audio.synergy();
     haptics.success();
