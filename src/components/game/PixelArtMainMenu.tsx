@@ -29,47 +29,6 @@ const Prop: React.FC<{ name: keyof typeof PROP_SIZE; s?: number; className?: str
     );
   };
 
-// Cute pixel person — mirrors the town walkers' drawPerson() recipe. `cheer` raises
-// the arms (audience), `play`/`sing` are the band poses.
-const HAIR = ['#f72585', '#4cc9f0', '#7cf06a', '#ffd23f', '#b072e0', '#ff7a4d', '#ff5da2', '#5ad1c4'];
-const PixelPerson: React.FC<{ hair: string; shirt: string; skin?: string; pose?: 'cheer' | 'idle' | 'play' | 'sing'; s?: number; silhouette?: boolean }> =
-  ({ hair, shirt, skin = '#e0b58a', pose = 'idle', s = 4, silhouette = false }) => {
-    const body = silhouette ? '#0c0a16' : shirt;
-    const head = silhouette ? '#15101f' : skin;
-    const legs = silhouette ? '#0c0a16' : '#2a2330';
-    const armsUp = pose === 'cheer';
-    return (
-      <svg width={7 * s} height={13 * s} viewBox="0 0 7 13" style={{ imageRendering: 'pixelated', display: 'block', overflow: 'visible' }} aria-hidden>
-        {/* legs */}
-        <rect x="2" y="9" width="1" height="3" fill={legs} />
-        <rect x="4" y="9" width="1" height="3" fill={legs} />
-        {/* arms */}
-        {armsUp ? (
-          <>
-            <rect x="0" y="3" width="1" height="3" fill={body} />
-            <rect x="6" y="3" width="1" height="3" fill={body} />
-            <rect x="0" y="2" width="1" height="1" fill={head} />
-            <rect x="6" y="2" width="1" height="1" fill={head} />
-          </>
-        ) : (
-          <>
-            <rect x="0" y="6" width="1" height="3" fill={body} />
-            <rect x="6" y="6" width="1" height="3" fill={body} />
-          </>
-        )}
-        {/* torso */}
-        <rect x="1" y="5" width="5" height="4" fill={body} />
-        {/* head + hair */}
-        <rect x="2" y="2" width="3" height="3" fill={head} />
-        <rect x="2" y="1" width="3" height="1" fill={hair} />
-        <rect x="3" y="0" width="1" height="1" fill={hair} />
-        {/* sing: a little mic dot; play: a guitar slab */}
-        {pose === 'sing' && <rect x="6" y="4" width="1" height="2" fill="#cfd3df" />}
-        {pose === 'play' && <rect x="5" y="6" width="3" height="2" fill="#7a3df0" />}
-      </svg>
-    );
-  };
-
 // Real Fantasy-Dreamland character (24x24 frame in a 96x96 / 4-dir x 4-frame
 // sheet). dir 0 = facing the viewer. The art pack's cohesive style — replaces the
 // procedural rect people on the stage.
@@ -95,14 +54,13 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
     return () => cancelAnimationFrame(id);
   }, []);
 
-  // Crowd: deterministic colours by index so it's stable across renders.
+  // Crowd: real characters from the pack, varied + stable by index. Two depth rows.
   const crowd = Array.from({ length: tier.crowd }, (_, i) => ({
-    hair: HAIR[i % HAIR.length],
-    // spread along the front, two rows for bigger tiers
-    left: 2 + ((i * 137) % 94),
+    id: String(((i * 7) % 40) + 1).padStart(3, '0'),
+    left: 1 + ((i * 137) % 95),
     row: i % 2,
     delay: (i % 7) * 0.13,
-    s: 4.8 + ((i * 7) % 5) * 0.4,
+    s: 2.0 + ((i * 13) % 4) * 0.22,
   }));
 
   return (
@@ -155,7 +113,7 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
       <div className="crowd">
         {crowd.map((c, i) => (
           <span key={i} className="fan" style={{ left: `${c.left}%`, bottom: c.row ? '34%' : '0', animationDelay: `${c.delay}s`, zIndex: c.row ? 3 : 4 }}>
-            <PixelPerson hair={c.hair} shirt="#0c0a16" pose="cheer" s={c.s} silhouette />
+            <FdSprite id={c.id} s={c.s} />
           </span>
         ))}
       </div>
