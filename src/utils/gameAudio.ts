@@ -66,10 +66,20 @@ class GameAudioManager {
 
   private async init() {
     try {
-      // Check if audio is disabled in localStorage
+      // Respect the player's saved audio settings (shared with simpleAudio):
+      // 'audioDisabled' is the AudioErrorBoundary's hard kill (no context at all);
+      // 'audioEnabled' is the Settings toggle (default on); 'audioVolume' drives
+      // the music bed. We still build the context when soft-disabled so re-enabling
+      // from Settings works without a reload.
       if (window.localStorage?.getItem("audioDisabled") === "true") {
         this.enabled = false;
         return;
+      }
+      if (window.localStorage?.getItem("audioEnabled") === "false") this.enabled = false;
+      const savedVol = window.localStorage?.getItem("audioVolume");
+      if (savedVol != null) {
+        const v = parseFloat(savedVol);
+        if (!Number.isNaN(v)) this.musicVolume = Math.max(0, Math.min(1, v));
       }
 
       const AudioContextClass =
@@ -82,6 +92,18 @@ class GameAudioManager {
       this.musicGainNode = this.context.createGain();
       this.musicGainNode.connect(this.context.destination);
       this.musicGainNode.gain.value = this.musicVolume;
+
+      // iOS/Capacitor start every AudioContext 'suspended' until a user gesture.
+      // This is a SEPARATE context from simpleAudio's, so it needs its OWN resume
+      // on first interaction — otherwise the music bed + gameAudio SFX stay silent
+      // for the whole session.
+      const resumeOnGesture = () => {
+        this.resume();
+        document.removeEventListener("pointerdown", resumeOnGesture);
+        document.removeEventListener("keydown", resumeOnGesture);
+      };
+      document.addEventListener("pointerdown", resumeOnGesture);
+      document.addEventListener("keydown", resumeOnGesture);
     } catch (error) {
       devLog.warn("Game audio initialization failed:", error);
       this.enabled = false;
@@ -331,6 +353,26 @@ class GameAudioManager {
     this.musicVolume = Math.max(0, Math.min(1, volume));
     if (this.musicGainNode) {
       this.musicGainNode.gain.value = this.musicVolume;
+    }
+  }
+
+  /** Resume the (autoplay-policy-)suspended context. Safe to call repeatedly. */
+  resume() {
+    if (this.context && this.context.state === "suspended") {
+      this.context.resume().catch(() => {});
+    }
+  }
+
+  /** Settings toggle. Mutes the music bed immediately when turned off, and
+   *  restarts it (resuming the context) when turned back on if a track was active
+   *  this session — so the Sound switch actually controls the music + gameAudio SFX. */
+  setEnabled(enabled: boolean) {
+    this.enabled = enabled;
+    if (!enabled) {
+      this.stopBackgroundMusic();
+    } else {
+      this.resume();
+      if (this.currentTrackType) this.startBackgroundMusic(this.currentTrackType);
     }
   }
 

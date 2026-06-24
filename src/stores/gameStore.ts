@@ -965,12 +965,14 @@ export const useGameStore = create<GameStore>()(
           venues: target.venues,
         });
         // The day-job pool is per-city (DayJobSystem derives it from the active
-        // districts/shops). Regenerate it for the new scene — the same refresh
-        // startNewRun does — so the jobs list isn't stale from the city you left.
-        // Dynamic import avoids a circular dependency (DayJobSystem reads the store).
-        import('@game/mechanics/DayJobSystem').then(({ dayJobSystem }) =>
-          dayJobSystem.refreshJobs(),
-        );
+        // districts/shops). Clear the held job (its shop only exists in the city
+        // you left — otherwise it keeps paying out / draining stats for a vanished
+        // shop, the travel-time sibling of the cross-run bleed) and regenerate the
+        // pool for the new scene. Dynamic import avoids a circular dependency.
+        import('@game/mechanics/DayJobSystem').then(({ dayJobSystem }) => {
+          dayJobSystem.setJob(null);
+          dayJobSystem.refreshJobs();
+        });
       },
       updateVenue: (venue) =>
         set((state) => ({

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAudio } from '@utils/audio';
+import { gameAudio } from '@utils/gameAudio';
 import { useFxQuality } from '@utils/fxQuality';
 import { haptics } from '@utils/mobile';
 import { useGameStore } from '@stores/gameStore';
@@ -23,12 +24,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newVolume = parseFloat(e.target.value);
-    setVolume(newVolume);
+    setVolume(newVolume);        // simpleAudio SFX
+    gameAudio.setMusicVolume(newVolume); // music bed + gameAudio SFX (separate manager)
     haptics.light();
   };
 
   const toggleSound = () => {
-    setEnabled(!enabled);
+    setEnabled(!enabled);        // simpleAudio SFX
+    gameAudio.setEnabled(!enabled); // music bed + gameAudio SFX (separate manager)
     haptics.light();
   };
 
