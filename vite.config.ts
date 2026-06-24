@@ -66,33 +66,37 @@ export default defineConfig({
     },
     rollupOptions: {
       output: {
+        // CHUNKING IS DELIBERATELY MINIMAL. The previous strategy sliced
+        // node_modules into react / state / dnd / vendor sub-chunks AND forced
+        // app code into game-mechanics / game-types chunks. Those boundaries cut
+        // straight through circular imports (React↔zustand internals; the app's
+        // own gameStore↔mechanics cycle), and Rollup cannot guarantee init order
+        // across a chunk boundary inside a cycle — so a binding gets used before
+        // it initializes ("Cannot access 'X' before initialization"), throwing at
+        // module-eval time and white-screening BOTH the production web build and
+        // the Capacitor native app. (Dev + Vitest use a different module-eval
+        // order, which is why it never showed up there.) Rule of thumb: only split
+        // out LARGE, SELF-CONTAINED leaves whose dependency edges are one-way
+        // (pixi, framer-motion depend on React but nothing depends back on them).
+        // Everything else — React, react-dom, scheduler, zustand, immer, dnd, idb,
+        // … — stays in one `vendor` chunk, and app code is left for Rollup to
+        // co-locate (lazy import() boundaries still split on their own and are
+        // safe, since they aren't part of the initial synchronous eval).
         manualChunks: (id) => {
-          // Split vendor chunks
+          // ALL node_modules go in ONE vendor chunk. Splitting them (react / state
+          // / pixi / framer-motion / …) repeatedly created cross-chunk cycles
+          // (zustand's create() landing in the react chunk; pixi.js ↔ pixi-filters
+          // straddling pixi/vendor) where Rollup can't guarantee init order, so a
+          // binding is used before initialization at module-eval — a hard
+          // "Cannot access 'X' before initialization" crash that white-screens the
+          // production web build AND the Capacitor native app (dev + Vitest hide it
+          // via a different eval order). A single vendor chunk makes every
+          // cross-chunk edge one-way (app → vendor), so a startup TDZ is
+          // structurally impossible and stays that way as dependencies change.
+          // App code is left to Rollup; lazy import() boundaries still split on
+          // their own and are safe (not part of the initial synchronous eval).
           if (id.includes('node_modules')) {
-            if (id.includes('@pixi') || id.includes('pixi')) {
-              return 'pixi';
-            }
-            if (id.includes('framer-motion')) {
-              return 'framer-motion';
-            }
-            if (id.includes('react') || id.includes('react-dom')) {
-              return 'react';
-            }
-            if (id.includes('zustand') || id.includes('immer')) {
-              return 'state';
-            }
-            if (id.includes('@hello-pangea/dnd')) {
-              return 'dnd';
-            }
             return 'vendor';
-          }
-          // Split game mechanics into separate chunk
-          if (id.includes('/game/mechanics/')) {
-            return 'game-mechanics';
-          }
-          // Split game types
-          if (id.includes('/game/types/')) {
-            return 'game-types';
           }
         }
       }
