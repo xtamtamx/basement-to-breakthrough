@@ -259,15 +259,19 @@ class RunManager {
   // Update run stats
   updateRunStats(updates: Partial<RunStats>) {
     if (!this.currentRun) return;
-    
+
+    // Capture the prior peak BEFORE the spread — otherwise `...updates` overwrites
+    // peakReputation first and the high-water comparison below is always false,
+    // letting peak drift DOWN with the latest reputation (it feeds the run score).
+    const prevPeak = this.currentRun.stats.peakReputation;
     this.currentRun.stats = {
       ...this.currentRun.stats,
       ...updates
     };
-    
-    // Update peak reputation
-    if (updates.peakReputation && updates.peakReputation > this.currentRun.stats.peakReputation) {
-      this.currentRun.stats.peakReputation = updates.peakReputation;
+
+    // Peak reputation is a one-way high-water mark.
+    if (updates.peakReputation !== undefined) {
+      this.currentRun.stats.peakReputation = Math.max(prevPeak, updates.peakReputation);
     }
   }
   

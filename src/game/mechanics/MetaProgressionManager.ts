@@ -608,8 +608,11 @@ class MetaProgressionManager {
     };
     
     fame = Math.floor(fame * (runMultipliers[runType] || 1.0));
-    
-    return fame;
+
+    // Never bank NEGATIVE fame: a losing run can score negative (uncapped
+    // disasters, no win-efficiency multiplier), and banking that would DRAIN the
+    // meta currency earned in prior runs. A run is worth 0 fame at worst.
+    return Math.max(0, fame);
   }
 }
 

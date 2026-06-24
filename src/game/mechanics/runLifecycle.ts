@@ -48,6 +48,9 @@ export async function startNewRun(
   // across runs; the store field auto-resets via resetGame() but these don't.
   factionSystem.reset();
   bandRelationships.clearRelationships();
+  // A held day job is a singleton too: without this, a job kept at run 1's end
+  // keeps paying out (and draining rep/fans/stress) every turn of run 2.
+  dayJobSystem.setJob(null);
 
   const run = runManager.startRun(configId, stakeTier);
   const bonuses = metaProgressionManager.getRunStartBonuses();

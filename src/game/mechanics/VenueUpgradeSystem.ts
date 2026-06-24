@@ -731,21 +731,18 @@ export class VenueUpgradeSystem {
     // Deduct cost
     store.addMoney(-equipment.purchasePrice);
     
-    // Add equipment to venue
+    // Add equipment to venue. We deliberately DON'T bake acousticsBonus/
+    // atmosphereBonus into the venue's base stats here: executeShow already sums
+    // every owned (and rented) piece's acoustics/atmosphere into equipmentQualityBonus
+    // at show time. Baking too would double-count owned gear for attendance and
+    // make owned strictly stronger than rented. Show-time application is the single
+    // source of truth (matches the rental path).
     const ownedEquipment = { ...equipment, owned: true };
     const updatedVenue = {
       ...venue,
       equipment: [...venue.equipment, ownedEquipment]
     };
-    
-    // Apply immediate effects
-    if (equipment.effects.acousticsBonus) {
-      updatedVenue.acoustics = Math.min(100, updatedVenue.acoustics + equipment.effects.acousticsBonus);
-    }
-    if (equipment.effects.atmosphereBonus) {
-      updatedVenue.atmosphere = Math.min(100, updatedVenue.atmosphere + equipment.effects.atmosphereBonus);
-    }
-    
+
     // Update venue in store
     store.updateVenue(updatedVenue);
     
