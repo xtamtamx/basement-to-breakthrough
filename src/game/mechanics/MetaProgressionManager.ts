@@ -428,7 +428,7 @@ class MetaProgressionManager {
     
     // Check cost
     if (unlock.cost.fame && this.progression.currency.fame < unlock.cost.fame) {
-      return { success: false, error: 'Insufficient fame' };
+      return { success: false, error: 'Not enough Scene Points' };
     }
     
     if (unlock.cost.legacy && this.progression.currency.legacy < unlock.cost.legacy) {

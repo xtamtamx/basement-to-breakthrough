@@ -33,7 +33,7 @@ export const ObjectivesModal: React.FC<ObjectivesModalProps> = ({ onClose }) => 
         </div>
 
         <p style={{ fontSize: '11px', color: '#6f6796', margin: '0 0 14px', lineHeight: 1.5 }}>
-          Optional goals for this run. Clearing one banks bonus fame at the end — no effect on the run itself.
+          Optional goals for this run. Clearing one banks bonus Scene Points at the end — no effect on the run itself.
         </p>
 
         {progress.length === 0 ? (

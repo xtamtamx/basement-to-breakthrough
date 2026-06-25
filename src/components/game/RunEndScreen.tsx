@@ -271,7 +271,7 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
                     fontWeight: 700,
                   }}
                 >
-                  Fame Earned
+                  Scene Points Earned
                 </div>
                 <div style={{ fontSize: '24px', fontWeight: 900, color: '#f472b6' }}>
                   +{ceremony.fameEarned}
@@ -293,7 +293,7 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
             {ceremony.completedObjectives.length > 0 && (
               <div style={{ marginTop: '8px' }}>
                 <div style={{ fontSize: '10px', textTransform: 'uppercase', color: '#6f6796', fontWeight: 700, marginBottom: '2px' }}>
-                  Challenges Cleared (+{ceremony.objectiveBonus} fame)
+                  Challenges Cleared (+{ceremony.objectiveBonus} Scene Points)
                 </div>
                 {ceremony.completedObjectives.map((o) => (
                   <div key={o.id} style={{ fontSize: '12px', color: '#c4b5fd', display: 'flex', justifyContent: 'space-between', gap: '8px' }}>

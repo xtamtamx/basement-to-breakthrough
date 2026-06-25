@@ -86,10 +86,10 @@ export const MetaProgressionShop: React.FC<MetaProgressionShopProps> = ({
                 letterSpacing: '0.02em',
               }}
             >
-              Scene Cred
+              Scene Points
             </h1>
             <p style={{ fontSize: '12px', color: '#9ca3af', margin: '2px 0 0' }}>
-              Spend fame — every run starts stronger.
+              Spend Scene Points — every run starts stronger.
             </p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>

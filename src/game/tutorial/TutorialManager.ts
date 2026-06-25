@@ -77,7 +77,7 @@ const STEPS: TutorialStep[] = [
     id: 'challenges',
     title: 'Optional challenges 🎯',
     body:
-      'Each run rolls a few optional goals up here. Clear them for bonus fame — your ' +
+      'Each run rolls a few optional goals up here. Clear them for bonus Scene Points — your ' +
       "permanent currency for upgrades between runs. No pressure: they don't affect this run at all.",
     target: '[data-tut="challenges"]',
     placement: 'below',
