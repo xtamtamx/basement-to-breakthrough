@@ -37,56 +37,17 @@ const FdSprite: React.FC<{ id: string; s?: number; dir?: number; className?: str
     }} />
   );
 
-// Hand-drawn pixel instruments — the pack has none, and instruments are what make
-// the cute townsfolk read as a BAND rather than villagers standing on a box.
-// CRISP pixel-art instruments — integer coords only (no soft ellipses) so they
-// match the characters' pixel density. The pack ships no instrument art.
-const PX = { imageRendering: 'pixelated' as const, shapeRendering: 'crispEdges' as const };
-const Guitar: React.FC<{ className?: string; bass?: boolean }> = ({ className, bass }) => {
-  const body = bass ? '#2f6fd0' : '#e23b6e';
-  const edge = bass ? '#19407f' : '#a4164a';
-  const plate = bass ? '#bfe9ff' : '#ffd23f';
-  return (
-    <svg aria-hidden className={className} width={(bass ? 22 : 21) * 3} height={11 * 3} viewBox="0 0 22 11" style={PX}>
-      {/* body */}
-      <rect x="1" y="3" width="1" height="4" fill={edge} /><rect x="2" y="2" width="6" height="6" fill={body} />
-      <rect x="8" y="3" width="1" height="4" fill={body} /><rect x="2" y="7" width="7" height="1" fill={edge} />
-      <rect x="3" y="4" width="3" height="2" fill={plate} /> {/* scratchplate */}
-      <rect x="6" y="5" width="1" height="2" fill="#1c1014" /> {/* bridge */}
-      {/* neck + frets + head */}
-      <rect x="9" y="4" width="10" height="2" fill="#6a4528" />
-      <rect x="11" y="4" width="1" height="2" fill="#caa15f" /><rect x="14" y="4" width="1" height="2" fill="#caa15f" /><rect x="17" y="4" width="1" height="2" fill="#caa15f" />
-      <rect x="19" y="3" width="3" height="4" fill="#241510" /><rect x="20" y="3" width="1" height="1" fill="#4a3320" /><rect x="20" y="6" width="1" height="1" fill="#4a3320" />
-      <rect x="3" y="4" width="16" height="1" fill="#eef0f7" opacity="0.4" /> {/* strings */}
-    </svg>
-  );
+// REAL instrument sprites (ELV "instrument & more" pack), sliced into
+// public/title/band. Native px sizes → nearest-neighbour scaled.
+const BAND_SRC = '/title/band';
+const INSTR_SIZE: Record<string, [number, number]> = {
+  guitar: [15, 48], bass: [15, 52], micstand: [15, 60], drumkit: [94, 85], amp: [28, 43],
 };
-// Small handheld mic — short, so it sits at the singer's mouth, not above the head.
-const Mic: React.FC<{ className?: string }> = ({ className }) => (
-  <svg aria-hidden className={className} width={5 * 3} height={8 * 3} viewBox="0 0 5 8" style={PX}>
-    <rect x="1" y="1" width="3" height="2" fill="#6a6a82" /><rect x="0" y="1" width="1" height="1" fill="#6a6a82" /><rect x="4" y="1" width="1" height="1" fill="#6a6a82" />
-    <rect x="1" y="0" width="3" height="1" fill="#86869c" /><rect x="1" y="1" width="1" height="1" fill="#9a9ab0" /> {/* mesh + shine */}
-    <rect x="1" y="3" width="3" height="1" fill="#26262e" /> {/* collar */}
-    <rect x="2" y="4" width="2" height="4" fill="#3a3a46" /><rect x="2" y="4" width="1" height="4" fill="#56565f" /> {/* handle */}
-  </svg>
-);
-// Drum kit — crisp blocky bass drum + cymbal + tom; the drummer stands behind it.
-const DrumKit: React.FC<{ className?: string }> = ({ className }) => (
-  <svg aria-hidden className={className} width={24 * 3} height={16 * 3} viewBox="0 0 24 16" style={PX}>
-    {/* cymbal on a stand */}
-    <rect x="20" y="4" width="1" height="10" fill="#46465a" />
-    <rect x="17" y="3" width="7" height="1" fill="#ffd23f" /><rect x="18" y="2" width="5" height="1" fill="#ffe27a" />
-    {/* tom (top-left) */}
-    <rect x="5" y="4" width="5" height="3" fill="#41356a" /><rect x="5" y="4" width="5" height="1" fill="#4cc9f0" />
-    {/* bass drum: solid shell + lighter head + pink rim + logo */}
-    <rect x="5" y="6" width="13" height="1" fill="#f72585" /><rect x="5" y="14" width="13" height="1" fill="#f72585" />
-    <rect x="4" y="7" width="1" height="7" fill="#f72585" /><rect x="18" y="7" width="1" height="7" fill="#f72585" />
-    <rect x="5" y="7" width="13" height="7" fill="#2b2248" /><rect x="6" y="8" width="11" height="5" fill="#41356a" />
-    <rect x="10" y="9" width="3" height="3" fill="#d11e5a" />
-    {/* legs */}
-    <rect x="5" y="15" width="1" height="1" fill="#26262e" /><rect x="17" y="15" width="1" height="1" fill="#26262e" />
-  </svg>
-);
+const Instr: React.FC<{ name: keyof typeof INSTR_SIZE; s?: number; className?: string }> = ({ name, s = 1.4, className }) => {
+  const [w, h] = INSTR_SIZE[name];
+  return <img src={`${BAND_SRC}/${name}.png`} alt="" aria-hidden className={className}
+    style={{ width: w * s, height: h * s, imageRendering: 'pixelated' }} />;
+};
 
 // The band — [guitarist, singer, bassist, drummer]. Red-spiky punk on the mic.
 const BAND = ['010', '004', '008', '015'];
@@ -150,10 +111,10 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
         <div className="backline">
           <Prop name="pa_speaker_stack" s={2.5} className="pa pa-l" />
           <div className="band">
-            <span className="bandmate b0 guitarist"><FdSprite id={BAND[0]} s={3} /><Guitar className="gtr" /></span>
-            <span className="bandmate b1 singer"><FdSprite id={BAND[1]} s={3} /><Mic className="handmic" /></span>
-            <span className="bandmate b2 bassist"><FdSprite id={BAND[2]} s={3} /><Guitar className="bass" bass /></span>
-            <span className="bandmate b3 drummer"><FdSprite id={BAND[3]} s={2.7} /><DrumKit className="kit" /></span>
+            <span className="bandmate b0 guitarist"><FdSprite id={BAND[0]} s={3} /><Instr name="guitar" s={1.3} className="gtr" /></span>
+            <span className="bandmate b1 singer"><FdSprite id={BAND[1]} s={3} /><Instr name="micstand" s={0.82} className="mic-stand" /></span>
+            <span className="bandmate b2 bassist"><FdSprite id={BAND[2]} s={3} /><Instr name="bass" s={1.3} className="bass" /></span>
+            <span className="bandmate b3 drummer"><FdSprite id={BAND[3]} s={2.5} /><Instr name="drumkit" s={0.72} className="kit" /></span>
           </div>
           <Prop name="pa_speaker_stack" s={2.5} className="pa pa-r" />
         </div>
@@ -262,12 +223,12 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
         .bandmate { position: relative; transform-origin: bottom center; animation: headbang 0.62s ease-in-out infinite; filter: drop-shadow(0 2px 0 rgba(0,0,0,.4)); }
         .b1 { animation-delay: .1s; animation-duration: .54s } .b2 { animation-delay: .26s; animation-duration: .7s }
         @keyframes headbang { 0%,100%{transform:translateY(0) rotate(0)} 30%{transform:translateY(-3px) rotate(-3deg)} 60%{transform:translateY(-1px) rotate(3deg)} }
-        /* instruments — crisp pixel art, positioned to actually be HELD */
-        .gtr { position: absolute; left: 4%; bottom: 16%; transform: rotate(-20deg); z-index: 3; pointer-events: none; filter: drop-shadow(1px 1px 0 rgba(0,0,0,.45)); }
-        .bass { position: absolute; right: 2%; bottom: 15%; transform: rotate(18deg); z-index: 3; pointer-events: none; filter: drop-shadow(1px 1px 0 rgba(0,0,0,.45)); }
-        .handmic { position: absolute; left: 50%; bottom: 27%; transform: translateX(-46%) rotate(12deg); z-index: 4; pointer-events: none; filter: drop-shadow(1px 1px 0 rgba(0,0,0,.5)); }
+        /* REAL instrument sprites, positioned on/around the players */
+        .gtr { position: absolute; left: 6%; bottom: 4%; transform: rotate(-28deg); transform-origin: bottom center; z-index: 3; pointer-events: none; filter: drop-shadow(1px 2px 0 rgba(0,0,0,.5)); }
+        .bass { position: absolute; left: 4%; bottom: 4%; transform: rotate(26deg); transform-origin: bottom center; z-index: 3; pointer-events: none; filter: drop-shadow(1px 2px 0 rgba(0,0,0,.5)); }
+        .mic-stand { position: absolute; left: 50%; bottom: -8%; transform: translateX(-44%); z-index: 4; pointer-events: none; filter: drop-shadow(1px 2px 0 rgba(0,0,0,.5)); }
         .drummer { z-index: 1; }
-        .kit { position: absolute; left: 50%; bottom: -8%; transform: translateX(-50%); z-index: 3; pointer-events: none; filter: drop-shadow(0 2px 0 rgba(0,0,0,.4)); }
+        .kit { position: absolute; left: 50%; bottom: -16%; transform: translateX(-50%); z-index: 3; pointer-events: none; filter: drop-shadow(0 3px 0 rgba(0,0,0,.45)); }
         .platform { width: clamp(150px, 26vw, 240px); height: clamp(10px, 2.4vh, 16px); margin-top: -2px;
           background: linear-gradient(180deg, #5a3f2a 0%, #3e2a1a 100%); border-top: 2px solid #6e4d33;
           box-shadow: 0 5px 10px rgba(0,0,0,.5); }
