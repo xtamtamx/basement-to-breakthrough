@@ -37,9 +37,40 @@ const FdSprite: React.FC<{ id: string; s?: number; dir?: number; className?: str
     }} />
   );
 
-// The band: a fixed, characterful trio (red punk on the mic, blue punk on guitar,
-// cowboy on the kit). Uniform size, facing the crowd.
-const BAND = ['004', '010', '008'];
+// Hand-drawn pixel instruments — the pack has none, and instruments are what make
+// the cute townsfolk read as a BAND rather than villagers standing on a box.
+const Guitar: React.FC<{ className?: string }> = ({ className }) => (
+  <svg aria-hidden className={className} width={58} height={26} viewBox="0 0 29 13" style={{ imageRendering: 'pixelated' }}>
+    {/* body */}
+    <rect x="0" y="4" width="1" height="6" fill="#b3174a" /><rect x="1" y="3" width="11" height="8" fill="#e23b6e" />
+    <rect x="12" y="4" width="1" height="6" fill="#b3174a" />
+    <rect x="3" y="5" width="5" height="4" fill="#ffd23f" /> {/* scratchplate */}
+    <rect x="9" y="6" width="2" height="2" fill="#241015" /> {/* bridge */}
+    {/* neck + head */}
+    <rect x="13" y="6" width="13" height="2" fill="#6a4528" /><rect x="26" y="5" width="3" height="4" fill="#241510" />
+    <rect x="15" y="6" width="1" height="2" fill="#d7dbe6" /><rect x="19" y="6" width="1" height="2" fill="#d7dbe6" /><rect x="23" y="6" width="1" height="2" fill="#d7dbe6" />
+    <rect x="2" y="6" width="25" height="1" fill="#e9e9f2" opacity="0.45" /> {/* strings */}
+  </svg>
+);
+const DrumKit: React.FC<{ className?: string }> = ({ className }) => (
+  <svg aria-hidden className={className} width={64} height={40} viewBox="0 0 32 20" style={{ imageRendering: 'pixelated' }}>
+    {/* cymbal on a stand */}
+    <rect x="25" y="4" width="1" height="11" fill="#46465a" />
+    <ellipse cx="25.5" cy="4" rx="5.5" ry="1.5" fill="#ffd23f" /><ellipse cx="25.5" cy="4" rx="5.5" ry="1.5" fill="none" stroke="#b8901a" strokeWidth="0.5" />
+    {/* bass drum — solid shell + head + neon rim so it reads as a drum, not a ring */}
+    <ellipse cx="13" cy="13" rx="10.5" ry="6.5" fill="#2b2248" />
+    <ellipse cx="13" cy="13" rx="8.4" ry="4.9" fill="#41356a" />
+    <ellipse cx="13" cy="13" rx="10.5" ry="6.5" fill="none" stroke="#f72585" strokeWidth="1.5" />
+    <circle cx="13" cy="13" r="2.6" fill="#d11e5a" />
+    {/* a small tom up top + legs */}
+    <ellipse cx="8" cy="6.5" rx="3.6" ry="2.2" fill="#41356a" /><ellipse cx="8" cy="6.5" rx="3.6" ry="2.2" fill="none" stroke="#4cc9f0" strokeWidth="1" />
+    <rect x="6" y="18" width="1.6" height="2" fill="#2a2a35" /><rect x="19" y="18" width="1.6" height="2" fill="#2a2a35" />
+  </svg>
+);
+
+// The band: punk trio — [guitarist, singer, drummer]. Blue-spiky on guitar,
+// red-spiky on the mic, a third on the kit.
+const BAND = ['010', '004', '008'];
 
 // Drifting 7" records (the Emogame motif — vinyl as ammo). Label colours from the
 // neon palette; they spin + float up like the old notes, but read as records.
@@ -116,9 +147,9 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
         <div className="backline">
           <Prop name="pa_speaker_stack" s={2.5} className="pa pa-l" />
           <div className="band">
-            {BAND.map((id, i) => (
-              <span key={id} className={`bandmate b${i}`}><FdSprite id={id} s={3} /></span>
-            ))}
+            <span className="bandmate b0 guitarist"><FdSprite id={BAND[0]} s={3} /><Guitar className="gtr" /></span>
+            <span className="bandmate b1 singer"><FdSprite id={BAND[1]} s={3} /></span>
+            <span className="bandmate b2 drummer"><FdSprite id={BAND[2]} s={2.7} /><DrumKit className="kit" /></span>
             <Prop name="mic_stand" s={3.2} className="mic" />
             <Prop name="floor_amp" s={3} className="amp" />
           </div>
@@ -231,8 +262,11 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
         .bandmate { position: relative; transform-origin: bottom center; animation: headbang 0.62s ease-in-out infinite; filter: drop-shadow(0 2px 0 rgba(0,0,0,.4)); }
         .b1 { animation-delay: .1s; animation-duration: .54s } .b2 { animation-delay: .26s; animation-duration: .7s }
         @keyframes headbang { 0%,100%{transform:translateY(0) rotate(0)} 30%{transform:translateY(-3px) rotate(-3deg)} 60%{transform:translateY(-1px) rotate(3deg)} }
-        .mic { position: absolute; left: 50%; transform: translateX(-50%); bottom: 0; z-index: 3; }
+        .mic { position: absolute; left: 50%; transform: translateX(-50%); bottom: 0; z-index: 4; }
         .amp { position: absolute; right: -16px; bottom: 0; }
+        /* instruments — what turns villagers into a band */
+        .gtr { position: absolute; left: 2%; bottom: 14%; transform: rotate(-18deg); z-index: 3; pointer-events: none; filter: drop-shadow(0 1px 0 rgba(0,0,0,.5)); }
+        .kit { position: absolute; left: 50%; bottom: -6%; transform: translateX(-50%); z-index: 3; pointer-events: none; filter: drop-shadow(0 2px 0 rgba(0,0,0,.45)); }
         .platform { width: clamp(150px, 26vw, 240px); height: clamp(10px, 2.4vh, 16px); margin-top: -2px;
           background: linear-gradient(180deg, #5a3f2a 0%, #3e2a1a 100%); border-top: 2px solid #6e4d33;
           box-shadow: 0 5px 10px rgba(0,0,0,.5); }
