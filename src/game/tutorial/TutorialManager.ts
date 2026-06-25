@@ -66,7 +66,7 @@ const STEPS: TutorialStep[] = [
     id: 'instincts',
     title: 'These are your instincts 🧠',
     body:
-      'You start with one scene instinct down here — it kicks in automatically every show. ' +
+      'You start with one scene instinct up here — it kicks in automatically every show. ' +
       "You'll earn more at turn milestones (5, 12, 20, 28); slot the ones that fit your run. " +
       'Persistent, stackable, build-defining.',
     target: '[data-tut="instincts"]',

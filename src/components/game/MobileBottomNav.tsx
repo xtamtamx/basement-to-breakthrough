@@ -103,7 +103,11 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         borderTop: '2px solid #f72585',
         boxShadow: 'inset 0 -2px 0 0 #0a0814',
         zIndex: 40,
-        paddingBottom: 'env(safe-area-inset-bottom)'
+        paddingBottom: 'env(safe-area-inset-bottom)',
+        // Clear the home indicator + Dynamic Island, which sit on the SIDES in
+        // landscape (the nav is full-width + fixed, so it needs its own insets).
+        paddingLeft: 'env(safe-area-inset-left)',
+        paddingRight: 'env(safe-area-inset-right)',
       }}>
         <div className="mobile-bottom-nav__row" style={{
           display: 'flex',

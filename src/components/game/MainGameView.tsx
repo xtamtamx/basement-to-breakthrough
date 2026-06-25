@@ -257,7 +257,18 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
   const CurrentViewComponent = views[currentView];
 
   return (
-    <div className="h-full flex flex-col" style={{ background: '#0a0814' }}>
+    <div
+      className="h-full flex flex-col"
+      style={{
+        background: '#0a0814',
+        // Keep the HUD + content clear of the notch / Dynamic Island (which sits
+        // on a SIDE in landscape) and the top inset (portrait). The fixed bottom
+        // nav handles its own insets.
+        paddingTop: 'env(safe-area-inset-top)',
+        paddingLeft: 'env(safe-area-inset-left)',
+        paddingRight: 'env(safe-area-inset-right)',
+      }}
+    >
       {/* Screen-reader-only live region — announces turn outcomes to assistive
           tech (the visual HUD/modal are otherwise silent). */}
       <div
@@ -337,8 +348,10 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
         />
       </div>
 
-      {/* View Content with Swipe Support */}
-      <main className="flex-1 overflow-hidden relative" {...swipeHandlers}>
+      {/* View Content with Swipe Support. The city MAP pans/scrolls under your
+          finger, so view-swipe is disabled there (it was hijacking map drags and
+          flipping tabs); navigate off the map via the bottom nav. */}
+      <main className="flex-1 overflow-hidden relative" {...(currentView === 'city' ? {} : swipeHandlers)}>
         <AnimatePresence mode="wait">
           <motion.div
             key={currentView}
