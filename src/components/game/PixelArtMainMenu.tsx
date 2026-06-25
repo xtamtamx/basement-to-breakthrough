@@ -41,6 +41,15 @@ const FdSprite: React.FC<{ id: string; s?: number; dir?: number; className?: str
 // cowboy on the kit). Uniform size, facing the crowd.
 const BAND = ['004', '010', '008'];
 
+// Drifting 7" records (the Emogame motif — vinyl as ammo). Label colours from the
+// neon palette; they spin + float up like the old notes, but read as records.
+const RECORDS = [
+  { left: '8%', size: 26, lbl: '#f72585', dur: 13, delay: 0 },
+  { left: '24%', size: 18, lbl: '#4cc9f0', dur: 17, delay: 4.5 },
+  { left: '42%', size: 30, lbl: '#ffd23f', dur: 15, delay: 7 },
+  { left: '57%', size: 20, lbl: '#3ad17e', dur: 19, delay: 2.2 },
+];
+
 export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
   onStartGame, onContinueGame, onSettings, onUpgrades, hasSavedGame = false,
 }) => {
@@ -92,19 +101,28 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
         {Array.from({ length: 9 }, (_, i) => <Prop key={i} name="string_lights" s={3.2} className="lights" />)}
       </div>
 
+      {/* Flying 7" records — the Emogame nod (vinyl as ammo). A few, drifting up. */}
+      <div className="records">
+        {RECORDS.map((r, i) => (
+          <span key={i} className="rec-fly" style={{ left: r.left, animationDuration: `${r.dur}s`, animationDelay: `${r.delay}s` }}>
+            <span className="rec" style={{ width: r.size, height: r.size, ['--lbl' as string]: r.lbl }} />
+          </span>
+        ))}
+      </div>
+
       {/* ===== STAGE + BAND (focal point) ===== */}
       <div className="stage">
         <div className="spot" />
         <div className="backline">
-          <Prop name="pa_speaker_stack" s={3.4} className="pa" />
+          <Prop name="pa_speaker_stack" s={2.5} className="pa pa-l" />
           <div className="band">
             {BAND.map((id, i) => (
-              <span key={id} className={`bandmate b${i}`}><FdSprite id={id} s={2.9} /></span>
+              <span key={id} className={`bandmate b${i}`}><FdSprite id={id} s={3} /></span>
             ))}
             <Prop name="mic_stand" s={3.2} className="mic" />
-            <Prop name="floor_amp" s={3.2} className="amp" />
+            <Prop name="floor_amp" s={3} className="amp" />
           </div>
-          <Prop name="pa_speaker_stack" s={3.4} className="pa" />
+          <Prop name="pa_speaker_stack" s={2.5} className="pa pa-r" />
         </div>
         <div className="platform" />
       </div>
@@ -123,6 +141,8 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
       {/* ===== LOGO + MENU ===== */}
       <div className="menu-stage">
         <div className="hero-col">
+          {/* a big spinning record the logo is "pinned" over — Emogame DNA */}
+          <span className="logo-record" aria-hidden />
           <div className="banner">
             <span className="banner-pin pin-l" /><span className="banner-pin pin-r" />
             <h1 className="title-text">SETTLING</h1>
@@ -208,9 +228,9 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
         .backline { position: relative; display: flex; align-items: flex-end; justify-content: center; gap: 14px; }
         .pa { filter: drop-shadow(0 3px 0 rgba(0,0,0,.45)); }
         .band { position: relative; display: flex; align-items: flex-end; gap: 14px; padding: 0 18px; }
-        .bandmate { position: relative; animation: bob 1.5s ease-in-out infinite; filter: drop-shadow(0 2px 0 rgba(0,0,0,.4)); }
-        .b1 { animation-delay: .2s } .b2 { animation-delay: .4s }
-        @keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-3px)} }
+        .bandmate { position: relative; transform-origin: bottom center; animation: headbang 0.62s ease-in-out infinite; filter: drop-shadow(0 2px 0 rgba(0,0,0,.4)); }
+        .b1 { animation-delay: .1s; animation-duration: .54s } .b2 { animation-delay: .26s; animation-duration: .7s }
+        @keyframes headbang { 0%,100%{transform:translateY(0) rotate(0)} 30%{transform:translateY(-3px) rotate(-3deg)} 60%{transform:translateY(-1px) rotate(3deg)} }
         .mic { position: absolute; left: 50%; transform: translateX(-50%); bottom: 0; z-index: 3; }
         .amp { position: absolute; right: -16px; bottom: 0; }
         .platform { width: clamp(150px, 26vw, 240px); height: clamp(10px, 2.4vh, 16px); margin-top: -2px;
@@ -224,6 +244,26 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
           opacity: 0; transition: opacity .4s ease; }
         [data-revealed="true"] .fan { opacity: 1; }
         @keyframes jump { 0%,100%{transform:translateX(-50%) translateY(0)} 45%{transform:translateX(-50%) translateY(-4px)} }
+
+        /* ===== Emogame: spinning 7" records ===== */
+        .records { position: absolute; inset: 0; z-index: 6; pointer-events: none; overflow: hidden; }
+        .rec-fly { position: absolute; bottom: 16%; opacity: 0; animation-name: rec-rise; animation-timing-function: linear; animation-iteration-count: infinite; }
+        @keyframes rec-rise { 0%{transform:translateY(0) translateX(0);opacity:0} 12%{opacity:.85} 88%{opacity:.85} 100%{transform:translateY(-84vh) translateX(26px);opacity:0} }
+        .rec { display: block; position: relative; border-radius: 50%; animation: rec-spin 1.8s linear infinite;
+          background: radial-gradient(circle at 50% 50%, #0c0c0c 0 7%, var(--lbl, #f72585) 8% 27%, #0a0a0a 28% 31%, #1c1c1c 32% 45%, #0a0a0a 46% 49%, #1c1c1c 50% 64%, #0a0a0a 65% 68%, #1c1c1c 69% 100%);
+          box-shadow: 0 2px 6px rgba(0,0,0,.55), inset 0 0 5px rgba(255,255,255,.07); }
+        .rec::after { content:''; position:absolute; top:50%; left:50%; width:11%; height:11%; transform:translate(-50%,-50%); border-radius:50%; background:#1a1118; }
+        .rec::before { content:''; position:absolute; inset:0; border-radius:50%; background:linear-gradient(125deg, rgba(255,255,255,.16) 0 16%, transparent 36%); }
+        @keyframes rec-spin { to { transform: rotate(360deg); } }
+
+        /* a big record the logo is pinned over */
+        .hero-col { position: relative; }
+        .logo-record { position: absolute; top: 4%; left: 76%; width: clamp(96px,12vw,132px); height: clamp(96px,12vw,132px);
+          transform: translate(-50%,-46%); border-radius: 50%; z-index: -1; pointer-events: none; opacity: .92;
+          animation: rec-spin 8s linear infinite;
+          background: radial-gradient(circle at 50% 50%, #0c0c0c 0 8%, #d11e5a 9% 23%, #0a0a0a 24% 28%, #1a1a1a 29% 44%, #0a0a0a 45% 47%, #1a1a1a 48% 63%, #0a0a0a 64% 66%, #1a1a1a 67% 100%);
+          box-shadow: 0 8px 26px rgba(0,0,0,.6); }
+        .logo-record::after { content:''; position:absolute; top:50%; left:50%; width:7%; height:7%; transform:translate(-50%,-50%); border-radius:50%; background:#1a1118; }
 
         .vignette { position: absolute; inset: 0; z-index: 6; pointer-events: none;
           background: radial-gradient(125% 90% at 50% 42%, transparent 58%, rgba(8,4,14,.6) 100%); }
