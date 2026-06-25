@@ -39,32 +39,29 @@ const FdSprite: React.FC<{ id: string; s?: number; dir?: number; className?: str
 
 // Hand-drawn pixel instruments — the pack has none, and instruments are what make
 // the cute townsfolk read as a BAND rather than villagers standing on a box.
-const Guitar: React.FC<{ className?: string }> = ({ className }) => (
-  <svg aria-hidden className={className} width={58} height={26} viewBox="0 0 29 13" style={{ imageRendering: 'pixelated' }}>
-    {/* body */}
-    <rect x="0" y="4" width="1" height="6" fill="#b3174a" /><rect x="1" y="3" width="11" height="8" fill="#e23b6e" />
-    <rect x="12" y="4" width="1" height="6" fill="#b3174a" />
-    <rect x="3" y="5" width="5" height="4" fill="#ffd23f" /> {/* scratchplate */}
-    <rect x="9" y="6" width="2" height="2" fill="#241015" /> {/* bridge */}
-    {/* neck + head */}
-    <rect x="13" y="6" width="13" height="2" fill="#6a4528" /><rect x="26" y="5" width="3" height="4" fill="#241510" />
-    <rect x="15" y="6" width="1" height="2" fill="#d7dbe6" /><rect x="19" y="6" width="1" height="2" fill="#d7dbe6" /><rect x="23" y="6" width="1" height="2" fill="#d7dbe6" />
-    <rect x="2" y="6" width="25" height="1" fill="#e9e9f2" opacity="0.45" /> {/* strings */}
-  </svg>
-);
-const DrumKit: React.FC<{ className?: string }> = ({ className }) => (
-  <svg aria-hidden className={className} width={64} height={40} viewBox="0 0 32 20" style={{ imageRendering: 'pixelated' }}>
-    {/* cymbal on a stand */}
-    <rect x="25" y="4" width="1" height="11" fill="#46465a" />
-    <ellipse cx="25.5" cy="4" rx="5.5" ry="1.5" fill="#ffd23f" /><ellipse cx="25.5" cy="4" rx="5.5" ry="1.5" fill="none" stroke="#b8901a" strokeWidth="0.5" />
-    {/* bass drum — solid shell + head + neon rim so it reads as a drum, not a ring */}
-    <ellipse cx="13" cy="13" rx="10.5" ry="6.5" fill="#2b2248" />
-    <ellipse cx="13" cy="13" rx="8.4" ry="4.9" fill="#41356a" />
-    <ellipse cx="13" cy="13" rx="10.5" ry="6.5" fill="none" stroke="#f72585" strokeWidth="1.5" />
-    <circle cx="13" cy="13" r="2.6" fill="#d11e5a" />
-    {/* a small tom up top + legs */}
-    <ellipse cx="8" cy="6.5" rx="3.6" ry="2.2" fill="#41356a" /><ellipse cx="8" cy="6.5" rx="3.6" ry="2.2" fill="none" stroke="#4cc9f0" strokeWidth="1" />
-    <rect x="6" y="18" width="1.6" height="2" fill="#2a2a35" /><rect x="19" y="18" width="1.6" height="2" fill="#2a2a35" />
+const Guitar: React.FC<{ className?: string; bass?: boolean }> = ({ className, bass }) => {
+  const body = bass ? '#2f6fd0' : '#e23b6e';
+  const edge = bass ? '#1c478f' : '#b3174a';
+  const plate = bass ? '#bfe9ff' : '#ffd23f';
+  return (
+    <svg aria-hidden className={className} width={bass ? 64 : 58} height={bass ? 29 : 26} viewBox="0 0 29 13" style={{ imageRendering: 'pixelated' }}>
+      <rect x="0" y="4" width="1" height="6" fill={edge} /><rect x="1" y="3" width="11" height="8" fill={body} />
+      <rect x="12" y="4" width="1" height="6" fill={edge} />
+      <rect x="3" y="5" width="5" height="4" fill={plate} />
+      <rect x="9" y="6" width="2" height="2" fill="#241015" />
+      <rect x="13" y="6" width="13" height="2" fill="#6a4528" /><rect x="26" y="5" width="3" height="4" fill="#241510" />
+      <rect x="15" y="6" width="1" height="2" fill="#d7dbe6" /><rect x="19" y="6" width="1" height="2" fill="#d7dbe6" /><rect x="23" y="6" width="1" height="2" fill="#d7dbe6" />
+      <rect x="2" y="6" width="25" height="1" fill="#e9e9f2" opacity="0.45" />
+    </svg>
+  );
+};
+// Handheld mic the singer grips at mouth level — way cleaner than a floating stand.
+const Mic: React.FC<{ className?: string }> = ({ className }) => (
+  <svg aria-hidden className={className} width={13} height={26} viewBox="0 0 6.5 13" style={{ imageRendering: 'pixelated' }}>
+    <ellipse cx="3.2" cy="2.4" rx="2.4" ry="2.6" fill="#62627a" /><ellipse cx="3.2" cy="2.4" rx="2.4" ry="2.6" fill="none" stroke="#32323d" strokeWidth="0.5" />
+    <ellipse cx="2.4" cy="1.6" rx="0.7" ry="0.9" fill="#8a8aa0" />
+    <rect x="2.3" y="4.2" width="1.8" height="0.9" fill="#26262e" />
+    <rect x="2.6" y="5" width="1.2" height="8" fill="#3a3a46" /><rect x="2.6" y="5" width="0.5" height="8" fill="#54545f" />
   </svg>
 );
 
@@ -72,14 +69,6 @@ const DrumKit: React.FC<{ className?: string }> = ({ className }) => (
 // red-spiky on the mic, a third on the kit.
 const BAND = ['010', '004', '008'];
 
-// Drifting 7" records (the Emogame motif — vinyl as ammo). Label colours from the
-// neon palette; they spin + float up like the old notes, but read as records.
-const RECORDS = [
-  { left: '8%', size: 26, lbl: '#f72585', dur: 13, delay: 0 },
-  { left: '24%', size: 18, lbl: '#4cc9f0', dur: 17, delay: 4.5 },
-  { left: '42%', size: 30, lbl: '#ffd23f', dur: 15, delay: 7 },
-  { left: '57%', size: 20, lbl: '#3ad17e', dur: 19, delay: 2.2 },
-];
 
 export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
   onStartGame, onContinueGame, onSettings, onUpgrades, hasSavedGame = false,
@@ -132,14 +121,6 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
         {Array.from({ length: 9 }, (_, i) => <Prop key={i} name="string_lights" s={3.2} className="lights" />)}
       </div>
 
-      {/* Flying 7" records — the Emogame nod (vinyl as ammo). A few, drifting up. */}
-      <div className="records">
-        {RECORDS.map((r, i) => (
-          <span key={i} className="rec-fly" style={{ left: r.left, animationDuration: `${r.dur}s`, animationDelay: `${r.delay}s` }}>
-            <span className="rec" style={{ width: r.size, height: r.size, ['--lbl' as string]: r.lbl }} />
-          </span>
-        ))}
-      </div>
 
       {/* ===== STAGE + BAND (focal point) ===== */}
       <div className="stage">
@@ -148,9 +129,8 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
           <Prop name="pa_speaker_stack" s={2.5} className="pa pa-l" />
           <div className="band">
             <span className="bandmate b0 guitarist"><FdSprite id={BAND[0]} s={3} /><Guitar className="gtr" /></span>
-            <span className="bandmate b1 singer"><FdSprite id={BAND[1]} s={3} /></span>
-            <span className="bandmate b2 drummer"><FdSprite id={BAND[2]} s={2.7} /><DrumKit className="kit" /></span>
-            <Prop name="mic_stand" s={3.2} className="mic" />
+            <span className="bandmate b1 singer"><FdSprite id={BAND[1]} s={3} /><Mic className="handmic" /></span>
+            <span className="bandmate b2 bassist"><FdSprite id={BAND[2]} s={3} /><Guitar className="bass" bass /></span>
             <Prop name="floor_amp" s={3} className="amp" />
           </div>
           <Prop name="pa_speaker_stack" s={2.5} className="pa pa-r" />
@@ -172,8 +152,6 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
       {/* ===== LOGO + MENU ===== */}
       <div className="menu-stage">
         <div className="hero-col">
-          {/* a big spinning record the logo is "pinned" over — Emogame DNA */}
-          <span className="logo-record" aria-hidden />
           <div className="banner">
             <span className="banner-pin pin-l" /><span className="banner-pin pin-r" />
             <h1 className="title-text">SETTLING</h1>
@@ -262,11 +240,11 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
         .bandmate { position: relative; transform-origin: bottom center; animation: headbang 0.62s ease-in-out infinite; filter: drop-shadow(0 2px 0 rgba(0,0,0,.4)); }
         .b1 { animation-delay: .1s; animation-duration: .54s } .b2 { animation-delay: .26s; animation-duration: .7s }
         @keyframes headbang { 0%,100%{transform:translateY(0) rotate(0)} 30%{transform:translateY(-3px) rotate(-3deg)} 60%{transform:translateY(-1px) rotate(3deg)} }
-        .mic { position: absolute; left: 50%; transform: translateX(-50%); bottom: 0; z-index: 4; }
         .amp { position: absolute; right: -16px; bottom: 0; }
         /* instruments — what turns villagers into a band */
         .gtr { position: absolute; left: 2%; bottom: 14%; transform: rotate(-18deg); z-index: 3; pointer-events: none; filter: drop-shadow(0 1px 0 rgba(0,0,0,.5)); }
-        .kit { position: absolute; left: 50%; bottom: -6%; transform: translateX(-50%); z-index: 3; pointer-events: none; filter: drop-shadow(0 2px 0 rgba(0,0,0,.45)); }
+        .bass { position: absolute; right: -2%; bottom: 12%; transform: rotate(16deg); z-index: 3; pointer-events: none; filter: drop-shadow(0 1px 0 rgba(0,0,0,.5)); }
+        .handmic { position: absolute; left: 54%; bottom: 42%; transform: rotate(22deg); z-index: 4; pointer-events: none; filter: drop-shadow(0 1px 0 rgba(0,0,0,.5)); }
         .platform { width: clamp(150px, 26vw, 240px); height: clamp(10px, 2.4vh, 16px); margin-top: -2px;
           background: linear-gradient(180deg, #5a3f2a 0%, #3e2a1a 100%); border-top: 2px solid #6e4d33;
           box-shadow: 0 5px 10px rgba(0,0,0,.5); }
@@ -278,26 +256,6 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
           opacity: 0; transition: opacity .4s ease; }
         [data-revealed="true"] .fan { opacity: 1; }
         @keyframes jump { 0%,100%{transform:translateX(-50%) translateY(0)} 45%{transform:translateX(-50%) translateY(-4px)} }
-
-        /* ===== Emogame: spinning 7" records ===== */
-        .records { position: absolute; inset: 0; z-index: 6; pointer-events: none; overflow: hidden; }
-        .rec-fly { position: absolute; bottom: 16%; opacity: 0; animation-name: rec-rise; animation-timing-function: linear; animation-iteration-count: infinite; }
-        @keyframes rec-rise { 0%{transform:translateY(0) translateX(0);opacity:0} 12%{opacity:.85} 88%{opacity:.85} 100%{transform:translateY(-84vh) translateX(26px);opacity:0} }
-        .rec { display: block; position: relative; border-radius: 50%; animation: rec-spin 1.8s linear infinite;
-          background: radial-gradient(circle at 50% 50%, #0c0c0c 0 7%, var(--lbl, #f72585) 8% 27%, #0a0a0a 28% 31%, #1c1c1c 32% 45%, #0a0a0a 46% 49%, #1c1c1c 50% 64%, #0a0a0a 65% 68%, #1c1c1c 69% 100%);
-          box-shadow: 0 2px 6px rgba(0,0,0,.55), inset 0 0 5px rgba(255,255,255,.07); }
-        .rec::after { content:''; position:absolute; top:50%; left:50%; width:11%; height:11%; transform:translate(-50%,-50%); border-radius:50%; background:#1a1118; }
-        .rec::before { content:''; position:absolute; inset:0; border-radius:50%; background:linear-gradient(125deg, rgba(255,255,255,.16) 0 16%, transparent 36%); }
-        @keyframes rec-spin { to { transform: rotate(360deg); } }
-
-        /* a big record the logo is pinned over */
-        .hero-col { position: relative; }
-        .logo-record { position: absolute; top: 4%; left: 76%; width: clamp(96px,12vw,132px); height: clamp(96px,12vw,132px);
-          transform: translate(-50%,-46%); border-radius: 50%; z-index: -1; pointer-events: none; opacity: .92;
-          animation: rec-spin 8s linear infinite;
-          background: radial-gradient(circle at 50% 50%, #0c0c0c 0 8%, #d11e5a 9% 23%, #0a0a0a 24% 28%, #1a1a1a 29% 44%, #0a0a0a 45% 47%, #1a1a1a 48% 63%, #0a0a0a 64% 66%, #1a1a1a 67% 100%);
-          box-shadow: 0 8px 26px rgba(0,0,0,.6); }
-        .logo-record::after { content:''; position:absolute; top:50%; left:50%; width:7%; height:7%; transform:translate(-50%,-50%); border-radius:50%; background:#1a1118; }
 
         .vignette { position: absolute; inset: 0; z-index: 6; pointer-events: none;
           background: radial-gradient(125% 90% at 50% 42%, transparent 58%, rgba(8,4,14,.6) 100%); }
