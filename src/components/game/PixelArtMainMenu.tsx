@@ -14,7 +14,10 @@ interface PixelArtMainMenuProps {
 const PROP_BASE = '/title/props';
 const PROP_SIZE: Record<string, [number, number]> = {
   string_lights: [28, 14], floor_amp: [16, 14], pa_speaker_stack: [16, 26],
-  mic_stand: [12, 24], poster_wall: [18, 20],
+  mic_stand: [12, 24], poster_wall: [18, 20], crate_stack: [16, 18],
+  road_case: [18, 14], guitar_case: [12, 20], cable_coil: [14, 8],
+  keg_cooler: [12, 16], flyer_pole: [14, 26], sandwich_board: [16, 18],
+  stage_riser: [20, 12],
 };
 const Prop: React.FC<{ name: keyof typeof PROP_SIZE; s?: number; className?: string; style?: React.CSSProperties }> =
   ({ name, s = 4, className, style }) => {
@@ -74,6 +77,24 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
     delay: (i % 6) * 0.12,
   }));
 
+  // Per-tier ROOM DRESSING — grows with the venue (basement→theater). Festival is the
+  // outdoor path and dresses itself (sky/skyline). Kept LEFT of ~30% so it never reaches
+  // the right-side menu column in landscape.
+  const ROOM: Record<string, { flyers: number; hero: 'bulb' | 'barglow' | 'marquee' | null; backline: string[]; riser: boolean; fg: string[]; board: boolean }> = {
+    basement: { flyers: 6, hero: 'bulb',    backline: ['floor_amp', 'crate_stack', 'floor_amp'],            riser: false, fg: ['guitar_case', 'cable_coil'], board: false },
+    dive:     { flyers: 4, hero: 'barglow', backline: ['floor_amp', 'road_case', 'floor_amp', 'floor_amp'], riser: false, fg: ['keg_cooler', 'cable_coil'],   board: true },
+    theater:  { flyers: 2, hero: 'marquee', backline: ['road_case', 'crate_stack'],                          riser: true,  fg: [],                            board: false },
+    festival: { flyers: 0, hero: null,      backline: [],                                                    riser: true,  fg: [],                            board: false },
+  };
+  const room = ROOM[tier.id] ?? ROOM.basement;
+  // plastered flyers, upper-LEFT focal wall: varied position / tilt / scale, overlapping.
+  const flyers = Array.from({ length: room.flyers }, (_, i) => ({
+    left: 3 + (i % 3) * 8.5 + ((i * 5) % 3) * 1.5,           // 3–22%
+    top: 9 + Math.floor(i / 3) * 17 + ((i * 7) % 3) * 3,     // stacked rows on the upper wall
+    rot: ((i * 11) % 7) - 3,                                  // −3…3°
+    s: 2.1 + ((i * 3) % 3) * 0.3,
+  }));
+
   return (
     <div className="pixel-main-menu" data-revealed={revealed} data-tier={tier.id} data-outdoor={tier.outdoor}>
       {/* ===== ROOM ===== */}
@@ -91,8 +112,22 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
             </svg>
           </div>
         ) : (
-          <div className="wall"><Prop name="poster_wall" s={3} className="wall-poster" /></div>
+          <div className="wall">
+            {flyers.map((f, i) => (
+              <Prop key={i} name="poster_wall" s={f.s} className="flyer"
+                style={{ position: 'absolute', left: `${f.left}%`, top: `${f.top}%`, transform: `rotate(${f.rot}deg)`, zIndex: 3 }} />
+            ))}
+            {room.flyers > 0 && (
+              <Prop name="flyer_pole" s={2.4} className="flyer"
+                style={{ position: 'absolute', left: '25%', bottom: '3%', zIndex: 3 }} />
+            )}
+          </div>
         )}
+        {/* motivated warm hero light (per tier) + dusty light shaft over the band */}
+        {!tier.outdoor && room.hero === 'bulb' && <div className="bulb" />}
+        {!tier.outdoor && room.hero === 'barglow' && <div className="bar-glow" />}
+        {!tier.outdoor && room.hero === 'marquee' && <div className="marquee">{tier.venue.toUpperCase()}</div>}
+        <div className="light-shaft" />
         <div className="stage-wash" />
         <div className="floor" />
         <div className="floor-line" />
@@ -107,6 +142,11 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
       {/* ===== STAGE + BAND (focal point) ===== */}
       <div className="stage">
         <div className="spot" />
+        {room.backline.length > 0 && (
+          <div className="backline-gear">
+            {room.backline.map((g, i) => <Prop key={i} name={g as keyof typeof PROP_SIZE} s={2.3} />)}
+          </div>
+        )}
         <div className="backline">
           <Prop name="pa_speaker_stack" s={2.5} className="pa pa-l" />
           <div className="band">
@@ -128,6 +168,18 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
           </span>
         ))}
       </div>
+
+      {/* ===== FOREGROUND FRAME (darkest plane, lower corners only) ===== */}
+      {room.fg.length > 0 && (
+        <div className="foreground">
+          {room.fg.map((g, i) => (
+            <Prop key={i} name={g as keyof typeof PROP_SIZE} s={2.6} className="fg-prop" style={{ left: `${3 + i * 7}%` }} />
+          ))}
+          {room.board && (
+            <Prop name="sandwich_board" s={2.6} className="fg-prop fg-board" style={{ left: '22%' }} />
+          )}
+        </div>
+      )}
 
       <div className="vignette" />
 
@@ -169,14 +221,39 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
 
         /* ===== ROOM: back wall + floor with a clear seam ===== */
         .room { position: absolute; inset: 0; z-index: 1; }
+        /* BASEMENT base: poured concrete, faint horizontal form-tie streaks (NOT a tile grid),
+           hard-banded warm-purple, depth-fade to top+right, corner soot. */
         .wall { position: absolute; left: 0; right: 0; top: 0; bottom: 33%;
+          --wall-a: #3a2a3e; --wall-b: #241a2c; --mortar: rgba(0,0,0,.10);
           background:
-            linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,0) 30%),
-            repeating-linear-gradient(90deg, rgba(255,255,255,.025) 0 1px, transparent 1px 30px),
-            repeating-linear-gradient(0deg, rgba(0,0,0,.16) 0 1px, transparent 1px 15px),
-            linear-gradient(180deg, #3a2440 0%, #2c1a34 55%, #221428 100%);
+            repeating-linear-gradient(0deg, var(--mortar) 0 2px, transparent 2px 24px),
+            linear-gradient(180deg, var(--wall-a) 0 60%, var(--wall-b) 60% 100%);
           opacity: 0; transition: opacity .5s ease; }
         [data-revealed="true"] .wall { opacity: 1; }
+        .wall::before { content: ""; position: absolute; inset: 0; pointer-events: none;
+          background:
+            linear-gradient(90deg, transparent 21.5%, rgba(0,0,0,.30) 22%, transparent 22.5%),
+            linear-gradient(90deg, transparent 70.5%, rgba(0,0,0,.30) 71%, transparent 71.5%),
+            radial-gradient(120% 95% at 30% 100%, transparent 34%, rgba(10,6,18,.74) 100%); }
+        .wall::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+          background:
+            radial-gradient(circle at 14% 16%, rgba(0,0,0,.34), transparent 24%),
+            radial-gradient(circle at 86% 96%, rgba(0,0,0,.30), transparent 30%); }
+        /* DIVE: painted cinderblock — the ONLY grid tier, BIG 2:1 (92x46) cells. */
+        .pixel-main-menu[data-tier="dive"] .wall {
+          --wall-a: #3d2a3a; --wall-b: #2a1826;
+          background:
+            repeating-linear-gradient(0deg, rgba(255,255,255,.05) 0 1px, transparent 1px 46px),
+            repeating-linear-gradient(0deg, rgba(0,0,0,.16) 0 2px, transparent 2px 46px),
+            repeating-linear-gradient(90deg, rgba(0,0,0,.16) 0 2px, transparent 2px 92px),
+            linear-gradient(180deg, var(--wall-a) 0 60%, var(--wall-b) 60% 100%); }
+        /* THEATER: clean papered wainscot + gold dado rail at 60% (clean = earned, not empty). */
+        .pixel-main-menu[data-tier="theater"] .wall {
+          --wall-a: #3e2c46; --wall-b: #2c1e34;
+          background:
+            linear-gradient(180deg, rgba(255,210,120,.10) 0 2px, transparent 2px 4px) 0 60% / 100% 4px no-repeat,
+            linear-gradient(180deg, var(--wall-a) 0 60%, var(--wall-b) 60% 100%); }
+        .pixel-main-menu[data-tier="theater"] .wall::after { background: none; }
         .wall-poster { position: absolute; left: 7%; bottom: 8%; filter: drop-shadow(0 2px 0 rgba(0,0,0,.4)); }
         .sky { position: absolute; left: 0; right: 0; top: 0; bottom: 30%;
           background: linear-gradient(180deg, #1d1140 0%, #5a2b66 55%, #b5556a 100%); }
@@ -186,21 +263,86 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
 
         /* warm glow on the back wall behind the stage */
         .stage-wash { position: absolute; left: 50%; transform: translateX(-50%); bottom: 30%; width: 64%; height: 46%; z-index: 1; pointer-events: none;
-          background: radial-gradient(60% 80% at 50% 100%, color-mix(in srgb, var(--accent) 30%, transparent), transparent 72%);
+          background: radial-gradient(60% 80% at 50% 100%, color-mix(in srgb, color-mix(in srgb, var(--accent) 55%, rgb(255,200,120)) 32%, transparent), transparent 72%);
           opacity: 0; transition: opacity .8s ease .4s; mix-blend-mode: screen; }
         [data-revealed="true"] .stage-wash { opacity: 1; }
 
+        /* ===== motivated warm lighting (bare bulb → light shaft → warmed spot) ===== */
+        .bulb { position: absolute; left: 30%; top: 8%; z-index: 3; pointer-events: none; transform: translateX(-50%);
+          width: 10px; height: 10px; border-radius: 50%;
+          background: radial-gradient(circle at 40% 35%, #fff 0 25%, #ffce7a 55%, #c98a30 100%);
+          box-shadow: 0 0 0 1px rgba(0,0,0,.4); }
+        .bulb::before { content: ""; position: absolute; left: 50%; top: -60px; width: 1px; height: 60px; background: rgba(0,0,0,.45); transform: translateX(-50%); }
+        .bulb::after { content: ""; position: absolute; left: 50%; top: 50%; width: 170px; height: 170px; transform: translate(-50%,-50%); border-radius: 50%;
+          background: radial-gradient(circle, rgba(255,200,120,.50), transparent 60%); mix-blend-mode: screen;
+          animation: bulbBreathe 5s ease-in-out infinite; }
+        @keyframes bulbBreathe { 0%,100%{opacity:.82} 50%{opacity:1} }
+        .light-shaft { position: absolute; left: 30%; top: 6%; bottom: 33%; width: 46%; z-index: 2; transform: translateX(-50%); pointer-events: none;
+          background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 24%, rgba(255,220,150,.18)) 0%, transparent 78%);
+          clip-path: polygon(40% 0, 60% 0, 80% 100%, 20% 100%); mix-blend-mode: screen; opacity: .5;
+          animation: bulbBreathe 5s ease-in-out infinite .3s; }
+        [data-outdoor="true"] .light-shaft { background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 22%, rgba(255,200,120,.16)) 0%, transparent 80%); }
+        /* dive hero: warm bar-glow panel; theater hero: lit marquee plate */
+        .bar-glow { position: absolute; left: 22%; top: 16%; z-index: 3; width: 54px; height: 30px; transform: translateX(-50%); pointer-events: none; border-radius: 3px;
+          background: linear-gradient(180deg,#1a0f18,#2a1620); box-shadow: 0 2px 0 rgba(0,0,0,.5); }
+        .bar-glow::after { content: ""; position: absolute; left: 50%; top: 50%; width: 104px; height: 74px; transform: translate(-50%,-50%);
+          background: radial-gradient(circle, color-mix(in srgb, var(--accent) 46%, rgba(255,190,110,.32)), transparent 66%); mix-blend-mode: screen; opacity: .78;
+          animation: bulbBreathe 4s ease-in-out infinite; }
+        .marquee { position: absolute; left: 22%; top: 13%; z-index: 3; transform: translateX(-50%); pointer-events: none;
+          padding: 3px 9px; border-radius: 2px; background: #1a1208; color: #ffe9b0;
+          font-family: 'Bebas Neue','Oswald',sans-serif; font-size: 11px; letter-spacing: 2px;
+          box-shadow: 0 0 0 2px var(--accent), 0 0 16px color-mix(in srgb, var(--accent) 55%, rgba(255,200,120,.6)); }
+
+        /* plastered flyers on the wall */
+        .flyer { filter: drop-shadow(1px 2px 0 rgba(0,0,0,.5)); }
+        /* midground backline gear — a DARKER value plane behind the band */
+        .backline-gear { position: absolute; left: 50%; transform: translateX(-50%); bottom: 4px; z-index: -1;
+          display: flex; align-items: flex-end; justify-content: center; gap: 12px; pointer-events: none;
+          filter: brightness(.58) saturate(.9); }
+        /* foreground frame: lowest darkest plane, hugging the bottom-left corner */
+        .foreground { position: absolute; left: 0; right: 0; bottom: 0; height: 30%; z-index: 6; pointer-events: none; }
+        .fg-prop { position: absolute; bottom: 1%; filter: brightness(.5) drop-shadow(0 2px 0 rgba(0,0,0,.55)); image-rendering: pixelated; }
+
+        /* Floor recedes (dark far / lit near) + catches the stage glow as a reflected puddle. */
         .floor { position: absolute; left: 0; right: 0; bottom: 0; height: 33%; z-index: 1;
           background:
+            linear-gradient(180deg, rgba(0,0,0,.34), transparent 42%),
+            repeating-linear-gradient(0deg, rgba(0,0,0,.16) 0 1px, transparent 1px 9px),
             repeating-linear-gradient(90deg, rgba(0,0,0,.14) 0 1px, transparent 1px 34px),
             linear-gradient(180deg, #4a3324 0%, #38261a 60%, #2a1c12 100%);
           opacity: 0; transition: opacity .5s ease; }
         [data-revealed="true"] .floor { opacity: 1; }
+        .floor::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 60%; pointer-events: none;
+          background: radial-gradient(46% 78% at 50% 0%, color-mix(in srgb, var(--accent) 22%, rgba(255,200,120,.16)), transparent 70%);
+          mix-blend-mode: screen; }
+        .pixel-main-menu[data-tier="basement"] .floor { filter: saturate(.85) brightness(.94); }
+        .pixel-main-menu[data-tier="dive"] .floor::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+          background:
+            radial-gradient(circle at 24% 55%, rgba(0,0,0,.50), transparent 9%),
+            radial-gradient(circle at 40% 72%, rgba(0,0,0,.42), transparent 7%); }
+        .pixel-main-menu[data-tier="theater"] .floor { background:
+          linear-gradient(180deg, rgba(0,0,0,.28), transparent 42%),
+          repeating-linear-gradient(0deg, rgba(0,0,0,.12) 0 1px, transparent 1px 9px),
+          repeating-linear-gradient(90deg, rgba(0,0,0,.10) 0 1px, transparent 1px 40px),
+          linear-gradient(180deg, #5a4030 0%, #45301f 60%, #341f12 100%); }
         [data-outdoor="true"] .floor { background:
           repeating-linear-gradient(90deg, rgba(0,0,0,.10) 0 1px, transparent 1px 30px),
           linear-gradient(180deg, #6a4a36 0%, #4a3122 100%); }
-        .floor-line { position: absolute; left: 0; right: 0; bottom: 33%; height: 8px; z-index: 1; pointer-events: none;
-          background: linear-gradient(180deg, rgba(0,0,0,0), rgba(0,0,0,.55)); }
+        [data-outdoor="true"] .floor::before { background: radial-gradient(46% 78% at 50% 0%, color-mix(in srgb, var(--accent) 20%, rgba(255,200,120,.14)), transparent 70%); mix-blend-mode: screen; }
+
+        /* Built baseboard: lit top lip + molding body + dark cast-shadow underside. */
+        .floor-line { position: absolute; left: 0; right: 0; bottom: 33%; height: 12px; z-index: 2; pointer-events: none;
+          background: linear-gradient(180deg,
+            color-mix(in srgb, var(--accent) 16%, #2a1c2e) 0 2px,
+            #241830 2px 6px,
+            rgba(0,0,0,.50) 6px 12px);
+          box-shadow: 0 1px 0 color-mix(in srgb, var(--accent) 18%, transparent); }
+        .pixel-main-menu[data-tier="basement"] .floor-line { background:
+          linear-gradient(180deg, #2a2230 0 3px, #1a1018 3px 8px, rgba(0,0,0,.5) 8px 12px); box-shadow: none; }
+        .pixel-main-menu[data-tier="dive"] .floor-line { background:
+          linear-gradient(180deg, #4a3320 0 2px, #2a1c12 2px 7px, rgba(0,0,0,.5) 7px 12px); }
+        .pixel-main-menu[data-tier="theater"] .floor-line { height: 14px; background:
+          linear-gradient(180deg, #ffd23f 0 1px, #6a4a20 1px 3px, #2c1e10 3px 8px, rgba(0,0,0,.5) 8px 14px); }
         [data-outdoor="true"] .floor-line { display: none; }
 
         /* ===== string lights ===== */
@@ -215,7 +357,7 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
           opacity: 0; transition: opacity .5s ease .35s; }
         [data-revealed="true"] .stage { opacity: 1; }
         .spot { position: absolute; bottom: -24%; left: 50%; transform: translateX(-50%); width: 150%; height: 150%;
-          background: radial-gradient(46% 64% at 50% 92%, color-mix(in srgb, var(--accent) 62%, transparent), transparent 70%); mix-blend-mode: screen; }
+          background: radial-gradient(46% 64% at 50% 92%, color-mix(in srgb, color-mix(in srgb, var(--accent) 60%, rgb(255,200,120)) 62%, transparent), transparent 70%); mix-blend-mode: screen; }
         .backline { position: relative; display: flex; align-items: flex-end; justify-content: center; gap: 14px; }
         .pa { filter: drop-shadow(0 3px 0 rgba(0,0,0,.45)); }
         .band { position: relative; display: flex; align-items: flex-end; justify-content: center; gap: 2px; padding: 0 8px; }
@@ -297,9 +439,10 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
 
         @media (prefers-reduced-motion: reduce) {
           .wall,.floor,.floor-line,.stage-wash,.lights-row,.stage,.fan,.banner,.tagline,.menu-buttons>*,.menu-footer { transition: none !important; opacity: 1 !important; transform: none !important; }
-          .bandmate,.fan,.dusk-stars span { animation: none !important; }
+          .bandmate,.fan,.dusk-stars span,.bulb::after,.light-shaft,.bar-glow::after { animation: none !important; }
           .lights-row { transform: none !important; }
           .fan { transform: translateX(-50%) !important; }
+          .light-shaft { opacity: .5 !important; }
         }
       `}</style>
     </div>
