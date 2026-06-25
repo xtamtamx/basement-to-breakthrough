@@ -12,36 +12,34 @@ interface PixelArtMainMenuProps {
 }
 
 const PROP_BASE = '/title/props';
-// native px sizes of the source sprites (see public/title/props)
 const PROP_SIZE: Record<string, [number, number]> = {
-  string_lights: [28, 14], stage_riser: [20, 12], floor_amp: [16, 14],
-  pa_speaker_stack: [16, 26], mic_stand: [12, 24], poster_wall: [18, 20],
-  guitar_case: [12, 20], keg_cooler: [12, 16], crate_stack: [16, 18], flyer_pole: [14, 26],
+  string_lights: [28, 14], floor_amp: [16, 14], pa_speaker_stack: [16, 26],
+  mic_stand: [12, 24], poster_wall: [18, 20],
 };
-
-/** A real game prop sprite, nearest-neighbour scaled. */
 const Prop: React.FC<{ name: keyof typeof PROP_SIZE; s?: number; className?: string; style?: React.CSSProperties }> =
   ({ name, s = 4, className, style }) => {
     const [w, h] = PROP_SIZE[name];
-    return (
-      <img src={`${PROP_BASE}/${name}.png`} alt="" aria-hidden className={className}
-        style={{ width: w * s, height: h * s, imageRendering: 'pixelated', ...style }} />
-    );
+    return <img src={`${PROP_BASE}/${name}.png`} alt="" aria-hidden className={className}
+      style={{ width: w * s, height: h * s, imageRendering: 'pixelated', ...style }} />;
   };
 
-// Real Fantasy-Dreamland character (24x24 frame in a 96x96 / 4-dir x 4-frame
-// sheet). dir 0 = facing the viewer. The art pack's cohesive style — replaces the
-// procedural rect people on the stage.
+// Real Fantasy-Dreamland character. 96x96 idle sheet = 4 rows (Down/Left/Right/Up)
+// x 4 frames. dir 0 = facing viewer (band); dir 3 = back, facing the stage (crowd).
 const CHAR_SRC = '/assets/sprites/characters';
-const FdSprite: React.FC<{ id: string; s?: number; dir?: number; className?: string }> = ({ id, s = 3, dir = 0, className }) => (
-  <div aria-hidden className={className} style={{
-    width: 24 * s, height: 24 * s, imageRendering: 'pixelated',
-    backgroundImage: `url(${CHAR_SRC}/FD_Character_${id}_Idle.png)`,
-    backgroundSize: `${96 * s}px ${96 * s}px`,
-    backgroundPosition: `0px ${-dir * 24 * s}px`,
-    backgroundRepeat: 'no-repeat',
-  }} />
-);
+const FdSprite: React.FC<{ id: string; s?: number; dir?: number; className?: string; style?: React.CSSProperties }> =
+  ({ id, s = 3, dir = 0, className, style }) => (
+    <div aria-hidden className={className} style={{
+      width: 24 * s, height: 24 * s, imageRendering: 'pixelated',
+      backgroundImage: `url(${CHAR_SRC}/FD_Character_${id}_Idle.png)`,
+      backgroundSize: `${96 * s}px ${96 * s}px`,
+      backgroundPosition: `0px ${-dir * 24 * s}px`,
+      backgroundRepeat: 'no-repeat', ...style,
+    }} />
+  );
+
+// The band: a fixed, characterful trio (red punk on the mic, blue punk on guitar,
+// cowboy on the kit). Uniform size, facing the crowd.
+const BAND = ['004', '010', '008'];
 
 export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
   onStartGame, onContinueGame, onSettings, onUpgrades, hasSavedGame = false,
@@ -54,91 +52,84 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
     return () => cancelAnimationFrame(id);
   }, []);
 
-  // Crowd: real characters from the pack, varied + stable by index. Two depth rows.
-  const crowd = Array.from({ length: tier.crowd }, (_, i) => ({
-    id: String(((i * 7) % 40) + 1).padStart(3, '0'),
-    left: 1 + ((i * 137) % 95),
-    row: i % 2,
-    delay: (i % 7) * 0.13,
-    s: 2.0 + ((i * 13) % 4) * 0.22,
+  // Crowd: real characters, EVENLY spaced, all the same size, all facing the stage
+  // (backs to camera), grounded on the floor. Darkened as a foreground silhouette.
+  const crowdN = tier.crowd;
+  const crowd = Array.from({ length: crowdN }, (_, i) => ({
+    id: String(((i * 9 + 1) % 40) + 1).padStart(3, '0'),
+    // even spread with a tiny deterministic jitter so it's not a perfect grid
+    left: ((i + 0.5) / crowdN) * 100 + (((i * 7) % 3) - 1) * 1.4,
+    lift: (i % 2) * 6,             // slight 2-row depth
+    delay: (i % 6) * 0.12,
   }));
 
   return (
     <div className="pixel-main-menu" data-revealed={revealed} data-tier={tier.id} data-outdoor={tier.outdoor}>
-      {/* ---- BACKDROP: interior wall (basement→theater) or dusk sky + skyline (festival) ---- */}
-      <div className="backdrop">
-        {tier.outdoor && (
-          <>
-            <div className="dusk-stars">{Array.from({ length: 14 }, (_, i) => <span key={i} style={{ left: `${(i * 67) % 100}%`, top: `${(i * 23) % 38}%`, animationDelay: `${(i % 5) * 0.6}s` }} />)}</div>
-            <svg className="fest-skyline" viewBox="0 0 375 120" preserveAspectRatio="none" aria-hidden>
-              {Array.from({ length: 16 }, (_, i) => {
-                const w = 18 + (i % 4) * 6, x = i * 24 - 4, h = 40 + ((i * 37) % 70);
-                return <g key={i}><rect x={x} y={120 - h} width={w} height={h} fill="#120c22" />
-                  {Array.from({ length: 8 }, (_, j) => (j + i) % 2 === 0 && <rect key={j} x={x + 3 + (j % 3) * 5} y={120 - h + 6 + j * 6} width="3" height="4" fill={['#ffd23f', '#f72585', '#4cc9f0'][j % 3]} opacity="0.85" />)}
+      {/* ===== ROOM ===== */}
+      <div className="room">
+        {tier.outdoor ? (
+          <div className="sky">
+            <div className="dusk-stars">{Array.from({ length: 16 }, (_, i) => <span key={i} style={{ left: `${(i * 61) % 100}%`, top: `${(i * 29) % 42}%`, animationDelay: `${(i % 5) * 0.5}s` }} />)}</div>
+            <svg className="fest-skyline" viewBox="0 0 375 110" preserveAspectRatio="none" aria-hidden>
+              {Array.from({ length: 15 }, (_, i) => {
+                const w = 20 + (i % 3) * 7, x = i * 26 - 6, h = 38 + ((i * 41) % 60);
+                return <g key={i}><rect x={x} y={110 - h} width={w} height={h} fill="#160d28" />
+                  {Array.from({ length: 7 }, (_, j) => (j + i) % 2 === 0 && <rect key={j} x={x + 3 + (j % 3) * 5} y={110 - h + 6 + j * 7} width="3" height="4" fill={['#ffd23f', '#f72585', '#4cc9f0'][j % 3]} opacity=".9" />)}
                 </g>;
               })}
             </svg>
-          </>
-        )}
-        {!tier.outdoor && <div className="wall" />}
-        <div className="floor" />
-        <div className="wallbase" />
-        {/* back-wall DIY dressing */}
-        <Prop name="poster_wall" s={3.4} className="prop poster" />
-        <Prop name="flyer_pole" s={3.2} className="prop flyerpole" />
-      </div>
-
-      {/* ---- STRING LIGHTS across the top ---- */}
-      <div className="lights-row">
-        {Array.from({ length: 8 }, (_, i) => <Prop key={i} name="string_lights" s={3.4} className="lights" />)}
-      </div>
-
-      {/* ---- STAGE: spotlight + backline + band ---- */}
-      <div className="stage">
-        <div className="spotlight" />
-        <div className="backline">
-          <Prop name="pa_speaker_stack" s={4.4} className="prop pa pa-l" />
-          <div className="band">
-            <span className="player p-guitar"><FdSprite id="003" s={3} /></span>
-            <span className="player p-sing"><FdSprite id="004" s={3.3} /></span>
-            <span className="player p-drum"><FdSprite id="021" s={2.8} /></span>
-            <Prop name="mic_stand" s={4} className="prop mic" />
-            <Prop name="floor_amp" s={4} className="prop amp" />
           </div>
-          <Prop name="pa_speaker_stack" s={4.4} className="prop pa pa-r" />
-        </div>
-        <div className="stage-platform"><span className="stage-edge" /></div>
+        ) : (
+          <div className="wall"><Prop name="poster_wall" s={3} className="wall-poster" /></div>
+        )}
+        <div className="stage-wash" />
+        <div className="floor" />
+        <div className="floor-line" />
       </div>
 
-      {/* ---- CROWD (foreground, backlit by the floor wash) ---- */}
-      <div className="floor-glow" />
+      {/* string lights swag across the top */}
+      <div className="lights-row">
+        {Array.from({ length: 9 }, (_, i) => <Prop key={i} name="string_lights" s={3.2} className="lights" />)}
+      </div>
+
+      {/* ===== STAGE + BAND (focal point) ===== */}
+      <div className="stage">
+        <div className="spot" />
+        <div className="backline">
+          <Prop name="pa_speaker_stack" s={3.4} className="pa" />
+          <div className="band">
+            {BAND.map((id, i) => (
+              <span key={id} className={`bandmate b${i}`}><FdSprite id={id} s={2.9} /></span>
+            ))}
+            <Prop name="mic_stand" s={3.2} className="mic" />
+            <Prop name="floor_amp" s={3.2} className="amp" />
+          </div>
+          <Prop name="pa_speaker_stack" s={3.4} className="pa" />
+        </div>
+        <div className="platform" />
+      </div>
+
+      {/* ===== CROWD (backs to camera, watching the band) ===== */}
       <div className="crowd">
         {crowd.map((c, i) => (
-          <span key={i} className="fan" style={{ left: `${c.left}%`, bottom: c.row ? '34%' : '0', animationDelay: `${c.delay}s`, zIndex: c.row ? 3 : 4 }}>
-            <FdSprite id={c.id} s={c.s} />
+          <span key={i} className="fan" style={{ left: `${c.left}%`, bottom: `${c.lift}px`, animationDelay: `${c.delay}s` }}>
+            <FdSprite id={c.id} dir={3} s={2.7} />
           </span>
         ))}
       </div>
 
-      {/* side props */}
-      <Prop name="crate_stack" s={3.4} className="prop crates" />
-      <Prop name="keg_cooler" s={3.4} className="prop keg" />
-      <Prop name="guitar_case" s={3.2} className="prop gcase" />
+      <div className="vignette" />
 
-      <div className="haze" />
-
-      {/* ---- LOGO BANNER + MENU ---- */}
+      {/* ===== LOGO + MENU ===== */}
       <div className="menu-stage">
         <div className="hero-col">
           <div className="banner">
-            <span className="banner-pin pin-l" />
-            <span className="banner-pin pin-r" />
+            <span className="banner-pin pin-l" /><span className="banner-pin pin-r" />
             <h1 className="title-text">SETTLING</h1>
             <h2 className="subtitle-text">UP</h2>
           </div>
           <p className="tagline"><span className="venue">{tier.venue}</span> — {tier.blurb}</p>
         </div>
-
         <div className="menu-col">
           <div className="menu-buttons">
             {hasSavedGame && onContinueGame && (
@@ -156,170 +147,145 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
         </div>
       </div>
 
-      <div className="crt-scanlines" />
-
       <style>{`
         .pixel-main-menu {
           position: relative; min-height: 100vh; min-height: 100dvh; overflow: hidden;
           display: flex; align-items: center; justify-content: center;
           font-family: 'Press Start 2P', ui-monospace, monospace; -webkit-font-smoothing: none;
-          background: linear-gradient(180deg, #0a0814 0%, #150b27 60%, #1d1338 100%);
-          padding: max(16px, env(safe-area-inset-top)) max(22px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(22px, env(safe-area-inset-left));
+          background: #140a1e;
+          padding: max(14px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
         }
-        .pixel-main-menu[data-outdoor="true"] { background: linear-gradient(180deg, #241140 0%, #5a2b66 42%, #b5556a 78%, #e88a6a 100%); }
 
-        /* ---- backdrop ---- */
-        .backdrop { position: absolute; inset: 0; z-index: 1; overflow: hidden; }
-        .wall {
-          position: absolute; inset: 0;
+        /* ===== ROOM: back wall + floor with a clear seam ===== */
+        .room { position: absolute; inset: 0; z-index: 1; }
+        .wall { position: absolute; left: 0; right: 0; top: 0; bottom: 33%;
           background:
-            repeating-linear-gradient(90deg, rgba(0,0,0,0.18) 0 2px, transparent 2px 46px),
-            repeating-linear-gradient(0deg, rgba(0,0,0,0.22) 0 2px, transparent 2px 24px),
-            linear-gradient(180deg, #2c1d33 0%, #241629 60%, #160e1d 100%);
-          opacity: 0; transition: opacity 0.6s ease 0.1s;
-        }
+            linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,0) 30%),
+            repeating-linear-gradient(90deg, rgba(255,255,255,.025) 0 1px, transparent 1px 30px),
+            repeating-linear-gradient(0deg, rgba(0,0,0,.16) 0 1px, transparent 1px 15px),
+            linear-gradient(180deg, #3a2440 0%, #2c1a34 55%, #221428 100%);
+          opacity: 0; transition: opacity .5s ease; }
         [data-revealed="true"] .wall { opacity: 1; }
-        /* the room's floor + the shadowed seam where it meets the back wall */
-        .floor {
-          position: absolute; left: 0; right: 0; bottom: 0; height: 27%; z-index: 1;
+        .wall-poster { position: absolute; left: 7%; bottom: 8%; filter: drop-shadow(0 2px 0 rgba(0,0,0,.4)); }
+        .sky { position: absolute; left: 0; right: 0; top: 0; bottom: 30%;
+          background: linear-gradient(180deg, #1d1140 0%, #5a2b66 55%, #b5556a 100%); }
+        .dusk-stars span { position: absolute; width: 2px; height: 2px; background: #fff; opacity: .85; animation: tw 3s ease-in-out infinite; }
+        @keyframes tw { 0%,100%{opacity:.2} 50%{opacity:.95} }
+        .fest-skyline { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 70%; image-rendering: pixelated; }
+
+        /* warm glow on the back wall behind the stage */
+        .stage-wash { position: absolute; left: 50%; transform: translateX(-50%); bottom: 30%; width: 64%; height: 46%; z-index: 1; pointer-events: none;
+          background: radial-gradient(60% 80% at 50% 100%, color-mix(in srgb, var(--accent) 30%, transparent), transparent 72%);
+          opacity: 0; transition: opacity .8s ease .4s; mix-blend-mode: screen; }
+        [data-revealed="true"] .stage-wash { opacity: 1; }
+
+        .floor { position: absolute; left: 0; right: 0; bottom: 0; height: 33%; z-index: 1;
           background:
-            repeating-linear-gradient(90deg, rgba(0,0,0,.10) 0 1px, transparent 1px 26px),
-            repeating-linear-gradient(0deg, rgba(0,0,0,.13) 0 1px, transparent 1px 8px),
-            linear-gradient(180deg, #3b2a20 0%, #30221a 55%, #241712 100%);
-          opacity: 0; transition: opacity .6s ease .1s;
-        }
+            repeating-linear-gradient(90deg, rgba(0,0,0,.14) 0 1px, transparent 1px 34px),
+            linear-gradient(180deg, #4a3324 0%, #38261a 60%, #2a1c12 100%);
+          opacity: 0; transition: opacity .5s ease; }
         [data-revealed="true"] .floor { opacity: 1; }
-        .wallbase { position: absolute; left: 0; right: 0; bottom: 27%; height: 14px; z-index: 1; pointer-events: none;
-          background: linear-gradient(180deg, rgba(0,0,0,0), rgba(0,0,0,.5)); opacity: 0; transition: opacity .6s ease .1s; }
-        [data-revealed="true"] .wallbase { opacity: 1; }
         [data-outdoor="true"] .floor { background:
-          repeating-linear-gradient(0deg, rgba(0,0,0,.10) 0 1px, transparent 1px 7px),
-          linear-gradient(180deg, #6a4636 0%, #4a3022 100%); }
-        [data-outdoor="true"] .wallbase { display: none; }
-        .dusk-stars span { position: absolute; width: 2px; height: 2px; background: #fff; opacity: .8; animation: twinkle 3s ease-in-out infinite; }
-        @keyframes twinkle { 0%,100%{opacity:.2} 50%{opacity:.95} }
-        .fest-skyline { position: absolute; left: 0; right: 0; bottom: 28%; width: 100%; height: 34vh; image-rendering: pixelated; opacity: .9; }
+          repeating-linear-gradient(90deg, rgba(0,0,0,.10) 0 1px, transparent 1px 30px),
+          linear-gradient(180deg, #6a4a36 0%, #4a3122 100%); }
+        .floor-line { position: absolute; left: 0; right: 0; bottom: 33%; height: 8px; z-index: 1; pointer-events: none;
+          background: linear-gradient(180deg, rgba(0,0,0,0), rgba(0,0,0,.55)); }
+        [data-outdoor="true"] .floor-line { display: none; }
 
-        .prop { position: absolute; image-rendering: pixelated; pointer-events: none; }
-        .poster { bottom: 50%; left: 6%; opacity: 0; transition: opacity .5s ease .3s; filter: drop-shadow(0 3px 0 rgba(0,0,0,.4)); }
-        .flyerpole { bottom: 23%; right: 7%; opacity: 0; transition: opacity .5s ease .4s; }
-        [data-revealed="true"] .poster, [data-revealed="true"] .flyerpole { opacity: 1; }
-        [data-outdoor="true"] .poster, [data-outdoor="true"] .flyerpole { display: none; }
-
-        /* ---- string lights ---- */
-        .lights-row { position: absolute; top: max(8px, env(safe-area-inset-top)); left: -2%; right: -2%; z-index: 8; display: flex; justify-content: space-between; pointer-events: none;
-          transform: translateY(-120%); transition: transform .7s cubic-bezier(.2,.9,.3,1) .15s; filter: drop-shadow(0 0 7px rgba(255,210,120,.5)); }
+        /* ===== string lights ===== */
+        .lights-row { position: absolute; top: max(2px, env(safe-area-inset-top)); left: -3%; right: -3%; z-index: 7; display: flex; justify-content: space-between; pointer-events: none;
+          transform: translateY(-130%); transition: transform .7s cubic-bezier(.2,.9,.3,1) .15s; filter: drop-shadow(0 0 8px rgba(255,210,120,.55)); }
         [data-revealed="true"] .lights-row { transform: translateY(0); }
-        .lights { flex: 0 0 auto; }
 
-        /* ---- stage: band on a raised platform at the back of the room ---- */
-        .stage { position: absolute; left: 0; right: 0; bottom: 25%; z-index: 3;
-          display: flex; flex-direction: column; align-items: center; justify-content: flex-end; pointer-events: none; }
-        .spotlight { position: absolute; bottom: -30%; left: 50%; transform: translateX(-50%); width: 60%; height: 150%;
-          background: radial-gradient(52% 76% at 50% 88%, color-mix(in srgb, var(--accent) 52%, transparent) 0%, transparent 70%);
-          opacity: 0; transition: opacity .9s ease .5s; mix-blend-mode: screen; }
-        [data-revealed="true"] .spotlight { opacity: 1; }
-        .floor-glow { position: absolute; left: 0; right: 0; bottom: 20%; height: 16%; z-index: 2; pointer-events: none;
-          background: radial-gradient(46% 100% at 50% 100%, color-mix(in srgb, var(--accent) 28%, transparent) 0%, transparent 72%);
-          opacity: 0; transition: opacity .9s ease .5s; mix-blend-mode: screen; }
-        [data-revealed="true"] .floor-glow { opacity: .7; }
-        .backline { position: relative; display: flex; align-items: flex-end; justify-content: center; gap: 12px; z-index: 2; }
-        .stage-platform { position: relative; width: clamp(170px, 30%, 290px); height: clamp(15px, 3.6vh, 24px); margin-top: -3px;
-          background: linear-gradient(180deg, #4a3526 0%, #38271b 55%, #281a11 100%);
-          border-top: 3px solid #5e4430; box-shadow: 0 4px 0 rgba(0,0,0,.4); }
-        .stage-edge { position: absolute; left: -3%; right: -3%; top: 100%; height: 7px;
-          background: linear-gradient(180deg, #190f08, rgba(0,0,0,0)); }
-        .band { position: relative; z-index: 2; display: flex; align-items: flex-end; gap: 13px; padding: 0 16px 2px; }
-        .player { position: relative; z-index: 2; animation: bob 1.4s ease-in-out infinite; }
-        .p-sing { animation-delay: .15s; } .p-drum { animation-delay: .4s; }
+        /* ===== stage + band (centered focal element) ===== */
+        /* base = portrait: band sits low (below the button stack, above the crowd) */
+        .stage { position: absolute; left: 50%; transform: translateX(-50%); bottom: 13%; z-index: 4;
+          display: flex; flex-direction: column; align-items: center; pointer-events: none;
+          opacity: 0; transition: opacity .5s ease .35s; }
+        [data-revealed="true"] .stage { opacity: 1; }
+        .spot { position: absolute; bottom: -24%; left: 50%; transform: translateX(-50%); width: 150%; height: 150%;
+          background: radial-gradient(46% 64% at 50% 92%, color-mix(in srgb, var(--accent) 62%, transparent), transparent 70%); mix-blend-mode: screen; }
+        .backline { position: relative; display: flex; align-items: flex-end; justify-content: center; gap: 14px; }
+        .pa { filter: drop-shadow(0 3px 0 rgba(0,0,0,.45)); }
+        .band { position: relative; display: flex; align-items: flex-end; gap: 14px; padding: 0 18px; }
+        .bandmate { position: relative; animation: bob 1.5s ease-in-out infinite; filter: drop-shadow(0 2px 0 rgba(0,0,0,.4)); }
+        .b1 { animation-delay: .2s } .b2 { animation-delay: .4s }
         @keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-3px)} }
-        .pa { align-self: flex-end; z-index: 1; filter: drop-shadow(0 3px 0 rgba(0,0,0,.4)); }
-        .mic { position: absolute; left: 50%; transform: translateX(-50%); bottom: 2px; z-index: 3; }
-        .amp { position: absolute; right: -14px; bottom: 2px; z-index: 1; }
+        .mic { position: absolute; left: 50%; transform: translateX(-50%); bottom: 0; z-index: 3; }
+        .amp { position: absolute; right: -16px; bottom: 0; }
+        .platform { width: clamp(150px, 26vw, 240px); height: clamp(10px, 2.4vh, 16px); margin-top: -2px;
+          background: linear-gradient(180deg, #5a3f2a 0%, #3e2a1a 100%); border-top: 2px solid #6e4d33;
+          box-shadow: 0 5px 10px rgba(0,0,0,.5); }
 
-        /* ---- crowd ---- */
-        .crowd { position: absolute; left: 0; right: 0; bottom: 1%; height: 23%; z-index: 5; pointer-events: none; }
-        .fan { position: absolute; transform-origin: bottom; animation: jump 0.7s ease-in-out infinite;
+        /* ===== crowd (uniform backs, evenly spaced, grounded) ===== */
+        .crowd { position: absolute; left: 0; right: 0; bottom: 2%; height: 30%; z-index: 5; pointer-events: none; }
+        .fan { position: absolute; transform: translateX(-50%); transform-origin: bottom;
+          filter: brightness(.42) contrast(1.05); animation: jump .72s ease-in-out infinite;
           opacity: 0; transition: opacity .4s ease; }
         [data-revealed="true"] .fan { opacity: 1; }
-        @keyframes jump { 0%,100%{transform:translateY(0)} 45%{transform:translateY(-5px)} }
+        @keyframes jump { 0%,100%{transform:translateX(-50%) translateY(0)} 45%{transform:translateX(-50%) translateY(-4px)} }
 
-        .crates { bottom: 3%; left: 3%; z-index: 6; opacity:0; transition:opacity .5s ease .5s; }
-        .keg { bottom: 3%; left: 11%; z-index: 6; opacity:0; transition:opacity .5s ease .55s; }
-        .gcase { bottom: 3%; right: 3%; z-index: 6; opacity:0; transition:opacity .5s ease .6s; }
-        [data-revealed="true"] .crates, [data-revealed="true"] .keg, [data-revealed="true"] .gcase { opacity: 1; }
+        .vignette { position: absolute; inset: 0; z-index: 6; pointer-events: none;
+          background: radial-gradient(125% 90% at 50% 42%, transparent 58%, rgba(8,4,14,.6) 100%); }
 
-        .haze { position: absolute; inset: 0; z-index: 7; pointer-events: none;
-          background: radial-gradient(130% 90% at 50% 36%, transparent 56%, rgba(8,5,16,.5) 100%); }
-
-        /* ---- logo banner + menu ---- */
+        /* ===== logo + menu ===== */
         .menu-stage { position: relative; z-index: 10; width: 100%; max-width: 1000px;
-          display: flex; flex-direction: column; align-items: center; gap: clamp(14px,4vh,30px); }
+          display: flex; flex-direction: column; align-items: center; gap: clamp(12px,3vh,24px); }
         .hero-col { text-align: center; }
-
-        .banner {
-          position: relative; display: inline-block; padding: 14px clamp(28px,7vw,60px) 16px;
-          background: linear-gradient(180deg, #fbe9c8 0%, #f3d6a0 100%);
-          color: #2a1020; border-radius: 2px;
-          box-shadow: 0 0 0 3px #3a210f, 0 10px 22px rgba(0,0,0,.5);
-          clip-path: polygon(0 6%, 3% 0, 97% 0, 100% 6%, 100% 88%, 96% 100%, 4% 100%, 0 88%);
-          transform: translateY(-18px) rotate(-1deg); opacity: 0;
-          transition: transform .7s cubic-bezier(.2,1.3,.4,1) .25s, opacity .5s ease .25s;
-        }
+        .banner { position: relative; display: inline-block; padding: 13px clamp(26px,6vw,54px) 15px;
+          background: linear-gradient(180deg, #fbe9c8, #f0cf98); color: #2a1020; border-radius: 2px;
+          box-shadow: 0 0 0 3px #3a210f, 0 9px 20px rgba(0,0,0,.55);
+          clip-path: polygon(0 7%, 3% 0, 97% 0, 100% 7%, 100% 86%, 96% 100%, 4% 100%, 0 86%);
+          transform: translateY(-16px) rotate(-1deg); opacity: 0;
+          transition: transform .7s cubic-bezier(.2,1.3,.4,1) .2s, opacity .5s ease .2s; }
         [data-revealed="true"] .banner { transform: translateY(0) rotate(-1deg); opacity: 1; }
         .banner-pin { position: absolute; top: -7px; width: 9px; height: 9px; border-radius: 50%;
           background: radial-gradient(circle at 35% 30%, #ff5da2, #b3245e); box-shadow: 0 0 5px rgba(247,37,133,.8); }
-        .pin-l { left: 10px; } .pin-r { right: 10px; }
-
+        .pin-l { left: 12px } .pin-r { right: 12px }
         .title-text { margin: 0; line-height: 1; color: #c81e63; text-transform: uppercase;
-          font-size: clamp(17px, 3.6vw, 34px); letter-spacing: clamp(2px,.8vw,6px);
-          text-shadow: 2px 2px 0 #fbe9c8, 3px 3px 0 #7a1540; }
+          font-size: clamp(16px, 3.3vw, 32px); letter-spacing: clamp(2px,.7vw,6px); text-shadow: 2px 2px 0 #fbe9c8, 3px 3px 0 #7a1540; }
         .subtitle-text { margin: 2px 0 0; line-height: .95; color: #e23b18; text-transform: uppercase;
-          font-size: clamp(36px, 9vw, 78px); letter-spacing: clamp(3px,1.4vw,10px);
-          text-shadow: 2px 2px 0 #fbe9c8, 4px 4px 0 #7a1540; }
-
-        .tagline { margin: clamp(12px,3vh,20px) 0 0; font-family: 'Bebas Neue','Oswald','Press Start 2P',sans-serif;
-          font-size: clamp(12px,1.7vw,17px); letter-spacing: 2px; color: #f0d9b8; text-transform: uppercase;
-          text-shadow: 1px 1px 2px #000; opacity: 0; transition: opacity .6s ease .7s; }
+          font-size: clamp(34px, 8.4vw, 72px); letter-spacing: clamp(3px,1.3vw,10px); text-shadow: 2px 2px 0 #fbe9c8, 4px 4px 0 #7a1540; }
+        .tagline { margin: clamp(10px,2.5vh,18px) 0 0; font-family: 'Bebas Neue','Oswald',sans-serif;
+          font-size: clamp(12px,1.6vw,17px); letter-spacing: 2px; color: #f0d9b8; text-transform: uppercase; text-shadow: 1px 1px 2px #000;
+          opacity: 0; transition: opacity .6s ease .7s; }
         [data-revealed="true"] .tagline { opacity: .96; }
         .venue { color: var(--accent); }
 
-        .menu-col { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 14px; }
+        .menu-col { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 13px; }
         .menu-buttons { display: flex; flex-direction: column; gap: 13px; }
         .menu-buttons > * { opacity: 0; transform: translateY(12px); transition: opacity .5s ease, transform .5s ease; }
         [data-revealed="true"] .menu-buttons > * { opacity: 1; transform: translateY(0); }
-        [data-revealed="true"] .menu-buttons > *:nth-child(1){transition-delay:.55s}
-        [data-revealed="true"] .menu-buttons > *:nth-child(2){transition-delay:.65s}
-        [data-revealed="true"] .menu-buttons > *:nth-child(3){transition-delay:.75s}
-        [data-revealed="true"] .menu-buttons > *:nth-child(4){transition-delay:.85s}
+        [data-revealed="true"] .menu-buttons > *:nth-child(1){transition-delay:.5s}
+        [data-revealed="true"] .menu-buttons > *:nth-child(2){transition-delay:.6s}
+        [data-revealed="true"] .menu-buttons > *:nth-child(3){transition-delay:.7s}
+        [data-revealed="true"] .menu-buttons > *:nth-child(4){transition-delay:.8s}
         .menu-footer { text-align: center; opacity: 0; transition: opacity .6s ease 1s; }
         [data-revealed="true"] .menu-footer { opacity: 1; }
-        .version { font-size: 7px; color: #b9a9c9; margin: 0; letter-spacing: 1px; text-transform: uppercase; text-shadow: 1px 1px 1px #000; }
+        .version { font-size: 7px; color: #c2b2d2; margin: 0; letter-spacing: 1px; text-transform: uppercase; text-shadow: 1px 1px 1px #000; }
 
-        .crt-scanlines { position: absolute; inset: 0; z-index: 11; pointer-events: none;
-          background: repeating-linear-gradient(0deg, rgba(0,0,0,.16) 0 1px, transparent 1px 3px); opacity: .3; }
-
-        /* accent var per tier */
         .pixel-main-menu { --accent: #f72585; }
         .pixel-main-menu[data-tier="dive"] { --accent: #4cc9f0; }
         .pixel-main-menu[data-tier="theater"] { --accent: #ffd23f; }
         .pixel-main-menu[data-tier="festival"] { --accent: #3ad17e; }
 
-        /* ---- landscape: hero + menu side by side; show fills the floor ---- */
+        /* ===== landscape: logo+menu on the right half; the show fills behind ===== */
         @media (min-aspect-ratio: 13/10) and (max-height: 600px) {
-          .menu-stage { flex-direction: row; align-items: center; justify-content: space-between; gap: clamp(20px,4vw,56px); padding: 0 clamp(8px,3vw,40px); }
-          .hero-col { flex: 1 1 auto; }
-          .menu-col { flex: 0 0 auto; max-width: 300px; }
-          .menu-buttons { gap: 10px; }
+          /* show on the LEFT (band on stage + crowd), menu on the RIGHT — they
+             never overlap. Children positioned independently. */
+          .menu-stage { display: contents; }
+          .hero-col { position: absolute; top: max(34px, env(safe-area-inset-top)); left: 30%; transform: translateX(-50%); z-index: 10; text-align: center; max-width: 56%; }
+          .menu-col { position: absolute; right: clamp(16px,4vw,48px); top: 50%; transform: translateY(-50%); z-index: 10; width: clamp(250px,32vw,310px); max-width: none; }
           .menu-footer { display: none; }
-          .stage { bottom: 25%; right: 34%; }
-          .crowd { bottom: 1%; height: 23%; }
+          .stage { left: 30%; bottom: 34%; }
+          .crowd { left: -4%; right: 36%; bottom: 1%; height: 36%; }
         }
 
         @media (prefers-reduced-motion: reduce) {
-          .wall,.poster,.flyerpole,.lights-row,.spotlight,.fan,.crates,.keg,.gcase,.banner,.tagline,.menu-buttons>*,.menu-footer { transition: none !important; opacity: 1 !important; transform: none !important; }
-          .player,.fan,.dusk-stars span { animation: none !important; }
+          .wall,.floor,.floor-line,.stage-wash,.lights-row,.stage,.fan,.banner,.tagline,.menu-buttons>*,.menu-footer { transition: none !important; opacity: 1 !important; transform: none !important; }
+          .bandmate,.fan,.dusk-stars span { animation: none !important; }
           .lights-row { transform: none !important; }
+          .fan { transform: translateX(-50%) !important; }
         }
       `}</style>
     </div>
