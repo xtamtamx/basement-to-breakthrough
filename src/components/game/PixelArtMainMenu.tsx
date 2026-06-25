@@ -37,20 +37,19 @@ const FdSprite: React.FC<{ id: string; s?: number; dir?: number; className?: str
     }} />
   );
 
-// REAL instrument sprites (ELV "instrument & more" pack), sliced into
-// public/title/band. Native px sizes → nearest-neighbour scaled.
+// Band members — each is ONE baked sprite: an ELV chibi character composited with a
+// downscaled real instrument + hand-drawn sleeved arms gripping it, so they actually
+// read as PLAYING (not an instrument floating on a plain idle pose). Authored by
+// scripts/makeBandMembers.mjs → public/title/band/members/{name}.png.
 const BAND_SRC = '/title/band';
-const INSTR_SIZE: Record<string, [number, number]> = {
-  guitar: [15, 48], bass: [15, 52], micstand: [15, 60], drumkit: [94, 85], amp: [28, 43],
+const MEMBER_SIZE: Record<string, [number, number]> = {
+  guitar: [42, 36], sing: [34, 36], bass: [42, 36], drum: [46, 38],
 };
-const Instr: React.FC<{ name: keyof typeof INSTR_SIZE; s?: number; className?: string }> = ({ name, s = 1.4, className }) => {
-  const [w, h] = INSTR_SIZE[name];
-  return <img src={`${BAND_SRC}/${name}.png`} alt="" aria-hidden className={className}
+const Member: React.FC<{ name: keyof typeof MEMBER_SIZE; s?: number; className?: string }> = ({ name, s = 3, className }) => {
+  const [w, h] = MEMBER_SIZE[name];
+  return <img src={`${BAND_SRC}/members/${name}.png`} alt="" aria-hidden className={className}
     style={{ width: w * s, height: h * s, imageRendering: 'pixelated' }} />;
 };
-
-// The band — [guitarist, singer, bassist, drummer]. Red-spiky punk on the mic.
-const BAND = ['010', '004', '008', '015'];
 
 
 export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
@@ -111,10 +110,10 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
         <div className="backline">
           <Prop name="pa_speaker_stack" s={2.5} className="pa pa-l" />
           <div className="band">
-            <span className="bandmate b0 guitarist"><FdSprite id={BAND[0]} s={3} /><Instr name="guitar" s={1.3} className="gtr" /></span>
-            <span className="bandmate b1 singer"><FdSprite id={BAND[1]} s={3} /><Instr name="micstand" s={0.82} className="mic-stand" /></span>
-            <span className="bandmate b2 bassist"><FdSprite id={BAND[2]} s={3} /><Instr name="bass" s={1.3} className="bass" /></span>
-            <span className="bandmate b3 drummer"><FdSprite id={BAND[3]} s={2.5} /><Instr name="drumkit" s={0.72} className="kit" /></span>
+            <span className="bandmate b0"><Member name="guitar" /></span>
+            <span className="bandmate b1"><Member name="sing" /></span>
+            <span className="bandmate b2"><Member name="bass" /></span>
+            <span className="bandmate b3 drummer"><Member name="drum" /></span>
           </div>
           <Prop name="pa_speaker_stack" s={2.5} className="pa pa-r" />
         </div>
@@ -219,17 +218,16 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
           background: radial-gradient(46% 64% at 50% 92%, color-mix(in srgb, var(--accent) 62%, transparent), transparent 70%); mix-blend-mode: screen; }
         .backline { position: relative; display: flex; align-items: flex-end; justify-content: center; gap: 14px; }
         .pa { filter: drop-shadow(0 3px 0 rgba(0,0,0,.45)); }
-        .band { position: relative; display: flex; align-items: flex-end; gap: 14px; padding: 0 18px; }
-        .bandmate { position: relative; transform-origin: bottom center; animation: headbang 0.62s ease-in-out infinite; filter: drop-shadow(0 2px 0 rgba(0,0,0,.4)); }
+        .band { position: relative; display: flex; align-items: flex-end; justify-content: center; gap: 2px; padding: 0 8px; }
+        .bandmate { position: relative; transform-origin: bottom center; animation: headbang 0.62s ease-in-out infinite; filter: drop-shadow(0 2px 0 rgba(0,0,0,.45)); }
+        .bandmate img { display: block; }
         .b1 { animation-delay: .1s; animation-duration: .54s } .b2 { animation-delay: .26s; animation-duration: .7s }
+        /* drummer sits behind a wide kit — bob only, no rotate */
+        .drummer { z-index: 0; margin: 0 -10px; animation: bob 0.66s ease-in-out infinite; animation-delay: .18s; }
+        .b0 { z-index: 2 } .b1 { z-index: 3 } .b2 { z-index: 2 }
         @keyframes headbang { 0%,100%{transform:translateY(0) rotate(0)} 30%{transform:translateY(-3px) rotate(-3deg)} 60%{transform:translateY(-1px) rotate(3deg)} }
-        /* REAL instrument sprites, positioned on/around the players */
-        .gtr { position: absolute; left: 6%; bottom: 4%; transform: rotate(-28deg); transform-origin: bottom center; z-index: 3; pointer-events: none; filter: drop-shadow(1px 2px 0 rgba(0,0,0,.5)); }
-        .bass { position: absolute; left: 4%; bottom: 4%; transform: rotate(26deg); transform-origin: bottom center; z-index: 3; pointer-events: none; filter: drop-shadow(1px 2px 0 rgba(0,0,0,.5)); }
-        .mic-stand { position: absolute; left: 50%; bottom: -8%; transform: translateX(-44%); z-index: 4; pointer-events: none; filter: drop-shadow(1px 2px 0 rgba(0,0,0,.5)); }
-        .drummer { z-index: 1; }
-        .kit { position: absolute; left: 50%; bottom: -16%; transform: translateX(-50%); z-index: 3; pointer-events: none; filter: drop-shadow(0 3px 0 rgba(0,0,0,.45)); }
-        .platform { width: clamp(150px, 26vw, 240px); height: clamp(10px, 2.4vh, 16px); margin-top: -2px;
+        @keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-2px)} }
+        .platform { width: clamp(300px, 60vw, 470px); height: clamp(10px, 2.4vh, 16px); margin-top: -2px;
           background: linear-gradient(180deg, #5a3f2a 0%, #3e2a1a 100%); border-top: 2px solid #6e4d33;
           box-shadow: 0 5px 10px rgba(0,0,0,.5); }
 
