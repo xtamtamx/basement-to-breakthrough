@@ -324,6 +324,26 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
               </div>
             )}
 
+            {ceremony.unlockedModeName && (
+              <div
+                className="btb-pop"
+                style={{
+                  marginTop: '10px',
+                  padding: '10px 12px',
+                  border: '2px solid #ffd23f',
+                  background: 'rgba(255,210,63,0.12)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                }}
+              >
+                <span style={{ fontSize: '18px' }}>🔓</span>
+                <span style={{ fontSize: '12px', color: '#fff3c4', fontWeight: 700 }}>
+                  New mode unlocked: <span style={{ color: '#ffd23f' }}>{ceremony.unlockedModeName}</span>! Choose it from New Game.
+                </span>
+              </div>
+            )}
+
             <div
               style={{
                 marginTop: '10px',

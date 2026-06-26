@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { runManager, RunConfig } from "@game/mechanics/RunManager";
 import { stakesManager, STAKE_TIERS } from "@game/mechanics/StakesManager";
+import { isModeUnlocked, modeUnlockRequiresId, modeOrderIndex } from "@game/mechanics/modeUnlocks";
 import { BASE_ROSTER_SLOTS } from "@game/constants/runConstants";
 import { haptics } from "@utils/mobile";
 import { X, DollarSign, Clock, Users, Trophy, Lock, Flame } from "lucide-react";
@@ -62,7 +63,11 @@ const stakeChips = (tier: number): string[] => {
 };
 
 export const RunModeSelector: React.FC<RunModeSelectorProps> = ({ onSelect, onClose }) => {
-  const configs = runManager.getRunConfigs();
+  // Lay modes out in progression order; locked modes are gated behind wins.
+  const configs = [...runManager.getRunConfigs()].sort(
+    (a, b) => modeOrderIndex(a.id) - modeOrderIndex(b.id),
+  );
+  const nameById = Object.fromEntries(configs.map((c) => [c.id, c.name]));
   // Selected stake tier per mode (defaults to Open Mic so newcomers aren't walled).
   const [tiers, setTiers] = useState<Record<string, number>>({});
   useEscapeToClose(onClose);
@@ -89,7 +94,7 @@ export const RunModeSelector: React.FC<RunModeSelectorProps> = ({ onSelect, onCl
               Pick Your Run
             </h2>
             <p style={{ fontSize: "11px", color: "#b9b3d6", margin: 0 }}>
-              Choose a mode and a stake. Win a stake to unlock the next, harder one.
+              Win a run to unlock the next mode. Win a stake to unlock the next, harder one.
             </p>
           </div>
           <button
@@ -104,6 +109,39 @@ export const RunModeSelector: React.FC<RunModeSelectorProps> = ({ onSelect, onCl
         <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "12px" }}>
           {configs.map((config) => {
             const accent = MODE_ACCENT[config.id] ?? "#f72585";
+
+            // Locked mode — gated behind beating the previous mode in the ladder.
+            if (!isModeUnlocked(config.id)) {
+              const reqId = modeUnlockRequiresId(config.id);
+              const reqName = reqId ? (nameById[reqId] ?? reqId) : "a run";
+              return (
+                <div
+                  key={config.id}
+                  className="snes-panel"
+                  aria-label={`${config.name}, locked. Win ${reqName} to unlock.`}
+                  style={{
+                    textAlign: "left",
+                    padding: "12px",
+                    border: "2px solid #2a2350",
+                    boxShadow: "inset 2px 2px 0 0 #241f3d, inset -2px -2px 0 0 #0a0814",
+                    borderRadius: 0,
+                    opacity: 0.85,
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+                    <span style={{ fontSize: "20px", lineHeight: 1, filter: "grayscale(1)", opacity: 0.5 }}>{MODE_ICON[config.id] ?? "🎸"}</span>
+                    <h3 className="snes-pixel" style={{ fontSize: "11px", color: "#6f6796", margin: 0, letterSpacing: 0, flex: 1 }}>{config.name}</h3>
+                    <Lock size={15} color="#6f6796" />
+                  </div>
+                  <p style={{ fontSize: "12px", color: "#56507a", margin: "0 0 8px", lineHeight: 1.4, fontStyle: "italic" }}>{config.description}</p>
+                  <div className="snes-pixel" style={{ fontSize: "8px", letterSpacing: 0, color: "#ffd23f", backgroundColor: "#0f0b1e", border: "2px solid #3a2f5c", padding: "7px 8px", display: "flex", alignItems: "center", gap: "6px", lineHeight: 1.5 }}>
+                    <Lock size={11} color="#ffd23f" style={{ flexShrink: 0 }} />
+                    Win {reqName} to unlock this mode
+                  </div>
+                </div>
+              );
+            }
+
             const slots = rosterSlotsFor(config);
             const perks = perkChips(config);
             const tier = tiers[config.id] ?? 0;

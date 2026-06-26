@@ -22,6 +22,7 @@ import { runManager } from './RunManager';
 import { metaProgressionManager } from './MetaProgressionManager';
 import { objectiveManager } from './ObjectiveManager';
 import { stakesManager, STAKE_TIERS } from './StakesManager';
+import { isModeBeaten, nextModeAfter } from './modeUnlocks';
 import { gentrificationSystem } from './GentrificationSystem';
 import { factionSystem } from './FactionSystem';
 import { bandRelationships } from './BandRelationships';
@@ -110,6 +111,8 @@ export interface RunCeremony {
   stakeTier: number;
   /** Name of a newly-unlocked stake tier (a win advanced the ladder), else null. */
   unlockedStakeName: string | null;
+  /** Name of a newly-unlocked game MODE (beating this mode opened the next), else null. */
+  unlockedModeName: string | null;
 }
 
 export interface TurnResult {
@@ -466,8 +469,15 @@ export class TurnResolutionEngine {
     const isWin = runEnd.reason === 'BREAKTHROUGH_WIN';
     const configId = run.config.id;
     const stakeTier = run.stakeTier ?? 0;
+    // Beating a mode for the FIRST time opens the next mode in the progression
+    // ladder — check BEFORE recordWin flips this mode to "beaten".
+    const modeWasUnbeaten = isWin && !isModeBeaten(configId);
     // Winning a stake unlocks the next tier for this mode (persisted cross-run).
     const unlockedStake = isWin ? stakesManager.recordWin(configId, stakeTier) : null;
+    const newModeId = modeWasUnbeaten ? nextModeAfter(configId) : null;
+    const unlockedModeName = newModeId
+      ? ((runManager.getRunConfigs() ?? []).find((c) => c.id === newModeId)?.name ?? null)
+      : null;
     // Capture before endRun() nulls the active run — banking is keyed on this so
     // a replayed conclusion (load a mid-run save, play it out again) is a no-op
     // for currency.
@@ -526,6 +536,7 @@ export class TurnResolutionEngine {
       completedObjectives,
       stakeTier,
       unlockedStakeName: unlockedStake !== null ? STAKE_TIERS[unlockedStake].name : null,
+      unlockedModeName,
       newHighScore: result.newHighScore,
       achievements: result.achievements.map((a) => ({
         id: a.id,
