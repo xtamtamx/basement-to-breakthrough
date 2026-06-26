@@ -7,7 +7,7 @@ import './styles/glassmorphism.css'
 import './styles/snes.css'
 import App from './App.tsx'
 import { initializeMobile, isNative } from '@utils/mobile'
-import { registerServiceWorker, requestPersistentStorage } from '@utils/serviceWorker'
+import { registerServiceWorker, requestPersistentStorage, purgeServiceWorkerOnNative } from '@utils/serviceWorker'
 import { useGameStore } from '@stores/gameStore'
 
 // Initialize mobile features
@@ -30,6 +30,10 @@ if (import.meta.env.DEV) {
 if (import.meta.env.PROD && !isNative) {
   registerServiceWorker();
   requestPersistentStorage();
+} else if (isNative) {
+  // Native never registers a SW — but a stale one from a prior install can still be
+  // controlling the WebView and serving old JS/CSS. Purge it (+ its caches) on boot.
+  purgeServiceWorkerOnNative();
 }
 
 createRoot(document.getElementById('root')!).render(

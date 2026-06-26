@@ -60,6 +60,33 @@ export const unregisterServiceWorker = async () => {
   }
 };
 
+/**
+ * Native cleanup: an OLD precache Service Worker left over from a prior install can
+ * keep serving stale JS/CSS inside the Capacitor WebView (the WebView data container
+ * survives app reinstalls), so the new bundle never shows. We never register a SW on
+ * native, so on boot just unregister anything stale AND nuke the Cache Storage it left
+ * behind. If we actually killed a controlling SW, reload once so the page is served
+ * fresh from the Capacitor bundle.
+ */
+export const purgeServiceWorkerOnNative = async () => {
+  if (!('serviceWorker' in navigator)) return;
+  try {
+    const regs = await navigator.serviceWorker.getRegistrations();
+    const hadController = !!navigator.serviceWorker.controller;
+    await Promise.all(regs.map((r) => r.unregister()));
+    if ('caches' in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((k) => caches.delete(k)));
+    }
+    if (regs.length && hadController) {
+      devLog.log('Purged stale native Service Worker + caches — reloading fresh');
+      window.location.reload();
+    }
+  } catch (error) {
+    devLog.error('Native Service Worker purge failed:', error);
+  }
+};
+
 // Request persistent storage for game saves
 export const requestPersistentStorage = async () => {
   if ('storage' in navigator && 'persist' in navigator.storage) {
