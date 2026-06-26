@@ -63,13 +63,39 @@ const Member: React.FC<{ name: keyof typeof MEMBER_SIZE; s?: number; className?:
     style={{ width: w * s, height: h * s, imageRendering: 'pixelated' }} />;
 };
 
+// The logo styled as a venue DRINK TICKET: a manila stub with a perforated tear-off
+// ("GOOD FOR ONE DRINK"), an "ADMIT ONE" kicker, and the title as the event.
+const Ticket: React.FC<{ className?: string }> = ({ className }) => (
+  <div className={`ticket${className ? ` ${className}` : ''}`}>
+    <div className="t-body">
+      <span className="t-kicker">★ ADMIT ONE ★</span>
+      <h1 className="t-title">SETTLING</h1>
+      <h2 className="t-sub">UP</h2>
+    </div>
+    <div className="t-stub" aria-hidden>
+      <span className="t-stub-text">★ ONE DRINK ★</span>
+    </div>
+  </div>
+);
+
 
 export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
   onStartGame, onContinueGame, onSettings, onUpgrades, hasSavedGame = false,
 }) => {
   const [revealed, setRevealed] = useState(false);
+  // The logo holds as a "touch to start" splash; the first touch IS the gesture that
+  // unlocks iOS audio, so the theme music kicks in exactly when the show reveals.
+  const [started, setStarted] = useState(false);
   const tier = getTitleTier();
   const titleTrack = TITLE_TRACK[tier.id] ?? 'chill';
+
+  const start = () => {
+    if (started) return;
+    setStarted(true);
+    setRevealed(true);
+    haptics.medium();
+    try { gameAudio.resume(); gameAudio.startBackgroundMusic(titleTrack); } catch { /* audio optional */ }
+  };
 
   // Drummer layers — the kit is planted; only these animate on the beat.
   const drumBodyRef = useRef<HTMLImageElement>(null);
@@ -78,10 +104,14 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
   const fxSnareRef = useRef<HTMLSpanElement>(null);
   const fxHatRef = useRef<HTMLSpanElement>(null);
 
+  // Keyboard fallback for the "touch to start" gate (Enter/Space).
   useEffect(() => {
-    const id = requestAnimationFrame(() => setTimeout(() => setRevealed(true), 80));
-    return () => cancelAnimationFrame(id);
-  }, []);
+    if (started) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') start(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [started]);
 
   // Title theme bed + the drummer playing IN TIME with it. The kit stays still;
   // sticks tap and each drum (kick/snare/hat) reacts on its own hit. Driven by
@@ -152,7 +182,7 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
   }));
 
   return (
-    <div className="pixel-main-menu" data-revealed={revealed} data-tier={tier.id} data-outdoor={tier.outdoor}>
+    <div className="pixel-main-menu" data-revealed={revealed} data-started={started} data-tier={tier.id} data-outdoor={tier.outdoor}>
       {/* ===== ROOM ===== */}
       <div className="room">
         {/* low basement ceiling: exposed joists + pipes + an HVAC duct */}
@@ -272,11 +302,7 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
       {/* ===== LOGO + MENU ===== */}
       <div className="menu-stage">
         <div className="hero-col">
-          <div className="banner">
-            <span className="banner-pin pin-l" /><span className="banner-pin pin-r" />
-            <h1 className="title-text">SETTLING</h1>
-            <h2 className="subtitle-text">UP</h2>
-          </div>
+          <Ticket />
           <p className="tagline"><span className="venue">{tier.venue}</span> — {tier.blurb}</p>
         </div>
         <div className="menu-col">
@@ -293,6 +319,15 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
             )}
           </div>
           <div className="menu-footer"><p className="version">v1.0.0 • Made with ❤ and 🤘</p></div>
+        </div>
+      </div>
+
+      {/* ===== "TOUCH TO START" splash gate (also unlocks audio on first touch) ===== */}
+      <div className="splash-gate" data-on={!started} onPointerDown={start} role="button" tabIndex={0} aria-label="Touch to start">
+        <div className="splash-inner">
+          <Ticket className="splash-ticket" />
+          <p className="splash-tag"><span className="venue">{tier.venue}</span> — {tier.blurb}</p>
+          <div className="touch-hint">TOUCH TO START</div>
         </div>
       </div>
 
@@ -520,20 +555,39 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
         .menu-stage { position: relative; z-index: 10; width: 100%; max-width: 1000px;
           display: flex; flex-direction: column; align-items: center; gap: clamp(12px,3vh,24px); }
         .hero-col { text-align: center; }
-        .banner { position: relative; display: inline-block; padding: 13px clamp(26px,6vw,54px) 15px;
-          background: linear-gradient(180deg, #fbe9c8, #f0cf98); color: #2a1020; border-radius: 2px;
-          box-shadow: 0 0 0 3px #3a210f, 0 9px 20px rgba(0,0,0,.55);
-          clip-path: polygon(0 7%, 3% 0, 97% 0, 100% 7%, 100% 86%, 96% 100%, 4% 100%, 0 86%);
-          transform: translateY(-16px) rotate(-1deg); opacity: 0;
+        /* ===== logo as a venue DRINK TICKET ===== */
+        .ticket { position: relative; display: inline-flex; align-items: stretch;
+          background: linear-gradient(180deg, #f6e2b0 0%, #ecce8c 100%); color: #2a1020;
+          border: 3px solid #3a210f; border-radius: 4px;
+          box-shadow: inset 0 0 0 1px #fbeec6, 0 9px 20px rgba(0,0,0,.55);
+          transform: translateY(-16px) rotate(-1.6deg); opacity: 0;
           transition: transform .7s cubic-bezier(.2,1.3,.4,1) .2s, opacity .5s ease .2s; }
-        [data-revealed="true"] .banner { transform: translateY(0) rotate(-1deg); opacity: 1; }
-        .banner-pin { position: absolute; top: -7px; width: 9px; height: 9px; border-radius: 50%;
-          background: radial-gradient(circle at 35% 30%, #ff5da2, #b3245e); box-shadow: 0 0 5px rgba(247,37,133,.8); }
-        .pin-l { left: 12px } .pin-r { right: 12px }
-        .title-text { margin: 0; line-height: 1; color: #c81e63; text-transform: uppercase;
-          font-size: clamp(16px, 3.3vw, 32px); letter-spacing: clamp(2px,.7vw,6px); text-shadow: 2px 2px 0 #fbe9c8, 3px 3px 0 #7a1540; }
-        .subtitle-text { margin: 2px 0 0; line-height: .95; color: #e23b18; text-transform: uppercase;
-          font-size: clamp(34px, 8.4vw, 72px); letter-spacing: clamp(3px,1.3vw,10px); text-shadow: 2px 2px 0 #fbe9c8, 4px 4px 0 #7a1540; }
+        [data-revealed="true"] .ticket { transform: translateY(0) rotate(-1.6deg); opacity: 1; }
+        .ticket::before { content: ""; position: absolute; inset: 4px; border: 1px solid #b07b38; border-radius: 2px; pointer-events: none; }
+        .t-body { padding: 9px clamp(16px,3.6vw,34px) 11px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        .t-kicker { font-family: 'Bebas Neue','Oswald',sans-serif; letter-spacing: clamp(2px,.7vw,5px); font-size: clamp(10px,1.5vw,15px); color: #9a3b1e; margin-bottom: 3px; }
+        .t-title { margin: 0; line-height: 1; color: #c81e63; text-transform: uppercase;
+          font-size: clamp(15px, 3vw, 30px); letter-spacing: clamp(2px,.7vw,6px); text-shadow: 2px 2px 0 #fbeec6; }
+        .t-sub { margin: 1px 0 0; line-height: .95; color: #e23b18; text-transform: uppercase;
+          font-size: clamp(32px, 8vw, 68px); letter-spacing: clamp(3px,1.2vw,10px); text-shadow: 2px 2px 0 #fbeec6, 4px 4px 0 rgba(0,0,0,.18); }
+        .t-stub { display: flex; align-items: center; justify-content: center; padding: 0 clamp(7px,1.5vw,13px);
+          border-left: 2px dashed #3a210f; background: linear-gradient(180deg, #eed79c 0%, #e1bf73 100%); border-radius: 0 2px 2px 0; }
+        .t-stub-text { writing-mode: vertical-rl; transform: rotate(180deg); font-family: 'Bebas Neue','Oswald',sans-serif;
+          letter-spacing: clamp(2px,.5vw,4px); font-size: clamp(10px,1.5vw,16px); color: #6a3c12; white-space: nowrap; font-weight: 700; }
+
+        /* ===== "touch to start" splash gate ===== */
+        .splash-gate { position: fixed; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: center;
+          background: radial-gradient(125% 100% at 50% 28%, #1d1232 0%, #0c0712 100%); cursor: pointer;
+          transition: opacity .55s ease; }
+        .splash-gate[data-on="false"] { opacity: 0; pointer-events: none; }
+        .splash-inner { display: flex; flex-direction: column; align-items: center; gap: clamp(16px,4.5vh,36px);
+          padding: max(14px, env(safe-area-inset-top)) 20px max(14px, env(safe-area-inset-bottom)); }
+        .splash-ticket { opacity: 1; transform: rotate(-2deg); }
+        .splash-tag { margin: 0; font-family: 'Bebas Neue','Oswald',sans-serif; letter-spacing: 2px; color: #f0d9b8;
+          font-size: clamp(12px,1.7vw,18px); text-transform: uppercase; text-shadow: 1px 1px 2px #000; }
+        .touch-hint { font-family: 'Press Start 2P', ui-monospace, monospace; font-size: clamp(8px,1.3vw,12px); letter-spacing: 2px;
+          color: #ffd23f; text-shadow: 1px 1px 0 rgba(0,0,0,.6); animation: touchPulse 1.25s ease-in-out infinite; }
+        @keyframes touchPulse { 0%,100% { opacity: .4 } 50% { opacity: 1 } }
         .tagline { margin: clamp(10px,2.5vh,18px) 0 0; font-family: 'Bebas Neue','Oswald',sans-serif;
           font-size: clamp(12px,1.6vw,17px); letter-spacing: 2px; color: #f0d9b8; text-transform: uppercase; text-shadow: 1px 1px 2px #000;
           opacity: 0; transition: opacity .6s ease .7s; }
@@ -571,7 +625,7 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
 
         @media (prefers-reduced-motion: reduce) {
           .wall,.floor,.floor-line,.stage-wash,.lights-row,.stage,.fan,.banner,.tagline,.menu-buttons>*,.menu-footer { transition: none !important; opacity: 1 !important; transform: none !important; }
-          .bandmate,.fan,.dusk-stars span,.bulb::after,.light-shaft,.bar-glow::after,.drum-sticks,.drum-body,.drum-fx { animation: none !important; }
+          .bandmate,.fan,.dusk-stars span,.bulb::after,.light-shaft,.bar-glow::after,.drum-sticks,.drum-body,.drum-fx,.touch-hint { animation: none !important; }
           .lights-row { transform: none !important; }
           .fan { transform: translateX(-50%) !important; }
           .light-shaft { opacity: .5 !important; }
