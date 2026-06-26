@@ -434,7 +434,7 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
         .drummer { z-index: 0; margin: 0 -10px; animation: none; }
         .b0 { z-index: 2 } .b1 { z-index: 3 } .b2 { z-index: 2 }
         @keyframes headbang { 0%,100%{transform:translateY(0) rotate(0)} 30%{transform:translateY(-3px) rotate(-3deg)} 60%{transform:translateY(-1px) rotate(3deg)} }
-        .drum-rig { position: relative; }
+        .drum-rig { position: relative; display: block; }
         .drum-l { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
         .drum-body { z-index: 1; transform-origin: 50% 100%; }
         .drum-kit { z-index: 2; }
