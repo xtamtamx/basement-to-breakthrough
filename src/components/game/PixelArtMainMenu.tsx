@@ -63,25 +63,38 @@ const Member: React.FC<{ name: keyof typeof MEMBER_SIZE; s?: number; className?:
     style={{ width: w * s, height: h * s, imageRendering: 'pixelated' }} />;
 };
 
-// The logo styled as a classic blue BEER ROLL TICKET (à la "Indiana Ticket Co."):
-// cyan stock, single-color navy print, a frothy mug, a serial top + bottom, and the
-// maker's name running vertically up the side.
+// The logo styled as a classic blue BEER TICKET (à la "Indiana Ticket Co."), in
+// LANDSCAPE: cyan stock, single-color navy print, a frothy mug, serials, and a
+// perforated tear-off stub reading ONE DRINK.
+const Mug = () => (
+  <svg className="t-mug" viewBox="0 0 28 24" aria-hidden>
+    <g fill="none" stroke="#13384f" strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round">
+      <path d="M18.5 10 h2.4 a3.2 3.2 0 0 1 0 6.4 H18.5" />
+      <path d="M7 8 H18 V19 a2 2 0 0 1 -2 2 H9 a2 2 0 0 1 -2 -2 Z" />
+      <path d="M6.4 8 a2.4 2.4 0 0 1 1.2 -4 a2.6 2.6 0 0 1 3.6 -1.4 a3 3 0 0 1 4.8 0 a2.6 2.6 0 0 1 3.6 1.4 a2.4 2.4 0 0 1 1.2 4 Z" />
+      <path d="M10.4 9.6 V18.6 M13.6 9.6 V18.6" strokeWidth="1.1" />
+    </g>
+  </svg>
+);
 const Ticket: React.FC<{ className?: string }> = ({ className }) => (
   <div className={`ticket${className ? ` ${className}` : ''}`}>
-    <span className="t-side" aria-hidden>SCENE TICKET CO.</span>
-    <div className="t-body">
-      <span className="t-serial">876023</span>
-      <svg className="t-mug" viewBox="0 0 28 24" aria-hidden>
-        <g fill="none" stroke="#13384f" strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round">
-          <path d="M18.5 10 h2.4 a3.2 3.2 0 0 1 0 6.4 H18.5" />
-          <path d="M7 8 H18 V19 a2 2 0 0 1 -2 2 H9 a2 2 0 0 1 -2 -2 Z" />
-          <path d="M6.4 8 a2.4 2.4 0 0 1 1.2 -4 a2.6 2.6 0 0 1 3.6 -1.4 a3 3 0 0 1 4.8 0 a2.6 2.6 0 0 1 3.6 1.4 a2.4 2.4 0 0 1 1.2 4 Z" />
-          <path d="M10.4 9.6 V18.6 M13.6 9.6 V18.6" strokeWidth="1.1" />
-        </g>
-      </svg>
-      <h1 className="t-title">SETTLING</h1>
-      <h2 className="t-sub">UP</h2>
-      <span className="t-serial">876023</span>
+    <div className="t-main">
+      <span className="t-kicker">★ GOOD FOR ONE DRINK ★</span>
+      <div className="t-headline">
+        <Mug />
+        <div className="t-words">
+          <h1 className="t-title">SETTLING</h1>
+          <h2 className="t-sub">UP</h2>
+        </div>
+      </div>
+      <div className="t-foot">
+        <span className="t-co">SCENE TICKET CO.</span>
+        <span className="t-serial">Nº 876023</span>
+      </div>
+    </div>
+    <div className="t-stub" aria-hidden>
+      <span className="t-drink">ONE<br />DRINK</span>
+      <span className="t-stub-no">876023</span>
     </div>
   </div>
 );
@@ -563,29 +576,35 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
         .menu-stage { position: relative; z-index: 10; width: 100%; max-width: 1000px;
           display: flex; flex-direction: column; align-items: center; gap: clamp(12px,3vh,24px); }
         .hero-col { text-align: center; }
-        /* ===== logo as a blue BEER ROLL TICKET (single-color navy print on cyan) ===== */
-        .ticket { position: relative; display: inline-block; color: #13384f;
-          background: linear-gradient(180deg, #4cb4da 0%, #2f9cc7 100%);
-          border: 2px solid #13384f; border-radius: 6px;
-          box-shadow: inset 0 0 0 1px rgba(255,255,255,.22), 0 9px 20px rgba(0,0,0,.5);
-          padding: 9px 30px 10px 18px;
-          transform: translateY(-16px) rotate(-1.6deg); opacity: 0;
+        /* ===== logo as a LANDSCAPE blue BEER TICKET (navy print on cyan, tear-off stub) ===== */
+        .ticket { position: relative; display: inline-flex; align-items: stretch; color: #13384f;
+          background: linear-gradient(180deg, #57bde1 0%, #34a1cc 100%);
+          border: 2px solid #13384f; border-radius: 7px;
+          box-shadow: inset 0 0 0 1px rgba(255,255,255,.28), 0 9px 22px rgba(0,0,0,.5);
+          transform: translateY(-16px) rotate(-1.4deg); opacity: 0;
           transition: transform .7s cubic-bezier(.2,1.3,.4,1) .2s, opacity .5s ease .2s; }
-        [data-revealed="true"] .ticket { transform: translateY(0) rotate(-1.6deg); opacity: 1; }
+        [data-revealed="true"] .ticket { transform: translateY(0) rotate(-1.4deg); opacity: 1; }
         /* full size as the splash focal; smaller in the title so the band shows behind it */
-        .hero-col .ticket { transform-origin: top center; transform: translateY(-16px) rotate(-1.6deg) scale(.6); }
-        [data-revealed="true"] .hero-col .ticket { transform: translateY(0) rotate(-1.6deg) scale(.6); }
-        .ticket::before { content: ""; position: absolute; inset: 4px; border: 1px solid #13384f; border-radius: 3px; pointer-events: none; }
-        .t-body { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 1px; }
-        .t-serial { font-family: 'Bebas Neue','Oswald',sans-serif; letter-spacing: clamp(3px,.8vw,6px); font-size: clamp(9px,1.3vw,13px); color: #13384f; }
-        .t-mug { width: clamp(30px,5vw,50px); height: auto; margin: 3px 0 1px; display: block; }
-        .t-title { margin: 0; line-height: 1; color: #13384f; text-transform: uppercase;
-          font-size: clamp(14px, 2.8vw, 28px); letter-spacing: clamp(2px,.65vw,5px); text-shadow: 1px 1px 0 rgba(255,255,255,.22); }
-        .t-sub { margin: 1px 0 0; line-height: .92; color: #13384f; text-transform: uppercase;
-          font-size: clamp(30px, 7.6vw, 64px); letter-spacing: clamp(3px,1.1vw,9px); text-shadow: 1px 1px 0 rgba(255,255,255,.25); }
-        .t-side { position: absolute; right: 6px; top: 7px; bottom: 7px; display: flex; align-items: center; justify-content: center;
-          writing-mode: vertical-rl; transform: rotate(180deg); font-family: 'Bebas Neue','Oswald',sans-serif;
-          letter-spacing: clamp(2px,.5vw,4px); font-size: clamp(8px,1.1vw,12px); color: #13384f; white-space: nowrap; }
+        .hero-col .ticket { transform-origin: top center; transform: translateY(-16px) rotate(-1.4deg) scale(.62); }
+        [data-revealed="true"] .hero-col .ticket { transform: translateY(0) rotate(-1.4deg) scale(.62); }
+        .ticket::before { content: ""; position: absolute; inset: 4px; border: 1px solid #13384f; border-radius: 4px; pointer-events: none; }
+        .t-main { display: flex; flex-direction: column; align-items: center; gap: clamp(2px,.6vh,5px);
+          padding: 9px clamp(16px,2.6vw,28px) 10px clamp(18px,3vw,32px); }
+        .t-kicker { font-family: 'Bebas Neue','Oswald',sans-serif; letter-spacing: clamp(2px,.6vw,5px); font-size: clamp(9px,1.3vw,14px); color: #13384f; }
+        .t-headline { display: flex; align-items: center; gap: clamp(8px,1.5vw,16px); }
+        .t-mug { width: clamp(36px,4.8vw,54px); height: auto; display: block; }
+        .t-words { display: flex; flex-direction: column; align-items: flex-start; }
+        .t-title { margin: 0; line-height: .95; color: #13384f; text-transform: uppercase;
+          font-size: clamp(15px,2.7vw,27px); letter-spacing: clamp(2px,.55vw,5px); text-shadow: 1px 1px 0 rgba(255,255,255,.25); }
+        .t-sub { margin: -2px 0 0; line-height: .85; color: #13384f; text-transform: uppercase;
+          font-size: clamp(30px,7vw,60px); letter-spacing: clamp(2px,.8vw,7px); text-shadow: 1px 1px 0 rgba(255,255,255,.28); }
+        .t-foot { display: flex; align-items: center; gap: clamp(8px,1.4vw,16px); }
+        .t-co, .t-serial, .t-stub-no { font-family: 'Bebas Neue','Oswald',sans-serif; letter-spacing: clamp(1px,.4vw,3px); font-size: clamp(8px,1.1vw,12px); color: #13384f; }
+        .t-stub { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+          padding: 7px clamp(9px,1.5vw,15px); border-left: 2px dashed #13384f;
+          background: linear-gradient(180deg, #4ab4dc 0%, #2e9bc6 100%); border-radius: 0 5px 5px 0; }
+        .t-drink { font-family: 'Bebas Neue','Oswald',sans-serif; font-weight: 700; text-align: center; line-height: .92;
+          font-size: clamp(15px,2.1vw,24px); letter-spacing: 2px; color: #13384f; }
 
         /* ===== "touch to start" splash gate ===== */
         .splash-gate { position: fixed; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: center;
