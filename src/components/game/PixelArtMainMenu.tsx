@@ -63,17 +63,25 @@ const Member: React.FC<{ name: keyof typeof MEMBER_SIZE; s?: number; className?:
     style={{ width: w * s, height: h * s, imageRendering: 'pixelated' }} />;
 };
 
-// The logo styled as a venue DRINK TICKET: a manila stub with a perforated tear-off
-// ("GOOD FOR ONE DRINK"), an "ADMIT ONE" kicker, and the title as the event.
+// The logo styled as a classic blue BEER ROLL TICKET (à la "Indiana Ticket Co."):
+// cyan stock, single-color navy print, a frothy mug, a serial top + bottom, and the
+// maker's name running vertically up the side.
 const Ticket: React.FC<{ className?: string }> = ({ className }) => (
   <div className={`ticket${className ? ` ${className}` : ''}`}>
+    <span className="t-side" aria-hidden>SCENE TICKET CO.</span>
     <div className="t-body">
-      <span className="t-kicker">★ ADMIT ONE ★</span>
+      <span className="t-serial">876023</span>
+      <svg className="t-mug" viewBox="0 0 28 24" aria-hidden>
+        <g fill="none" stroke="#13384f" strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round">
+          <path d="M18.5 10 h2.4 a3.2 3.2 0 0 1 0 6.4 H18.5" />
+          <path d="M7 8 H18 V19 a2 2 0 0 1 -2 2 H9 a2 2 0 0 1 -2 -2 Z" />
+          <path d="M6.4 8 a2.4 2.4 0 0 1 1.2 -4 a2.6 2.6 0 0 1 3.6 -1.4 a3 3 0 0 1 4.8 0 a2.6 2.6 0 0 1 3.6 1.4 a2.4 2.4 0 0 1 1.2 4 Z" />
+          <path d="M10.4 9.6 V18.6 M13.6 9.6 V18.6" strokeWidth="1.1" />
+        </g>
+      </svg>
       <h1 className="t-title">SETTLING</h1>
       <h2 className="t-sub">UP</h2>
-    </div>
-    <div className="t-stub" aria-hidden>
-      <span className="t-stub-text">★ ONE DRINK ★</span>
+      <span className="t-serial">876023</span>
     </div>
   </div>
 );
@@ -555,25 +563,29 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
         .menu-stage { position: relative; z-index: 10; width: 100%; max-width: 1000px;
           display: flex; flex-direction: column; align-items: center; gap: clamp(12px,3vh,24px); }
         .hero-col { text-align: center; }
-        /* ===== logo as a venue DRINK TICKET ===== */
-        .ticket { position: relative; display: inline-flex; align-items: stretch;
-          background: linear-gradient(180deg, #f6e2b0 0%, #ecce8c 100%); color: #2a1020;
-          border: 3px solid #3a210f; border-radius: 4px;
-          box-shadow: inset 0 0 0 1px #fbeec6, 0 9px 20px rgba(0,0,0,.55);
+        /* ===== logo as a blue BEER ROLL TICKET (single-color navy print on cyan) ===== */
+        .ticket { position: relative; display: inline-block; color: #13384f;
+          background: linear-gradient(180deg, #4cb4da 0%, #2f9cc7 100%);
+          border: 2px solid #13384f; border-radius: 6px;
+          box-shadow: inset 0 0 0 1px rgba(255,255,255,.22), 0 9px 20px rgba(0,0,0,.5);
+          padding: 9px 30px 10px 18px;
           transform: translateY(-16px) rotate(-1.6deg); opacity: 0;
           transition: transform .7s cubic-bezier(.2,1.3,.4,1) .2s, opacity .5s ease .2s; }
         [data-revealed="true"] .ticket { transform: translateY(0) rotate(-1.6deg); opacity: 1; }
-        .ticket::before { content: ""; position: absolute; inset: 4px; border: 1px solid #b07b38; border-radius: 2px; pointer-events: none; }
-        .t-body { padding: 9px clamp(16px,3.6vw,34px) 11px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
-        .t-kicker { font-family: 'Bebas Neue','Oswald',sans-serif; letter-spacing: clamp(2px,.7vw,5px); font-size: clamp(10px,1.5vw,15px); color: #9a3b1e; margin-bottom: 3px; }
-        .t-title { margin: 0; line-height: 1; color: #c81e63; text-transform: uppercase;
-          font-size: clamp(15px, 3vw, 30px); letter-spacing: clamp(2px,.7vw,6px); text-shadow: 2px 2px 0 #fbeec6; }
-        .t-sub { margin: 1px 0 0; line-height: .95; color: #e23b18; text-transform: uppercase;
-          font-size: clamp(32px, 8vw, 68px); letter-spacing: clamp(3px,1.2vw,10px); text-shadow: 2px 2px 0 #fbeec6, 4px 4px 0 rgba(0,0,0,.18); }
-        .t-stub { display: flex; align-items: center; justify-content: center; padding: 0 clamp(7px,1.5vw,13px);
-          border-left: 2px dashed #3a210f; background: linear-gradient(180deg, #eed79c 0%, #e1bf73 100%); border-radius: 0 2px 2px 0; }
-        .t-stub-text { writing-mode: vertical-rl; transform: rotate(180deg); font-family: 'Bebas Neue','Oswald',sans-serif;
-          letter-spacing: clamp(2px,.5vw,4px); font-size: clamp(10px,1.5vw,16px); color: #6a3c12; white-space: nowrap; font-weight: 700; }
+        /* full size as the splash focal; smaller in the title so the band shows behind it */
+        .hero-col .ticket { transform-origin: top center; transform: translateY(-16px) rotate(-1.6deg) scale(.6); }
+        [data-revealed="true"] .hero-col .ticket { transform: translateY(0) rotate(-1.6deg) scale(.6); }
+        .ticket::before { content: ""; position: absolute; inset: 4px; border: 1px solid #13384f; border-radius: 3px; pointer-events: none; }
+        .t-body { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 1px; }
+        .t-serial { font-family: 'Bebas Neue','Oswald',sans-serif; letter-spacing: clamp(3px,.8vw,6px); font-size: clamp(9px,1.3vw,13px); color: #13384f; }
+        .t-mug { width: clamp(30px,5vw,50px); height: auto; margin: 3px 0 1px; display: block; }
+        .t-title { margin: 0; line-height: 1; color: #13384f; text-transform: uppercase;
+          font-size: clamp(14px, 2.8vw, 28px); letter-spacing: clamp(2px,.65vw,5px); text-shadow: 1px 1px 0 rgba(255,255,255,.22); }
+        .t-sub { margin: 1px 0 0; line-height: .92; color: #13384f; text-transform: uppercase;
+          font-size: clamp(30px, 7.6vw, 64px); letter-spacing: clamp(3px,1.1vw,9px); text-shadow: 1px 1px 0 rgba(255,255,255,.25); }
+        .t-side { position: absolute; right: 6px; top: 7px; bottom: 7px; display: flex; align-items: center; justify-content: center;
+          writing-mode: vertical-rl; transform: rotate(180deg); font-family: 'Bebas Neue','Oswald',sans-serif;
+          letter-spacing: clamp(2px,.5vw,4px); font-size: clamp(8px,1.1vw,12px); color: #13384f; white-space: nowrap; }
 
         /* ===== "touch to start" splash gate ===== */
         .splash-gate { position: fixed; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: center;
