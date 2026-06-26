@@ -4,6 +4,13 @@ import { env } from "../config/env";
 
 import { devLog } from "./devLogger";
 
+/** A drum hit on a given step, fired to visual listeners in time with the audio. */
+export interface MusicBeat {
+  kick: boolean;
+  snare: boolean;
+  hat: boolean;
+}
+
 interface MusicTrack {
   bpm: number;
   lead: OscillatorType; // arp/melody waveform
@@ -59,6 +66,10 @@ class GameAudioManager {
   private currentTrackType: "chill" | "intense" | "festival" | null = null;
   private musicVolume = env.defaultMusicVolume;
   private enabled = env.enableAudio;
+  // Visual beat sync (e.g. the title-screen drummer): each scheduled drum step
+  // fires these listeners AT the audio-clock time it sounds, so visuals lock to
+  // the actual music. Empty by default → zero cost when nobody is watching.
+  private beatListeners = new Set<(hit: MusicBeat) => void>();
 
   constructor() {
     this.init();
@@ -245,7 +256,8 @@ class GameAudioManager {
   }
 
   // One 16th-note step: bass on the quarter notes, an octave-up arp on the even
-  // subdivisions, a kick on beats 1 & 3, and a hat on the off-beats.
+  // subdivisions, a kick on beats 1 & 3, a snare backbeat on 2 & 4, and a hat on
+  // the off-beats. Drum hits also fire visual beat listeners in time with the audio.
   private scheduleStep(track: MusicTrack, step: number, time: number, dur: number) {
     const inBar = step % 16;
     const chord = track.chords[Math.floor(step / 16) % track.chords.length];
@@ -255,8 +267,54 @@ class GameAudioManager {
       const arp = [chord[0] * 2, chord[1] * 2, chord[2] * 2, chord[1] * 2];
       this.musicTone(arp[(inBar / 2) % 4], time, dur * 1.5, track.lead, track.leadGain, track.bright);
     }
-    if (inBar === 0 || inBar === 8) this.musicKick(time);
-    if (inBar % 4 === 2) this.musicHat(time, track.hatGain);
+    const kick = inBar === 0 || inBar === 8;
+    const snare = inBar === 4 || inBar === 12;
+    const hat = inBar % 4 === 2;
+    if (kick) this.musicKick(time);
+    if (snare) this.musicSnare(time);
+    if (hat) this.musicHat(time, track.hatGain);
+    this.emitBeat(time, { kick, snare, hat });
+  }
+
+  // Fire visual beat listeners AT the moment the step sounds (audio-clock aligned).
+  private emitBeat(time: number, hit: MusicBeat) {
+    if (!this.beatListeners.size || (!hit.kick && !hit.snare && !hit.hat) || !this.context) return;
+    const delayMs = Math.max(0, (time - this.context.currentTime) * 1000);
+    setTimeout(() => this.beatListeners.forEach((cb) => cb(hit)), delayMs);
+  }
+
+  /** Subscribe to drum beats (kick/snare/hat) fired in time with the music bed.
+   *  Returns an unsubscribe. Used by the title-screen drummer to play in sync. */
+  onMusicBeat(cb: (hit: MusicBeat) => void): () => void {
+    this.beatListeners.add(cb);
+    return () => this.beatListeners.delete(cb);
+  }
+
+  /** Whether the music bed is currently scheduling. */
+  get musicPlaying() {
+    return this.isPlayingMusic;
+  }
+
+  private musicSnare(time: number) {
+    if (!this.context || !this.musicGainNode) return;
+    const buffer = this.context.createBuffer(1, Math.floor(this.context.sampleRate * 0.13), this.context.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+    const src = this.context.createBufferSource();
+    const env = this.context.createGain();
+    const filter = this.context.createBiquadFilter();
+    src.buffer = buffer;
+    filter.type = "bandpass";
+    filter.frequency.value = 1850;
+    filter.Q.value = 0.6;
+    env.gain.setValueAtTime(0.16, time);
+    env.gain.exponentialRampToValueAtTime(0.001, time + 0.13);
+    src.connect(filter);
+    filter.connect(env);
+    env.connect(this.musicGainNode);
+    src.start(time);
+    src.stop(time + 0.14);
+    this.trackVoice(src);
   }
 
   private musicTone(freq: number, time: number, dur: number, type: OscillatorType, gain: number, cutoff: number) {

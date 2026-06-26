@@ -1,7 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { PixelButton } from '@components/ui/PixelButton';
 import { haptics } from '@utils/mobile';
 import { getTitleTier } from '@game/world/titleStage';
+import { gameAudio } from '@utils/gameAudio';
+
+// The title theme bed per career tier, and its BPM (mirrors gameAudio's MUSIC_TRACKS)
+// for the drummer's self-clock when audio is suspended (iOS pre-gesture).
+const TITLE_TRACK: Record<string, 'chill' | 'intense' | 'festival'> = {
+  basement: 'chill', dive: 'intense', theater: 'festival', festival: 'festival',
+};
+const TRACK_BPM: Record<string, number> = { chill: 96, intense: 142, festival: 124 };
 
 interface PixelArtMainMenuProps {
   onStartGame: () => void;
@@ -60,11 +68,58 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
 }) => {
   const [revealed, setRevealed] = useState(false);
   const tier = getTitleTier();
+  const titleTrack = TITLE_TRACK[tier.id] ?? 'chill';
+
+  // Drummer layers — the kit is planted; only these animate on the beat.
+  const drumBodyRef = useRef<HTMLImageElement>(null);
+  const drumSticksRef = useRef<HTMLImageElement>(null);
+  const fxKickRef = useRef<HTMLSpanElement>(null);
+  const fxSnareRef = useRef<HTMLSpanElement>(null);
+  const fxHatRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
     const id = requestAnimationFrame(() => setTimeout(() => setRevealed(true), 80));
     return () => cancelAnimationFrame(id);
   }, []);
+
+  // Title theme bed + the drummer playing IN TIME with it. The kit stays still;
+  // sticks tap and each drum (kick/snare/hat) reacts on its own hit. Driven by
+  // gameAudio's beat events when the music sounds; a self-clock at the track BPM
+  // keeps the drummer alive when the AudioContext is still suspended (iOS, pre-gesture).
+  useEffect(() => {
+    const reduce = typeof window !== 'undefined'
+      && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    // play the theme bed (sounds once audio unlocks; no-op if audio is disabled)
+    gameAudio.startBackgroundMusic(titleTrack);
+    if (reduce) return; // honor reduced-motion: no drummer animation
+
+    const restart = (el: HTMLElement | null) => {
+      if (!el) return;
+      el.classList.remove('hit');
+      void el.offsetWidth; // reflow to retrigger the one-shot animation
+      el.classList.add('hit');
+    };
+    const play = (b: { kick: boolean; snare: boolean; hat: boolean }) => {
+      if (b.kick) { restart(fxKickRef.current); restart(drumSticksRef.current); restart(drumBodyRef.current); }
+      if (b.snare) { restart(fxSnareRef.current); restart(drumSticksRef.current); }
+      if (b.hat) restart(fxHatRef.current);
+    };
+
+    let lastAudioBeat = 0;
+    const off = gameAudio.onMusicBeat((b) => { lastAudioBeat = performance.now(); play(b); });
+
+    // Self-clock fallback: only drives when no audio beats have arrived recently.
+    const stepMs = 60000 / (TRACK_BPM[titleTrack] ?? 96) / 4; // 16th notes
+    let step = 0;
+    const clock = window.setInterval(() => {
+      if (performance.now() - lastAudioBeat < 400) return; // audio is driving
+      const inBar = step % 16; step = (step + 1) % 16;
+      play({ kick: inBar === 0 || inBar === 8, snare: inBar === 4 || inBar === 12, hat: inBar % 4 === 2 });
+    }, stepMs);
+
+    return () => { off(); window.clearInterval(clock); };
+    // Do NOT stop the bed on unmount — it flows seamlessly into the in-game music.
+  }, [titleTrack]);
 
   // Crowd: real characters, EVENLY spaced, all the same size, all facing the stage
   // (backs to camera), grounded on the floor. Darkened as a foreground silhouette.
@@ -153,7 +208,16 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
             <span className="bandmate b0"><Member name="guitar" /></span>
             <span className="bandmate b1"><Member name="sing" /></span>
             <span className="bandmate b2"><Member name="bass" /></span>
-            <span className="bandmate b3 drummer"><Member name="drum" /></span>
+            <span className="bandmate b3 drummer">
+              <span className="drum-rig" style={{ width: 46 * 3, height: 38 * 3 }}>
+                <img ref={drumBodyRef} className="drum-l drum-body" src={`${BAND_SRC}/members/drum_body.png`} alt="" aria-hidden />
+                <img className="drum-l drum-kit" src={`${BAND_SRC}/members/drum_kit.png`} alt="" aria-hidden />
+                <img ref={drumSticksRef} className="drum-l drum-sticks" src={`${BAND_SRC}/members/drum_sticks.png`} alt="" aria-hidden />
+                <span ref={fxKickRef} className="drum-fx kick" />
+                <span ref={fxSnareRef} className="drum-fx snare" />
+                <span ref={fxHatRef} className="drum-fx hat" />
+              </span>
+            </span>
           </div>
           <Prop name="pa_speaker_stack" s={2.5} className="pa pa-r" />
         </div>
@@ -365,10 +429,28 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
         .bandmate img { display: block; }
         .b1 { animation-delay: .1s; animation-duration: .54s } .b2 { animation-delay: .26s; animation-duration: .7s }
         /* drummer sits behind a wide kit — bob only, no rotate */
-        .drummer { z-index: 0; margin: 0 -10px; animation: bob 0.66s ease-in-out infinite; animation-delay: .18s; }
+        /* drummer: the KIT is planted furniture (no bob) — only the player body, the
+           sticks, and each drum's hit-flash animate, all in time with the music. */
+        .drummer { z-index: 0; margin: 0 -10px; animation: none; }
         .b0 { z-index: 2 } .b1 { z-index: 3 } .b2 { z-index: 2 }
         @keyframes headbang { 0%,100%{transform:translateY(0) rotate(0)} 30%{transform:translateY(-3px) rotate(-3deg)} 60%{transform:translateY(-1px) rotate(3deg)} }
-        @keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-2px)} }
+        .drum-rig { position: relative; }
+        .drum-l { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
+        .drum-body { z-index: 1; transform-origin: 50% 100%; }
+        .drum-kit { z-index: 2; }
+        .drum-sticks { z-index: 3; transform-origin: 50% 35%; }
+        .drum-sticks.hit { animation: stickTap .12s ease-out; }
+        .drum-body.hit { animation: drumBodyHit .16s ease-out; }
+        .drum-fx { position: absolute; transform: translate(-50%,-50%) scale(.5); border-radius: 50%; pointer-events: none; opacity: 0; z-index: 4;
+          background: radial-gradient(circle, rgba(255,242,214,.92), rgba(255,210,150,.34) 46%, transparent 72%); mix-blend-mode: screen; }
+        .drum-fx.kick { left: 50%; top: 82%; width: 44%; height: 32%; }
+        .drum-fx.snare { left: 37%; top: 62%; width: 28%; height: 22%; }
+        /* hat = the left (hi-hat) cymbal shimmers */
+        .drum-fx.hat { left: 24%; top: 42%; width: 26%; height: 24%; }
+        .drum-fx.hit { animation: drumFlash .2s ease-out; }
+        @keyframes stickTap { 0%{transform:translateY(0)} 40%{transform:translateY(3px)} 100%{transform:translateY(0)} }
+        @keyframes drumBodyHit { 0%{transform:translateY(0)} 35%{transform:translateY(1.5px)} 100%{transform:translateY(0)} }
+        @keyframes drumFlash { 0%{opacity:0; transform:translate(-50%,-50%) scale(.5)} 22%{opacity:.9; transform:translate(-50%,-50%) scale(1)} 100%{opacity:0; transform:translate(-50%,-50%) scale(1.18)} }
         .platform { width: clamp(300px, 60vw, 470px); height: clamp(10px, 2.4vh, 16px); margin-top: -2px;
           background: linear-gradient(180deg, #5a3f2a 0%, #3e2a1a 100%); border-top: 2px solid #6e4d33;
           box-shadow: 0 5px 10px rgba(0,0,0,.5); }
@@ -439,7 +521,7 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
 
         @media (prefers-reduced-motion: reduce) {
           .wall,.floor,.floor-line,.stage-wash,.lights-row,.stage,.fan,.banner,.tagline,.menu-buttons>*,.menu-footer { transition: none !important; opacity: 1 !important; transform: none !important; }
-          .bandmate,.fan,.dusk-stars span,.bulb::after,.light-shaft,.bar-glow::after { animation: none !important; }
+          .bandmate,.fan,.dusk-stars span,.bulb::after,.light-shaft,.bar-glow::after,.drum-sticks,.drum-body,.drum-fx { animation: none !important; }
           .lights-row { transform: none !important; }
           .fan { transform: translateX(-50%) !important; }
           .light-shaft { opacity: .5 !important; }

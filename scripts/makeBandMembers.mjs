@@ -77,6 +77,36 @@ function build(name, cfg) {
   return { W, H };
 }
 
+/**
+ * The drummer can't bob as one block (the kit is furniture). Emit THREE aligned
+ * layers on the same canvas so the title can plant the kit and animate only the
+ * player + sticks in time with the music:
+ *   drum_kit.png    — the kit alone (stationary)
+ *   drum_body.png   — the player: character + arms + gripping hands (no kit/sticks)
+ *   drum_sticks.png — just the two sticks (front layer, taps on the beat)
+ */
+function buildDrummerLayers(cfg) {
+  const [W, H] = cfg.canvas;
+  const skin = hex(cfg.skin), sleeve = hex(cfg.sleeve);
+  const char = charFrame(cfg.charId);
+  const ins = instr(cfg.instr.file, cfg.instr.resize, cfg.instr.rotate);
+
+  const kit = makeSprite(W, H);
+  blit(kit, ins, cfg.instr.at[0], cfg.instr.at[1]);
+  writeFileSync(join(OUT, 'drum_kit.png'), encodePng(W, H, kit.buf));
+
+  const body = makeSprite(W, H);
+  blit(body, char, cfg.charAt[0], cfg.charAt[1]);
+  (cfg.arms || []).forEach((a) => armLine(body, a.from, a.to, sleeve));
+  (cfg.sticks || []).forEach((s) => hand(body, s.from, skin)); // gripping hand at each stick top
+  writeFileSync(join(OUT, 'drum_body.png'), encodePng(W, H, body.buf));
+
+  const sticks = makeSprite(W, H);
+  (cfg.sticks || []).forEach((s) => stick(sticks, s.from, s.to, hex(s.col || '#caa477')));
+  writeFileSync(join(OUT, 'drum_sticks.png'), encodePng(W, H, sticks.buf));
+  console.log(`drum layers (kit/body/sticks): ${W}x${H}`);
+}
+
 const MEMBERS = {
   guitar: {
     charId: '010', skin: '#ffbd99', sleeve: '#0b2242',
@@ -124,6 +154,7 @@ for (const [name, cfg] of Object.entries(MEMBERS)) {
   built[name] = build(name, cfg);
   console.log(`${name}: ${built[name].W}x${built[name].H}`);
 }
+buildDrummerLayers(MEMBERS.drum);
 
 // optional bottom-aligned review montage (best-effort; ignore if magick/tmp absent)
 try {
