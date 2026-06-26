@@ -417,7 +417,18 @@ class GameAudioManager {
   /** Resume the (autoplay-policy-)suspended context. Safe to call repeatedly. */
   resume() {
     if (this.context && this.context.state === "suspended") {
-      this.context.resume().catch(() => {});
+      this.context
+        .resume()
+        .then(() => {
+          // After a long suspension (e.g. the title screen before the first tap),
+          // the music scheduler's nextStepTime is far in the past → re-anchor it so
+          // it doesn't flood a catch-up burst of notes when the bed starts sounding.
+          if (this.isPlayingMusic && this.context) {
+            this.nextStepTime = this.context.currentTime + 0.1;
+            this.stepIndex = 0;
+          }
+        })
+        .catch(() => {});
     }
   }
 

@@ -25,7 +25,8 @@ const PROP_SIZE: Record<string, [number, number]> = {
   mic_stand: [12, 24], poster_wall: [18, 20], crate_stack: [16, 18],
   road_case: [18, 14], guitar_case: [12, 20], cable_coil: [14, 8],
   keg_cooler: [12, 16], flyer_pole: [14, 26], sandwich_board: [16, 18],
-  stage_riser: [20, 12],
+  stage_riser: [20, 12], pipe_run: [34, 9], duct_vent: [22, 14],
+  basement_window: [28, 18], water_heater: [16, 28], support_post: [9, 70],
 };
 const Prop: React.FC<{ name: keyof typeof PROP_SIZE; s?: number; className?: string; style?: React.CSSProperties }> =
   ({ name, s = 4, className, style }) => {
@@ -135,11 +136,11 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
   // Per-tier ROOM DRESSING — grows with the venue (basement→theater). Festival is the
   // outdoor path and dresses itself (sky/skyline). Kept LEFT of ~30% so it never reaches
   // the right-side menu column in landscape.
-  const ROOM: Record<string, { flyers: number; hero: 'bulb' | 'barglow' | 'marquee' | null; backline: string[]; riser: boolean; fg: string[]; board: boolean }> = {
-    basement: { flyers: 6, hero: 'bulb',    backline: ['floor_amp', 'crate_stack', 'floor_amp'],            riser: false, fg: ['guitar_case', 'cable_coil'], board: false },
-    dive:     { flyers: 4, hero: 'barglow', backline: ['floor_amp', 'road_case', 'floor_amp', 'floor_amp'], riser: false, fg: ['keg_cooler', 'cable_coil'],   board: true },
-    theater:  { flyers: 2, hero: 'marquee', backline: ['road_case', 'crate_stack'],                          riser: true,  fg: [],                            board: false },
-    festival: { flyers: 0, hero: null,      backline: [],                                                    riser: true,  fg: [],                            board: false },
+  const ROOM: Record<string, { flyers: number; hero: 'bulb' | 'barglow' | 'marquee' | null; backline: string[]; riser: boolean; fg: string[]; board: boolean; ceiling: 'joists' | 'clean' | null; window: boolean; corner: boolean }> = {
+    basement: { flyers: 6, hero: 'bulb',    backline: ['floor_amp', 'crate_stack', 'floor_amp'],            riser: false, fg: ['guitar_case', 'cable_coil'], board: false, ceiling: 'joists', window: true,  corner: true },
+    dive:     { flyers: 4, hero: 'barglow', backline: ['floor_amp', 'road_case', 'floor_amp', 'floor_amp'], riser: false, fg: ['keg_cooler', 'cable_coil'],   board: true,  ceiling: 'joists', window: true,  corner: false },
+    theater:  { flyers: 2, hero: 'marquee', backline: ['road_case', 'crate_stack'],                          riser: true,  fg: [],                            board: false, ceiling: 'clean',  window: false, corner: false },
+    festival: { flyers: 0, hero: null,      backline: [],                                                    riser: true,  fg: [],                            board: false, ceiling: null,     window: false, corner: false },
   };
   const room = ROOM[tier.id] ?? ROOM.basement;
   // plastered flyers, upper-LEFT focal wall: varied position / tilt / scale, overlapping.
@@ -154,6 +155,18 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
     <div className="pixel-main-menu" data-revealed={revealed} data-tier={tier.id} data-outdoor={tier.outdoor}>
       {/* ===== ROOM ===== */}
       <div className="room">
+        {/* low basement ceiling: exposed joists + pipes + an HVAC duct */}
+        {!tier.outdoor && room.ceiling && (
+          <div className="ceiling" data-ceil={room.ceiling}>
+            {room.ceiling === 'joists' && (
+              <>
+                <Prop name="pipe_run" s={3.2} className="pipe pipe-1" />
+                <Prop name="pipe_run" s={2.7} className="pipe pipe-2" />
+                <Prop name="duct_vent" s={3} className="duct" />
+              </>
+            )}
+          </div>
+        )}
         {tier.outdoor ? (
           <div className="sky">
             <div className="dusk-stars">{Array.from({ length: 16 }, (_, i) => <span key={i} style={{ left: `${(i * 61) % 100}%`, top: `${(i * 29) % 42}%`, animationDelay: `${(i % 5) * 0.5}s` }} />)}</div>
@@ -176,6 +189,14 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
               <Prop name="flyer_pole" s={2.4} className="flyer"
                 style={{ position: 'absolute', left: '25%', bottom: '3%', zIndex: 3 }} />
             )}
+            {room.window && <Prop name="basement_window" s={3.2} className="bsmt-window" />}
+          </div>
+        )}
+        {/* back-corner basement clutter: support column + water heater */}
+        {!tier.outdoor && room.corner && (
+          <div className="bsmt-corner">
+            <Prop name="support_post" s={2.3} className="post" />
+            <Prop name="water_heater" s={2.6} className="heater" />
           </div>
         )}
         {/* motivated warm hero light (per tier) + dusty light shaft over the band */}
@@ -205,6 +226,7 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
         <div className="backline">
           <Prop name="pa_speaker_stack" s={2.5} className="pa pa-l" />
           <div className="band">
+            <span className="drum-riser" aria-hidden />
             <span className="bandmate b0"><Member name="guitar" /></span>
             <span className="bandmate b1"><Member name="sing" /></span>
             <span className="bandmate b2"><Member name="bass" /></span>
@@ -319,6 +341,25 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
             linear-gradient(180deg, var(--wall-a) 0 60%, var(--wall-b) 60% 100%); }
         .pixel-main-menu[data-tier="theater"] .wall::after { background: none; }
         .wall-poster { position: absolute; left: 7%; bottom: 8%; filter: drop-shadow(0 2px 0 rgba(0,0,0,.4)); }
+
+        /* ===== basement structure: low exposed-joist ceiling, pipes, window, clutter ===== */
+        .ceiling { position: absolute; top: 0; left: 0; right: 0; height: 13%; z-index: 2; pointer-events: none;
+          background:
+            repeating-linear-gradient(90deg, #271a11 0 15px, #33241850 15px 17px),
+            linear-gradient(180deg, #1b120b 0%, #2a1c11 70%, #1d130b 100%);
+          box-shadow: inset 0 -3px 7px rgba(0,0,0,.5), 0 3px 7px rgba(0,0,0,.55);
+          border-bottom: 2px solid #100b06; opacity: 0; transition: opacity .5s ease; }
+        [data-revealed="true"] .ceiling { opacity: 1; }
+        .ceiling[data-ceil="clean"] { height: 7%; background: linear-gradient(180deg, #30223a, #241a2c);
+          border-bottom: 2px solid color-mix(in srgb, var(--accent) 40%, #6a4a20); box-shadow: 0 2px 5px rgba(0,0,0,.4); }
+        .pipe { position: absolute; image-rendering: pixelated; filter: drop-shadow(0 2px 0 rgba(0,0,0,.45)); }
+        .pipe-1 { left: 5%; bottom: -16%; }
+        .pipe-2 { left: 50%; bottom: 18%; }
+        .duct { position: absolute; right: 33%; bottom: -2%; image-rendering: pixelated; filter: drop-shadow(0 2px 0 rgba(0,0,0,.5)); }
+        .bsmt-window { position: absolute; left: 25%; top: 20%; z-index: 1; filter: drop-shadow(0 2px 0 rgba(0,0,0,.4)); }
+        .bsmt-corner { position: absolute; left: 1%; bottom: 31%; z-index: 1; display: flex; align-items: flex-end; gap: 3px;
+          filter: brightness(.66) saturate(.9); opacity: 0; transition: opacity .5s ease; }
+        [data-revealed="true"] .bsmt-corner { opacity: 1; }
         .sky { position: absolute; left: 0; right: 0; top: 0; bottom: 30%;
           background: linear-gradient(180deg, #1d1140 0%, #5a2b66 55%, #b5556a 100%); }
         .dusk-stars span { position: absolute; width: 2px; height: 2px; background: #fff; opacity: .85; animation: tw 3s ease-in-out infinite; }
@@ -410,7 +451,7 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
         [data-outdoor="true"] .floor-line { display: none; }
 
         /* ===== string lights ===== */
-        .lights-row { position: absolute; top: max(2px, env(safe-area-inset-top)); left: -3%; right: -3%; z-index: 7; display: flex; justify-content: space-between; pointer-events: none;
+        .lights-row { position: absolute; top: 11%; left: -3%; right: -3%; z-index: 7; display: flex; justify-content: space-between; pointer-events: none;
           transform: translateY(-130%); transition: transform .7s cubic-bezier(.2,.9,.3,1) .15s; filter: drop-shadow(0 0 8px rgba(255,210,120,.55)); }
         [data-revealed="true"] .lights-row { transform: translateY(0); }
 
@@ -424,15 +465,24 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
           background: radial-gradient(46% 64% at 50% 92%, color-mix(in srgb, color-mix(in srgb, var(--accent) 60%, rgb(255,200,120)) 62%, transparent), transparent 70%); mix-blend-mode: screen; }
         .backline { position: relative; display: flex; align-items: flex-end; justify-content: center; gap: 14px; }
         .pa { filter: drop-shadow(0 3px 0 rgba(0,0,0,.45)); }
-        .band { position: relative; display: flex; align-items: flex-end; justify-content: center; gap: 2px; padding: 0 8px; }
-        .bandmate { position: relative; transform-origin: bottom center; animation: headbang 0.62s ease-in-out infinite; filter: drop-shadow(0 2px 0 rgba(0,0,0,.45)); }
+        /* Real-band stage formation: drummer raised at BACK-CENTER, singer FRONT-CENTER
+           at the mic, guitarist front-LEFT, bassist front-RIGHT. */
+        .band { position: relative; width: clamp(330px, 58vw, 460px); height: clamp(124px, 27vh, 168px); }
+        .bandmate { position: absolute; transform-origin: bottom center; filter: drop-shadow(0 2px 0 rgba(0,0,0,.45)); }
         .bandmate img { display: block; }
-        .b1 { animation-delay: .1s; animation-duration: .54s } .b2 { animation-delay: .26s; animation-duration: .7s }
-        /* drummer sits behind a wide kit — bob only, no rotate */
-        /* drummer: the KIT is planted furniture (no bob) — only the player body, the
-           sticks, and each drum's hit-flash animate, all in time with the music. */
-        .drummer { z-index: 0; margin: 0 -10px; animation: none; }
-        .b0 { z-index: 2 } .b1 { z-index: 3 } .b2 { z-index: 2 }
+        .bandmate > img { animation: headbang 0.62s ease-in-out infinite; transform-origin: bottom center; }
+        .b0 { left: 3%; bottom: 0; z-index: 3; }                         /* guitar, front-left */
+        .b1 { left: 50%; margin-left: -51px; bottom: 0; z-index: 4; }    /* singer, front-center (102/2) */
+        .b1 > img { animation-delay: .1s; animation-duration: .54s; }
+        .b2 { right: 3%; bottom: 0; z-index: 3; }                        /* bass, front-right */
+        .b2 > img { animation-delay: .26s; animation-duration: .7s; }
+        /* drummer raised at the back, smaller (further); kit planted, only player +
+           sticks + each drum's hit-flash animate, in time with the music. */
+        .drummer { left: 50%; margin-left: -69px; top: 5%; transform: scale(.72); transform-origin: top center; z-index: 1; }
+        /* drum riser — grounds the raised drummer so it doesn't float */
+        .drum-riser { position: absolute; left: 50%; transform: translateX(-50%); bottom: 0; height: 46%; width: 112px; z-index: 0;
+          background: linear-gradient(180deg, #4c3623 0%, #382616 55%, #2a1c12 100%); border-top: 3px solid #62482f;
+          box-shadow: 0 5px 10px rgba(0,0,0,.5); }
         @keyframes headbang { 0%,100%{transform:translateY(0) rotate(0)} 30%{transform:translateY(-3px) rotate(-3deg)} 60%{transform:translateY(-1px) rotate(3deg)} }
         .drum-rig { position: relative; display: block; }
         .drum-l { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
