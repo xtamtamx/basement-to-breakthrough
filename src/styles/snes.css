@@ -31,6 +31,12 @@
   --snes-ink-mute: #6f6796; /* muted text */
 
   --snes-font: 'Press Start 2P', ui-monospace, monospace;
+
+  /* Spacing scale — snap paddings/gaps to these instead of free-handing px. */
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 20px; --s6: 24px;
+  /* Pixel-type scale. 9px is the LEGIBILITY FLOOR for Press Start 2P (a ~1px
+     stroke below that is illegible + fails contrast); never set pixel text < --t-xs. */
+  --t-xs: 9px; --t-sm: 11px; --t-md: 12px; --t-lg: 14px; --t-xl: 16px;
 }
 
 /* Pixel-text treatment — apply per element, never globally. */
@@ -183,6 +189,7 @@
   align-items: center;
   justify-content: center;
   padding: 16px;
+  animation: snes-overlay-in 0.18s ease both;
 }
 .snes-modal__sheet {
   width: 100%;
@@ -195,7 +202,13 @@
   padding: 16px;
   max-height: 84vh;
   overflow-y: auto;
+  animation: snes-sheet-in 0.22s cubic-bezier(0.2, 0.9, 0.3, 1) both;
 }
+/* Bottom-sheet variant — slides up from the bottom edge, full-width. */
+.snes-modal--sheet { align-items: flex-end; padding: 0; }
+.snes-modal--sheet .snes-modal__sheet { max-width: 100%; max-height: 88vh; border-top-width: 3px; }
+@keyframes snes-overlay-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes snes-sheet-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
 /* Chunky stepped progress bar. */
 .snes-progress {
@@ -216,6 +229,21 @@
 
 /* Tint native form controls (volume slider, checkboxes, radios) to the brand. */
 input[type='range'], input[type='checkbox'], input[type='radio'], progress { accent-color: var(--snes-magenta); }
+
+/* Square pixel slider thumb — `appearance:none` sliders otherwise show a hidden /
+   native-gray thumb on iOS at key micro-decisions (e.g. ticket price). */
+.snes-slider { -webkit-appearance: none; appearance: none; height: 8px; background: var(--snes-bg-2);
+  border: 2px solid var(--snes-void); border-radius: 0; }
+.snes-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 22px; height: 22px;
+  background: var(--snes-magenta); border: 2px solid var(--snes-void);
+  box-shadow: inset 2px 2px 0 0 rgba(255,255,255,.35); cursor: pointer; }
+.snes-slider::-moz-range-thumb { width: 22px; height: 22px; background: var(--snes-magenta);
+  border: 2px solid var(--snes-void); border-radius: 0; cursor: pointer; }
+
+/* Universal pixel "depress" on press — apply to any clickable that isn't a .snes-btn
+   so every control feels physical. Reduced-motion safe (see media block below). */
+.btb-press { transition: transform 0.04s steps(1); }
+.btb-press:active { transform: translate(1px, 1px); }
 
 /* --- Juice: celebratory beats (sold-out, new synergy discovered) ----------
    CSS keyframes are compositor-driven, so the punch lands even when the tab
@@ -258,9 +286,12 @@ input[type='range'], input[type='checkbox'], input[type='radio'], progress { acc
 @media (prefers-reduced-motion: reduce) {
   .btb-glow,
   .btb-shake,
-  .btb-pop {
+  .btb-pop,
+  .snes-modal,
+  .snes-modal__sheet {
     animation: none !important;
   }
+  .btb-press, .btb-press:active { transform: none; }
 }
 
 /* --- Press feedback ------------------------------------------------------ */

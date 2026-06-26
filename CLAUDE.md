@@ -23,7 +23,11 @@ Punk attitude lives in the writing, not in grimdark visuals.
 
 ## Tech Stack
 - **Frontend:** React 19 + TypeScript + Vite 7
-- **Styling:** Tailwind CSS v4 (mobile-first)
+- **Styling:** `src/styles/snes.css` is the CANONICAL design system (neon-punk SNES
+  tokens + `.snes-*` classes). Tailwind was removed 2026-06-26 (it was silently inert:
+  v3 `@tailwind` directives on the v4 engine emitted nothing). gameUI.css holds the
+  utility/keyframe layer; pixel-art.css the sprite styles. Prefer `var(--snes-*)` tokens
+  + `.snes-*` classes over inline hex/magic-number spacing.
 - **State:** Zustand 5
 - **Storage:** IndexedDB (via idb)
 - **Rendering:** PixiJS 8 (`@pixi/react`)
@@ -67,7 +71,7 @@ Punk attitude lives in the writing, not in grimdark visuals.
 - `src/game/types/core.ts` - Core type definitions ("Game Bible")
 - `src/App.tsx` - Live app entry; renders `MainGameView` (the one canonical view)
 - `src/stores/gameStore.ts` - Zustand game state
-- `src/index.css` - Mobile-first Tailwind utilities
+- `src/styles/snes.css` - Canonical design system (tokens + `.snes-*` components)
 - `src/hooks/useTouch.ts` - Touch gesture detection
 - `src/utils/mobile.ts` - Mobile platform utilities
 - `capacitor.config.ts` - Native app configuration
