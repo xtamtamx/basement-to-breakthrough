@@ -322,12 +322,8 @@ export const BandsView: React.FC = () => {
                               {(() => {
                                 const fb = bandFactionBadge(band);
                                 return fb ? (
-                                  <span className="snes-pixel" style={{
-                                    display: 'inline-flex', alignItems: 'center', gap: '4px',
-                                    fontSize: '7px', letterSpacing: 0, color: fb.color,
-                                    border: `2px solid ${fb.color}`, borderRadius: 0, padding: '2px 5px'
-                                  }}>
-                                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: fb.color }} />
+                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: fb.color, whiteSpace: 'nowrap' }}>
+                                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: fb.color, flexShrink: 0 }} />
                                     {fb.name}
                                   </span>
                                 ) : null;
@@ -364,87 +360,13 @@ export const BandsView: React.FC = () => {
                           </div>
                         </div>
 
-                        {/* Stats Preview — Pop, Energy, and Authenticity (the
-                            DIY-ethics stat that drives factions + combos) */}
-                        <div style={{
-                          display: 'grid',
-                          gridTemplateColumns: '1fr 1fr 1fr',
-                          gap: '8px',
-                          marginTop: '8px'
-                        }}>
-                          <div>
-                            <div style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'space-between',
-                              marginBottom: '4px'
-                            }}>
-                              <span className="snes-pixel" style={{
-                                fontSize: '7px',
-                                color: '#6f6796',
-                                textTransform: 'uppercase',
-                                letterSpacing: 0
-                              }}>Pop</span>
-                              <span className="snes-pixel" style={{ fontSize: '8px', color: '#f72585', letterSpacing: 0 }}>{band.popularity}</span>
-                            </div>
-                            <div style={{
-                              height: '6px',
-                              backgroundColor: '#0f0b1e',
-                              border: '2px solid #0a0814',
-                              borderRadius: 0,
-                              overflow: 'hidden'
-                            }}>
-                              <div
-                                style={{
-                                  height: '100%',
-                                  backgroundColor: '#f72585',
-                                  width: `${band.popularity}%`,
-                                  transition: 'none'
-                                }}
-                              />
-                            </div>
-                          </div>
-                          <div>
-                            <div style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'space-between',
-                              marginBottom: '4px'
-                            }}>
-                              <span className="snes-pixel" style={{
-                                fontSize: '7px',
-                                color: '#6f6796',
-                                textTransform: 'uppercase',
-                                letterSpacing: 0
-                              }}>Energy</span>
-                              <span className="snes-pixel" style={{ fontSize: '8px', color: '#ffd23f', letterSpacing: 0 }}>{band.energy}</span>
-                            </div>
-                            <div style={{
-                              height: '6px',
-                              backgroundColor: '#0f0b1e',
-                              border: '2px solid #0a0814',
-                              borderRadius: 0,
-                              overflow: 'hidden'
-                            }}>
-                              <div
-                                style={{
-                                  height: '100%',
-                                  backgroundColor: '#ffd23f',
-                                  width: `${band.energy}%`,
-                                  transition: 'none'
-                                }}
-                              />
-                            </div>
-                          </div>
-                          <div>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-                              <span className="snes-pixel" style={{ fontSize: '7px', color: '#6f6796', textTransform: 'uppercase', letterSpacing: 0 }}>Auth</span>
-                              <span className="snes-pixel" style={{ fontSize: '8px', color: '#3ad17e', letterSpacing: 0 }}>{band.authenticity}</span>
-                            </div>
-                            <div style={{ height: '6px', backgroundColor: '#0f0b1e', border: '2px solid #0a0814', borderRadius: 0, overflow: 'hidden' }}>
-                              <div style={{ height: '100%', backgroundColor: '#3ad17e', width: `${band.authenticity}%`, transition: 'none' }} />
-                            </div>
-                          </div>
+                        {/* Compact stat readout — colored numbers keep the list
+                            scannable; the full labelled bars live in the expanded
+                            card (tap to open). */}
+                        <div style={{ display: 'flex', gap: '14px', marginTop: '7px' }}>
+                          <span className="snes-pixel" title="Popularity" style={{ fontSize: '9px', letterSpacing: 0, color: '#f72585' }}>★ {band.popularity}</span>
+                          <span className="snes-pixel" title="Energy" style={{ fontSize: '9px', letterSpacing: 0, color: '#ffd23f' }}>⚡ {band.energy}</span>
+                          <span className="snes-pixel" title="Authenticity" style={{ fontSize: '9px', letterSpacing: 0, color: '#3ad17e' }}>✦ {band.authenticity}</span>
                         </div>
                       </div>
                     </div>
