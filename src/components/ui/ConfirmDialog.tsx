@@ -9,33 +9,37 @@ export interface ConfirmOptions {
   cancelLabel?: string;
   /** Style the confirm button as destructive (red). */
   danger?: boolean;
+  /** Single-button acknowledge (no Cancel) — for in-app notices/alerts. */
+  notice?: boolean;
 }
 
 /** Controlled confirm dialog on the canonical SnesModal shell. */
 export const ConfirmDialog: React.FC<ConfirmOptions & { onConfirm: () => void; onCancel: () => void }> = ({
-  title, message, confirmLabel = 'Confirm', cancelLabel = 'Cancel', danger, onConfirm, onCancel,
+  title, message, confirmLabel, cancelLabel = 'Cancel', danger, notice, onConfirm, onCancel,
 }) => (
   <SnesModal
     onClose={onCancel}
-    title={title ?? (danger ? 'Are you sure?' : 'Confirm')}
+    title={title ?? (notice ? 'Heads up' : danger ? 'Are you sure?' : 'Confirm')}
     ariaLabel={title ?? 'Confirm'}
     accent={danger ? 'var(--snes-red)' : undefined}
     maxWidth={360}
   >
-    <p style={{ fontSize: 'var(--t-md)', color: 'var(--snes-ink-dim)', lineHeight: 1.5, margin: '0 0 var(--s4)' }}>
+    <p style={{ fontSize: 'var(--t-md)', color: 'var(--snes-ink-dim)', lineHeight: 1.5, margin: '0 0 var(--s4)', whiteSpace: 'pre-line' }}>
       {message}
     </p>
     <div style={{ display: 'flex', gap: 'var(--s2)' }}>
-      <button type="button" className="snes-btn snes-btn--ghost" style={{ flex: 1 }} onClick={onCancel}>
-        {cancelLabel}
-      </button>
+      {!notice && (
+        <button type="button" className="snes-btn snes-btn--ghost" style={{ flex: 1 }} onClick={onCancel}>
+          {cancelLabel}
+        </button>
+      )}
       <button
         type="button"
         className={`snes-btn${danger ? ' snes-btn--danger' : ''}`}
         style={{ flex: 1 }}
         onClick={() => { (danger ? haptics.heavy : haptics.medium)?.(); onConfirm(); }}
       >
-        {confirmLabel}
+        {confirmLabel ?? (notice ? 'OK' : 'Confirm')}
       </button>
     </div>
   </SnesModal>

@@ -17,6 +17,7 @@ import { TurnResultsModal } from "@components/ui/TurnResultsModal";
 import { SettingsModal } from "@components/ui/SettingsModal";
 import { SaveLoadModal } from "@components/ui/SaveLoadModal";
 import { ObjectivesModal } from "./ObjectivesModal";
+import { useConfirm } from "@components/ui/ConfirmDialog";
 import { useGameStore } from "@stores/gameStore";
 import { haptics } from "@utils/mobile";
 import { audio } from "@utils/simpleAudio";
@@ -91,6 +92,7 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
   // Re-entrancy guard: blocks a same-tick double-tap (and taps while the
   // results modal is up) from resolving the same turn twice.
   const resolvingRef = useRef(false);
+  const confirm = useConfirm();
 
   // synergyManager is a singleton OUTSIDE Zustand, so the SynergyBar won't
   // re-render on acquire/replace unless we bump this counter to force it.
@@ -158,9 +160,13 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
     // silently burns a finite turn (you just pay rent). Confirm first.
     if (useGameStore.getState().scheduledShows.length === 0) {
       haptics.warning();
-      if (!window.confirm('End the turn with no shows booked?\nYou\'ll just pay rent and lose ground.')) {
-        return;
-      }
+      const proceed = await confirm({
+        title: 'No shows booked',
+        message: "End the turn anyway? You'll just pay rent and lose ground.",
+        confirmLabel: 'End Turn',
+        cancelLabel: 'Go Back',
+      });
+      if (!proceed) return;
     }
     resolvingRef.current = true;
     try {
@@ -179,7 +185,11 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
       console.error('Turn resolution failed:', err);
       haptics.error();
       setAnnouncement('Something went wrong resolving the turn. Your progress is safe — please try again.');
-      window.alert('Something went wrong resolving the turn.\nYour progress is safe — please try the turn again.');
+      void confirm({
+        title: 'Turn hiccup',
+        message: 'Something went wrong resolving the turn.\nYour progress is safe — just try the turn again.',
+        notice: true,
+      });
     } finally {
       // Always clear the guard so the player can retry (success path also clears
       // it on results-close, which is now redundant but harmless).
