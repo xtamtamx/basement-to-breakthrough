@@ -2,13 +2,14 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useGameStore } from '../gameStore';
 
-// Track module loads
-let bandsModuleLoaded = false;
-let venuesModuleLoaded = false;
+// Track module loads. Hoisted so the (also-hoisted) vi.mock factories can touch
+// these without a TDZ error — the store now dynamically imports the bands module
+// from onRehydrateStorage too, so the factory can run during store rehydration.
+const loaded = vi.hoisted(() => ({ bands: false, venues: false }));
 
 // Mock the lazy imports
 vi.mock('../../data/initialBands', () => {
-  bandsModuleLoaded = true;
+  loaded.bands = true;
   return {
     initialBands: [
       { id: 'band1', name: 'Test Band 1' },
@@ -25,7 +26,7 @@ vi.mock('../../data/initialBands', () => {
 });
 
 vi.mock('../../data/initialVenues', () => {
-  venuesModuleLoaded = true;
+  loaded.venues = true;
   return {
     initialVenues: [
       { id: 'venue1', name: 'Test Venue 1' },
@@ -44,8 +45,8 @@ describe('GameStore Lazy Loading', () => {
       venues: [],
       rosterBandIds: []
     });
-    bandsModuleLoaded = false;
-    venuesModuleLoaded = false;
+    loaded.bands = false;
+    loaded.venues = false;
     vi.clearAllMocks();
   });
 
@@ -66,8 +67,8 @@ describe('GameStore Lazy Loading', () => {
     const { result } = renderHook(() => useGameStore());
     
     // Modules should not be loaded yet
-    expect(bandsModuleLoaded).toBe(false);
-    expect(venuesModuleLoaded).toBe(false);
+    expect(loaded.bands).toBe(false);
+    expect(loaded.venues).toBe(false);
     
     // Load data
     await act(async () => {

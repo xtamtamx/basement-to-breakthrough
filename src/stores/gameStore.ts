@@ -744,6 +744,41 @@ function reconcileCitiesAgainstData(draft: {
   }
 }
 
+/**
+ * Refresh each persisted band's authored CONTENT (name, bio, genre, subgenres,
+ * traits, requirements…) from the current data file by id, while preserving the
+ * run-mutated STATS (event-card deltas + the run-start quality shift). `allBands`
+ * is persisted in the save, so without this an in-progress run keeps showing stale
+ * band names/bios after a content patch — the bands' equivalent of the cities bug
+ * reconcileCitiesAgainstData solves. Shared by loadGame (save slot) AND
+ * onRehydrateStorage (refresh/relaunch) so both resume paths get the same refresh.
+ * The authored roster is passed in (dynamically imported at the call sites) so the
+ * band data stays out of the initial bundle. Save-only bands are kept untouched;
+ * newly-authored bands appear as free agents. Mutates the passed draft.
+ */
+const BAND_RUN_STATS = ["popularity", "authenticity", "energy", "technicalSkill"] as const;
+function reconcileBandsAgainstData(draft: { allBands: Band[] }, authored: Band[]): void {
+  // Nothing restored yet (e.g. menu boot) — let loadInitialGameData seed instead.
+  if (!Array.isArray(draft.allBands) || draft.allBands.length === 0) return;
+  if (!Array.isArray(authored) || authored.length === 0) return;
+  const authoredById = new Map(authored.map((b) => [b.id, b]));
+  const savedIds = new Set(draft.allBands.map((b) => b.id));
+  // Refresh content for bands still in the data file (keeping run-mutated stats),
+  // leave any save-only bands untouched, then surface newly-authored bands as free
+  // agents. Roster ids stay valid because every prior band is kept.
+  const refreshed = draft.allBands.map((prior) => {
+    const fresh = authoredById.get(prior.id);
+    if (!fresh) return prior;
+    const merged: Band = { ...fresh };
+    for (const k of BAND_RUN_STATS) {
+      if (typeof prior[k] === "number") merged[k] = prior[k];
+    }
+    return merged;
+  });
+  const added = authored.filter((b) => !savedIds.has(b.id));
+  draft.allBands = [...refreshed, ...added];
+}
+
 // Lazy initialization function
 const getInitialState = () => ({
   currentRound: 1,
@@ -920,6 +955,18 @@ export const useGameStore = create<GameStore>()(
             reconcileCitiesAgainstData(draft);
             return draft;
           });
+
+          // Bands are persisted too, so refresh their authored content from the
+          // data file (names/bios/genre/traits) while preserving run-mutated stats.
+          // Import lazily so the roster data stays out of the initial bundle.
+          {
+            const { initialBands: authoredBands } = await import("../data/initialBands");
+            set((s) => {
+              const draft = { allBands: s.allBands };
+              reconcileBandsAgainstData(draft, authoredBands);
+              return draft;
+            });
+          }
 
           // Rehydrate the run's singletons (active run, scheduled-show Map,
           // difficulty blocks, synergies) from the restored snapshot, or the
@@ -1446,6 +1493,25 @@ export const useGameStore = create<GameStore>()(
         // rent) so a mid-run save keeps its progress. Drop a currentCityId that
         // points at a city no longer in the roster.
         reconcileCitiesAgainstData(state);
+
+        // Bands are persisted in `allBands`, so likewise refresh their authored
+        // content (names/bios/genre/traits) from the data file while keeping
+        // run-mutated stats — otherwise an in-progress save shows stale band
+        // names/bios after a content patch (this is what just bit the roster).
+        // Imported lazily (keeps the roster out of the initial bundle); the .then
+        // runs after the store is committed, so setState here re-renders the views.
+        import("../data/initialBands")
+          .then(({ initialBands: authoredBands }) => {
+            useGameStore.setState((s) => {
+              const draft = { allBands: s.allBands };
+              reconcileBandsAgainstData(draft, authoredBands);
+              return draft;
+            });
+          })
+          .catch(() => {
+            // Offline/chunk-load failure: keep the persisted roster as-is rather
+            // than crash the resume. Names refresh on the next successful load.
+          });
 
         // One-time prune of dangling band/venue references orphaned by a
         // data-file patch since this save was written. Runs on every refresh
