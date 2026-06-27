@@ -5,6 +5,7 @@ export const initialBands: Band[] = [
   {
     id: "basement-punks",
     name: "Black Flagrant",
+    bio: "Toured the country in a van on gas money with a rotating cast of singers and a four-bar logo they swear they drew first. Rise above, allegedly.",
     genre: Genre.PUNK,
     subgenres: ["diy-punk", "garage"],
     traits: [
@@ -26,6 +27,7 @@ export const initialBands: Band[] = [
   {
     id: "angry-neighbors",
     name: "Dead Kenny's",
+    bio: "Snotty surf-punk satire from a frontman who ran for mayor as a joke and nearly won. Got hauled into court over a poster folded inside the record.",
     genre: Genre.PUNK,
     subgenres: ["hardcore", "political"],
     traits: [
@@ -48,6 +50,7 @@ export const initialBands: Band[] = [
   {
     id: "broken-strings",
     name: "Bad Reception",
+    bio: "Three-part whoa-oh harmonies, lyrics you have to look up, and their own label run out of a closet. The crossed-out cross is trademarked now.",
     genre: Genre.PUNK,
     subgenres: ["art-punk", "experimental"],
     traits: [
@@ -71,6 +74,7 @@ export const initialBands: Band[] = [
   {
     id: "doom-bringers",
     name: "Metallicat",
+    bio: "Went from sleeping on floors to suing their own fans for taping the set. The drummer mixed his snare to sound like a kicked trash can and dares you to say so.",
     genre: Genre.METAL,
     subgenres: ["doom", "stoner"],
     traits: [
@@ -94,6 +98,7 @@ export const initialBands: Band[] = [
   {
     id: "technical-death",
     name: "Megadebt",
+    bio: "Started by a guitarist who got kicked out of a bigger band and has written the same revenge record ever since. Still owes the venue for the PA.",
     genre: Genre.METAL,
     subgenres: ["death", "technical"],
     traits: [
@@ -119,6 +124,7 @@ export const initialBands: Band[] = [
   {
     id: "pit-warriors",
     name: "Minor Treat",
+    bio: "Hundred-second songs, X-es on the hands, and a singer who would rather lecture you about not drinking than play an encore. Started a label by accident; it runs the town now.",
     genre: Genre.HARDCORE,
     subgenres: ["beatdown", "tough-guy"],
     traits: [
@@ -142,6 +148,7 @@ export const initialBands: Band[] = [
   {
     id: "noise-collective",
     name: "Sonic Youthful",
+    bio: "Two detuned pawn-shop guitars, a screwdriver under the strings, and a fourteen-minute song about a mall. Art-school cool before you were born.",
     genre: Genre.EXPERIMENTAL,
     subgenres: ["noise", "avant-garde"],
     traits: [
@@ -165,6 +172,7 @@ export const initialBands: Band[] = [
   {
     id: "scene-veterans",
     name: "Sax Pistols",
+    bio: "Assembled by a guy with a clothes shop to move some trousers, lasted about one record, and swindled everyone on the way out. Could not really play, which was the point.",
     genre: Genre.PUNK,
     subgenres: ["punk-rock", "local-legends"],
     traits: [
@@ -188,6 +196,7 @@ export const initialBands: Band[] = [
   {
     id: "road-dogs",
     name: "Sick Of It Some",
+    bio: "Borough hardcore lifers — two brothers, a pit call-out every other line, and thirty years of just one more reunion show.",
     genre: Genre.HARDCORE,
     subgenres: ["melodic-hardcore", "touring"],
     traits: [
@@ -213,6 +222,7 @@ export const initialBands: Band[] = [
   {
     id: "flannel-core",
     name: "Nervana",
+    bio: "Came up in all-ages basements; the breakout EP got an unplugged set at the laundromat. The frontman hates that you like them, which makes you like them more.",
     genre: Genre.GRUNGE,
     subgenres: ["grunge", "90s-revival"],
     traits: [
@@ -236,6 +246,7 @@ export const initialBands: Band[] = [
   {
     id: "swamp-lords",
     name: "Electric Lizard",
+    bio: "The slowest, heaviest, most stoned band in the swamp: one riff per song, forty-five minutes long, all about wizards and weed. Turn it up until the cones tear.",
     genre: Genre.SLUDGE,
     subgenres: ["sludge", "southern-metal"],
     traits: [
@@ -261,6 +272,7 @@ export const initialBands: Band[] = [
   {
     id: "30-second-songs",
     name: "Weekday Nachos",
+    bio: "Powerviolence so fast the set ends before you have found parking. Twelve songs, four minutes, one of them just feedback and a guy yelling about his shift.",
     genre: Genre.POWERVIOLENCE,
     subgenres: ["powerviolence", "fastcore"],
     traits: [
@@ -284,6 +296,7 @@ export const initialBands: Band[] = [
   {
     id: "indie-darlings",
     name: "Modest Moose",
+    bio: "Jittery indie from a coastal nowhere town, all spidery guitar and a slurred singer. Got weirdly huge off a song about just floating on.",
     genre: Genre.INDIE,
     subgenres: ["indie-rock", "college-rock"],
     traits: [
@@ -307,6 +320,7 @@ export const initialBands: Band[] = [
   {
     id: "landlord-deathwish",
     name: "Anti-Flannel",
+    bio: "Megaphone politics, a star-in-a-circle on every patch, and a merch table that doubles as a voter-registration booth. Will absolutely lecture you about the war.",
     genre: Genre.PUNK,
     subgenres: ["crust", "anarcho-punk"],
     traits: [
@@ -330,6 +344,7 @@ export const initialBands: Band[] = [
   {
     id: "group-chat-silence",
     name: "My Chemical Bromance",
+    bio: "Theatrical emo in marching-band jackets and guyliner; the whole record is a concept album about death and your eighth-grade journal. The parade goes on.",
     genre: Genre.EMO,
     subgenres: ["midwest-emo", "twinkle"],
     traits: [
@@ -353,6 +368,7 @@ export const initialBands: Band[] = [
   {
     id: "frostbitten-cul-de-sac",
     name: "Dimmu Burger",
+    bio: "Symphonic black metal with corpse paint, a fog machine they cannot afford, and a keyboardist nobody mentions. Recorded the demo in a freezing garage on purpose.",
     genre: Genre.METAL,
     subgenres: ["black-metal", "atmospheric"],
     traits: [
@@ -378,6 +394,7 @@ export const initialBands: Band[] = [
   {
     id: "tinnitus-as-intended",
     name: "Lightning Volt",
+    bio: "Bass-and-drums duo who set up on the floor in the middle of the crowd and play until the PA gives up. The bassist sings through a phone taped to his face.",
     genre: Genre.NOISE,
     subgenres: ["harsh-noise", "power-electronics"],
     traits: [
@@ -401,6 +418,7 @@ export const initialBands: Band[] = [
   {
     id: "the-snooze-button",
     name: "Asleep",
+    bio: "One song. It is an hour long. It is about riding a riff across the desert to the riff-filled land. They got dropped for turning in exactly that.",
     genre: Genre.DOOM,
     subgenres: ["doom", "drone"],
     traits: [
@@ -426,6 +444,7 @@ export const initialBands: Band[] = [
   {
     id: "x-disappointed-dad-x",
     name: "Have Heartburn",
+    bio: "Straight-edge hardcore with the X-es drawn on in Sharpie and a singer who climbs the stack to scream about staying true. Broke up at the peak, reunited for the merch.",
     genre: Genre.HARDCORE,
     subgenres: ["straight-edge", "youth-crew"],
     traits: [
@@ -449,6 +468,7 @@ export const initialBands: Band[] = [
   {
     id: "thrift-store-cobain",
     name: "Pearl Jelly",
+    bio: "Flannel-and-Docs stadium grunge that refused to make videos and went to war with the ticket company instead. The singer vibrato could open a beer.",
     genre: Genre.GRUNGE,
     subgenres: ["grunge", "slacker-rock"],
     traits: [
@@ -472,6 +492,7 @@ export const initialBands: Band[] = [
   {
     id: "blink-twice-fastcore",
     name: "Charles Bronze",
+    bio: "Named after an action star, songs named after grudges, all of it over in twenty seconds. The 7-inch has forty tracks and a manifesto nobody can read.",
     genre: Genre.POWERVIOLENCE,
     subgenres: ["powerviolence", "grindcore"],
     traits: [
@@ -495,6 +516,7 @@ export const initialBands: Band[] = [
   {
     id: "couch-fort-collapse",
     name: "Eyehatecod",
+    bio: "Feedback, whiskey, and a riff dragged through the mud of a flooded city. Every song is a hangover with a slide guitar. Somehow the nicest guys at the bar.",
     genre: Genre.SLUDGE,
     subgenres: ["sludge", "stoner"],
     traits: [
@@ -520,6 +542,7 @@ export const initialBands: Band[] = [
   {
     id: "no-wave-goodbye",
     name: "The Boardrooms",
+    bio: "Noise-pop chaos with four drummers in a circle and a singer conducting it like air traffic control. The album is one seventy-minute song named after a number.",
     genre: Genre.EXPERIMENTAL,
     subgenres: ["no-wave", "art-punk"],
     traits: [
@@ -543,6 +566,7 @@ export const initialBands: Band[] = [
   {
     id: "almost-licensed",
     name: "Radioshack",
+    bio: "Art-rock that started as a guitar band and quietly became a laptop. Sold the last record as pay-what-you-want and somehow made more. The singer is sad about computers.",
     genre: Genre.ALTERNATIVE,
     subgenres: ["alt-rock", "shoegaze"],
     traits: [
@@ -565,6 +589,7 @@ export const initialBands: Band[] = [
   {
     id: "mutual-aid-abettors",
     name: "Propagander",
+    bio: "Skate-punk that will outplay you and out-argue you: vegan, anti-everything, liner notes like a reading list. The riffs got proggier the angrier they got.",
     genre: Genre.PUNK,
     subgenres: ["anarcho-punk", "crust"],
     traits: [
@@ -586,6 +611,7 @@ export const initialBands: Band[] = [
   {
     id: "reply-guys",
     name: "Converse",
+    bio: "Metalcore before it was a slur: jagged, mathy, a frontman bent double screaming about a jane doe. The guitarist also recorded half the records you own.",
     genre: Genre.HARDCORE,
     subgenres: ["youth-crew", "straight-edge"],
     traits: [
@@ -607,6 +633,7 @@ export const initialBands: Band[] = [
   {
     id: "quarter-life-crisis",
     name: "American Footnote",
+    bio: "Twinkly midwest emo in odd time signatures, with a cover of the same house everyone now has tattooed. Played four shows, broke up, became legends by accident.",
     genre: Genre.EMO,
     subgenres: ["midwest-emo", "math-rock"],
     traits: [
@@ -628,6 +655,7 @@ export const initialBands: Band[] = [
   {
     id: "gentrify-this",
     name: "The Melvinz",
+    bio: "Tuned-down sludge weirdos who have put out a record a year for forty years and quietly influenced every band you like. Refuse to play the hits.",
     genre: Genre.SLUDGE,
     subgenres: ["sludge", "noise-rock"],
     traits: [
@@ -649,6 +677,7 @@ export const initialBands: Band[] = [
   {
     id: "audience-of-phones",
     name: "Arcade Fired",
+    bio: "Eleven people on stage, each on a different instrument including a motorcycle helmet. Anthems about the suburbs that won an award nobody saw coming.",
     genre: Genre.INDIE,
     subgenres: ["indie-rock", "shoegaze"],
     traits: [
@@ -670,6 +699,7 @@ export const initialBands: Band[] = [
   {
     id: "blastbeat-yourself-up",
     name: "Crossed Off",
+    bio: "Eighty-second blasts of powerviolence, song titles you cannot print, and a demo louder than the masters. Done before the feedback stops.",
     genre: Genre.POWERVIOLENCE,
     subgenres: ["powerviolence", "grind"],
     traits: [
@@ -691,6 +721,7 @@ export const initialBands: Band[] = [
   {
     id: "frostbite-and-filing",
     name: "Anthax",
+    bio: "Thrash in skate shorts who put a rapper on a metal song before anyone thought you could. There is a cartoon mascot. Do not ask about the cartoon mascot.",
     genre: Genre.METAL,
     subgenres: ["atmospheric-black-metal"],
     traits: [
@@ -712,6 +743,7 @@ export const initialBands: Band[] = [
   {
     id: "the-loud-part",
     name: "Black Mice",
+    bio: "Started as a hardcore band, became a noise band by accident, now mostly a guy and a table of broken pedals making the prettiest racket in the loft.",
     genre: Genre.NOISE,
     subgenres: ["harsh-noise", "power-electronics"],
     traits: [
@@ -733,6 +765,7 @@ export const initialBands: Band[] = [
   {
     id: "direct-deposit-doom",
     name: "Black Sabbatical",
+    bio: "Invented doom in a flooded factory town after the guitarist lost his fingertips. The singer keeps taking time off to find himself; they keep auditioning new ones.",
     genre: Genre.DOOM,
     subgenres: ["doom", "drone"],
     traits: [
@@ -754,6 +787,7 @@ export const initialBands: Band[] = [
   {
     id: "soundcheck-forever",
     name: "The Flaming Stips",
+    bio: "Psych-rock circus with confetti cannons, a giant hamster ball, and a record you play on four stereos at once. The singer means every word, which is the strange part.",
     genre: Genre.EXPERIMENTAL,
     subgenres: ["art-punk", "no-wave"],
     traits: [
@@ -775,6 +809,7 @@ export const initialBands: Band[] = [
   {
     id: "thrift-store-messiah",
     name: "Mudmoney",
+    bio: "The actual first grunge band, still playing the dive for the door while the bands they invented bought houses. Fuzz pedal welded to the on position.",
     genre: Genre.GRUNGE,
     subgenres: ["grunge", "slacker-rock"],
     traits: [
@@ -796,6 +831,7 @@ export const initialBands: Band[] = [
   {
     id: "two-drink-minimum",
     name: "Sneezer",
+    bio: "Nerd-rock power-pop in matching glasses; the first record is perfect and they have spent thirty years apologizing for everything after. The harmonies do all the work.",
     genre: Genre.ALTERNATIVE,
     subgenres: ["alt-rock", "power-pop"],
     traits: [
