@@ -222,7 +222,7 @@ export const initialBands: Band[] = [
   {
     id: "flannel-core",
     name: "Nervana",
-    bio: "Came up in all-ages basements; the breakout EP got an unplugged set at the laundromat. The frontman hates that you like them, which makes you like them more.",
+    bio: "Out of a rainy logging town on a tiny label, until one song about teen deodorant blew the doors off and they spent the rest of their time hating that it did. Flannel, a smiley face with X-ed eyes, and a frontman who would rather you didn't sing along.",
     genre: Genre.GRUNGE,
     subgenres: ["grunge", "90s-revival"],
     traits: [
@@ -721,7 +721,7 @@ export const initialBands: Band[] = [
   {
     id: "frostbite-and-filing",
     name: "Anthax",
-    bio: "Thrash in skate shorts who put a rapper on a metal song before anyone thought you could. There is a cartoon mascot. Do not ask about the cartoon mascot.",
+    bio: "One of the big four thrash bands, but the goofy one — Bermuda shorts in the pit and a Stephen King paperback in the bag. Dragged a rap crew onstage for a crossover everyone swore wouldn't work, right up until it did.",
     genre: Genre.METAL,
     subgenres: ["atmospheric-black-metal"],
     traits: [
