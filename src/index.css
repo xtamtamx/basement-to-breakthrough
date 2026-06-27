@@ -3,6 +3,9 @@
  * they fall back to system-ui / ui-monospace, fine for body + mono text. */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;700&display=swap');
 @import './styles/gameUI.css';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 /* CSS Variables */
 :root {
