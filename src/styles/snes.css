@@ -209,6 +209,14 @@
 .snes-modal--sheet .snes-modal__sheet { max-width: 100%; max-height: 88vh; border-top-width: 3px; }
 @keyframes snes-overlay-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes snes-sheet-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+/* Shared modal header + 44px close button (used by the <SnesModal> shell). */
+.snes-modal__header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s2); margin-bottom: var(--s3); }
+.snes-modal__title { font-family: var(--snes-font); font-size: var(--t-lg); line-height: 1.3; color: var(--snes-magenta); margin: 0; letter-spacing: 0; text-shadow: 2px 2px 0 var(--snes-void); }
+.snes-close { width: 44px; height: 44px; flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center;
+  background: var(--snes-bg-2); color: var(--snes-ink-dim); border: 2px solid var(--snes-void);
+  box-shadow: inset 1px 1px 0 var(--snes-edge-lt); cursor: pointer; border-radius: 0; transition: transform 0.04s steps(1), color 0.1s; }
+.snes-close:hover { color: var(--snes-ink); }
+.snes-close:active { transform: translate(1px, 1px); }
 
 /* Chunky stepped progress bar. */
 .snes-progress {

@@ -7,7 +7,9 @@ import { useGameStore } from '@stores/gameStore';
 import { tutorialManager } from '@game/tutorial/TutorialManager';
 import { ColorblindMode } from '@game/types';
 import { useColorblind } from '@hooks/useColorblind';
-import { X, Volume2, VolumeX, RefreshCw, Info, Gamepad2, AlertTriangle } from 'lucide-react';
+import { Volume2, VolumeX, RefreshCw, Info, Gamepad2, AlertTriangle } from 'lucide-react';
+import { SnesModal } from './SnesModal';
+import { useConfirm } from './ConfirmDialog';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -19,6 +21,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   const { quality: fxQuality, cycleQuality: cycleFx } = useFxQuality();
   const { resetGame, currentRound } = useGameStore();
   const { mode: colorblindMode, setMode: setColorblindMode } = useColorblind();
+  const confirm = useConfirm();
 
   if (!isOpen) return null;
 
@@ -35,8 +38,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     haptics.light();
   };
 
-  const handleAbandonRun = () => {
-    if (confirm(`Are you sure you want to abandon this run? You're on round ${currentRound}.`)) {
+  const handleAbandonRun = async () => {
+    const ok = await confirm({
+      title: 'Abandon run?',
+      message: `You're on turn ${currentRound}. Abandoning ends this run for good.`,
+      confirmLabel: 'Abandon',
+      danger: true,
+    });
+    if (ok) {
       resetGame();
       window.location.reload();
       haptics.success();
@@ -66,77 +75,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   };
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(8, 6, 18, 0.86)',
-      zIndex: 9999,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '16px',
-      overflowY: 'auto'
-    }} onClick={onClose}>
-      <div style={{
-        backgroundColor: '#171327',
-        borderRadius: 0,
-        maxWidth: '500px',
-        width: '100%',
-        maxHeight: '90vh',
-        overflow: 'hidden',
-        border: '2px solid #0a0814',
-        borderTop: '3px solid #f72585',
-        boxShadow: 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814',
-        display: 'flex',
-        flexDirection: 'column'
-      }} onClick={(e) => e.stopPropagation()}>
-        {/* Header */}
-        <div style={{
-          padding: '20px 24px',
-          borderBottom: '2px solid #2a2350',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
-          <h2 style={{
-            fontFamily: '"Press Start 2P", monospace',
-            fontSize: '14px',
-            letterSpacing: 0,
-            color: '#f72585',
-            margin: 0
-          }}>Settings</h2>
-          <button
-            onClick={onClose}
-            style={{
-              width: '32px',
-              height: '32px',
-              minWidth: '44px',
-              minHeight: '44px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: '#1f1a3a',
-              border: '2px solid #0a0814',
-              borderRadius: 0,
-              color: '#b9b3d6',
-              cursor: 'pointer',
-              padding: 0
-            }}
-            aria-label="Close settings"
-          >
-            <X size={20} />
-          </button>
-        </div>
-
-        {/* Content */}
-        <div style={{
-          flex: 1,
-          overflowY: 'auto',
-          padding: '24px'
-        }}>
+    <SnesModal onClose={onClose} title="Settings" ariaLabel="Settings" maxWidth={500}>
+        <div>
           {/* Audio Settings */}
           <section style={{ marginBottom: '32px' }}>
             <h3 style={sectionHeader}>
@@ -417,7 +357,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
             </button>
           </section>
         </div>
-      </div>
-    </div>
+    </SnesModal>
   );
 };

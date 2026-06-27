@@ -14,6 +14,7 @@ import { haptics } from "@utils/mobile";
 import { audio } from "@utils/audio";
 import { safeStorage } from "@utils/safeStorage";
 import { AppErrorBoundary } from "@components/ErrorBoundary/AppErrorBoundary";
+import { ConfirmProvider } from "@components/ui/ConfirmDialog";
 import { ColorblindProvider } from "@contexts/ColorblindContext";
 import { ColorblindMode } from "@game/types";
 import { AudioMemoryTest } from "@components/AudioMemoryTest";
@@ -157,6 +158,7 @@ function App() {
   return (
     <ColorblindProvider initialMode={savedColorblindMode}>
       <AppErrorBoundary>
+       <ConfirmProvider>
         <MainGameView
           onExitToMenu={() => {
             setGameStarted(false);
@@ -172,6 +174,7 @@ function App() {
 
         {/* Tutorial */}
         {gameStarted && <TutorialOverlay />}
+       </ConfirmProvider>
       </AppErrorBoundary>
     </ColorblindProvider>
   );
