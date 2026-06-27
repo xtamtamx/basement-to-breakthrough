@@ -4,7 +4,7 @@ export const initialBands: Band[] = [
   // DIY Punk Bands
   {
     id: "basement-punks",
-    name: "Basement Punks",
+    name: "Black Flagrant",
     genre: Genre.PUNK,
     subgenres: ["diy-punk", "garage"],
     traits: [
@@ -25,7 +25,7 @@ export const initialBands: Band[] = [
   },
   {
     id: "angry-neighbors",
-    name: "The Angry Neighbors",
+    name: "Dead Kenny's",
     genre: Genre.PUNK,
     subgenres: ["hardcore", "political"],
     traits: [
@@ -47,7 +47,7 @@ export const initialBands: Band[] = [
   // More punk bands
   {
     id: "broken-strings",
-    name: "Broken Strings Theory",
+    name: "Bad Reception",
     genre: Genre.PUNK,
     subgenres: ["art-punk", "experimental"],
     traits: [
@@ -70,7 +70,7 @@ export const initialBands: Band[] = [
   // Metal Bands
   {
     id: "doom-bringers",
-    name: "Doom Bringers",
+    name: "Metallicat",
     genre: Genre.METAL,
     subgenres: ["doom", "stoner"],
     traits: [
@@ -93,7 +93,7 @@ export const initialBands: Band[] = [
   },
   {
     id: "technical-death",
-    name: "Technical Death Experience",
+    name: "Megadebt",
     genre: Genre.METAL,
     subgenres: ["death", "technical"],
     traits: [
@@ -118,7 +118,7 @@ export const initialBands: Band[] = [
   // Hardcore Bands
   {
     id: "pit-warriors",
-    name: "Pit Warriors",
+    name: "Minor Treat",
     genre: Genre.HARDCORE,
     subgenres: ["beatdown", "tough-guy"],
     traits: [
@@ -141,7 +141,7 @@ export const initialBands: Band[] = [
   // Experimental/Noise
   {
     id: "noise-collective",
-    name: "Noise Collective #47",
+    name: "Sonic Youthful",
     genre: Genre.EXPERIMENTAL,
     subgenres: ["noise", "avant-garde"],
     traits: [
@@ -164,7 +164,7 @@ export const initialBands: Band[] = [
   // Local favorites
   {
     id: "scene-veterans",
-    name: "Scene Veterans",
+    name: "Sax Pistols",
     genre: Genre.PUNK,
     subgenres: ["punk-rock", "local-legends"],
     traits: [
@@ -187,7 +187,7 @@ export const initialBands: Band[] = [
   // Touring bands
   {
     id: "road-dogs",
-    name: "Road Dogs",
+    name: "Sick Of It Some",
     genre: Genre.HARDCORE,
     subgenres: ["melodic-hardcore", "touring"],
     traits: [
@@ -212,7 +212,7 @@ export const initialBands: Band[] = [
   // Grunge revival
   {
     id: "flannel-core",
-    name: "Flannel Core",
+    name: "Nervana",
     genre: Genre.GRUNGE,
     subgenres: ["grunge", "90s-revival"],
     traits: [
@@ -235,7 +235,7 @@ export const initialBands: Band[] = [
   // Sludge metal
   {
     id: "swamp-lords",
-    name: "Swamp Lords",
+    name: "Electric Lizard",
     genre: Genre.SLUDGE,
     subgenres: ["sludge", "southern-metal"],
     traits: [
@@ -260,7 +260,7 @@ export const initialBands: Band[] = [
   // Powerviolence
   {
     id: "30-second-songs",
-    name: "30 Second Songs",
+    name: "Weekday Nachos",
     genre: Genre.POWERVIOLENCE,
     subgenres: ["powerviolence", "fastcore"],
     traits: [
@@ -283,7 +283,7 @@ export const initialBands: Band[] = [
   // Indie crossover
   {
     id: "indie-darlings",
-    name: "Indie Darlings",
+    name: "Modest Moose",
     genre: Genre.INDIE,
     subgenres: ["indie-rock", "college-rock"],
     traits: [
@@ -306,7 +306,7 @@ export const initialBands: Band[] = [
   // Crust punk with a Patreon
   {
     id: "landlord-deathwish",
-    name: "Landlord Deathwish",
+    name: "Anti-Flannel",
     genre: Genre.PUNK,
     subgenres: ["crust", "anarcho-punk"],
     traits: [
@@ -329,7 +329,7 @@ export const initialBands: Band[] = [
   // Emo that workshops its feelings
   {
     id: "group-chat-silence",
-    name: "Group Chat Silence",
+    name: "My Chemical Bromance",
     genre: Genre.EMO,
     subgenres: ["midwest-emo", "twinkle"],
     traits: [
@@ -352,7 +352,7 @@ export const initialBands: Band[] = [
   // Black metal from the suburbs
   {
     id: "frostbitten-cul-de-sac",
-    name: "Frostbitten Cul-De-Sac",
+    name: "Dimmu Burger",
     genre: Genre.METAL,
     subgenres: ["black-metal", "atmospheric"],
     traits: [
@@ -377,7 +377,7 @@ export const initialBands: Band[] = [
   // Noise act that insists it's a band
   {
     id: "tinnitus-as-intended",
-    name: "Tinnitus, As Intended",
+    name: "Lightning Volt",
     genre: Genre.NOISE,
     subgenres: ["harsh-noise", "power-electronics"],
     traits: [
@@ -400,7 +400,7 @@ export const initialBands: Band[] = [
   // Doom for the deeply tired
   {
     id: "the-snooze-button",
-    name: "The Snooze Button",
+    name: "Asleep",
     genre: Genre.DOOM,
     subgenres: ["doom", "drone"],
     traits: [
@@ -425,7 +425,7 @@ export const initialBands: Band[] = [
   // Hardcore band with a strict color scheme
   {
     id: "x-disappointed-dad-x",
-    name: "xDisappointed Dadx",
+    name: "Have Heartburn",
     genre: Genre.HARDCORE,
     subgenres: ["straight-edge", "youth-crew"],
     traits: [
@@ -448,7 +448,7 @@ export const initialBands: Band[] = [
   // Grunge that owns it ironically
   {
     id: "thrift-store-cobain",
-    name: "Thrift Store Cobain",
+    name: "Pearl Jelly",
     genre: Genre.GRUNGE,
     subgenres: ["grunge", "slacker-rock"],
     traits: [
@@ -471,7 +471,7 @@ export const initialBands: Band[] = [
   // Powerviolence so fast it's a rumor
   {
     id: "blink-twice-fastcore",
-    name: "Blink Twice",
+    name: "Charles Bronze",
     genre: Genre.POWERVIOLENCE,
     subgenres: ["powerviolence", "grindcore"],
     traits: [
@@ -494,7 +494,7 @@ export const initialBands: Band[] = [
   // Sludge band that smells like it sounds
   {
     id: "couch-fort-collapse",
-    name: "Couch Fort Collapse",
+    name: "Eyehatecod",
     genre: Genre.SLUDGE,
     subgenres: ["sludge", "stoner"],
     traits: [
@@ -519,7 +519,7 @@ export const initialBands: Band[] = [
   // Experimental act that read one Deleuze quote
   {
     id: "no-wave-goodbye",
-    name: "No Wave Goodbye",
+    name: "The Boardrooms",
     genre: Genre.EXPERIMENTAL,
     subgenres: ["no-wave", "art-punk"],
     traits: [
@@ -542,7 +542,7 @@ export const initialBands: Band[] = [
   // Alternative band one sync deal from "selling out"
   {
     id: "almost-licensed",
-    name: "Almost Licensed",
+    name: "Radioshack",
     genre: Genre.ALTERNATIVE,
     subgenres: ["alt-rock", "shoegaze"],
     traits: [
@@ -564,7 +564,7 @@ export const initialBands: Band[] = [
   // --- 2026-06 content pass: +12 sign-able bands (pool widened in gameStore) ---
   {
     id: "mutual-aid-abettors",
-    name: "Mutual Aid & Abettors",
+    name: "Propagander",
     genre: Genre.PUNK,
     subgenres: ["anarcho-punk", "crust"],
     traits: [
@@ -585,7 +585,7 @@ export const initialBands: Band[] = [
   },
   {
     id: "reply-guys",
-    name: "The Reply-Guys",
+    name: "Converse",
     genre: Genre.HARDCORE,
     subgenres: ["youth-crew", "straight-edge"],
     traits: [
@@ -606,7 +606,7 @@ export const initialBands: Band[] = [
   },
   {
     id: "quarter-life-crisis",
-    name: "Quarter-Life Crisis",
+    name: "American Footnote",
     genre: Genre.EMO,
     subgenres: ["midwest-emo", "math-rock"],
     traits: [
@@ -627,7 +627,7 @@ export const initialBands: Band[] = [
   },
   {
     id: "gentrify-this",
-    name: "Gentrify This",
+    name: "The Melvinz",
     genre: Genre.SLUDGE,
     subgenres: ["sludge", "noise-rock"],
     traits: [
@@ -648,7 +648,7 @@ export const initialBands: Band[] = [
   },
   {
     id: "audience-of-phones",
-    name: "Audience of Phones",
+    name: "Arcade Fired",
     genre: Genre.INDIE,
     subgenres: ["indie-rock", "shoegaze"],
     traits: [
@@ -669,7 +669,7 @@ export const initialBands: Band[] = [
   },
   {
     id: "blastbeat-yourself-up",
-    name: "Blastbeat Yourself Up",
+    name: "Crossed Off",
     genre: Genre.POWERVIOLENCE,
     subgenres: ["powerviolence", "grind"],
     traits: [
@@ -690,7 +690,7 @@ export const initialBands: Band[] = [
   },
   {
     id: "frostbite-and-filing",
-    name: "Frostbite & Filing",
+    name: "Anthax",
     genre: Genre.METAL,
     subgenres: ["atmospheric-black-metal"],
     traits: [
@@ -711,7 +711,7 @@ export const initialBands: Band[] = [
   },
   {
     id: "the-loud-part",
-    name: "The Loud Part",
+    name: "Black Mice",
     genre: Genre.NOISE,
     subgenres: ["harsh-noise", "power-electronics"],
     traits: [
@@ -732,7 +732,7 @@ export const initialBands: Band[] = [
   },
   {
     id: "direct-deposit-doom",
-    name: "Direct Deposit Doom",
+    name: "Black Sabbatical",
     genre: Genre.DOOM,
     subgenres: ["doom", "drone"],
     traits: [
@@ -753,7 +753,7 @@ export const initialBands: Band[] = [
   },
   {
     id: "soundcheck-forever",
-    name: "Soundcheck Forever",
+    name: "The Flaming Stips",
     genre: Genre.EXPERIMENTAL,
     subgenres: ["art-punk", "no-wave"],
     traits: [
@@ -774,7 +774,7 @@ export const initialBands: Band[] = [
   },
   {
     id: "thrift-store-messiah",
-    name: "Thrift Store Messiah",
+    name: "Mudmoney",
     genre: Genre.GRUNGE,
     subgenres: ["grunge", "slacker-rock"],
     traits: [
@@ -795,7 +795,7 @@ export const initialBands: Band[] = [
   },
   {
     id: "two-drink-minimum",
-    name: "Two-Drink Minimum",
+    name: "Sneezer",
     genre: Genre.ALTERNATIVE,
     subgenres: ["alt-rock", "power-pop"],
     traits: [

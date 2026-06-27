@@ -390,7 +390,7 @@ const initialVenues: Venue[] = [
 const initialBands: Band[] = [
   {
     id: "b1",
-    name: "Basement Dwellers",
+    name: "Hüsker Don’t",
     isRealArtist: false,
     genre: Genre.PUNK,
     subgenres: ["hardcore punk", "noise"],
@@ -420,7 +420,7 @@ const initialBands: Band[] = [
   },
   {
     id: "b2",
-    name: "Death Magnetic",
+    name: "Panthera",
     isRealArtist: true,
     artistId: "real-1",
     genre: Genre.METAL,
@@ -451,7 +451,7 @@ const initialBands: Band[] = [
   },
   {
     id: "b3",
-    name: "Riot Grrrl Revival",
+    name: "Bikini Bill",
     isRealArtist: false,
     genre: Genre.PUNK,
     subgenres: ["riot grrrl", "feminist punk"],
@@ -481,7 +481,7 @@ const initialBands: Band[] = [
   },
   {
     id: "b4",
-    name: "Blackened Skies",
+    name: "Mayheck",
     isRealArtist: false,
     genre: Genre.METAL,
     subgenres: ["black metal", "atmospheric"],
@@ -511,7 +511,7 @@ const initialBands: Band[] = [
   },
   {
     id: "b5",
-    name: "The Mosh Pit Kids",
+    name: "Guerilla Biscuits",
     isRealArtist: false,
     genre: Genre.PUNK,
     subgenres: ["hardcore", "youth crew"],
@@ -541,7 +541,7 @@ const initialBands: Band[] = [
   },
   {
     id: "b6",
-    name: "Void Screams",
+    name: "Pg. 98",
     isRealArtist: false,
     genre: Genre.METAL,
     subgenres: ["death metal", "technical"],
@@ -571,7 +571,7 @@ const initialBands: Band[] = [
   },
   {
     id: "b7",
-    name: "Suburban Revolt",
+    name: "Sum 42",
     isRealArtist: false,
     genre: Genre.PUNK,
     subgenres: ["pop punk", "skate punk"],
@@ -601,7 +601,7 @@ const initialBands: Band[] = [
   },
   {
     id: "b8",
-    name: "Crust Lords",
+    name: "Amoebix",
     isRealArtist: false,
     genre: Genre.PUNK,
     subgenres: ["crust punk", "d-beat"],
