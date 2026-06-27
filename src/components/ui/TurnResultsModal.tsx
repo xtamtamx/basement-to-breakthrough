@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { ShowResult } from '@game/types';
+import { SnesModal } from '@components/ui/SnesModal';
 import { useGameStore } from '@stores/gameStore';
 import { SATIRICAL_TURN_RESULTS } from '@game/data/satiricalText';
 import { STARTER_SYNERGIES, type SynergyTriggerResult } from '@game/mechanics/SynergyManager';
@@ -16,9 +16,8 @@ const instinctTriggerLabel = (id: string): string | null => {
 };
 import { audio } from '@utils/simpleAudio';
 import { haptics } from '@utils/mobile';
-import { useEscapeToClose } from '@hooks/useEscapeToClose';
 import { mapFx } from '@components/effects/mapFxBus';
-import { X, Users, DollarSign, Star } from 'lucide-react';
+import { Users, DollarSign, Star } from 'lucide-react';
 
 interface TurnResultsModalProps {
   isOpen: boolean;
@@ -157,9 +156,6 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
     if (anySoldOut || totalProfit > 100) mapFx.burst(null, null, { kind: 'confetti' });
     onClose();
   };
-  // Escape closes via the SAME celebratory path as the button/X/backdrop (active-
-  // gated so it's safe before the early return below).
-  useEscapeToClose(closeWithBurst, isOpen);
 
   // The turn used to resolve in silence. Fire one outcome-tiered stinger + a
   // matching haptic when the report opens, so a great night actually lands.
@@ -179,89 +175,20 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(8, 6, 18, 0.86)',
-          zIndex: 9999,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '16px',
-          overflowY: 'auto'
-        }}
-        onClick={closeWithBurst}
-      >
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0, y: 20 }}
-          animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.9, opacity: 0, y: 20 }}
-          onClick={e => e.stopPropagation()}
-          role="dialog"
-          aria-modal="true"
-          aria-label="Turn results"
-          style={{
-            backgroundColor: '#171327',
-            borderRadius: 0,
-            maxWidth: '500px',
-            width: '100%',
-            maxHeight: '90vh',
-            overflow: 'hidden',
-            border: '2px solid #0a0814',
-            borderTop: '3px solid #f72585',
-            boxShadow: 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814',
-            display: 'flex',
-            flexDirection: 'column'
-          }}
-        >
-          {/* Header */}
-          <div style={{
-            padding: '16px 20px',
-            borderBottom: '2px solid #0a0814',
-            backgroundColor: '#0f0b1e',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            gap: '12px'
-          }}>
-            <h2 className={`snes-pixel${bigNight ? ' btb-shake' : ''}`} style={{
-              fontSize: '12px',
-              color: bigNight ? '#ffd23f' : '#f72585',
-              margin: 0,
-              letterSpacing: 0,
-              lineHeight: 1.5
-            }}>{anySoldOut ? '🎉 Sold-Out Night!' : 'Post-Show Damage Report'}</h2>
-            <button
-              onClick={closeWithBurst}
-              style={{
-                width: '32px',
-                height: '32px',
-                minWidth: '32px',
-                flexShrink: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: '#1f1a3a',
-                border: '2px solid #0a0814',
-                borderRadius: 0,
-                color: '#b9b3d6',
-                cursor: 'pointer',
-                padding: 0,
-                transition: 'none'
-              }}
-            >
-              <X size={18} />
-            </button>
-          </div>
-
+    <SnesModal
+      onClose={closeWithBurst}
+      ariaLabel="Turn results"
+      maxWidth={500}
+      accent={bigNight ? '#ffd23f' : '#f72585'}
+      title={
+        <span className={`snes-pixel${bigNight ? ' btb-shake' : ''}`} style={{
+          fontSize: '12px',
+          color: bigNight ? '#ffd23f' : '#f72585',
+          letterSpacing: 0,
+          lineHeight: 1.5
+        }}>{anySoldOut ? '🎉 Sold-Out Night!' : 'Post-Show Damage Report'}</span>
+      }
+    >
           {/* Content */}
           <div style={{
             flex: 1,
@@ -599,8 +526,6 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
               Continue
             </button>
           </div>
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
+    </SnesModal>
   );
 };

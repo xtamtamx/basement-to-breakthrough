@@ -18,11 +18,12 @@ export const useFocusTrap = (isActive: boolean) => {
     
     const cleanup = trapFocus(containerRef.current);
     
-    // Focus first focusable element
+    // Focus first focusable element — preventScroll so auto-focus never scrolls a
+    // tall modal sheet down and clips its header.
     const firstFocusable = containerRef.current.querySelector<HTMLElement>(
       'a[href], button, textarea, input[type="text"], input[type="radio"], input[type="checkbox"], select, [tabindex]:not([tabindex="-1"])'
     );
-    firstFocusable?.focus();
+    firstFocusable?.focus({ preventScroll: true });
     
     return cleanup;
   }, [isActive]);

@@ -6,6 +6,7 @@
 import React, { useEffect } from 'react';
 import { EventCard } from '@game/mechanics/EventCardSystem';
 import { useGameStore } from '@stores/gameStore';
+import { SnesModal } from '@components/ui/SnesModal';
 import { audio } from '@utils/simpleAudio';
 import { haptics } from '@utils/mobile';
 
@@ -74,29 +75,19 @@ export const EventCardModal: React.FC<EventCardModalProps> = ({ event, onClose }
   };
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(8, 6, 18, 0.85)',
-        zIndex: 9999,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '16px',
-        overflowY: 'auto',
-      }}
+    <SnesModal
+      onClose={onClose}
+      ariaLabel={event.name}
+      accent={accent}
+      maxWidth={440}
+      hideClose
+      closeOnBackdrop={false}
+      className={`btb-pop ${event.type === 'crisis' ? 'btb-shake' : ''} ${event.type === 'legendary' ? 'btb-glow' : ''}`}
     >
       <div
-        className={`btb-pop ${event.type === 'crisis' ? 'btb-shake' : ''} ${event.type === 'legendary' ? 'btb-glow' : ''}`}
         style={{
           backgroundColor: '#171327',
-          maxWidth: '440px',
-          width: '100%',
-          maxHeight: '90vh',
           overflow: 'hidden',
-          border: `2px solid ${accent}`,
-          borderRadius: 0,
           boxShadow: glow
             ? `inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814, ${glow}`
             : 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814',
@@ -211,7 +202,7 @@ export const EventCardModal: React.FC<EventCardModalProps> = ({ event, onClose }
           )}
         </div>
       </div>
-    </div>
+    </SnesModal>
   );
 };
 

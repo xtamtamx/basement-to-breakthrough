@@ -3,7 +3,9 @@ import { useGameStore } from '@stores/gameStore';
 import { saveGameManager, SaveMetadata } from '@game/persistence/SaveGameManager';
 import { formatMoney } from '@utils/formatters';
 import { haptics } from '@utils/mobile';
-import { Save, Upload, Trash2, X, Calendar, DollarSign, Star, Users, Clock, AlertCircle, CheckCircle } from 'lucide-react';
+import { Save, Upload, Trash2, Calendar, DollarSign, Star, Users, Clock, AlertCircle, CheckCircle } from 'lucide-react';
+import { SnesModal } from './SnesModal';
+import { useConfirm } from './ConfirmDialog';
 
 interface SaveLoadModalProps {
   isOpen: boolean;
@@ -18,7 +20,8 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ isOpen, onClose })
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'save' | 'load'>('save');
-  
+  const confirm = useConfirm();
+
   useEffect(() => {
     if (isOpen) {
       loadSaves();
@@ -63,10 +66,14 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ isOpen, onClose })
   };
   
   const handleLoad = async (saveId: string) => {
-    if (!confirm('Loading will overwrite your current game. Continue?')) {
+    if (!(await confirm({
+      title: 'Load Game',
+      message: 'Loading will overwrite your current game. Continue?',
+      confirmLabel: 'Load',
+    }))) {
       return;
     }
-    
+
     setLoading(true);
     setError(null);
     
@@ -83,10 +90,15 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ isOpen, onClose })
   };
   
   const handleDelete = async (saveId: string) => {
-    if (!confirm('Are you sure you want to delete this save?')) {
+    if (!(await confirm({
+      title: 'Delete Save',
+      message: 'Are you sure you want to delete this save?',
+      confirmLabel: 'Delete',
+      danger: true,
+    }))) {
       return;
     }
-    
+
     try {
       await saveGameManager.deleteSave(saveId);
       await loadSaves();
@@ -119,69 +131,14 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ isOpen, onClose })
   if (!isOpen) return null;
   
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(8, 6, 18, 0.86)',
-      zIndex: 9999,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '16px',
-      overflowY: 'auto'
-    }} onClick={onClose}>
-      <div style={{
-        backgroundColor: '#171327',
-        borderRadius: 0,
-        maxWidth: '600px',
-        width: '100%',
-        maxHeight: '90vh',
-        overflow: 'hidden',
-        border: '2px solid #0a0814',
-        borderTop: '3px solid #f72585',
-        boxShadow: 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814',
-        display: 'flex',
-        flexDirection: 'column'
-      }} onClick={(e) => e.stopPropagation()}>
-        {/* Header */}
-        <div style={{
-          padding: '20px 24px',
-          borderBottom: '2px solid #2a2350',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
-          <h2 className="snes-pixel" style={{
-            fontSize: '14px',
-            color: '#f72585',
-            textShadow: '3px 3px 0 #0a0814',
-            margin: 0,
-            textTransform: 'uppercase'
-          }}>Save & Load</h2>
-          <button
-            onClick={onClose}
-            aria-label="Close save and load"
-            style={{
-              width: '32px',
-              height: '32px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: '#1f1a3a',
-              border: '2px solid #0a0814',
-              borderRadius: 0,
-              color: '#b9b3d6',
-              cursor: 'pointer',
-              padding: 0
-            }}
-          >
-            <X size={20} />
-          </button>
-        </div>
-
+    <SnesModal
+      onClose={onClose}
+      title="Save & Load"
+      ariaLabel="Save and load"
+      maxWidth={600}
+      accent="#f72585"
+    >
+      <div>
         {/* Tabs */}
         <div style={{
           display: 'flex',
@@ -490,6 +447,6 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ isOpen, onClose })
           )}
         </div>
       </div>
-    </div>
+    </SnesModal>
   );
 };

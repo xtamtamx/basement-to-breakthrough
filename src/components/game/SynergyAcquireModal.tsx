@@ -11,7 +11,7 @@ import {
   SynergyRarity,
 } from '@game/mechanics/SynergyManager';
 import { useGameStore } from '@stores/gameStore';
-import { useEscapeToClose } from '@hooks/useEscapeToClose';
+import { SnesModal } from '@components/ui/SnesModal';
 
 interface SynergyAcquireModalProps {
   synergy: Synergy;
@@ -42,7 +42,6 @@ export const SynergyAcquireModal: React.FC<SynergyAcquireModalProps> = ({
 }) => {
   const currentTurn = useGameStore(state => state.currentRound);
   const [selectedReplaceSlot, setSelectedReplaceSlot] = useState<number | null>(null);
-  useEscapeToClose(onClose);
 
   const isFull = synergyManager.isFull();
   const equipped = synergyManager.getEquippedSynergies();
@@ -79,39 +78,15 @@ export const SynergyAcquireModal: React.FC<SynergyAcquireModalProps> = ({
   const acquireDisabled = isFull && selectedReplaceSlot === null;
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(8, 6, 18, 0.8)',
-        zIndex: 9999,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '16px',
-        overflowY: 'auto',
-      }}
+    <SnesModal
+      onClose={handleDiscard}
+      ariaLabel={`New synergy offered: ${synergy.name}`}
+      maxWidth={440}
+      accent={accent}
+      closeOnBackdrop={false}
+      className={glow ? 'btb-glow' : undefined}
     >
-      <div
-        className={`btb-pop ${glow ? 'btb-glow' : ''}`}
-        role="dialog"
-        aria-modal="true"
-        aria-label={`New synergy offered: ${synergy.name}`}
-        style={{
-          backgroundColor: '#171327',
-          maxWidth: '440px',
-          width: '100%',
-          maxHeight: '90vh',
-          overflow: 'hidden',
-          border: `2px solid ${accent}`,
-          borderRadius: 0,
-          boxShadow: glow
-            ? `inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814, ${glow}`
-            : 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814',
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
+      <div>
         {/* Header */}
         <div
           style={{
@@ -121,6 +96,7 @@ export const SynergyAcquireModal: React.FC<SynergyAcquireModalProps> = ({
             display: 'flex',
             alignItems: 'center',
             gap: '12px',
+            margin: '-16px -16px 0',
           }}
         >
           <span style={{ fontSize: '32px', lineHeight: 1, flexShrink: 0 }}>{synergy.icon}</span>
@@ -287,6 +263,7 @@ export const SynergyAcquireModal: React.FC<SynergyAcquireModalProps> = ({
             backgroundColor: '#0f0b1e',
             display: 'flex',
             gap: '12px',
+            margin: '0 -16px -16px',
           }}
         >
           <button
@@ -306,7 +283,7 @@ export const SynergyAcquireModal: React.FC<SynergyAcquireModalProps> = ({
           </button>
         </div>
       </div>
-    </div>
+    </SnesModal>
   );
 };
 

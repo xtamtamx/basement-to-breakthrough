@@ -56,11 +56,15 @@ export const SnesModal: React.FC<SnesModalProps> = ({
     restoreRef.current = document.activeElement as HTMLElement;
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
+    // The focus-trap focuses the first control on open, which can scroll the sheet
+    // and clip the header — pin it back to the top once focus settles.
+    const id = requestAnimationFrame(() => { if (sheetRef.current) sheetRef.current.scrollTop = 0; });
     return () => {
+      cancelAnimationFrame(id);
       document.body.style.overflow = prevOverflow;
       restoreRef.current?.focus?.();
     };
-  }, []);
+  }, [sheetRef]);
 
   const close = () => { haptics.light(); onClose(); };
 

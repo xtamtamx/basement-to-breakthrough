@@ -6,7 +6,7 @@
 import React from 'react';
 import { useGameStore } from '@stores/gameStore';
 import { objectiveManager } from '@game/mechanics/ObjectiveManager';
-import { X } from 'lucide-react';
+import { SnesModal } from '@components/ui/SnesModal';
 
 interface ObjectivesModalProps {
   onClose: () => void;
@@ -17,21 +17,8 @@ export const ObjectivesModal: React.FC<ObjectivesModalProps> = ({ onClose }) => 
   const progress = runObjectives?.progress ?? [];
 
   return (
-    <div className="snes-modal" onClick={onClose}>
-      <div className="snes-modal__sheet" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '460px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
-          <h2 className="snes-pixel" style={{ fontSize: '12px', color: '#c77dff', margin: 0, letterSpacing: 0 }}>
-            🎯 Challenges
-          </h2>
-          <button
-            onClick={onClose}
-            aria-label="Close"
-            style={{ width: 32, height: 32, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1f1a3a', color: '#b9b3d6', border: '2px solid #0a0814', boxShadow: 'inset 1px 1px 0 #3a2f5c', cursor: 'pointer', borderRadius: 0 }}
-          >
-            <X size={18} />
-          </button>
-        </div>
-
+    <SnesModal onClose={onClose} title="🎯 Challenges" ariaLabel="Challenges" maxWidth={460} accent="#c77dff">
+      <div>
         <p style={{ fontSize: '11px', color: '#6f6796', margin: '0 0 14px', lineHeight: 1.5 }}>
           Optional goals for this run. Clearing one banks bonus Scene Points at the end — no effect on the run itself.
         </p>
@@ -72,7 +59,7 @@ export const ObjectivesModal: React.FC<ObjectivesModalProps> = ({ onClose }) => 
           </div>
         )}
       </div>
-    </div>
+    </SnesModal>
   );
 };
 
