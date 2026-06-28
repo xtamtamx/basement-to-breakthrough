@@ -71,8 +71,11 @@ export interface Band {
   bio?: string;
   /** Band photo/artwork URL */
   imageUrl?: string;
-  /** Origin city */
+  /** Origin city (display string, e.g. "Seattle, WA") */
   hometown?: string;
+  /** Home scene: a city id (src/data/cities.ts). Playing the band IN this city
+   *  draws a hometown-crowd bonus — ties each band to a real-scene home. */
+  homeCity?: string;
   /** Year the band formed */
   formedYear?: number;
   /** Applied band upgrade IDs */

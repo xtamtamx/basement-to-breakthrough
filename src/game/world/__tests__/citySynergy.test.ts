@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { cityGenreFit } from "../citySynergy";
+import { cityGenreFit, homeCityFit, HOME_CITY_MULT } from "../citySynergy";
 import { Genre } from "@game/types";
 
 describe("cityGenreFit", () => {
@@ -24,5 +24,20 @@ describe("cityGenreFit", () => {
 
   it("is neutral when the city has no genre", () => {
     expect(cityGenreFit(undefined, Genre.PUNK).multiplier).toBe(1);
+  });
+});
+
+describe("homeCityFit", () => {
+  it("gives the hometown-crowd bonus when the band plays its home city", () => {
+    const fit = homeCityFit("nasheattle", "nasheattle");
+    expect(fit.isHome).toBe(true);
+    expect(fit.multiplier).toBe(HOME_CITY_MULT);
+    expect(fit.label).toBe("Hometown crowd");
+  });
+
+  it("is neutral away from home, or when the band has no home city", () => {
+    expect(homeCityFit("nasheattle", "home").multiplier).toBe(1);
+    expect(homeCityFit("nasheattle", "home").isHome).toBe(false);
+    expect(homeCityFit(undefined, "home").multiplier).toBe(1);
   });
 });

@@ -35,7 +35,7 @@ import {
   metaProgressValue,
 } from '../world/landmarks';
 import { recordCityUnlocks } from '../world/cityUnlocks';
-import { cityGenreFit } from '../world/citySynergy';
+import { cityGenreFit, homeCityFit } from '../world/citySynergy';
 import { getCitySignature } from '../world/citySignatures';
 import { captureRuntimeSnapshot } from '../persistence/runtimeSnapshot';
 import { devLog } from '@utils/devLogger';
@@ -703,6 +703,9 @@ export class TurnResolutionEngine {
     // City↔band scene fit: the local scene turns out for its own sound.
     const currentCity = store.cities?.find((c) => c.id === store.currentCityId);
     const sceneFit = cityGenreFit(currentCity?.primaryGenre, mainBand.genre);
+    // Hometown crowd: the headliner playing its OWN home city draws extra (a
+    // band-specific bonus that stacks on the genre scene fit). Rewards touring.
+    const homeFit = homeCityFit(mainBand.homeCity, store.currentCityId);
     // Per-city signature: each town plays differently (rent, crowds, incidents…).
     const sig = getCitySignature(store.currentCityId);
 
@@ -861,6 +864,7 @@ export class TurnResolutionEngine {
           billMultiplier *
           gentrificationAttendance *
           sceneFit.multiplier *
+          homeFit.multiplier *
           comboMult *
           (sig?.attendanceMult ?? 1) *
           factionAttendanceMult *

@@ -9,7 +9,8 @@ import { UserPlus, Check, Briefcase } from 'lucide-react';
 import { bandFactionBadge } from '@game/world/factionDisplay';
 import { metaSnapshot, bandLockInfo, type BandLockInfo } from '@game/world/bandUnlocks';
 import { SnesModal } from '@components/ui/SnesModal';
-import { Lock } from 'lucide-react';
+import { getCity } from '@/data/cities';
+import { Lock, Home } from 'lucide-react';
 
 type Filter = 'all' | 'available' | 'roster';
 type Sort = 'popularity' | 'authenticity' | 'name' | 'genre';
@@ -51,7 +52,7 @@ const STAT_ROWS = (b: Band) => ([
 ] as const);
 
 export const BandsView: React.FC = () => {
-  const { allBands, rosterBandIds, maxRosterSize, hiredManagers, rosterSlotSources, money, addBandToRoster, removeBandFromRoster, hireBookingManager } = useGameStore();
+  const { allBands, rosterBandIds, maxRosterSize, hiredManagers, rosterSlotSources, money, currentCityId, addBandToRoster, removeBandFromRoster, hireBookingManager } = useGameStore();
   const [filter, setFilter] = useState<Filter>('all');
   const [sort, setSort] = useState<Sort>('popularity');
   const [detailId, setDetailId] = useState<string | null>(null);
@@ -337,7 +338,16 @@ export const BandsView: React.FC = () => {
             headerRight={<span style={{ fontSize: '22px' }}>{genreIcon(detailBand.genre)}</span>}>
             <h2 style={{ fontFamily: SANS, fontWeight: 800, fontSize: '20px', color: C.ink, margin: '0 0 4px', lineHeight: 1.15 }}>{detailBand.name}</h2>
             <div style={{ fontFamily: SANS, fontSize: '13px', color: C.dim, margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              <span>{titleCase(detailBand.genre)}{detailBand.hometown ? ` · ${detailBand.hometown}` : ''}</span>
+              <span>{titleCase(detailBand.genre)}</span>
+              {detailBand.homeCity && (() => {
+                const homeName = getCity(detailBand.homeCity)?.name ?? detailBand.homeCity;
+                const atHome = detailBand.homeCity === currentCityId;
+                return (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: atHome ? C.green : C.dim }}>
+                    <Home size={12} /> {homeName}{atHome ? ' · home turf' : ''}
+                  </span>
+                );
+              })()}
               {fb && (
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: fb.color }}>
                   <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: fb.color }} />{fb.name}
@@ -345,6 +355,11 @@ export const BandsView: React.FC = () => {
               )}
               {isInRoster && <span className="snes-pixel" style={{ fontSize: '8px', color: C.green, letterSpacing: 0, border: `2px solid ${C.green}`, padding: '2px 5px' }}>SIGNED</span>}
             </div>
+            {detailBand.homeCity && detailBand.homeCity !== currentCityId && (
+              <p style={{ fontFamily: SANS, fontSize: '12px', color: C.cyan, margin: '0 0 12px' }}>
+                🏠 Draws a hometown crowd in {getCity(detailBand.homeCity)?.name ?? detailBand.homeCity} — tour there for a bigger show.
+              </p>
+            )}
 
             {detailBand.bio && <p style={{ fontFamily: SANS, fontSize: '13.5px', color: C.dim, margin: '0 0 14px', lineHeight: 1.55 }}>{detailBand.bio}</p>}
 

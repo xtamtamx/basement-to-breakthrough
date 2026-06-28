@@ -4,6 +4,7 @@ export const initialBands: Band[] = [
   // DIY Punk Bands
   {
     id: "basement-punks",
+    homeCity: "newangeles",
     name: "Damage Deposit",
     bio: "Toured the country in a van on gas money with a rotating cast of singers and a logo so simple they swear nobody could've thought of it first. Rising above it all, allegedly.",
     genre: Genre.PUNK,
@@ -26,6 +27,7 @@ export const initialBands: Band[] = [
   },
   {
     id: "angry-neighbors",
+    homeCity: "santampa",
     name: "Curfew for Democracy",
     bio: "Snotty surf-punk satire from a frontman who turned a stunt run for public office into a near-upset. Hauled into court over something they slipped inside the record sleeve.",
     genre: Genre.PUNK,
@@ -49,6 +51,7 @@ export const initialBands: Band[] = [
   // More punk bands
   {
     id: "broken-strings",
+    homeCity: "newangeles",
     name: "Against The Brain",
     bio: "Big shout-along harmonies, lyrics you have to look up, and a record label they started themselves because nobody else would. The old crossed-out logo that used to mean rebellion is a registered trademark now.",
     genre: Genre.PUNK,
@@ -73,6 +76,7 @@ export const initialBands: Band[] = [
   // Metal Bands
   {
     id: "doom-bringers",
+    homeCity: "santampa",
     name: "Bill 'Em All",
     bio: "Went from sleeping on floors to dragging the very fans who built them into court. The drummer landed on a snare tone you either love or want to throw out with the garbage, and he dares you to say which.",
     genre: Genre.METAL,
@@ -97,6 +101,7 @@ export const initialBands: Band[] = [
   },
   {
     id: "technical-death",
+    homeCity: "newangeles",
     name: "Spite Sells",
     bio: "Started by a guitarist who got shown the door at a band on its way up and has been writing the same revenge song louder ever since. Still owes the venue for the PA.",
     genre: Genre.METAL,
@@ -123,6 +128,7 @@ export const initialBands: Band[] = [
   // Hardcore Bands
   {
     id: "pit-warriors",
+    homeCity: "bostland",
     name: "Out Of Steam",
     bio: "Songs that are over before the feedback dies, a sober crowd, and a singer who'd rather lecture you about clean living than play an encore. Started a label by accident; somehow it runs the whole scene now.",
     genre: Genre.HARDCORE,
@@ -147,6 +153,7 @@ export const initialBands: Band[] = [
   // Experimental/Noise
   {
     id: "noise-collective",
+    homeCity: "home",
     name: "Thousand Detunes",
     bio: "Two detuned pawn-shop guitars, some hardware shoved under the strings, and one song so long it has its own intermission. Art-school cool since before it was cool.",
     genre: Genre.EXPERIMENTAL,
@@ -171,6 +178,7 @@ export const initialBands: Band[] = [
   // Local favorites
   {
     id: "scene-veterans",
+    homeCity: "newangeles",
     name: "Mind the Bollards",
     bio: "Cooked up by a manager with stuff to sell, gone almost as fast as they arrived, and a mess of money trouble on the way out. Could not really play, which was the point.",
     genre: Genre.PUNK,
@@ -195,6 +203,7 @@ export const initialBands: Band[] = [
   // Touring bands
   {
     id: "road-dogs",
+    homeCity: "home",
     name: "Yours Cruelly",
     bio: "City hardcore lifers — a sibling at the core, a pit call-out every other line, and decades of one final reunion after another.",
     genre: Genre.HARDCORE,
@@ -221,6 +230,7 @@ export const initialBands: Band[] = [
   // Grunge revival
   {
     id: "flannel-core",
+    homeCity: "nasheattle",
     name: "Stains Not Bleach",
     bio: "Out of some rainy nowhere town on a label nobody had heard of, until one accidental anthem blew the doors off and they spent the rest of their time hating that it did. Thrift-store layers, a logo that smiled back at you wrong, and a frontman who would rather you didn't sing along.",
     genre: Genre.GRUNGE,
@@ -245,6 +255,7 @@ export const initialBands: Band[] = [
   // Sludge metal
   {
     id: "swamp-lords",
+    homeCity: "detroleans",
     name: "Dope Altar",
     bio: "The slowest, heaviest, most stoned band you'll ever sit through: one riff per song, stretched out near an hour, all about sorcery and getting high. Turn it up until the cones tear.",
     genre: Genre.SLUDGE,
@@ -271,6 +282,7 @@ export const initialBands: Band[] = [
   // Powerviolence
   {
     id: "30-second-songs",
+    homeCity: "chicaustin",
     name: "Never Settled",
     bio: "Powerviolence so fast the set ends before you have found parking. Twelve songs, four minutes, one of them just feedback and a guy yelling about his shift.",
     genre: Genre.POWERVIOLENCE,
@@ -295,6 +307,7 @@ export const initialBands: Band[] = [
   // Indie crossover
   {
     id: "indie-darlings",
+    homeCity: "nasheattle",
     name: "The Lonesome Crowded Coast",
     bio: "Jittery indie from some middle-of-nowhere town, all spidery guitar and a slurred singer. Got weirdly huge off a mellow little song about not much at all.",
     genre: Genre.INDIE,
@@ -319,6 +332,7 @@ export const initialBands: Band[] = [
   // Crust punk with a Patreon
   {
     id: "landlord-deathwish",
+    homeCity: "bostland",
     name: "Die For The Paperwork",
     bio: "Megaphone politics, a hand-scrawled symbol of resistance on every patch, and a merch table that's really a sign-up sheet for the cause. Will absolutely lecture you about whatever's wrong this week.",
     genre: Genre.PUNK,
@@ -343,6 +357,7 @@ export const initialBands: Band[] = [
   // Emo that workshops its feelings
   {
     id: "group-chat-silence",
+    homeCity: "home",
     name: "I Brought You My Bruises",
     bio: "Theatrical emo in dramatic costumes and smudged eyeliner; the whole record is one big operatic concept about mortality and your eighth-grade journal. The procession marches on.",
     genre: Genre.EMO,
@@ -367,6 +382,7 @@ export const initialBands: Band[] = [
   // Black metal from the suburbs
   {
     id: "frostbitten-cul-de-sac",
+    homeCity: "santampa",
     name: "Enthrone The Frost",
     bio: "Symphonic black metal with corpse paint, a fog machine they cannot afford, and synths the band would rather you forgot. Insisted on recording somewhere freezing, on purpose, for the grimness.",
     genre: Genre.METAL,
@@ -393,6 +409,7 @@ export const initialBands: Band[] = [
   // Noise act that insists it's a band
   {
     id: "tinnitus-as-intended",
+    homeCity: "bostland",
     name: "Terrible Rainbow",
     bio: "Just two of them, no stage, playing from the floor right in the thick of the crowd until the PA throws in the towel. The singer buries his voice in something taped to his face, so you feel the words more than hear them.",
     genre: Genre.NOISE,
@@ -417,6 +434,7 @@ export const initialBands: Band[] = [
   // Doom for the deeply tired
   {
     id: "the-snooze-button",
+    homeCity: "santampa",
     name: "The Weed Caravan",
     bio: "One song. It takes up the whole record. It is about hauling a single riff across the wasteland toward some promised heavier land. They got dropped for handing in exactly that, and nothing else.",
     genre: Genre.DOOM,
@@ -443,6 +461,7 @@ export const initialBands: Band[] = [
   // Hardcore band with a strict color scheme
   {
     id: "x-disappointed-dad-x",
+    homeCity: "bostland",
     name: "The Weight We Carry",
     bio: "Straight-edge hardcore with the X-es drawn on in Sharpie and a singer who'll climb anything bolted down to scream about staying true. Burned out right when it was working, came back once the nostalgia got expensive.",
     genre: Genre.HARDCORE,
@@ -467,6 +486,7 @@ export const initialBands: Band[] = [
   // Grunge that owns it ironically
   {
     id: "thrift-store-cobain",
+    homeCity: "nasheattle",
     name: "No Code of Conduct",
     bio: "Flannel-and-Docs stadium grunge that wouldn't play the promo game and picked a fight with the people who sell the tickets instead. The singer's baritone wobbled hard enough to open a beer.",
     genre: Genre.GRUNGE,
@@ -491,6 +511,7 @@ export const initialBands: Band[] = [
   // Powerviolence so fast it's a rumor
   {
     id: "blink-twice-fastcore",
+    homeCity: "chicaustin",
     name: "Total Discocrap",
     bio: "Named after a tough-guy of the silver screen, songs named after grudges, all of it over before you blink. The little record crams in an impossible number of tracks and a manifesto nobody can finish reading.",
     genre: Genre.POWERVIOLENCE,
@@ -515,6 +536,7 @@ export const initialBands: Band[] = [
   // Sludge band that smells like it sounds
   {
     id: "couch-fort-collapse",
+    homeCity: "detroleans",
     name: "As Needed for Mud",
     bio: "Feedback, whiskey, and a riff dragged through the mud of somewhere half-underwater. Every song is a hangover smeared across a sliding, downtuned guitar. Somehow the sweetest guys in the room.",
     genre: Genre.SLUDGE,
@@ -541,6 +563,7 @@ export const initialBands: Band[] = [
   // Experimental act that read one Deleuze quote
   {
     id: "no-wave-goodbye",
+    homeCity: "detroleans",
     name: "Newsun Vision",
     bio: "Noise-pop chaos with a small battalion of drummers and a singer who stands out front waving them in and out like he's directing traffic. The whole album is one unbroken track that runs past the hour mark and is named after a number.",
     genre: Genre.EXPERIMENTAL,
@@ -565,6 +588,7 @@ export const initialBands: Band[] = [
   // Alternative band one sync deal from "selling out"
   {
     id: "almost-licensed",
+    homeCity: "chicaustin",
     name: "Computer Is Fine",
     bio: "Art-rock that started as a guitar band and slowly traded its amps for screens. Let people pay whatever they wanted for the last record and somehow came out ahead. The singer is sad about machines.",
     genre: Genre.ALTERNATIVE,
@@ -588,6 +612,7 @@ export const initialBands: Band[] = [
   // --- 2026-06 content pass: +12 sign-able bands (pool widened in gameStore) ---
   {
     id: "mutual-aid-abettors",
+    homeCity: "bostland",
     name: "How to Ruin Everything",
     bio: "Skate-punk that will outplay you and out-argue you: righteous about everything, with liner notes that read like assigned homework. The angrier they got, the more the riffs started showing off.",
     genre: Genre.PUNK,
@@ -610,6 +635,7 @@ export const initialBands: Band[] = [
   },
   {
     id: "reply-guys",
+    homeCity: "bostland",
     name: "Jane Roe",
     bio: "Heavy and mathy back when that took an apology to admit: jagged time signatures, a frontman folded in half howling about an unnamed body in a ditch. The guitarist quietly produced half the records in your collection, too.",
     genre: Genre.HARDCORE,
@@ -632,6 +658,7 @@ export const initialBands: Band[] = [
   },
   {
     id: "quarter-life-crisis",
+    homeCity: "chicaustin",
     name: "What I Never Meant",
     bio: "Twinkly midwest emo in odd time signatures, with an album cover everyone now has tattooed on them. Played a handful of shows, broke up, became legends by accident.",
     genre: Genre.EMO,
@@ -654,6 +681,7 @@ export const initialBands: Band[] = [
   },
   {
     id: "gentrify-this",
+    homeCity: "nasheattle",
     name: "Senile Beast",
     bio: "Tuned-down sludge weirdos who've put out a record a year for what feels like forever, quietly influencing every band you like. Won't play the song you came to hear.",
     genre: Genre.SLUDGE,
@@ -676,6 +704,7 @@ export const initialBands: Band[] = [
   },
   {
     id: "audience-of-phones",
+    homeCity: "newangeles",
     name: "Neon Cathedral",
     bio: "A whole orchestra's worth of people on stage, every one of them banging on something, half of it not technically an instrument. Big swelling anthems about growing up where nothing happens, and then one night they walked off with a trophy nobody had them down to win.",
     genre: Genre.INDIE,
@@ -698,6 +727,7 @@ export const initialBands: Band[] = [
   },
   {
     id: "blastbeat-yourself-up",
+    homeCity: "santampa",
     name: "Redaction Bars",
     bio: "Eighty-second blasts of powerviolence, song titles you cannot print, and a demo louder than the masters. Done before the feedback stops.",
     genre: Genre.POWERVIOLENCE,
@@ -720,6 +750,7 @@ export const initialBands: Band[] = [
   },
   {
     id: "frostbite-and-filing",
+    homeCity: "home",
     name: "Fistful of Sand",
     bio: "One of the heavyweights of thrash, but the goofy one — beach shorts in the pit and a dog-eared horror paperback in the bag. Dragged a rap crew onstage for a crossover everyone swore wouldn't work, right up until it did.",
     genre: Genre.METAL,
@@ -742,6 +773,7 @@ export const initialBands: Band[] = [
   },
   {
     id: "the-loud-part",
+    homeCity: "home",
     name: "Cracked Ear",
     bio: "Started as a hardcore band, became a noise band by accident, now mostly a guy and a table of broken pedals making the prettiest racket in the loft.",
     genre: Genre.NOISE,
@@ -764,6 +796,7 @@ export const initialBands: Band[] = [
   },
   {
     id: "direct-deposit-doom",
+    homeCity: "santampa",
     name: "Headless Choir",
     bio: "Invented doom in a grim factory town after the guitarist's hand injury forced a heavier way of playing. The singer keeps leaving to find himself; they keep auditioning new ones.",
     genre: Genre.DOOM,
@@ -786,6 +819,7 @@ export const initialBands: Band[] = [
   },
   {
     id: "soundcheck-forever",
+    homeCity: "atlando",
     name: "Yoshimi Versus",
     bio: "Psych-rock circus that comes with its own confetti, inflatable contraptions, and a record meant to play on a stack of stereos at once. The singer believes every word of it, which is the strange part.",
     genre: Genre.EXPERIMENTAL,
@@ -808,6 +842,7 @@ export const initialBands: Band[] = [
   },
   {
     id: "thrift-store-messiah",
+    homeCity: "nasheattle",
     name: "Every Good Boy Deserves Fuzz",
     bio: "Swears they invented the whole filthy fuzzed-out sound, and they probably did, still splitting the door money at the same basement while their copycats closed on second homes. Pedals stuck on full, by choice or by rust.",
     genre: Genre.GRUNGE,
@@ -830,6 +865,7 @@ export const initialBands: Band[] = [
   },
   {
     id: "two-drink-minimum",
+    homeCity: "newangeles",
     name: "Everything Was Alright At The Start",
     bio: "Nerd-rock power-pop played by guys who look like they alphabetize their record collection; the debut is flawless and they've spent the rest of their career quietly apologizing for not topping it. The harmonies do all the work.",
     genre: Genre.ALTERNATIVE,

@@ -42,3 +42,17 @@ export function cityGenreFit(cityGenre: Genre | undefined, bandGenre: Genre): Sc
   if ((AFFINITY[cityGenre] ?? []).includes(bandGenre)) return { tier: "good", multiplier: 1.12, label: "Scene fit" };
   return { tier: "neutral", multiplier: 1, label: "" };
 }
+
+/** Crowd bonus when a band plays its OWN home city — the hometown turns out for
+ *  one of their own. Band-specific (vs cityGenreFit's genre match); the two stack:
+ *  a band playing its home scene in its home genre is a guaranteed packed room. */
+export const HOME_CITY_MULT = 1.25;
+export function homeCityFit(
+  bandHomeCity: string | undefined,
+  currentCityId: string,
+): { isHome: boolean; multiplier: number; label: string } {
+  if (bandHomeCity && bandHomeCity === currentCityId) {
+    return { isHome: true, multiplier: HOME_CITY_MULT, label: "Hometown crowd" };
+  }
+  return { isHome: false, multiplier: 1, label: "" };
+}

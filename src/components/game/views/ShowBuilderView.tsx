@@ -8,7 +8,7 @@ import { computeLineupChemistry } from '@game/mechanics/lineupChemistry';
 import { bandFactionBadge } from '@game/world/factionDisplay';
 import { factionSystem } from '@game/mechanics/FactionSystem';
 import { difficultySystem } from '@game/mechanics/DifficultySystem';
-import { cityGenreFit } from '@game/world/citySynergy';
+import { cityGenreFit, homeCityFit } from '@game/world/citySynergy';
 import { isVenueUnlocked } from '@game/world/venueProgression';
 import { tutorialManager } from '@game/tutorial/TutorialManager';
 import { COMBO_MULT_CAP } from '@game/constants/runConstants';
@@ -116,6 +116,8 @@ export const ShowBuilderView: React.FC = () => {
 
     // City scene fit: the local scene turns out for its own sound (headliner).
     const sceneFit = cityGenreFit(currentCity?.primaryGenre, selectedBands[0].genre);
+    // Hometown crowd: the headliner playing its OWN home city (band-specific, stacks).
+    const homeFit = homeCityFit(selectedBands[0].homeCity, currentCityId);
 
     // Expected attendance — mirror the engine's deterministic shape (crowd scales
     // with venue atmosphere, +20% per extra band on the bill) so the preview
@@ -139,7 +141,7 @@ export const ShowBuilderView: React.FC = () => {
     // oversell a room the cops just capped.
     const effectiveCapacity = Math.max(1, selectedVenue.capacity - (eventCapacityPenalty ?? 0));
     const baseAttendance = Math.floor(effectiveCapacity * (avgPopularity / 100) * venueBonus);
-    const expectedAttendance = Math.floor(baseAttendance * billMultiplier * totalMultiplier * sceneFit.multiplier * lineupChem.mult * factionAttMult);
+    const expectedAttendance = Math.floor(baseAttendance * billMultiplier * totalMultiplier * sceneFit.multiplier * homeFit.multiplier * lineupChem.mult * factionAttMult);
     const finalAttendance = Math.min(expectedAttendance, effectiveCapacity);
 
     // Revenue includes bar sales where the venue has a bar (matches the engine),
@@ -157,6 +159,7 @@ export const ShowBuilderView: React.FC = () => {
       totalMultiplier,
       reputationBonus,
       sceneFit,
+      homeFit,
       lineupChem,
       factionAttPct,
       expectedAttendance: finalAttendance,
@@ -584,6 +587,19 @@ export const ShowBuilderView: React.FC = () => {
                 }}>
                   <span className="snes-pixel" style={{ fontSize: '8px', color: preview.sceneFit.tier === 'perfect' ? '#ffd23f' : '#4cc9f0', letterSpacing: 0 }}>
                     🔥 {preview.sceneFit.label} in {currentCity?.name} (+{Math.round((preview.sceneFit.multiplier - 1) * 100)}% crowd)
+                  </span>
+                </div>
+              )}
+
+              {/* Hometown crowd — this band is from this city */}
+              {preview.homeFit.isHome && (
+                <div className="snes-panel-inset" style={{
+                  border: '2px solid #3ad17e',
+                  padding: '8px 10px',
+                  marginBottom: '16px',
+                }}>
+                  <span className="snes-pixel" style={{ fontSize: '8px', color: '#3ad17e', letterSpacing: 0 }}>
+                    🏠 {preview.homeFit.label} — {currentCity?.name} turns out (+{Math.round((preview.homeFit.multiplier - 1) * 100)}% crowd)
                   </span>
                 </div>
               )}
