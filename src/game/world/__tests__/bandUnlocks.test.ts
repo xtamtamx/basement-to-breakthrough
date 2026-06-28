@@ -85,14 +85,19 @@ describe('bandUnlocks (variety-weighted)', () => {
     ]));
   });
 
-  it('secret (Long Island) bands are HIDDEN until earned, then appear', () => {
+  it('Long Island bands stay HIDDEN through normal play; reveal only via the secret flag', () => {
     expect(isBandHidden('tell-all-frenemies')).toBe(true);   // secret + locked
     expect(isBandHidden('road-dogs')).toBe(false);           // locked but not secret
     expect(isBandHidden('basement-punks')).toBe(false);      // starter
-    h.stats.totalRuns = 3;
-    recordBandUnlocks([{ id: 'tell-all-frenemies', name: 'Tell All Your Frenemies' }]);
-    expect(isBandUnlocked('tell-all-frenemies')).toBe(true);
-    expect(isBandHidden('tell-all-frenemies')).toBe(false);  // earned → no longer hidden
+    // No amount of normal-play progress unlocks them...
+    h.stats.totalRuns = 50; h.stats.totalFans = 999999; h.beaten.add('hardcore'); h.stakeTier = 3;
+    expect(recordBandUnlocks([{ id: 'tell-all-frenemies', name: 'x' }]).map((b) => b.id)).not.toContain('tell-all-frenemies');
+    expect(isBandHidden('tell-all-frenemies')).toBe(true);
+    // ...only the private trigger does.
+    h.unlocks.add('feat_long_island');
+    const fresh = recordBandUnlocks([{ id: 'tell-all-frenemies', name: 'Tell All Your Frenemies' }]).map((b) => b.id);
+    expect(fresh).toContain('tell-all-frenemies');
+    expect(isBandHidden('tell-all-frenemies')).toBe(false);
   });
 
   it('a loss records no feats; unlock is idempotent', () => {

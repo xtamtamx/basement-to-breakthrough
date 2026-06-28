@@ -57,6 +57,9 @@ export const FEAT = {
   flawless: "feat_flawless",
   soldOut: "feat_sold_out",
   winNoFuture: "feat_win_no_future",
+  // Hidden gate for the Long Island scene — set ONLY by a private/secret trigger
+  // (friends/demo), never by normal play. Until then the LI bands stay invisible.
+  longIsland: "feat_long_island",
 } as const;
 
 type Cond =
@@ -109,13 +112,15 @@ const BAND_UNLOCKS: BandUnlockRule[] = [
   { id: "quarter-life-crisis", cond: { kind: "fans", value: 2000 } },
   { id: "couch-fort-collapse", cond: { kind: "revenue", value: 12000 } },
 
-  // Long Island Easter egg — the home scene's legends, HIDDEN until earned
-  // (SECRET_BAND_IDS below). They reveal as you become a scene veteran.
-  { id: "tell-all-frenemies", cond: { kind: "runs", value: 3 } },
-  { id: "forty-hour-delay", cond: { kind: "runs", value: 6 } },
-  { id: "your-favorite-weakness", cond: { kind: "fans", value: 6000 } },
-  { id: "worship-and-trouble", cond: { kind: "beatMode", mode: "hardcore" } },
-  { id: "bliss-to-eviction", cond: { kind: "stakeTier", value: 3 } },
+  // Long Island Easter egg — the home scene's legends. HIDDEN (SECRET_BAND_IDS)
+  // AND gated on a private flag normal play never sets, so they're a friends/demo
+  // unlock, not something a public playtester can stumble into. Flip the flag via
+  // unlockLongIsland() (a deliberate secret trigger) to reveal all five at once.
+  { id: "tell-all-frenemies", cond: { kind: "feat", flag: FEAT.longIsland, label: "Long Island" } },
+  { id: "forty-hour-delay", cond: { kind: "feat", flag: FEAT.longIsland, label: "Long Island" } },
+  { id: "your-favorite-weakness", cond: { kind: "feat", flag: FEAT.longIsland, label: "Long Island" } },
+  { id: "worship-and-trouble", cond: { kind: "feat", flag: FEAT.longIsland, label: "Long Island" } },
+  { id: "bliss-to-eviction", cond: { kind: "feat", flag: FEAT.longIsland, label: "Long Island" } },
 ];
 
 /**
@@ -131,6 +136,23 @@ export const SECRET_BAND_IDS: ReadonlySet<string> = new Set([
 /** Hidden from the roster entirely (secret AND not yet unlocked). */
 export function isBandHidden(bandId: string): boolean {
   return SECRET_BAND_IDS.has(bandId) && !isBandUnlocked(bandId);
+}
+
+/** Has the private Long Island scene been revealed on this device? */
+export function isLongIslandUnlocked(): boolean {
+  return metaProgressionManager.hasUnlock(FEAT.longIsland);
+}
+
+/**
+ * The secret trigger (friends/demo): flip the hidden flag AND reveal the five LI
+ * bands immediately (no run boundary needed). Persists cross-run. Wire this to
+ * whatever private gesture/code we choose; normal play never calls it. Returns
+ * true the first time it reveals the scene.
+ */
+export function unlockLongIsland(): boolean {
+  const first = metaProgressionManager.recordUnlock(FEAT.longIsland);
+  for (const id of SECRET_BAND_IDS) metaProgressionManager.recordUnlock(bandUnlockId(id));
+  return first;
 }
 
 const RULE_BY_ID = new Map(BAND_UNLOCKS.map((r) => [r.id, r]));
