@@ -1,11 +1,14 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-// Drive the unlock logic against controlled meta state (the manager + mode-win
-// reads are mocked in-memory so thresholds are deterministic).
+// Drive the unlock logic against controlled meta state (manager, mode-win, and
+// stake reads are mocked in-memory so every gate is deterministic). City/feat
+// gates are checked via hasUnlock, so adding `city_*` / `feat_*` ids to the
+// unlocks set simulates touring a city / earning a feat.
 const h = vi.hoisted(() => ({
   unlocks: new Set<string>(),
   stats: { totalRuns: 0, totalShows: 0, totalFans: 0, totalRevenue: 0 },
   beaten: new Set<string>(),
+  stakeTier: 0,
 }));
 
 vi.mock('@game/mechanics/MetaProgressionManager', () => ({
@@ -19,58 +22,74 @@ vi.mock('@game/mechanics/modeUnlocks', () => ({
   MODE_ORDER: ['classic', 'speed', 'festival', 'hardcore'],
   isModeBeaten: (m: string) => h.beaten.has(m),
 }));
+vi.mock('@game/mechanics/StakesManager', () => ({
+  stakesManager: { getUnlockedTier: (_m: string) => h.stakeTier },
+  STAKE_TIERS: [{ name: 'Open Mic' }, { name: 'Pay to Play' }, { name: 'Sellout Pressure' }, { name: 'No Future' }],
+}));
 
-import { isBandUnlocked, bandLockInfo, recordBandUnlocks, STARTER_BAND_IDS } from '../bandUnlocks';
+import { isBandUnlocked, bandLockInfo, recordBandUnlocks, recordRunFeats, STARTER_BAND_IDS } from '../bandUnlocks';
 
 const names = [
-  { id: 'two-drink-minimum', name: 'Everything Was Alright At The Start' },
+  { id: 'frostbitten-cul-de-sac', name: 'Enthrone The Frost' },
+  { id: 'technical-death', name: 'Spite Sells' },
+  { id: 'road-dogs', name: 'Yours Cruelly' },
+  { id: 'mutual-aid-abettors', name: 'How to Ruin Everything' },
   { id: 'scene-veterans', name: 'Mind the Bollards' },
-  { id: 'audience-of-phones', name: 'Neon Cathedral' },
-  { id: 'blink-twice-fastcore', name: 'Total Discocrap' },
+  { id: 'blastbeat-yourself-up', name: 'Redaction Bars' },
+  { id: 'x-disappointed-dad-x', name: 'The Weight We Carry' },
+  { id: 'landlord-deathwish', name: 'Die For The Paperwork' },
 ];
 
 beforeEach(() => {
   h.unlocks.clear(); h.beaten.clear();
   h.stats.totalRuns = 0; h.stats.totalShows = 0; h.stats.totalFans = 0; h.stats.totalRevenue = 0;
+  h.stakeTier = 0;
 });
 
-describe('bandUnlocks', () => {
+describe('bandUnlocks (variety-weighted)', () => {
   it('starter bands are always unlocked; locked bands start locked', () => {
-    expect(isBandUnlocked('basement-punks')).toBe(true);     // starter (punk floor)
+    expect(isBandUnlocked('basement-punks')).toBe(true);
     expect(STARTER_BAND_IDS.has('almost-licensed')).toBe(true);
-    expect(isBandUnlocked('two-drink-minimum')).toBe(false); // locked: needs 1 run
-    expect(isBandUnlocked('blink-twice-fastcore')).toBe(false); // locked: win Speed
+    expect(isBandUnlocked('frostbitten-cul-de-sac')).toBe(false); // win Classic
+    expect(isBandUnlocked('road-dogs')).toBe(false);              // tour Bostland
   });
 
-  it('exposes a hint + numeric progress for a locked counter gate', () => {
-    h.stats.totalShows = 5;
-    const info = bandLockInfo('road-dogs'); // shows >= 8
-    expect(info.unlocked).toBe(false);
-    expect(info.hint).toBe('Book 8 shows all-time');
-    expect(info.progress).toEqual({ current: 5, target: 8 });
+  it('hints read by gate kind; only cumulative gates show numeric progress', () => {
+    h.stats.totalShows = 10;
+    expect(bandLockInfo('landlord-deathwish')).toMatchObject({
+      hint: 'Book 30 shows all-time', progress: { current: 10, target: 30 },
+    });
+    expect(bandLockInfo('frostbitten-cul-de-sac')).toMatchObject({ hint: 'Win a Classic run', progress: null });
+    expect(bandLockInfo('technical-death')).toMatchObject({ hint: 'Win a Pay to Play run', progress: null });
+    expect(bandLockInfo('road-dogs')).toMatchObject({ hint: 'Tour Bostland', progress: null });
+    expect(bandLockInfo('mutual-aid-abettors')).toMatchObject({ hint: 'Win a DIY-aligned run', progress: null });
   });
 
-  it('a mode-win gate has a hint but no numeric progress', () => {
-    const info = bandLockInfo('blink-twice-fastcore');
-    expect(info.hint).toBe('Win a Speed run');
-    expect(info.progress).toBeNull();
-  });
-
-  it('records a cumulative-counter unlock once, when the threshold is met', () => {
-    expect(recordBandUnlocks(names)).toEqual([]); // nothing met at zero
-    h.stats.totalRuns = 1;
-    const first = recordBandUnlocks(names);
-    expect(first.map((b) => b.id)).toContain('two-drink-minimum');
-    expect(first.find((b) => b.id === 'two-drink-minimum')!.name).toBe('Everything Was Alright At The Start');
-    expect(isBandUnlocked('two-drink-minimum')).toBe(true);
-    expect(recordBandUnlocks(names)).toEqual([]); // idempotent — no re-fire
-  });
-
-  it('records revenue/fans gates and a mode-win gate', () => {
-    h.stats.totalRevenue = 2500; // scene-veterans
-    h.stats.totalFans = 1500;    // audience-of-phones
-    h.beaten.add('speed');       // blink-twice-fastcore
+  it('unlocks a mode-win, a stake clear, and a city tour', () => {
+    h.beaten.add('classic');                 // frostbitten-cul-de-sac
+    h.stakeTier = 2;                          // technical-death (Pay to Play)
+    h.unlocks.add('city_bostland');          // road-dogs (toured)
     const fresh = recordBandUnlocks(names).map((b) => b.id);
-    expect(fresh).toEqual(expect.arrayContaining(['scene-veterans', 'audience-of-phones', 'blink-twice-fastcore']));
+    expect(fresh).toEqual(expect.arrayContaining(['frostbitten-cul-de-sac', 'technical-death', 'road-dogs']));
+  });
+
+  it('recordRunFeats grants feat flags that unlock feat-gated bands', () => {
+    expect(recordBandUnlocks(names)).toEqual([]); // nothing met yet
+    recordRunFeats({ isWin: true, pathAlignment: 'PURE_DIY', stakeTier: 3, disasters: 0, perfectShows: 3 });
+    const fresh = recordBandUnlocks(names).map((b) => b.id);
+    expect(fresh).toEqual(expect.arrayContaining([
+      'mutual-aid-abettors',   // DIY win
+      'scene-veterans',        // zero disasters
+      'blastbeat-yourself-up', // 3 sold-out shows
+      'x-disappointed-dad-x',  // won No Future
+    ]));
+  });
+
+  it('a loss records no feats; unlock is idempotent', () => {
+    recordRunFeats({ isWin: false, pathAlignment: 'PURE_DIY', stakeTier: 3, disasters: 0, perfectShows: 5 });
+    expect(recordBandUnlocks(names)).toEqual([]); // a loss earns no feats
+    h.stats.totalShows = 30;
+    expect(recordBandUnlocks(names).map((b) => b.id)).toContain('landlord-deathwish');
+    expect(recordBandUnlocks(names)).toEqual([]); // no re-fire
   });
 });

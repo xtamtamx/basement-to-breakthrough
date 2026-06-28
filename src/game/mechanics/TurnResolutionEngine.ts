@@ -23,7 +23,7 @@ import { metaProgressionManager } from './MetaProgressionManager';
 import { objectiveManager } from './ObjectiveManager';
 import { stakesManager, STAKE_TIERS } from './StakesManager';
 import { isModeBeaten, nextModeAfter } from './modeUnlocks';
-import { recordBandUnlocks } from '@game/world/bandUnlocks';
+import { recordBandUnlocks, recordRunFeats } from '@game/world/bandUnlocks';
 import { gentrificationSystem } from './GentrificationSystem';
 import { factionSystem } from './FactionSystem';
 import { bandRelationships } from './BandRelationships';
@@ -528,10 +528,18 @@ export class TurnResolutionEngine {
     // Credit fame at most once per run id; a replayed conclusion is a no-op.
     metaProgressionManager.bankRunOnce(runId, totalFame);
 
-    // Band unlocks (Balatro drip). Evaluated AFTER updateStats folds this run
-    // into the lifetime totals and AFTER recordWin marks any beaten mode, so
-    // this run's play counts. Fires on win OR loss — every run can pull you a
-    // step closer to the next band. recordUnlock is idempotent (replay-safe).
+    // Band unlocks (Balatro drip, weighted toward replay variety). First record
+    // the variety FEAT flags this run earned (DIY/sellout/clean/sold-out/top-stake
+    // win), THEN evaluate band unlocks — AFTER updateStats folds the run into the
+    // lifetime totals and AFTER recordWin marks any beaten mode, so this run counts.
+    // recordUnlock is idempotent (replay-safe). Band unlocks accrue on win OR loss.
+    recordRunFeats({
+      isWin,
+      pathAlignment: store.pathAlignment,
+      stakeTier,
+      disasters: result.stats.disasters,
+      perfectShows: result.stats.perfectShows,
+    });
     const unlockedBandNames = recordBandUnlocks(store.allBands).map((b) => b.name);
 
     const progression = metaProgressionManager.getProgression();

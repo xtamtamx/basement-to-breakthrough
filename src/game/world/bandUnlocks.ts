@@ -1,28 +1,29 @@
 /**
  * bandUnlocks — which bands are signable yet.
  *
- * Balatro-style drip: a STARTER set is always available, and the rest unlock
- * cross-run by hitting cumulative milestones (lifetime shows / fans / revenue /
- * runs, or beating a mode). Each unlock is recorded in MetaProgression so it
- * PERSISTS ACROSS RUNS — once earned, the band stays signable forever. Front-
- * loaded thresholds mean most early runs pop at least one new band.
+ * Balatro-style drip tuned to encourage REPLAY VARIETY: a STARTER set is always
+ * available, and the rest unlock cross-run by playing DIFFERENTLY — win each mode,
+ * clear higher stakes, tour new cities, win on both the DIY and sellout paths, run
+ * clean or sell a room out — rather than grinding the same Classic run. A handful
+ * of cumulative + run-count gates keep a steady early drip. Each unlock persists in
+ * MetaProgression, so it stays earned forever.
  *
- * Mirrors the cityUnlocks.ts pattern (hasUnlock/recordUnlock + a `band_${id}`
- * id namespace). "Locked" is a pure meta overlay — `allBands` still holds the
- * full authored roster, so the sim and save-resume paths are untouched; the UI
- * just renders locked bands as teaser cards and refuses to sign them.
+ * Mirrors the cityUnlocks.ts pattern (hasUnlock/recordUnlock + a `band_${id}` id
+ * namespace). "Locked" is a pure meta overlay — `allBands` still holds the full
+ * authored roster, so the sim and save-resume paths are untouched.
  */
 import { metaProgressionManager } from "@game/mechanics/MetaProgressionManager";
 import { isModeBeaten, MODE_ORDER } from "@game/mechanics/modeUnlocks";
+import { stakesManager, STAKE_TIERS } from "@game/mechanics/StakesManager";
+import { cityUnlockId } from "@game/world/cityUnlocks";
 
 export const bandUnlockId = (bandId: string): string => `band_${bandId}`;
 
 /**
- * Always-unlocked from the first game. Keeps the three weakest punk bands at
- * array indices 0-2 (the balance sim signs the first-3 by order and wins on
- * them — see balanceSim.sim.ts) PLUS one band of every other genre, so the
- * opening roster has full genre variety while ~2/3 of the roster stays as
- * unlock bait.
+ * Always-unlocked from the first game: the three weakest punk bands at array
+ * indices 0-2 (the balance sim signs the first-3 by order and wins on them) PLUS
+ * one band of every other genre, so the opening roster has full genre variety
+ * while ~2/3 of the roster stays as unlock bait.
  */
 export const STARTER_BAND_IDS: ReadonlySet<string> = new Set([
   "basement-punks", "angry-neighbors", "broken-strings", // punk trio — sim floor, keep first
@@ -43,54 +44,78 @@ const MODE_NAME: Record<string, string> = {
   classic: "Classic", speed: "Speed", festival: "Festival", hardcore: "Hardcore",
 };
 
+/** Tour cities a band can be gated behind (id → display name). */
+const CITY_NAME: Record<string, string> = {
+  bostland: "Bostland", detroleans: "Detroleans", nasheattle: "Nasheattle",
+  chicaustin: "Chicaustin", newangeles: "New Angeles",
+};
+
+/** Recorded run-end achievement flags (a band gate can require one). */
+export const FEAT = {
+  winDiy: "feat_win_diy",
+  winSellout: "feat_win_sellout",
+  flawless: "feat_flawless",
+  soldOut: "feat_sold_out",
+  winNoFuture: "feat_win_no_future",
+} as const;
+
 type Cond =
+  // cumulative counters (numeric progress) — a steady baseline drip
   | { kind: "runs"; value: number }
   | { kind: "shows"; value: number }
   | { kind: "fans"; value: number }
   | { kind: "revenue"; value: number }
-  | { kind: "beatMode"; mode: string };
+  // variety milestones (binary — each pulls a DIFFERENT kind of run)
+  | { kind: "beatMode"; mode: string }
+  | { kind: "stakeTier"; value: number } // max unlocked stake tier across modes >= value
+  | { kind: "city"; city: string }       // toured (rep-unlocked) this city
+  | { kind: "feat"; flag: string; label: string };
 
 interface BandUnlockRule { id: string; cond: Cond }
 
 /**
- * The 22 locked bands. Tiers are tuned against the sim baseline (~12 shows /
- * ~550 fans / ~3,800 revenue per winning run) so Tier 1 fires during/after run
- * 1, then the drip spaces out — the Balatro unlock curve.
+ * The 22 locked bands, weighted toward VARIETY: 4 mode wins, 2 stake clears + the
+ * top-stake feat, 5 city tours, DIY/sellout/clean/sold-out feats, run-count
+ * dedication, and a few cumulative keepers. Chasing the full roster means winning
+ * across modes, stakes, cities, and playstyles — i.e. replaying differently.
  */
 const BAND_UNLOCKS: BandUnlockRule[] = [
-  // Tier 1 — first run or two (generous early drip)
-  { id: "two-drink-minimum", cond: { kind: "runs", value: 1 } },
-  { id: "road-dogs", cond: { kind: "shows", value: 8 } },
-  { id: "thrift-store-cobain", cond: { kind: "fans", value: 400 } },
-  { id: "scene-veterans", cond: { kind: "revenue", value: 2500 } },
+  // Win each mode
   { id: "frostbitten-cul-de-sac", cond: { kind: "beatMode", mode: "classic" } },
-  // Tier 2 — runs 2-3
-  { id: "technical-death", cond: { kind: "shows", value: 25 } },
-  { id: "reply-guys", cond: { kind: "runs", value: 2 } },
-  { id: "audience-of-phones", cond: { kind: "fans", value: 1500 } },
-  { id: "couch-fort-collapse", cond: { kind: "revenue", value: 8000 } },
-  // Tier 3 — runs 3-5
-  { id: "landlord-deathwish", cond: { kind: "shows", value: 50 } },
-  { id: "quarter-life-crisis", cond: { kind: "fans", value: 3500 } },
-  { id: "no-wave-goodbye", cond: { kind: "runs", value: 4 } },
-  { id: "frostbite-and-filing", cond: { kind: "revenue", value: 18000 } },
-  // Tier 4 — mode-win milestones (skill gates)
   { id: "blink-twice-fastcore", cond: { kind: "beatMode", mode: "speed" } },
   { id: "gentrify-this", cond: { kind: "beatMode", mode: "festival" } },
   { id: "direct-deposit-doom", cond: { kind: "beatMode", mode: "hardcore" } },
-  // Tier 5 — long tail
-  { id: "blastbeat-yourself-up", cond: { kind: "shows", value: 120 } },
-  { id: "thrift-store-messiah", cond: { kind: "fans", value: 10000 } },
-  { id: "soundcheck-forever", cond: { kind: "revenue", value: 50000 } },
-  { id: "mutual-aid-abettors", cond: { kind: "runs", value: 8 } },
-  { id: "the-loud-part", cond: { kind: "shows", value: 200 } },
-  { id: "x-disappointed-dad-x", cond: { kind: "fans", value: 25000 } },
+  // Climb the stakes
+  { id: "technical-death", cond: { kind: "stakeTier", value: 2 } },        // win Pay to Play
+  { id: "thrift-store-messiah", cond: { kind: "stakeTier", value: 3 } },   // win Sellout Pressure
+  { id: "x-disappointed-dad-x", cond: { kind: "feat", flag: FEAT.winNoFuture, label: "Win a No Future run" } },
+  // Tour the map
+  { id: "road-dogs", cond: { kind: "city", city: "bostland" } },
+  { id: "audience-of-phones", cond: { kind: "city", city: "detroleans" } },
+  { id: "no-wave-goodbye", cond: { kind: "city", city: "nasheattle" } },
+  { id: "soundcheck-forever", cond: { kind: "city", city: "chicaustin" } },
+  { id: "two-drink-minimum", cond: { kind: "city", city: "newangeles" } },
+  // Play different ways
+  { id: "mutual-aid-abettors", cond: { kind: "feat", flag: FEAT.winDiy, label: "Win a DIY-aligned run" } },
+  { id: "thrift-store-cobain", cond: { kind: "feat", flag: FEAT.winSellout, label: "Win a sellout-aligned run" } },
+  { id: "scene-veterans", cond: { kind: "feat", flag: FEAT.flawless, label: "Win with zero disasters" } },
+  { id: "blastbeat-yourself-up", cond: { kind: "feat", flag: FEAT.soldOut, label: "Sell out 3 shows in a run" } },
+  // Keep coming back
+  { id: "reply-guys", cond: { kind: "runs", value: 3 } },
+  { id: "frostbite-and-filing", cond: { kind: "runs", value: 7 } },
+  { id: "the-loud-part", cond: { kind: "runs", value: 12 } },
+  // Cumulative keepers (steady drip)
+  { id: "landlord-deathwish", cond: { kind: "shows", value: 30 } },
+  { id: "quarter-life-crisis", cond: { kind: "fans", value: 2000 } },
+  { id: "couch-fort-collapse", cond: { kind: "revenue", value: 12000 } },
 ];
 
 const RULE_BY_ID = new Map(BAND_UNLOCKS.map((r) => [r.id, r]));
-/** The only ids that can be locked. Anything else (starters, or a future band
- *  not yet added to the table) defaults to UNLOCKED — never accidentally hidden. */
+/** The only ids that can be locked. Anything else (starters, or a future band not
+ *  yet added to the table) defaults to UNLOCKED — never accidentally hidden. */
 const LOCKED_IDS: ReadonlySet<string> = new Set(BAND_UNLOCKS.map((r) => r.id));
+const TOUR_CITY_IDS = Object.keys(CITY_NAME);
+const FEAT_FLAGS = Object.values(FEAT);
 
 export interface MetaSnapshot {
   totalRuns: number;
@@ -98,9 +123,12 @@ export interface MetaSnapshot {
   totalFans: number;
   totalRevenue: number;
   beaten: ReadonlySet<string>;
+  maxStakeTier: number;
+  cities: ReadonlySet<string>;
+  feats: ReadonlySet<string>;
 }
 
-/** Cumulative cross-run counters that unlock conditions test against. */
+/** Persistent cross-run signals the unlock conditions test against. */
 export function metaSnapshot(): MetaSnapshot {
   const p = metaProgressionManager.getProgression();
   return {
@@ -109,6 +137,9 @@ export function metaSnapshot(): MetaSnapshot {
     totalFans: p.stats.totalFans,
     totalRevenue: p.stats.totalRevenue,
     beaten: new Set(MODE_ORDER.filter((m) => isModeBeaten(m))),
+    maxStakeTier: Math.max(0, ...MODE_ORDER.map((m) => stakesManager.getUnlockedTier(m))),
+    cities: new Set(TOUR_CITY_IDS.filter((c) => metaProgressionManager.hasUnlock(cityUnlockId(c)))),
+    feats: new Set(FEAT_FLAGS.filter((f) => metaProgressionManager.hasUnlock(f))),
   };
 }
 
@@ -119,6 +150,9 @@ const condMet = (c: Cond, s: MetaSnapshot): boolean => {
     case "fans": return s.totalFans >= c.value;
     case "revenue": return s.totalRevenue >= c.value;
     case "beatMode": return s.beaten.has(c.mode);
+    case "stakeTier": return s.maxStakeTier >= c.value;
+    case "city": return s.cities.has(c.city);
+    case "feat": return s.feats.has(c.flag);
   }
 };
 
@@ -128,7 +162,7 @@ const condProgress = (c: Cond, s: MetaSnapshot): { current: number; target: numb
     case "shows": return { current: s.totalShows, target: c.value };
     case "fans": return { current: s.totalFans, target: c.value };
     case "revenue": return { current: s.totalRevenue, target: c.value };
-    case "beatMode": return null;
+    default: return null; // variety milestones are binary — hint only
   }
 };
 
@@ -139,6 +173,10 @@ const condHint = (c: Cond): string => {
     case "fans": return `Reach ${c.value.toLocaleString()} total fans`;
     case "revenue": return `Earn $${c.value.toLocaleString()} all-time`;
     case "beatMode": return `Win a ${MODE_NAME[c.mode] ?? c.mode} run`;
+    // stakeTier value N requires unlocking tier N = winning tier N-1.
+    case "stakeTier": return `Win a ${STAKE_TIERS[c.value - 1]?.name ?? `tier ${c.value}`} run`;
+    case "city": return `Tour ${CITY_NAME[c.city] ?? c.city}`;
+    case "feat": return c.label;
   }
 };
 
@@ -151,27 +189,45 @@ export function isBandUnlocked(bandId: string): boolean {
 
 export interface BandLockInfo {
   unlocked: boolean;
-  /** "How do I unlock this?" line (null when already unlocked). */
   hint: string | null;
-  /** Numeric progress toward the threshold (null for unlocked or milestone gates). */
   progress: { current: number; target: number } | null;
 }
 
-/** UI helper: lock state + a hint + progress for a single band. */
+/** UI helper: lock state + hint + (numeric) progress for a single band. */
 export function bandLockInfo(bandId: string, snap: MetaSnapshot = metaSnapshot()): BandLockInfo {
   if (isBandUnlocked(bandId)) return { unlocked: true, hint: null, progress: null };
   const rule = RULE_BY_ID.get(bandId);
-  // Unknown id (not in the locked table and not a starter) — treat as unlocked
-  // so a future data-file band is never accidentally hidden forever.
   if (!rule) return { unlocked: true, hint: null, progress: null };
   return { unlocked: false, hint: condHint(rule.cond), progress: condProgress(rule.cond, snap) };
 }
 
+export interface RunFeatContext {
+  isWin: boolean;
+  pathAlignment: string;
+  stakeTier: number;
+  disasters: number;
+  perfectShows: number;
+}
+
 /**
- * Record any locked bands whose milestone is now met (called once at run end,
- * AFTER this run's stats are folded into the lifetime totals). Returns the bands
- * unlocked THIS call so the run-end ceremony can announce them. Idempotent via
- * recordUnlock — a replayed conclusion won't re-fire.
+ * Record the variety FEAT flags earned by a finished run (DIY/sellout win, clean
+ * run, sold-out streak, top-stake win). Persistent + idempotent. Call at run end
+ * BEFORE recordBandUnlocks so the feat-gated bands see the new flag this same run.
+ */
+export function recordRunFeats(ctx: RunFeatContext): void {
+  if (!ctx.isWin) return;
+  const diy = ctx.pathAlignment === "PURE_DIY" || ctx.pathAlignment === "DIY_LEANING";
+  const sellout = ctx.pathAlignment === "FULL_SELLOUT" || ctx.pathAlignment === "CORPORATE_LEANING";
+  if (diy) metaProgressionManager.recordUnlock(FEAT.winDiy);
+  if (sellout) metaProgressionManager.recordUnlock(FEAT.winSellout);
+  if (ctx.disasters === 0) metaProgressionManager.recordUnlock(FEAT.flawless);
+  if (ctx.perfectShows >= 3) metaProgressionManager.recordUnlock(FEAT.soldOut);
+  if (ctx.stakeTier >= 3) metaProgressionManager.recordUnlock(FEAT.winNoFuture);
+}
+
+/**
+ * Record any locked bands whose milestone is now met. Returns the bands unlocked
+ * THIS call so the run-end ceremony can announce them. Idempotent (replay-safe).
  */
 export function recordBandUnlocks(allBands: { id: string; name: string }[]): { id: string; name: string }[] {
   const snap = metaSnapshot();
