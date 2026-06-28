@@ -24,6 +24,7 @@ import { objectiveManager } from './ObjectiveManager';
 import { stakesManager, STAKE_TIERS } from './StakesManager';
 import { isModeBeaten, nextModeAfter } from './modeUnlocks';
 import { recordBandUnlocks, recordRunFeats } from '@game/world/bandUnlocks';
+import { TOURING_ENABLED } from '@/config/featureFlags';
 import { gentrificationSystem } from './GentrificationSystem';
 import { factionSystem } from './FactionSystem';
 import { bandRelationships } from './BandRelationships';
@@ -385,9 +386,13 @@ export class TurnResolutionEngine {
     }
 
     // Reputation may have crossed a city's unlock threshold — record it (persists
-    // cross-run) and announce any newly reachable tour stops.
-    const unlockedCities = recordCityUnlocks(postTurnStore.cities ?? [], postTurnStore.reputation);
-    unlockedCities.forEach((c) => warnings.push(`NEW CITY UNLOCKED: ${c.name} — book a tour!`));
+    // cross-run) and announce any newly reachable tour stops. Skipped in the
+    // single-city demo: you can't travel, so recording a "city unlock" only leaks
+    // a phantom +roster-slot (cityRosterSlotBonus) for a town you can never visit.
+    if (TOURING_ENABLED) {
+      const unlockedCities = recordCityUnlocks(postTurnStore.cities ?? [], postTurnStore.reputation);
+      unlockedCities.forEach((c) => warnings.push(`NEW CITY UNLOCKED: ${c.name} — book a tour!`));
+    }
 
     // Fold this turn into the optional-objective stats (meta-fame challenges).
     // Live objectives may complete here; avoidance ones resolve in concludeRun.

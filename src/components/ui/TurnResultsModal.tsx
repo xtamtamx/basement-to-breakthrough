@@ -487,6 +487,8 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
                 </p>
                 <div className="snes-pixel" style={{ fontSize: '8px', color: '#b9b3d6', letterSpacing: 0, lineHeight: 1.6 }}>
                   +${dayJobResult.money} • Stress +{dayJobResult.stressGain}%
+                  {dayJobResult.reputationLoss > 0 ? ` • −${dayJobResult.reputationLoss} rep` : ''}
+                  {dayJobResult.fanLoss > 0 ? ` • −${dayJobResult.fanLoss} fans` : ''}
                 </div>
               </div>
             )}

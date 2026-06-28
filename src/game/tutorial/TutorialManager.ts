@@ -1,3 +1,5 @@
+import { TOURING_ENABLED } from '@/config/featureFlags';
+
 /** The narrow slice of live game state the action-gated steps actually read. */
 export interface TutorialGameSlice {
   rosterBandIds: string[];
@@ -97,7 +99,7 @@ const STEPS: TutorialStep[] = [
     title: 'Sign your first act',
     body:
       "You're starting light — just one band signed. Your roster is who you can put on a bill. " +
-      'Open the "Available" tab, TAP a band to expand it, then hit "Sign to Roster".',
+      'Open the "Free" tab, TAP a band to expand it, then hit "Sign to roster".',
     placement: 'screen-top',
     // New runs seed exactly one signed act (gameStore loadInitialGameData), so
     // signing one more takes the roster to 2 and advances the step.
@@ -126,12 +128,14 @@ const STEPS: TutorialStep[] = [
   {
     id: 'combos',
     title: 'Combos fire on the bill 🔥',
+    // Screen-anchored (no spotlight): this fires right after booking, when the
+    // ShowBuilder preview + its 🔥 chips have already unmounted — so explain
+    // combos as a concept rather than pointing at an element that's gone.
     body:
-      "Instincts are always on — combos are situational. Match the right BANDS to the right VENUE and " +
-      'bonus multipliers stack on top, shown in "Synergies Firing". Tap any 🔥 chip to see what it did. ' +
+      "Instincts are always on — combos are situational. When you build a bill, matching the right " +
+      'BANDS to the right VENUE stacks bonus multipliers (watch "Synergies Firing" in the preview). ' +
       'Discover them all in the Synergies tab.',
-    target: '[data-tut="combos"]',
-    placement: 'above',
+    placement: 'screen-top',
     gate: { kind: 'button', label: 'Got it' },
   },
   {
@@ -149,8 +153,9 @@ const STEPS: TutorialStep[] = [
     body:
       'Your damage report: crowd, cash, cred and new fans. ' +
       'Thin crowd? Hit the Promo tab to hype a show BEFORE the night — promotion packs the room. ' +
-      'Keep booking smarter shows to grow the scene — and when you can, hit the road on the Tour tab. ' +
-      "Have fun out there.",
+      'Keep booking smarter shows to grow the scene' +
+      (TOURING_ENABLED ? ' — and when you can, hit the road on the Tour tab.' : '.') +
+      ' Have fun out there.',
     placement: 'screen-top',
     gate: { kind: 'button', label: 'Finish' },
   },

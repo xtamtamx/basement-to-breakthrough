@@ -313,7 +313,7 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
             </span>
           </div>
 
-          {/* Current city — always know where you're touring */}
+          {/* Current city pin. Single-city demo: always Strong Island (scene flavor). */}
           <div className="snes-pixel" style={{ flex: 1, minWidth: 0, textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', color: '#f72585', fontSize: '8px', letterSpacing: 0, padding: '0 6px' }}>
             <MapPin size={11} style={{ flexShrink: 0 }} />
             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{currentCityName}</span>

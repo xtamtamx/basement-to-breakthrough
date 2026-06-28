@@ -78,7 +78,7 @@ export const BandsView: React.FC = () => {
   if (rosterSlotSources.mode !== 0)
     slotBreakdown.push({ label: runManager.getCurrentRun()?.config.name ?? 'Run mode', value: rosterSlotSources.mode });
   if (rosterSlotSources.meta > 0) slotBreakdown.push({ label: 'Scene Expansion', value: rosterSlotSources.meta });
-  if (rosterSlotSources.city > 0) slotBreakdown.push({ label: 'City unlocks', value: rosterSlotSources.city });
+  if (TOURING_ENABLED && rosterSlotSources.city > 0) slotBreakdown.push({ label: 'City unlocks', value: rosterSlotSources.city });
   if (hiredManagers > 0) slotBreakdown.push({ label: 'Booking Managers', value: hiredManagers });
 
   const managerCost = nextBookingManagerCost(hiredManagers);
@@ -343,7 +343,7 @@ export const BandsView: React.FC = () => {
             <h2 style={{ fontFamily: SANS, fontWeight: 800, fontSize: '20px', color: C.ink, margin: '0 0 4px', lineHeight: 1.15 }}>{detailBand.name}</h2>
             <div style={{ fontFamily: SANS, fontSize: '13px', color: C.dim, margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
               <span>{titleCase(detailBand.genre)}</span>
-              {detailBand.homeCity && (() => {
+              {TOURING_ENABLED && detailBand.homeCity && (() => {
                 const homeName = getCity(detailBand.homeCity)?.name ?? detailBand.homeCity;
                 const atHome = detailBand.homeCity === currentCityId;
                 return (
