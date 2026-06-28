@@ -27,7 +27,7 @@ vi.mock('@game/mechanics/StakesManager', () => ({
   STAKE_TIERS: [{ name: 'Open Mic' }, { name: 'Pay to Play' }, { name: 'Sellout Pressure' }, { name: 'No Future' }],
 }));
 
-import { isBandUnlocked, bandLockInfo, recordBandUnlocks, recordRunFeats, STARTER_BAND_IDS } from '../bandUnlocks';
+import { isBandUnlocked, bandLockInfo, recordBandUnlocks, recordRunFeats, isBandHidden, STARTER_BAND_IDS } from '../bandUnlocks';
 
 const names = [
   { id: 'frostbitten-cul-de-sac', name: 'Enthrone The Frost' },
@@ -83,6 +83,16 @@ describe('bandUnlocks (variety-weighted)', () => {
       'blastbeat-yourself-up', // 3 sold-out shows
       'x-disappointed-dad-x',  // won No Future
     ]));
+  });
+
+  it('secret (Long Island) bands are HIDDEN until earned, then appear', () => {
+    expect(isBandHidden('tell-all-frenemies')).toBe(true);   // secret + locked
+    expect(isBandHidden('road-dogs')).toBe(false);           // locked but not secret
+    expect(isBandHidden('basement-punks')).toBe(false);      // starter
+    h.stats.totalRuns = 3;
+    recordBandUnlocks([{ id: 'tell-all-frenemies', name: 'Tell All Your Frenemies' }]);
+    expect(isBandUnlocked('tell-all-frenemies')).toBe(true);
+    expect(isBandHidden('tell-all-frenemies')).toBe(false);  // earned → no longer hidden
   });
 
   it('a loss records no feats; unlock is idempotent', () => {

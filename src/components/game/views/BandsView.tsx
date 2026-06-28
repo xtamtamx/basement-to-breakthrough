@@ -7,7 +7,7 @@ import { runManager } from '@game/mechanics/RunManager';
 import { nextBookingManagerCost } from '@game/constants/runConstants';
 import { UserPlus, Check, Briefcase } from 'lucide-react';
 import { bandFactionBadge } from '@game/world/factionDisplay';
-import { metaSnapshot, bandLockInfo, type BandLockInfo } from '@game/world/bandUnlocks';
+import { metaSnapshot, bandLockInfo, isBandHidden, type BandLockInfo } from '@game/world/bandUnlocks';
 import { SnesModal } from '@components/ui/SnesModal';
 import { getCity } from '@/data/cities';
 import { Lock, Home } from 'lucide-react';
@@ -124,15 +124,18 @@ export const BandsView: React.FC = () => {
       const p = lockByBand.get(id)?.progress;
       return p && p.target > 0 ? Math.min(1, p.current / p.target) : 0;
     };
-    return allBands.filter((b) => !isUnlocked(b.id)).sort((a, b) => ratio(b.id) - ratio(a.id));
+    // Secret (Long Island) bands stay hidden until earned — no "???" teaser.
+    return allBands.filter((b) => !isUnlocked(b.id) && !isBandHidden(b.id)).sort((a, b) => ratio(b.id) - ratio(a.id));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allBands, filter, lockByBand]);
 
+  // Hidden secret bands are excluded from every count so the Easter egg stays secret.
+  const visibleTotal = allBands.filter((b) => !isBandHidden(b.id)).length;
   const unlockedCount = allBands.filter((b) => isUnlocked(b.id)).length;
   const availableCount = unlockedCount - rosterBandIds.length;
-  const lockedCount = allBands.length - unlockedCount;
+  const lockedCount = visibleTotal - unlockedCount;
   const filterTabs: { id: Filter; label: string; count: number }[] = [
-    { id: 'all', label: 'All', count: allBands.length },
+    { id: 'all', label: 'All', count: visibleTotal },
     { id: 'roster', label: 'Roster', count: rosterBandIds.length },
     { id: 'available', label: 'Free', count: availableCount },
   ];

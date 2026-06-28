@@ -108,7 +108,30 @@ const BAND_UNLOCKS: BandUnlockRule[] = [
   { id: "landlord-deathwish", cond: { kind: "shows", value: 30 } },
   { id: "quarter-life-crisis", cond: { kind: "fans", value: 2000 } },
   { id: "couch-fort-collapse", cond: { kind: "revenue", value: 12000 } },
+
+  // Long Island Easter egg — the home scene's legends, HIDDEN until earned
+  // (SECRET_BAND_IDS below). They reveal as you become a scene veteran.
+  { id: "tell-all-frenemies", cond: { kind: "runs", value: 3 } },
+  { id: "forty-hour-delay", cond: { kind: "runs", value: 6 } },
+  { id: "your-favorite-weakness", cond: { kind: "fans", value: 6000 } },
+  { id: "worship-and-trouble", cond: { kind: "beatMode", mode: "hardcore" } },
+  { id: "bliss-to-eviction", cond: { kind: "stakeTier", value: 3 } },
 ];
+
+/**
+ * SECRET bands — the Long Island Easter egg. They don't show as "???" teaser
+ * cards while locked (unlike the normal locked roster); they simply appear, with
+ * the run-end "new band" beat, once their milestone is met — the home scene's
+ * legends emerging as you earn your stripes. (Still recorded the same way.)
+ */
+export const SECRET_BAND_IDS: ReadonlySet<string> = new Set([
+  "tell-all-frenemies", "your-favorite-weakness", "worship-and-trouble",
+  "forty-hour-delay", "bliss-to-eviction",
+]);
+/** Hidden from the roster entirely (secret AND not yet unlocked). */
+export function isBandHidden(bandId: string): boolean {
+  return SECRET_BAND_IDS.has(bandId) && !isBandUnlocked(bandId);
+}
 
 const RULE_BY_ID = new Map(BAND_UNLOCKS.map((r) => [r.id, r]));
 /** The only ids that can be locked. Anything else (starters, or a future band not
