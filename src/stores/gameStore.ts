@@ -32,6 +32,7 @@ import { performanceMetrics } from "@utils/performanceMetrics";
 import { ALL_DISTRICTS } from "../data/districts";
 import { CITIES, HOME_CITY_ID } from "../data/cities";
 import { BASE_ROSTER_SLOTS, ROSTER_SLOT_FLOOR, nextBookingManagerCost } from "@game/constants/runConstants";
+import { isBandUnlocked } from "@game/world/bandUnlocks";
 
 // Lazy load initial data
 let initialDataPromise: Promise<{ bands: Band[], venues: Venue[] }> | null = null;
@@ -888,6 +889,9 @@ export const useGameStore = create<GameStore>()(
 
       loadInitialGameData: async () => {
         const { bands, venues } = await loadInitialData();
+        // Auto-sign the first UNLOCKED band (basement-punks today, but never seed
+        // a locked band if the array order ever changes).
+        const firstSigned = bands.find((b) => isBandUnlocked(b.id)) ?? bands[0];
         // Load the FULL home venue ladder; the scene-growth gate (unlockReputation
         // vs peakReputation) decides which actually show on the map / are bookable,
         // so the town opens with just the DIY rooms and grows from there.
@@ -903,7 +907,7 @@ export const useGameStore = create<GameStore>()(
           // Start with a SINGLE signed act — signing more is the player's first
           // real decision (and the onboarding walkthrough's first hands-on step).
           // The other first-5 bands are unsigned "Available" free agents.
-          rosterBandIds: bands.slice(0, 1).map((b) => b.id),
+          rosterBandIds: firstSigned ? [firstSigned.id] : [],
           // Backfill the home city's lazily-loaded venues so travelling back restores them
           cities: state.cities.map((c) =>
             c.id === HOME_CITY_ID ? { ...c, venues: homeVenues } : c,
@@ -1045,12 +1049,14 @@ export const useGameStore = create<GameStore>()(
       // Band actions
       addBandToRoster: (bandId) =>
         set((state) => {
-          // Roster slot cap: silently no-op when full or
-          // already signed. UI disables the Sign button + shows X/Y, so this is
-          // the safety net for any non-UI caller.
+          // Roster slot cap: silently no-op when full, already signed, or the
+          // band is still LOCKED (Balatro unlock gate). UI disables the Sign
+          // button + shows X/Y + locked cards, so this is the safety net for any
+          // non-UI caller.
           if (
             state.rosterBandIds.includes(bandId) ||
-            state.rosterBandIds.length >= state.maxRosterSize
+            state.rosterBandIds.length >= state.maxRosterSize ||
+            !isBandUnlocked(bandId)
           ) {
             return {};
           }

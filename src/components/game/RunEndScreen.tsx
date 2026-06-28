@@ -344,6 +344,28 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
               </div>
             )}
 
+            {ceremony.unlockedBandNames.length > 0 && (
+              <div
+                className="btb-pop"
+                style={{
+                  marginTop: '10px',
+                  padding: '10px 12px',
+                  border: '2px solid #3ad17e',
+                  background: 'rgba(58,209,126,0.12)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                }}
+              >
+                <span style={{ fontSize: '18px' }}>🎸</span>
+                <span style={{ fontSize: '12px', color: '#c8f5dd', fontWeight: 700 }}>
+                  {ceremony.unlockedBandNames.length === 1
+                    ? <>New band unlocked: <span style={{ color: '#3ad17e' }}>{ceremony.unlockedBandNames[0]}</span> — sign them next run!</>
+                    : <>{ceremony.unlockedBandNames.length} new bands unlocked: <span style={{ color: '#3ad17e' }}>{ceremony.unlockedBandNames.join(', ')}</span>!</>}
+                </span>
+              </div>
+            )}
+
             <div
               style={{
                 marginTop: '10px',

@@ -23,6 +23,7 @@ import { metaProgressionManager } from './MetaProgressionManager';
 import { objectiveManager } from './ObjectiveManager';
 import { stakesManager, STAKE_TIERS } from './StakesManager';
 import { isModeBeaten, nextModeAfter } from './modeUnlocks';
+import { recordBandUnlocks } from '@game/world/bandUnlocks';
 import { gentrificationSystem } from './GentrificationSystem';
 import { factionSystem } from './FactionSystem';
 import { bandRelationships } from './BandRelationships';
@@ -113,6 +114,8 @@ export interface RunCeremony {
   unlockedStakeName: string | null;
   /** Name of a newly-unlocked game MODE (beating this mode opened the next), else null. */
   unlockedModeName: string | null;
+  /** Names of bands whose cumulative milestone unlocked them THIS run (Balatro drip). */
+  unlockedBandNames: string[];
 }
 
 export interface TurnResult {
@@ -525,6 +528,12 @@ export class TurnResolutionEngine {
     // Credit fame at most once per run id; a replayed conclusion is a no-op.
     metaProgressionManager.bankRunOnce(runId, totalFame);
 
+    // Band unlocks (Balatro drip). Evaluated AFTER updateStats folds this run
+    // into the lifetime totals and AFTER recordWin marks any beaten mode, so
+    // this run's play counts. Fires on win OR loss — every run can pull you a
+    // step closer to the next band. recordUnlock is idempotent (replay-safe).
+    const unlockedBandNames = recordBandUnlocks(store.allBands).map((b) => b.name);
+
     const progression = metaProgressionManager.getProgression();
     const bonuses = metaProgressionManager.getRunStartBonuses();
 
@@ -537,6 +546,7 @@ export class TurnResolutionEngine {
       stakeTier,
       unlockedStakeName: unlockedStake !== null ? STAKE_TIERS[unlockedStake].name : null,
       unlockedModeName,
+      unlockedBandNames,
       newHighScore: result.newHighScore,
       achievements: result.achievements.map((a) => ({
         id: a.id,

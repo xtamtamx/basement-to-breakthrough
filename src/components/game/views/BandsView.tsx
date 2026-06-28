@@ -7,7 +7,9 @@ import { runManager } from '@game/mechanics/RunManager';
 import { nextBookingManagerCost } from '@game/constants/runConstants';
 import { UserPlus, Check, Briefcase } from 'lucide-react';
 import { bandFactionBadge } from '@game/world/factionDisplay';
+import { metaSnapshot, bandLockInfo, type BandLockInfo } from '@game/world/bandUnlocks';
 import { SnesModal } from '@components/ui/SnesModal';
+import { Lock } from 'lucide-react';
 
 type Filter = 'all' | 'available' | 'roster';
 type Sort = 'popularity' | 'authenticity' | 'name' | 'genre';
@@ -32,6 +34,7 @@ const GENRE_ICON: Partial<Record<Genre, string>> = {
 };
 const genreIcon = (g: Genre) => GENRE_ICON[g] ?? '🎵';
 const titleCase = (s: string) => s.charAt(0) + s.slice(1).toLowerCase();
+const fmtN = (n: number) => (n >= 1000 ? `${+(n / 1000).toFixed(1)}k` : `${n}`);
 
 const SORTS: { id: Sort; label: string }[] = [
   { id: 'popularity', label: '★ Top' },
@@ -56,6 +59,16 @@ export const BandsView: React.FC = () => {
 
   const rosterSet = useMemo(() => new Set(rosterBandIds), [rosterBandIds]);
   const rosterFull = rosterBandIds.length >= maxRosterSize;
+
+  // Lock state is a meta overlay (static within a run — unlocks fire at run end),
+  // so compute it once per pool. Locked bands show as "???" teaser cards.
+  const lockByBand = useMemo(() => {
+    const snap = metaSnapshot();
+    const m = new Map<string, BandLockInfo>();
+    for (const b of allBands) m.set(b.id, bandLockInfo(b.id, snap));
+    return m;
+  }, [allBands]);
+  const isUnlocked = (id: string) => lockByBand.get(id)?.unlocked ?? true;
 
   const slotBreakdown: { label: string; value: number }[] = [
     { label: 'Base', value: rosterSlotSources.base },
@@ -83,12 +96,14 @@ export const BandsView: React.FC = () => {
   };
   const handleRemove = (id: string) => { removeBandFromRoster(id); haptics.light(); };
 
+  // Unlocked, filtered + sorted (the signable bands).
   const visible = useMemo(() => {
-    const base = allBands.filter((b) =>
-      filter === 'roster' ? rosterSet.has(b.id)
-      : filter === 'available' ? !rosterSet.has(b.id)
-      : true,
-    );
+    const base = allBands.filter((b) => {
+      if (!isUnlocked(b.id)) return false;
+      return filter === 'roster' ? rosterSet.has(b.id)
+        : filter === 'available' ? !rosterSet.has(b.id)
+        : true;
+    });
     const byName = (a: Band, b: Band) => a.name.localeCompare(b.name);
     return [...base].sort((a, b) => {
       switch (sort) {
@@ -98,9 +113,23 @@ export const BandsView: React.FC = () => {
         default: return b.popularity - a.popularity || byName(a, b);
       }
     });
-  }, [allBands, filter, sort, rosterSet]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allBands, filter, sort, rosterSet, lockByBand]);
 
-  const availableCount = allBands.length - rosterBandIds.length;
+  // Locked teasers — shown only in "All", closest-to-unlocking first (motivating).
+  const lockedTeasers = useMemo(() => {
+    if (filter !== 'all') return [];
+    const ratio = (id: string) => {
+      const p = lockByBand.get(id)?.progress;
+      return p && p.target > 0 ? Math.min(1, p.current / p.target) : 0;
+    };
+    return allBands.filter((b) => !isUnlocked(b.id)).sort((a, b) => ratio(b.id) - ratio(a.id));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allBands, filter, lockByBand]);
+
+  const unlockedCount = allBands.filter((b) => isUnlocked(b.id)).length;
+  const availableCount = unlockedCount - rosterBandIds.length;
+  const lockedCount = allBands.length - unlockedCount;
   const filterTabs: { id: Filter; label: string; count: number }[] = [
     { id: 'all', label: 'All', count: allBands.length },
     { id: 'roster', label: 'Roster', count: rosterBandIds.length },
@@ -166,7 +195,7 @@ export const BandsView: React.FC = () => {
         flex: 1, overflowY: 'auto',
         padding: '10px calc(12px + env(safe-area-inset-right)) calc(4.5rem + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left))',
       }}>
-        {visible.length === 0 ? (
+        {visible.length === 0 && lockedTeasers.length === 0 ? (
           <div className="snes-panel-inset" style={{ textAlign: 'center', padding: '36px 24px', border: `2px solid ${C.gold}`, color: C.dim }}>
             <div style={{ fontSize: '40px', marginBottom: '10px' }}>🎸</div>
             <h3 className="snes-pixel" style={{ fontSize: '11px', color: C.ink, margin: '0 0 8px', letterSpacing: 0 }}>
@@ -242,6 +271,55 @@ export const BandsView: React.FC = () => {
                   >
                     {isInRoster ? <Check size={18} /> : <UserPlus size={18} />}
                   </button>
+                </div>
+              );
+            })}
+
+            {lockedTeasers.length > 0 && (
+              <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: '8px', margin: '8px 2px 2px' }}>
+                <span className="snes-pixel" style={{ fontSize: '9px', color: C.mute, letterSpacing: 0, display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                  <Lock size={11} /> Locked · {lockedCount}
+                </span>
+                <span style={{ flex: 1, height: '2px', background: C.line }} />
+                <span className="snes-pixel" style={{ fontSize: '8px', color: C.mute, letterSpacing: 0 }}>keep playing to unlock</span>
+              </div>
+            )}
+
+            {lockedTeasers.map((band) => {
+              const lock = lockByBand.get(band.id)!;
+              const pr = lock.progress;
+              const pct = pr && pr.target > 0 ? Math.min(100, Math.round((pr.current / pr.target) * 100)) : 0;
+              return (
+                <div
+                  key={band.id}
+                  title={lock.hint ?? 'Locked'}
+                  style={{
+                    backgroundColor: C.bg2, border: `2px dashed ${C.line}`,
+                    padding: '8px 8px 8px 10px', display: 'flex', gap: '8px', alignItems: 'center', minWidth: 0, opacity: 0.9,
+                  }}
+                >
+                  <div className="snes-panel-inset" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '36px', height: '36px', color: C.mute }}>
+                    <Lock size={16} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <h3 style={{ fontFamily: SANS, fontWeight: 800, fontSize: '14px', color: C.mute, margin: 0, lineHeight: 1.2, letterSpacing: '2px' }}>???</h3>
+                      <span className="snes-pixel" style={{ flexShrink: 0, fontSize: '8px', color: C.mute, letterSpacing: 0 }}>{titleCase(band.genre)}</span>
+                    </div>
+                    <div style={{ fontFamily: SANS, fontSize: '11px', color: C.dim, margin: '3px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {lock.hint}
+                    </div>
+                    {pr && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '5px' }}>
+                        <div className="snes-progress" style={{ flex: 1 }}>
+                          <div className="snes-progress__fill" style={{ width: `${pct}%`, background: C.gold }} />
+                        </div>
+                        <span className="snes-pixel" style={{ fontSize: '8px', color: C.mute, letterSpacing: 0, flexShrink: 0 }}>
+                          {fmtN(Math.min(pr.current, pr.target))}/{fmtN(pr.target)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })}
