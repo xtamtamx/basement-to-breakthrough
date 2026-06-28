@@ -116,6 +116,14 @@ export interface RunCeremony {
   unlockedModeName: string | null;
   /** Names of bands whose cumulative milestone unlocked them THIS run (Balatro drip). */
   unlockedBandNames: string[];
+  /** The mode this run was played in — lets the run-end screen one-tap re-launch it. */
+  configId: string;
+  /** Scene Points reward multiplier from the stake tier (1.0 at Open Mic → 2.0 at No Future). */
+  stakeFameMult: number;
+  /** Stake tiers cleared in this mode so far (the "how high have I climbed" badge). */
+  stakesCleared: number;
+  /** Total stake tiers (so the badge reads N/total). */
+  stakeCount: number;
 }
 
 export interface TurnResult {
@@ -495,9 +503,20 @@ export class TurnResolutionEngine {
       isWin,
     );
 
-    const fameEarned = metaProgressionManager.calculateFameEarned(
-      result.score,
-      configId,
+    // Ascension reward: climbing the stake ladder PAYS more Scene Points (×1 at
+    // Open Mic → ×2 at No Future), so a harsher economy (which scores lower) is
+    // worth the climb instead of punishing it.
+    const stake = stakesManager.getTier(stakeTier);
+    const fameEarned = Math.round(
+      metaProgressionManager.calculateFameEarned(result.score, configId) * stake.fameMult,
+    );
+    // Stake tiers cleared in this mode: getUnlockedTier == #cleared (winning T
+    // unlocks T+1), but beating the TOP tier doesn't bump it — fold that in.
+    const stakeCount = stakesManager.getTiers().length;
+    const stakesCleared = Math.min(
+      stakeCount,
+      stakesManager.getUnlockedTier(configId) +
+        (isWin && stakeTier === stakeCount - 1 ? 1 : 0),
     );
     metaProgressionManager.updateStats({
       score: result.score,
@@ -555,6 +574,10 @@ export class TurnResolutionEngine {
       unlockedStakeName: unlockedStake !== null ? STAKE_TIERS[unlockedStake].name : null,
       unlockedModeName,
       unlockedBandNames,
+      configId,
+      stakeFameMult: stake.fameMult,
+      stakesCleared,
+      stakeCount,
       newHighScore: result.newHighScore,
       achievements: result.achievements.map((a) => ({
         id: a.id,

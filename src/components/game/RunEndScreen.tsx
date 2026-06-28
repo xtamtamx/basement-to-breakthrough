@@ -15,6 +15,8 @@ interface RunEndScreenProps {
   ceremony?: RunCeremony | null;
   onPlayAgain: () => void;
   onMainMenu: () => void;
+  /** One-tap re-launch of the same mode at the next stake (a win that opened it). */
+  onClimb?: () => void;
 }
 
 const RESULT_CONFIGS: Record<
@@ -62,9 +64,12 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
   ceremony,
   onPlayAgain,
   onMainMenu,
+  onClimb,
 }) => {
   const config = RESULT_CONFIGS[result.reason];
   const isWin = result.reason === 'BREAKTHROUGH_WIN';
+  // A win that opened the next stake → offer a one-tap climb (same mode, +1 stake).
+  const canClimb = isWin && !!ceremony?.unlockedStakeName && !!onClimb;
 
   // The run's climax used to land in silence — ring it in (and harder on a win).
   useEffect(() => {
@@ -276,8 +281,30 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
                 <div style={{ fontSize: '24px', fontWeight: 900, color: '#f472b6' }}>
                   +{ceremony.fameEarned}
                 </div>
+                {ceremony.stakeFameMult > 1 && (
+                  <div style={{ fontSize: '10px', fontWeight: 800, color: '#ffd23f' }}>
+                    stake bonus ×{ceremony.stakeFameMult}
+                  </div>
+                )}
               </div>
             </div>
+
+            {isWin && ceremony.stakesCleared > 0 && (
+              <div
+                className="btb-pop"
+                style={{
+                  marginTop: '10px', padding: '10px 12px',
+                  border: '2px solid #4cc9f0', background: 'rgba(76,201,240,0.12)',
+                  display: 'flex', alignItems: 'center', gap: '8px',
+                }}
+              >
+                <span style={{ fontSize: '18px' }}>🏆</span>
+                <span style={{ fontSize: '12px', color: '#cdeffd', fontWeight: 700 }}>
+                  Stakes cleared this mode:{' '}
+                  <span style={{ color: '#4cc9f0' }}>{ceremony.stakesCleared}/{ceremony.stakeCount}</span>
+                </span>
+              </div>
+            )}
 
             {ceremony.achievements.length > 0 && (
               <div style={{ marginTop: '8px' }}>
@@ -417,12 +444,35 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
           style={{
             padding: '12px 20px 16px',
             display: 'flex',
-            gap: '12px',
+            flexDirection: 'column',
+            gap: '10px',
             flexShrink: 0,
             borderTop: '1px solid rgba(255,255,255,0.1)',
             backgroundColor: 'rgba(0,0,0,0.25)',
           }}
         >
+          {canClimb && (
+            <button
+              onClick={onClimb}
+              className="snes-pixel btb-press"
+              style={{
+                width: '100%',
+                padding: '14px',
+                backgroundColor: '#c77dff',
+                color: '#2a0a3a',
+                border: '2px solid #0a0814',
+                borderRadius: 0,
+                boxShadow: 'inset 2px 2px 0 0 rgba(255,255,255,0.4), inset -2px -2px 0 0 rgba(0,0,0,0.4)',
+                fontSize: '11px',
+                letterSpacing: 0,
+                cursor: 'pointer',
+                minHeight: '48px',
+              }}
+            >
+              ▶ Climb · {ceremony?.unlockedStakeName}
+            </button>
+          )}
+          <div style={{ display: 'flex', gap: '12px' }}>
           <button
             onClick={onMainMenu}
             className="snes-pixel"
@@ -459,8 +509,9 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
               minHeight: '44px',
             }}
           >
-            {isWin ? 'Play Again' : 'Try Again'}
+            {canClimb ? 'New Game' : isWin ? 'Play Again' : 'Try Again'}
           </button>
+          </div>
         </div>
       </div>
     </div>

@@ -447,6 +447,11 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
           ceremony={ceremony}
           onPlayAgain={handlePlayAgain}
           onMainMenu={handleMainMenu}
+          onClimb={
+            ceremony
+              ? () => startRunWithMode(ceremony.configId, ceremony.stakeTier + 1)
+              : undefined
+          }
         />
       )}
 

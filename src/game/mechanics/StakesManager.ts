@@ -18,6 +18,8 @@ export interface StakeTier {
   incidentMult: number; // incident chance ×
   turnMult: number; // fraction of the mode's turn budget (proportional, so it
   // bites short AND long modes equally — a fixed delta is nothing to 100-turn Hardcore)
+  fameMult: number; // Scene Points reward × — climbing the ladder PAYS more, the
+  // ascension carrot (offsets that a harsher economy scores lower → less base fame)
 }
 
 export const STAKE_TIERS: StakeTier[] = [
@@ -30,6 +32,7 @@ export const STAKE_TIERS: StakeTier[] = [
     stressMult: 1.0,
     incidentMult: 1.0,
     turnMult: 1.0,
+    fameMult: 1.0,
   },
   {
     tier: 1,
@@ -40,6 +43,7 @@ export const STAKE_TIERS: StakeTier[] = [
     stressMult: 1.25,
     incidentMult: 1.9,
     turnMult: 0.88,
+    fameMult: 1.3,
   },
   {
     tier: 2,
@@ -50,6 +54,7 @@ export const STAKE_TIERS: StakeTier[] = [
     stressMult: 1.35,
     incidentMult: 2.2,
     turnMult: 0.84,
+    fameMult: 1.6,
   },
   {
     tier: 3,
@@ -60,6 +65,7 @@ export const STAKE_TIERS: StakeTier[] = [
     stressMult: 1.5,
     incidentMult: 2.8,
     turnMult: 0.76,
+    fameMult: 2.0,
   },
 ];
 
