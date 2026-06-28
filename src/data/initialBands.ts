@@ -128,7 +128,6 @@ export const initialBands: Band[] = [
   // Hardcore Bands
   {
     id: "pit-warriors",
-    homeCity: "bostland",
     name: "Out Of Steam",
     bio: "Songs that are over before the feedback dies, a sober crowd, and a singer who'd rather lecture you about clean living than play an encore. Started a label by accident; somehow it runs the whole scene now.",
     genre: Genre.HARDCORE,
@@ -153,7 +152,7 @@ export const initialBands: Band[] = [
   // Experimental/Noise
   {
     id: "noise-collective",
-    homeCity: "home",
+    homeCity: "newangeles",
     name: "Thousand Detunes",
     bio: "Two detuned pawn-shop guitars, some hardware shoved under the strings, and one song so long it has its own intermission. Art-school cool since before it was cool.",
     genre: Genre.EXPERIMENTAL,
@@ -178,7 +177,6 @@ export const initialBands: Band[] = [
   // Local favorites
   {
     id: "scene-veterans",
-    homeCity: "newangeles",
     name: "Mind the Bollards",
     bio: "Cooked up by a manager with stuff to sell, gone almost as fast as they arrived, and a mess of money trouble on the way out. Could not really play, which was the point.",
     genre: Genre.PUNK,
@@ -203,7 +201,7 @@ export const initialBands: Band[] = [
   // Touring bands
   {
     id: "road-dogs",
-    homeCity: "home",
+    homeCity: "newangeles",
     name: "Yours Cruelly",
     bio: "City hardcore lifers — a sibling at the core, a pit call-out every other line, and decades of one final reunion after another.",
     genre: Genre.HARDCORE,
@@ -255,7 +253,6 @@ export const initialBands: Band[] = [
   // Sludge metal
   {
     id: "swamp-lords",
-    homeCity: "detroleans",
     name: "Dope Altar",
     bio: "The slowest, heaviest, most stoned band you'll ever sit through: one riff per song, stretched out near an hour, all about sorcery and getting high. Turn it up until the cones tear.",
     genre: Genre.SLUDGE,
@@ -332,7 +329,6 @@ export const initialBands: Band[] = [
   // Crust punk with a Patreon
   {
     id: "landlord-deathwish",
-    homeCity: "bostland",
     name: "Die For The Paperwork",
     bio: "Megaphone politics, a hand-scrawled symbol of resistance on every patch, and a merch table that's really a sign-up sheet for the cause. Will absolutely lecture you about whatever's wrong this week.",
     genre: Genre.PUNK,
@@ -357,7 +353,6 @@ export const initialBands: Band[] = [
   // Emo that workshops its feelings
   {
     id: "group-chat-silence",
-    homeCity: "home",
     name: "I Brought You My Bruises",
     bio: "Theatrical emo in dramatic costumes and smudged eyeliner; the whole record is one big operatic concept about mortality and your eighth-grade journal. The procession marches on.",
     genre: Genre.EMO,
@@ -382,7 +377,6 @@ export const initialBands: Band[] = [
   // Black metal from the suburbs
   {
     id: "frostbitten-cul-de-sac",
-    homeCity: "santampa",
     name: "Enthrone The Frost",
     bio: "Symphonic black metal with corpse paint, a fog machine they cannot afford, and synths the band would rather you forgot. Insisted on recording somewhere freezing, on purpose, for the grimness.",
     genre: Genre.METAL,
@@ -563,7 +557,6 @@ export const initialBands: Band[] = [
   // Experimental act that read one Deleuze quote
   {
     id: "no-wave-goodbye",
-    homeCity: "detroleans",
     name: "Newsun Vision",
     bio: "Noise-pop chaos with a small battalion of drummers and a singer who stands out front waving them in and out like he's directing traffic. The whole album is one unbroken track that runs past the hour mark and is named after a number.",
     genre: Genre.EXPERIMENTAL,
@@ -588,7 +581,6 @@ export const initialBands: Band[] = [
   // Alternative band one sync deal from "selling out"
   {
     id: "almost-licensed",
-    homeCity: "chicaustin",
     name: "Computer Is Fine",
     bio: "Art-rock that started as a guitar band and slowly traded its amps for screens. Let people pay whatever they wanted for the last record and somehow came out ahead. The singer is sad about machines.",
     genre: Genre.ALTERNATIVE,
@@ -612,7 +604,6 @@ export const initialBands: Band[] = [
   // --- 2026-06 content pass: +12 sign-able bands (pool widened in gameStore) ---
   {
     id: "mutual-aid-abettors",
-    homeCity: "bostland",
     name: "How to Ruin Everything",
     bio: "Skate-punk that will outplay you and out-argue you: righteous about everything, with liner notes that read like assigned homework. The angrier they got, the more the riffs started showing off.",
     genre: Genre.PUNK,
@@ -704,7 +695,6 @@ export const initialBands: Band[] = [
   },
   {
     id: "audience-of-phones",
-    homeCity: "newangeles",
     name: "Neon Cathedral",
     bio: "A whole orchestra's worth of people on stage, every one of them banging on something, half of it not technically an instrument. Big swelling anthems about growing up where nothing happens, and then one night they walked off with a trophy nobody had them down to win.",
     genre: Genre.INDIE,
@@ -750,7 +740,7 @@ export const initialBands: Band[] = [
   },
   {
     id: "frostbite-and-filing",
-    homeCity: "home",
+    homeCity: "newangeles",
     name: "Fistful of Sand",
     bio: "One of the heavyweights of thrash, but the goofy one — beach shorts in the pit and a dog-eared horror paperback in the bag. Dragged a rap crew onstage for a crossover everyone swore wouldn't work, right up until it did.",
     genre: Genre.METAL,
@@ -773,7 +763,7 @@ export const initialBands: Band[] = [
   },
   {
     id: "the-loud-part",
-    homeCity: "home",
+    homeCity: "newangeles",
     name: "Cracked Ear",
     bio: "Started as a hardcore band, became a noise band by accident, now mostly a guy and a table of broken pedals making the prettiest racket in the loft.",
     genre: Genre.NOISE,
@@ -796,7 +786,6 @@ export const initialBands: Band[] = [
   },
   {
     id: "direct-deposit-doom",
-    homeCity: "santampa",
     name: "Headless Choir",
     bio: "Invented doom in a grim factory town after the guitarist's hand injury forced a heavier way of playing. The singer keeps leaving to find himself; they keep auditioning new ones.",
     genre: Genre.DOOM,
@@ -819,7 +808,6 @@ export const initialBands: Band[] = [
   },
   {
     id: "soundcheck-forever",
-    homeCity: "atlando",
     name: "Yoshimi Versus",
     bio: "Psych-rock circus that comes with its own confetti, inflatable contraptions, and a record meant to play on a stack of stereos at once. The singer believes every word of it, which is the strange part.",
     genre: Genre.EXPERIMENTAL,
