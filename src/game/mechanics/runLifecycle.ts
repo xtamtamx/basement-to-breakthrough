@@ -21,6 +21,7 @@ import { stakesManager } from './StakesManager';
 import type { RunMode } from '@game/types';
 import { captureRuntimeSnapshot } from '@game/persistence/runtimeSnapshot';
 import { cityRosterSlotBonus } from '@game/world/cityUnlocks';
+import { recordBandUnlocks } from '@game/world/bandUnlocks';
 import { BASE_ROSTER_SLOTS, ROSTER_SLOT_FLOOR } from '@game/constants/runConstants';
 
 let lastConfigId = 'classic';
@@ -77,6 +78,12 @@ export async function startNewRun(
   if (bonuses.startingFans) store.addFans(bonuses.startingFans);
 
   await store.loadInitialGameData();
+  // Catch up any band unlocks already earned by prior runs' cumulative totals.
+  // Idempotent (recordUnlock dedupes), so this is a no-op after a normal run-end
+  // — it only matters for a save written before band unlocks existed, and for
+  // letting a threshold crossed last run make the band signable from turn 1. The
+  // run-END ceremony still celebrates only bands crossed DURING the run.
+  recordBandUnlocks(useGameStore.getState().allBands);
   dayJobSystem.refreshJobs();
 
   // Roster slot cap = base + this mode's delta
