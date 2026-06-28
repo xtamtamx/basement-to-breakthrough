@@ -8,6 +8,7 @@ import { DayJobView } from "./views/DayJobView";
 import { PromotionView } from "./views/PromotionView";
 import { ProgressionView } from "./views/ProgressionView";
 import { TourView } from "./views/TourView";
+import { TOURING_ENABLED } from "@/config/featureFlags";
 import { MobileBottomNav } from "./MobileBottomNav";
 import { SynergyBar } from "./SynergyBar";
 import { SynergyAcquireModal } from "./SynergyAcquireModal";
@@ -236,7 +237,8 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
   // Matches the bottom nav's reading order (primaries then secondaries) so
   // swiping lands where the nav implies — they used to disagree (swipe right
   // from Promo went to Jobs while the nav's next tab was Tour).
-  const viewOrder: ViewType[] = ["city", "bands", "shows", "promotion", "tour", "jobs", "synergies", "progression"];
+  const viewOrder: ViewType[] = (["city", "bands", "shows", "promotion", "tour", "jobs", "synergies", "progression"] as ViewType[])
+    .filter((v) => v !== "tour" || TOURING_ENABLED);
   const currentIndex = viewOrder.indexOf(currentView);
   
   const swipeHandlers = useSwipeable({

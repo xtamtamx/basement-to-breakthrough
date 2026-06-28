@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { runManager, RunConfig } from "@game/mechanics/RunManager";
 import { stakesManager, STAKE_TIERS } from "@game/mechanics/StakesManager";
 import { isModeUnlocked, modeUnlockRequiresId, modeOrderIndex } from "@game/mechanics/modeUnlocks";
+import { TOURING_ENABLED } from "@/config/featureFlags";
 import { BASE_ROSTER_SLOTS } from "@game/constants/runConstants";
 import { haptics } from "@utils/mobile";
 import { X, DollarSign, Clock, Users, Trophy, Lock, Flame } from "lucide-react";
@@ -64,9 +65,10 @@ const stakeChips = (tier: number): string[] => {
 
 export const RunModeSelector: React.FC<RunModeSelectorProps> = ({ onSelect, onClose }) => {
   // Lay modes out in progression order; locked modes are gated behind wins.
-  const configs = [...runManager.getRunConfigs()].sort(
-    (a, b) => modeOrderIndex(a.id) - modeOrderIndex(b.id),
-  );
+  // The single-city demo holds Hardcore for the full game (it's tuned around travel).
+  const configs = [...runManager.getRunConfigs()]
+    .filter((c) => TOURING_ENABLED || c.id !== "hardcore")
+    .sort((a, b) => modeOrderIndex(a.id) - modeOrderIndex(b.id));
   const nameById = Object.fromEntries(configs.map((c) => [c.id, c.name]));
   // Selected stake tier per mode (defaults to Open Mic so newcomers aren't walled).
   const [tiers, setTiers] = useState<Record<string, number>>({});

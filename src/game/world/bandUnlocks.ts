@@ -87,17 +87,20 @@ const BAND_UNLOCKS: BandUnlockRule[] = [
   { id: "frostbitten-cul-de-sac", cond: { kind: "beatMode", mode: "classic" } },
   { id: "blink-twice-fastcore", cond: { kind: "beatMode", mode: "speed" } },
   { id: "gentrify-this", cond: { kind: "beatMode", mode: "festival" } },
-  { id: "direct-deposit-doom", cond: { kind: "beatMode", mode: "hardcore" } },
+  // (Was "beat Hardcore"; Hardcore is held for the full game, so re-point at a
+  // reachable long-tail gate for the demo. Restore the beatMode gate with touring.)
+  { id: "direct-deposit-doom", cond: { kind: "revenue", value: 25000 } },
   // Climb the stakes
   { id: "technical-death", cond: { kind: "stakeTier", value: 2 } },        // win Pay to Play
   { id: "thrift-store-messiah", cond: { kind: "stakeTier", value: 3 } },   // win Sellout Pressure
   { id: "x-disappointed-dad-x", cond: { kind: "feat", flag: FEAT.winNoFuture, label: "Win a No Future run" } },
-  // Tour the map
-  { id: "road-dogs", cond: { kind: "city", city: "bostland" } },
-  { id: "audience-of-phones", cond: { kind: "city", city: "detroleans" } },
-  { id: "no-wave-goodbye", cond: { kind: "city", city: "nasheattle" } },
-  { id: "soundcheck-forever", cond: { kind: "city", city: "chicaustin" } },
-  { id: "two-drink-minimum", cond: { kind: "city", city: "newangeles" } },
+  // (Were city-tour gates; re-pointed at reachable milestones while the single-
+  // city demo has touring disabled — restore `city` gates when TOURING_ENABLED.)
+  { id: "road-dogs", cond: { kind: "shows", value: 15 } },
+  { id: "audience-of-phones", cond: { kind: "fans", value: 1200 } },
+  { id: "no-wave-goodbye", cond: { kind: "runs", value: 5 } },
+  { id: "soundcheck-forever", cond: { kind: "revenue", value: 6000 } },
+  { id: "two-drink-minimum", cond: { kind: "fans", value: 4000 } },
   // Play different ways
   { id: "mutual-aid-abettors", cond: { kind: "feat", flag: FEAT.winDiy, label: "Win a DIY-aligned run" } },
   { id: "thrift-store-cobain", cond: { kind: "feat", flag: FEAT.winSellout, label: "Win a sellout-aligned run" } },

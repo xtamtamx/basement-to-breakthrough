@@ -7,6 +7,7 @@ import { useGameStore } from '@stores/gameStore';
 import { showPromotionSystem } from '@game/mechanics/ShowPromotionSystem';
 import { progressionPathSystem } from '@game/mechanics/ProgressionPathSystem';
 import { haptics } from '@utils/mobile';
+import { TOURING_ENABLED } from '@/config/featureFlags';
 
 type ViewType = "city" | "bands" | "shows" | "promotion" | "synergies" | "jobs" | "progression" | "tour";
 
@@ -66,11 +67,12 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   ];
 
   const secondaryViews = [
-    {
+    // Touring is gated for the single-city demo (Strong Island only).
+    ...(TOURING_ENABLED ? [{
       id: 'tour' as ViewType,
       icon: <Map size={18} />,
       label: 'Tour'
-    },
+    }] : []),
     {
       id: 'jobs' as ViewType,
       icon: <Briefcase size={18} />,

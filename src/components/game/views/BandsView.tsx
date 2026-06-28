@@ -10,6 +10,7 @@ import { bandFactionBadge } from '@game/world/factionDisplay';
 import { metaSnapshot, bandLockInfo, isBandHidden, type BandLockInfo } from '@game/world/bandUnlocks';
 import { SnesModal } from '@components/ui/SnesModal';
 import { getCity } from '@/data/cities';
+import { TOURING_ENABLED } from '@/config/featureFlags';
 import { Lock, Home } from 'lucide-react';
 
 type Filter = 'all' | 'available' | 'roster';
@@ -358,7 +359,7 @@ export const BandsView: React.FC = () => {
               )}
               {isInRoster && <span className="snes-pixel" style={{ fontSize: '8px', color: C.green, letterSpacing: 0, border: `2px solid ${C.green}`, padding: '2px 5px' }}>SIGNED</span>}
             </div>
-            {detailBand.homeCity && detailBand.homeCity !== currentCityId && (
+            {TOURING_ENABLED && detailBand.homeCity && detailBand.homeCity !== currentCityId && (
               <p style={{ fontFamily: SANS, fontSize: '12px', color: C.cyan, margin: '0 0 12px' }}>
                 🏠 Draws a hometown crowd in {getCity(detailBand.homeCity)?.name ?? detailBand.homeCity} — tour there for a bigger show.
               </p>

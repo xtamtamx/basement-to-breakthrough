@@ -18,6 +18,7 @@ import { runManager } from '../RunManager';
 import { dayJobSystem } from '../DayJobSystem';
 import { synergyManager } from '../SynergyManager';
 import { rollTravelOffer } from '@game/world/travelModes';
+import { TOURING_ENABLED } from '@/config/featureFlags';
 
 // Greedy "keep the best instinct" rank for milestone replacement.
 const RARITY_RANK: Record<string, number> = { COMMON: 0, UNCOMMON: 1, RARE: 2, LEGENDARY: 3 };
@@ -143,6 +144,7 @@ function manageDayJob(): void {
 // touring band — and mirrors the UI by clearing any booked show first.
 // Returns true if it travelled this turn.
 function maybeTravel(turn: number): boolean {
+  if (!TOURING_ENABLED) return false; // single-city demo — model a no-travel run
   const s = useGameStore.getState();
   if (turn === 0 || turn % 7 !== 0) return false;
   const dests = s.cities.filter((c) => c.id !== s.currentCityId && isCityUnlocked(c));
@@ -229,7 +231,9 @@ function avg(ns: number[]): number {
 
 describe('balance simulation', () => {
   it('plays full runs across modes and reports aggregates', async () => {
-    const modes = ['classic', 'speed', 'hardcore', 'festival'];
+    const modes = ['classic', 'speed', 'hardcore', 'festival'].filter(
+      (m) => TOURING_ENABLED || m !== 'hardcore',
+    );
     const N = 12;
     const report: string[] = ['', '===== BALANCE SIM (' + N + ' runs/mode) ====='];
 

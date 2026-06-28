@@ -6,31 +6,34 @@ import {
   nextModeAfter,
   modeOrderIndex,
   MODE_ORDER,
+  ACTIVE_MODES,
 } from '../modeUnlocks';
 
+// NOTE: asserts the SHIPPED config (TOURING_ENABLED=false → single-city demo),
+// where the active ladder caps at Festival. The full 4-mode ladder (incl. Hardcore)
+// returns when touring is re-enabled.
 describe('modeUnlocks — game-mode progression chain', () => {
   it('exposes the ladder relationships (pure, no state)', () => {
     expect([...MODE_ORDER]).toEqual(['classic', 'speed', 'festival', 'hardcore']);
-    // classic is always open; every other mode requires the previous one
+    expect([...ACTIVE_MODES]).toEqual(['classic', 'speed', 'festival']); // demo: Hardcore held
+    // classic is always open; every other ACTIVE mode requires the previous one
     expect(isModeUnlocked('classic')).toBe(true);
     expect(modeUnlockRequiresId('classic')).toBeNull();
     expect(modeUnlockRequiresId('speed')).toBe('classic');
     expect(modeUnlockRequiresId('festival')).toBe('speed');
-    expect(modeUnlockRequiresId('hardcore')).toBe('festival');
-    // beating a mode opens the next one (last opens nothing)
+    // beating a mode opens the next ACTIVE one (Festival is last → nothing)
     expect(nextModeAfter('classic')).toBe('speed');
-    expect(nextModeAfter('festival')).toBe('hardcore');
-    expect(nextModeAfter('hardcore')).toBeNull();
+    expect(nextModeAfter('speed')).toBe('festival');
+    expect(nextModeAfter('festival')).toBeNull();
     // selector lays them out in progression order
     expect(modeOrderIndex('classic')).toBeLessThan(modeOrderIndex('speed'));
-    expect(modeOrderIndex('speed')).toBeLessThan(modeOrderIndex('hardcore'));
+    expect(modeOrderIndex('speed')).toBeLessThan(modeOrderIndex('festival'));
   });
 
-  it('unlocks each mode only after beating the previous one', () => {
+  it('unlocks each ACTIVE mode only after beating the previous one', () => {
     // fresh module (vitest isolates per file) → no wins recorded yet
     expect(isModeUnlocked('speed')).toBe(false);
     expect(isModeUnlocked('festival')).toBe(false);
-    expect(isModeUnlocked('hardcore')).toBe(false);
 
     stakesManager.recordWin('classic', 0); // beat Classic
     expect(isModeUnlocked('speed')).toBe(true);
@@ -38,9 +41,5 @@ describe('modeUnlocks — game-mode progression chain', () => {
 
     stakesManager.recordWin('speed', 0); // beat Speed
     expect(isModeUnlocked('festival')).toBe(true);
-    expect(isModeUnlocked('hardcore')).toBe(false);
-
-    stakesManager.recordWin('festival', 0); // beat Festival
-    expect(isModeUnlocked('hardcore')).toBe(true);
   });
 });

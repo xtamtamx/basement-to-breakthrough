@@ -61,14 +61,13 @@ describe('bandUnlocks (variety-weighted)', () => {
     });
     expect(bandLockInfo('frostbitten-cul-de-sac')).toMatchObject({ hint: 'Win a Classic run', progress: null });
     expect(bandLockInfo('technical-death')).toMatchObject({ hint: 'Win a Pay to Play run', progress: null });
-    expect(bandLockInfo('road-dogs')).toMatchObject({ hint: 'Tour Bostland', progress: null });
     expect(bandLockInfo('mutual-aid-abettors')).toMatchObject({ hint: 'Win a DIY-aligned run', progress: null });
   });
 
-  it('unlocks a mode-win, a stake clear, and a city tour', () => {
+  it('unlocks a mode-win, a stake clear, and a cumulative gate', () => {
     h.beaten.add('classic');                 // frostbitten-cul-de-sac
     h.stakeTier = 2;                          // technical-death (Pay to Play)
-    h.unlocks.add('city_bostland');          // road-dogs (toured)
+    h.stats.totalShows = 15;                  // road-dogs (re-gated to shows in the demo)
     const fresh = recordBandUnlocks(names).map((b) => b.id);
     expect(fresh).toEqual(expect.arrayContaining(['frostbitten-cul-de-sac', 'technical-death', 'road-dogs']));
   });

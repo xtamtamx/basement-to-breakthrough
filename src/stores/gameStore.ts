@@ -33,6 +33,7 @@ import { ALL_DISTRICTS } from "../data/districts";
 import { CITIES, HOME_CITY_ID } from "../data/cities";
 import { BASE_ROSTER_SLOTS, ROSTER_SLOT_FLOOR, nextBookingManagerCost } from "@game/constants/runConstants";
 import { isBandUnlocked } from "@game/world/bandUnlocks";
+import { TOURING_ENABLED } from "@/config/featureFlags";
 
 // Lazy load initial data
 let initialDataPromise: Promise<{ bands: Band[], venues: Venue[] }> | null = null;
@@ -1006,6 +1007,8 @@ export const useGameStore = create<GameStore>()(
       updateDistricts: (districts) => set({ districts }),
       updateVenues: (venues) => set({ venues }),
       switchCity: (cityId) => {
+        // Single-city demo: travel is disabled, the game stays on Strong Island.
+        if (!TOURING_ENABLED) return;
         const state = get();
         const target = state.cities.find((c) => c.id === cityId);
         if (!target || cityId === state.currentCityId) return;
