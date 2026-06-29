@@ -1,53 +1,53 @@
 /**
- * bandUnlocks — which bands are signable yet.
+ * bandUnlocks — which Long Island bands are signable yet.
  *
- * Balatro-style drip tuned to encourage REPLAY VARIETY: a STARTER set is always
- * available, and the rest unlock cross-run by playing DIFFERENTLY — win each mode,
- * clear higher stakes, tour new cities, win on both the DIY and sellout paths, run
- * clean or sell a room out — rather than grinding the same Classic run. A handful
- * of cumulative + run-count gates keep a steady early drip. Each unlock persists in
- * MetaProgression, so it stays earned forever.
+ * Balatro-style drip tuned for REPLAY VARIETY. You start with ~12 scrappy low-pop
+ * locals (every genre represented) and unlock the bigger acts — up to the home-town
+ * legends — by playing DIFFERENTLY: win each mode, climb the stakes, win DIY and
+ * sellout, run clean, sell rooms out, plus a few cumulative gates for a steady early
+ * drip. Each unlock persists cross-run in MetaProgression, so it stays earned.
  *
- * Mirrors the cityUnlocks.ts pattern (hasUnlock/recordUnlock + a `band_${id}` id
- * namespace). "Locked" is a pure meta overlay — `allBands` still holds the full
- * authored roster, so the sim and save-resume paths are untouched.
+ * Mirrors the cityUnlocks.ts pattern (hasUnlock/recordUnlock + a `band_${id}`
+ * namespace). "Locked" is a pure meta overlay — `allBands` holds the full roster, so
+ * the sim and save-resume paths are untouched; the UI renders locked bands as "???"
+ * teaser cards and refuses to sign them.
  */
 import { metaProgressionManager } from "@game/mechanics/MetaProgressionManager";
 import { isModeBeaten, MODE_ORDER } from "@game/mechanics/modeUnlocks";
 import { stakesManager, STAKE_TIERS } from "@game/mechanics/StakesManager";
-import { cityUnlockId } from "@game/world/cityUnlocks";
 
 export const bandUnlockId = (bandId: string): string => `band_${bandId}`;
 
 /**
- * Always-unlocked from the first game: the three weakest punk bands at array
- * indices 0-2 (the balance sim signs the first-3 by order and wins on them) PLUS
- * one band of every other genre, so the opening roster has full genre variety
- * while ~2/3 of the roster stays as unlock bait.
+ * Always-unlocked from the first game: the lowest-popularity locals, one-or-more of
+ * every genre, so the opening roster is playable and varied while the famous acts
+ * stay as unlock bait. The balance sim signs the first-3 bands by array order
+ * (lowest popularity) and wins on them — keep these in the starter set.
  */
 export const STARTER_BAND_IDS: ReadonlySet<string> = new Set([
-  "basement-punks", "angry-neighbors", "broken-strings", // punk trio — sim floor, keep first
-  "doom-bringers",        // METAL
-  "pit-warriors",         // HARDCORE
-  "noise-collective",     // EXPERIMENTAL
-  "flannel-core",         // GRUNGE
-  "swamp-lords",          // SLUDGE
-  "30-second-songs",      // POWERVIOLENCE
-  "indie-darlings",       // INDIE
-  "group-chat-silence",   // EMO
-  "tinnitus-as-intended", // NOISE
-  "the-snooze-button",    // DOOM
-  "almost-licensed",      // ALTERNATIVE
+  "automedication",          // EMO
+  "life-of-a-speculator",    // PUNK
+  "the-constant-ache",       // PUNK
+  "darker-halftime",         // HARDCORE
+  "felony-in-mono-is-dead",  // EMO
+  "get-warner",              // PUNK
+  "into-the-floodlights",    // INDIE
+  "lucy-grave",              // EMO
+  "this-is-just-the-ending", // HARDCORE
+  "weight-of-the-word",      // METAL
+  "believe-what-we-sold-you",// ALTERNATIVE
+  "termites-in-his-teeth",   // METAL
 ]);
+
+/**
+ * No hidden/secret bands in the single-city demo — the Long Island roster IS the
+ * game. Kept (empty) so callers asking "is this band hidden from the roster
+ * entirely?" still resolve to false.
+ */
+export const SECRET_BAND_IDS: ReadonlySet<string> = new Set();
 
 const MODE_NAME: Record<string, string> = {
   classic: "Classic", speed: "Speed", festival: "Festival", hardcore: "Hardcore",
-};
-
-/** Tour cities a band can be gated behind (id → display name). */
-const CITY_NAME: Record<string, string> = {
-  bostland: "Bostland", detroleans: "Detroleans", nasheattle: "Nasheattle",
-  chicaustin: "Chicaustin", newangeles: "New Angeles",
 };
 
 /** Recorded run-end achievement flags (a band gate can require one). */
@@ -57,112 +57,53 @@ export const FEAT = {
   flawless: "feat_flawless",
   soldOut: "feat_sold_out",
   winNoFuture: "feat_win_no_future",
-  // Hidden gate for the Long Island scene — set ONLY by a private/secret trigger
-  // (friends/demo), never by normal play. Until then the LI bands stay invisible.
-  longIsland: "feat_long_island",
 } as const;
 
 type Cond =
-  // cumulative counters (numeric progress) — a steady baseline drip
   | { kind: "runs"; value: number }
   | { kind: "shows"; value: number }
   | { kind: "fans"; value: number }
   | { kind: "revenue"; value: number }
-  // variety milestones (binary — each pulls a DIFFERENT kind of run)
   | { kind: "beatMode"; mode: string }
   | { kind: "stakeTier"; value: number } // max unlocked stake tier across modes >= value
-  | { kind: "city"; city: string }       // toured (rep-unlocked) this city
   | { kind: "feat"; flag: string; label: string };
 
 interface BandUnlockRule { id: string; cond: Cond }
 
 /**
- * The 22 locked bands, weighted toward VARIETY: 4 mode wins, 2 stake clears + the
- * top-stake feat, 5 city tours, DIY/sellout/clean/sold-out feats, run-count
- * dedication, and a few cumulative keepers. Chasing the full roster means winning
- * across modes, stakes, cities, and playstyles — i.e. replaying differently.
+ * The 20 locked bands, lowest-pop first. Cumulative + run-count gates front-load the
+ * early drip; mode/stake/feat gates reward playing differently. The home-town
+ * legends sit at the end behind the hardest asks.
  */
 const BAND_UNLOCKS: BandUnlockRule[] = [
-  // Win each mode
-  { id: "frostbitten-cul-de-sac", cond: { kind: "beatMode", mode: "classic" } },
-  { id: "blink-twice-fastcore", cond: { kind: "beatMode", mode: "speed" } },
-  { id: "gentrify-this", cond: { kind: "beatMode", mode: "festival" } },
-  // (Was "beat Hardcore"; Hardcore is held for the full game, so re-point at a
-  // reachable long-tail gate for the demo. Restore the beatMode gate with touring.)
-  { id: "direct-deposit-doom", cond: { kind: "revenue", value: 25000 } },
-  // Climb the stakes
-  { id: "technical-death", cond: { kind: "stakeTier", value: 2 } },        // win Pay to Play
-  { id: "thrift-store-messiah", cond: { kind: "stakeTier", value: 3 } },   // win Sellout Pressure
-  { id: "x-disappointed-dad-x", cond: { kind: "feat", flag: FEAT.winNoFuture, label: "Win a No Future run" } },
-  // (Were city-tour gates; re-pointed at reachable milestones while the single-
-  // city demo has touring disabled — restore `city` gates when TOURING_ENABLED.)
-  { id: "road-dogs", cond: { kind: "shows", value: 15 } },
-  { id: "audience-of-phones", cond: { kind: "fans", value: 1200 } },
-  { id: "no-wave-goodbye", cond: { kind: "runs", value: 5 } },
-  { id: "soundcheck-forever", cond: { kind: "revenue", value: 6000 } },
-  { id: "two-drink-minimum", cond: { kind: "fans", value: 4000 } },
-  // Play different ways
-  { id: "mutual-aid-abettors", cond: { kind: "feat", flag: FEAT.winDiy, label: "Win a DIY-aligned run" } },
-  { id: "thrift-store-cobain", cond: { kind: "feat", flag: FEAT.winSellout, label: "Win a sellout-aligned run" } },
-  { id: "scene-veterans", cond: { kind: "feat", flag: FEAT.flawless, label: "Win with zero disasters" } },
-  { id: "blastbeat-yourself-up", cond: { kind: "feat", flag: FEAT.soldOut, label: "Sell out 3 shows in a run" } },
-  // Keep coming back
-  { id: "reply-guys", cond: { kind: "runs", value: 3 } },
-  { id: "frostbite-and-filing", cond: { kind: "runs", value: 7 } },
-  { id: "the-loud-part", cond: { kind: "runs", value: 12 } },
-  // Cumulative keepers (steady drip)
-  { id: "landlord-deathwish", cond: { kind: "shows", value: 30 } },
-  { id: "quarter-life-crisis", cond: { kind: "fans", value: 2000 } },
-  { id: "couch-fort-collapse", cond: { kind: "revenue", value: 12000 } },
-
-  // Long Island Easter egg — the home scene's legends. SECRET (hidden, no "???"
-  // teaser) but earned through DEMO PROGRESSION: scene-veteran milestones spread
-  // late so they pop as surprise reveals. unlockLongIsland() still reveals all five
-  // at once (for showing friends) — both paths coexist.
-  { id: "tell-all-frenemies", cond: { kind: "runs", value: 2 } },
-  { id: "forty-hour-delay", cond: { kind: "runs", value: 4 } },
-  { id: "your-favorite-weakness", cond: { kind: "fans", value: 5000 } },
-  { id: "worship-and-trouble", cond: { kind: "beatMode", mode: "festival" } },
-  { id: "bliss-to-eviction", cond: { kind: "stakeTier", value: 3 } },
+  // Steady early drip (cumulative + runs)
+  { id: "save-each-otter", cond: { kind: "shows", value: 10 } },
+  { id: "cost-of-leaving", cond: { kind: "runs", value: 2 } },
+  { id: "monocultured", cond: { kind: "fans", value: 600 } },
+  { id: "making-mountains", cond: { kind: "revenue", value: 4000 } },
+  { id: "no-foolin-eyes", cond: { kind: "shows", value: 25 } },
+  { id: "built-for-greased", cond: { kind: "runs", value: 3 } },
+  { id: "pictures-and-sentences", cond: { kind: "fans", value: 2000 } },
+  { id: "needles-in-the-spaces", cond: { kind: "revenue", value: 10000 } },
+  { id: "release-the-cured", cond: { kind: "shows", value: 50 } },
+  { id: "too-bad-so-beautiful", cond: { kind: "runs", value: 5 } },
+  // Play differently (variety + skill)
+  { id: "we-are-still-awake", cond: { kind: "feat", flag: FEAT.winDiy, label: "Win a DIY-aligned run" } },
+  { id: "bliss-to-eviction", cond: { kind: "beatMode", mode: "festival" } },
+  { id: "the-walking-worried", cond: { kind: "beatMode", mode: "speed" } },
+  { id: "forty-hour-delay", cond: { kind: "beatMode", mode: "classic" } },
+  { id: "worship-and-trouble", cond: { kind: "feat", flag: FEAT.flawless, label: "Win with zero disasters" } },
+  { id: "liminal-criminals", cond: { kind: "feat", flag: FEAT.soldOut, label: "Sell out 3 shows in a run" } },
+  { id: "your-favorite-weakness", cond: { kind: "stakeTier", value: 2 } },  // win Pay to Play
+  { id: "tyranny-and-mutiny", cond: { kind: "stakeTier", value: 3 } },      // win Sellout Pressure
+  { id: "stay-angry", cond: { kind: "feat", flag: FEAT.winSellout, label: "Win a sellout-aligned run" } },
+  { id: "tell-all-frenemies", cond: { kind: "feat", flag: FEAT.winNoFuture, label: "Win a No Future run" } },
 ];
-
-/**
- * SECRET bands — the Long Island Easter egg. They don't show as "???" teaser
- * cards while locked (unlike the normal locked roster); they simply appear, with
- * the run-end "new band" beat, once their milestone is met — the home scene's
- * legends emerging as you earn your stripes. (Still recorded the same way.)
- */
-export const SECRET_BAND_IDS: ReadonlySet<string> = new Set([
-  "tell-all-frenemies", "your-favorite-weakness", "worship-and-trouble",
-  "forty-hour-delay", "bliss-to-eviction",
-]);
-/** Hidden from the roster entirely (secret AND not yet unlocked). */
-export function isBandHidden(bandId: string): boolean {
-  return SECRET_BAND_IDS.has(bandId) && !isBandUnlocked(bandId);
-}
-
-/** Has the private Long Island scene been revealed on this device? */
-export function isLongIslandUnlocked(): boolean {
-  return metaProgressionManager.hasUnlock(FEAT.longIsland);
-}
-
-/**
- * The secret trigger (friends/demo): flip the hidden flag AND reveal the five LI
- * bands immediately (no run boundary needed). Persists cross-run. Wire this to
- * whatever private gesture/code we choose; normal play never calls it. Returns
- * true the first time it reveals the scene.
- */
-export function unlockLongIsland(): boolean {
-  const first = metaProgressionManager.recordUnlock(FEAT.longIsland);
-  for (const id of SECRET_BAND_IDS) metaProgressionManager.recordUnlock(bandUnlockId(id));
-  return first;
-}
 
 const RULE_BY_ID = new Map(BAND_UNLOCKS.map((r) => [r.id, r]));
 /** The only ids that can be locked. Anything else (starters, or a future band not
  *  yet added to the table) defaults to UNLOCKED — never accidentally hidden. */
 const LOCKED_IDS: ReadonlySet<string> = new Set(BAND_UNLOCKS.map((r) => r.id));
-const TOUR_CITY_IDS = Object.keys(CITY_NAME);
 const FEAT_FLAGS = Object.values(FEAT);
 
 export interface MetaSnapshot {
@@ -172,7 +113,6 @@ export interface MetaSnapshot {
   totalRevenue: number;
   beaten: ReadonlySet<string>;
   maxStakeTier: number;
-  cities: ReadonlySet<string>;
   feats: ReadonlySet<string>;
 }
 
@@ -186,7 +126,6 @@ export function metaSnapshot(): MetaSnapshot {
     totalRevenue: p.stats.totalRevenue,
     beaten: new Set(MODE_ORDER.filter((m) => isModeBeaten(m))),
     maxStakeTier: Math.max(0, ...MODE_ORDER.map((m) => stakesManager.getUnlockedTier(m))),
-    cities: new Set(TOUR_CITY_IDS.filter((c) => metaProgressionManager.hasUnlock(cityUnlockId(c)))),
     feats: new Set(FEAT_FLAGS.filter((f) => metaProgressionManager.hasUnlock(f))),
   };
 }
@@ -199,7 +138,6 @@ const condMet = (c: Cond, s: MetaSnapshot): boolean => {
     case "revenue": return s.totalRevenue >= c.value;
     case "beatMode": return s.beaten.has(c.mode);
     case "stakeTier": return s.maxStakeTier >= c.value;
-    case "city": return s.cities.has(c.city);
     case "feat": return s.feats.has(c.flag);
   }
 };
@@ -221,9 +159,7 @@ const condHint = (c: Cond): string => {
     case "fans": return `Reach ${c.value.toLocaleString()} total fans`;
     case "revenue": return `Earn $${c.value.toLocaleString()} all-time`;
     case "beatMode": return `Win a ${MODE_NAME[c.mode] ?? c.mode} run`;
-    // stakeTier value N requires unlocking tier N = winning tier N-1.
     case "stakeTier": return `Win a ${STAKE_TIERS[c.value - 1]?.name ?? `tier ${c.value}`} run`;
-    case "city": return `Tour ${CITY_NAME[c.city] ?? c.city}`;
     case "feat": return c.label;
   }
 };
@@ -233,6 +169,12 @@ const condHint = (c: Cond): string => {
 export function isBandUnlocked(bandId: string): boolean {
   if (!LOCKED_IDS.has(bandId)) return true;
   return metaProgressionManager.hasUnlock(bandUnlockId(bandId));
+}
+
+/** Hidden from the roster entirely (secret AND not yet unlocked). No secret bands
+ *  exist in the demo, so this is always false — kept for the BandsView call site. */
+export function isBandHidden(bandId: string): boolean {
+  return SECRET_BAND_IDS.has(bandId) && !isBandUnlocked(bandId);
 }
 
 export interface BandLockInfo {

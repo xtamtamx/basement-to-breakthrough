@@ -15,19 +15,19 @@ const band = (id: string) => ({
 describe('addBandToRoster — lock gate', () => {
   beforeEach(() => {
     useGameStore.setState({
-      allBands: [band('basement-punks'), band('two-drink-minimum')],
+      allBands: [band('automedication'), band('tell-all-frenemies')],
       rosterBandIds: [],
       maxRosterSize: 4,
     });
   });
 
   it('refuses to sign a LOCKED band', () => {
-    useGameStore.getState().addBandToRoster('two-drink-minimum'); // locked (needs 1 run)
+    useGameStore.getState().addBandToRoster('tell-all-frenemies'); // locked (win a No Future run)
     expect(useGameStore.getState().rosterBandIds).toEqual([]);
   });
 
   it('signs a STARTER (unlocked) band', () => {
-    useGameStore.getState().addBandToRoster('basement-punks'); // always unlocked
-    expect(useGameStore.getState().rosterBandIds).toEqual(['basement-punks']);
+    useGameStore.getState().addBandToRoster('automedication'); // starter — always unlocked
+    expect(useGameStore.getState().rosterBandIds).toEqual(['automedication']);
   });
 });

@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-// Drive the unlock logic against controlled meta state (manager, mode-win, and
-// stake reads are mocked in-memory so every gate is deterministic). City/feat
-// gates are checked via hasUnlock, so adding `city_*` / `feat_*` ids to the
-// unlocks set simulates touring a city / earning a feat.
+// Drive the LI-roster unlock logic against controlled meta state (manager,
+// mode-win, and stake reads are mocked in-memory so every gate is deterministic).
+// Feat gates are checked via hasUnlock, so adding `feat_*` ids to the unlocks set
+// simulates earning a feat.
 const h = vi.hoisted(() => ({
   unlocks: new Set<string>(),
   stats: { totalRuns: 0, totalShows: 0, totalFans: 0, totalRevenue: 0 },
@@ -27,17 +27,14 @@ vi.mock('@game/mechanics/StakesManager', () => ({
   STAKE_TIERS: [{ name: 'Open Mic' }, { name: 'Pay to Play' }, { name: 'Sellout Pressure' }, { name: 'No Future' }],
 }));
 
-import { isBandUnlocked, bandLockInfo, recordBandUnlocks, recordRunFeats, isBandHidden, unlockLongIsland, STARTER_BAND_IDS } from '../bandUnlocks';
+import { isBandUnlocked, bandLockInfo, recordBandUnlocks, recordRunFeats, STARTER_BAND_IDS } from '../bandUnlocks';
 
 const names = [
-  { id: 'frostbitten-cul-de-sac', name: 'Enthrone The Frost' },
-  { id: 'technical-death', name: 'Spite Sells' },
-  { id: 'road-dogs', name: 'Yours Cruelly' },
-  { id: 'mutual-aid-abettors', name: 'How to Ruin Everything' },
-  { id: 'scene-veterans', name: 'Mind the Bollards' },
-  { id: 'blastbeat-yourself-up', name: 'Redaction Bars' },
-  { id: 'x-disappointed-dad-x', name: 'The Weight We Carry' },
-  { id: 'landlord-deathwish', name: 'Die For The Paperwork' },
+  { id: 'save-each-otter', name: 'Save Each Otter' },
+  { id: 'bliss-to-eviction', name: 'From Bliss to Eviction' },
+  { id: 'your-favorite-weakness', name: 'Your Favorite Weakness' },
+  { id: 'we-are-still-awake', name: 'We Are Still Awake' },
+  { id: 'tell-all-frenemies', name: 'Tell All Your Frenemies' },
 ];
 
 beforeEach(() => {
@@ -46,68 +43,45 @@ beforeEach(() => {
   h.stakeTier = 0;
 });
 
-describe('bandUnlocks (variety-weighted)', () => {
-  it('starter bands are always unlocked; locked bands start locked', () => {
-    expect(isBandUnlocked('basement-punks')).toBe(true);
-    expect(STARTER_BAND_IDS.has('almost-licensed')).toBe(true);
-    expect(isBandUnlocked('frostbitten-cul-de-sac')).toBe(false); // win Classic
-    expect(isBandUnlocked('road-dogs')).toBe(false);              // tour Bostland
+describe('bandUnlocks (Long Island roster)', () => {
+  it('starter locals are unlocked; legends start locked', () => {
+    expect(isBandUnlocked('automedication')).toBe(true);          // starter
+    expect(STARTER_BAND_IDS.has('life-of-a-speculator')).toBe(true);
+    expect(isBandUnlocked('save-each-otter')).toBe(false);        // locked: book 10 shows
+    expect(isBandUnlocked('tell-all-frenemies')).toBe(false);     // locked: win No Future
   });
 
-  it('hints read by gate kind; only cumulative gates show numeric progress', () => {
-    h.stats.totalShows = 10;
-    expect(bandLockInfo('landlord-deathwish')).toMatchObject({
-      hint: 'Book 30 shows all-time', progress: { current: 10, target: 30 },
-    });
-    expect(bandLockInfo('frostbitten-cul-de-sac')).toMatchObject({ hint: 'Win a Classic run', progress: null });
-    expect(bandLockInfo('technical-death')).toMatchObject({ hint: 'Win a Pay to Play run', progress: null });
-    expect(bandLockInfo('mutual-aid-abettors')).toMatchObject({ hint: 'Win a DIY-aligned run', progress: null });
+  it('hints by gate kind; only cumulative gates show numeric progress', () => {
+    h.stats.totalShows = 4;
+    expect(bandLockInfo('save-each-otter')).toMatchObject({ hint: 'Book 10 shows all-time', progress: { current: 4, target: 10 } });
+    expect(bandLockInfo('bliss-to-eviction')).toMatchObject({ hint: 'Win a Festival run', progress: null });
+    expect(bandLockInfo('your-favorite-weakness')).toMatchObject({ hint: 'Win a Pay to Play run', progress: null });
+    expect(bandLockInfo('tell-all-frenemies')).toMatchObject({ hint: 'Win a No Future run', progress: null });
   });
 
-  it('unlocks a mode-win, a stake clear, and a cumulative gate', () => {
-    h.beaten.add('classic');                 // frostbitten-cul-de-sac
-    h.stakeTier = 2;                          // technical-death (Pay to Play)
-    h.stats.totalShows = 15;                  // road-dogs (re-gated to shows in the demo)
+  it('unlocks a cumulative gate, a mode win, and a stake clear', () => {
+    h.stats.totalShows = 10;  // save-each-otter
+    h.beaten.add('festival'); // bliss-to-eviction
+    h.stakeTier = 2;          // your-favorite-weakness (Pay to Play)
     const fresh = recordBandUnlocks(names).map((b) => b.id);
-    expect(fresh).toEqual(expect.arrayContaining(['frostbitten-cul-de-sac', 'technical-death', 'road-dogs']));
+    expect(fresh).toEqual(expect.arrayContaining(['save-each-otter', 'bliss-to-eviction', 'your-favorite-weakness']));
   });
 
-  it('recordRunFeats grants feat flags that unlock feat-gated bands', () => {
-    expect(recordBandUnlocks(names)).toEqual([]); // nothing met yet
+  it('recordRunFeats grants feat flags that unlock feat-gated legends', () => {
+    expect(recordBandUnlocks(names)).toEqual([]);
     recordRunFeats({ isWin: true, pathAlignment: 'PURE_DIY', stakeTier: 3, disasters: 0, perfectShows: 3 });
     const fresh = recordBandUnlocks(names).map((b) => b.id);
     expect(fresh).toEqual(expect.arrayContaining([
-      'mutual-aid-abettors',   // DIY win
-      'scene-veterans',        // zero disasters
-      'blastbeat-yourself-up', // 3 sold-out shows
-      'x-disappointed-dad-x',  // won No Future
+      'we-are-still-awake', // DIY win
+      'tell-all-frenemies', // won No Future
     ]));
-  });
-
-  it('Long Island bands are SECRET (hidden, no teaser) but unlock via progression', () => {
-    expect(isBandHidden('tell-all-frenemies')).toBe(true);   // secret + locked → hidden, no teaser
-    expect(isBandHidden('road-dogs')).toBe(false);           // locked but NOT secret → shows as a "???" teaser
-    expect(isBandHidden('basement-punks')).toBe(false);      // starter
-    // progression earns it (tell-all-frenemies gates on runs >= 2) and it stops being hidden
-    h.stats.totalRuns = 2;
-    const fresh = recordBandUnlocks([{ id: 'tell-all-frenemies', name: 'Tell All Your Frenemies' }]).map((b) => b.id);
-    expect(fresh).toContain('tell-all-frenemies');
-    expect(isBandHidden('tell-all-frenemies')).toBe(false);
-  });
-
-  it('unlockLongIsland() reveals all five at once (friends/demo path)', () => {
-    expect(isBandUnlocked('worship-and-trouble')).toBe(false);
-    unlockLongIsland();
-    for (const id of ['tell-all-frenemies', 'your-favorite-weakness', 'worship-and-trouble', 'forty-hour-delay', 'bliss-to-eviction']) {
-      expect(isBandUnlocked(id)).toBe(true);
-    }
   });
 
   it('a loss records no feats; unlock is idempotent', () => {
     recordRunFeats({ isWin: false, pathAlignment: 'PURE_DIY', stakeTier: 3, disasters: 0, perfectShows: 5 });
-    expect(recordBandUnlocks(names)).toEqual([]); // a loss earns no feats
-    h.stats.totalShows = 30;
-    expect(recordBandUnlocks(names).map((b) => b.id)).toContain('landlord-deathwish');
+    expect(recordBandUnlocks(names)).toEqual([]);
+    h.stats.totalShows = 10;
+    expect(recordBandUnlocks(names).map((b) => b.id)).toContain('save-each-otter');
     expect(recordBandUnlocks(names)).toEqual([]); // no re-fire
   });
 });
