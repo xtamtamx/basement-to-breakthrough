@@ -87,6 +87,13 @@ const BAND_UNLOCKS: BandUnlockRule[] = [
   { id: "needles-in-the-spaces", cond: { kind: "revenue", value: 10000 } },
   { id: "release-the-cured", cond: { kind: "shows", value: 50 } },
   { id: "too-bad-so-beautiful", cond: { kind: "runs", value: 5 } },
+  // The modern wave — the current scene rises as your own matures
+  { id: "would-you-even-notice", cond: { kind: "fans", value: 5000 } },
+  { id: "a-practice-in-patients", cond: { kind: "shows", value: 75 } },
+  { id: "stuck-on-repeat", cond: { kind: "runs", value: 8 } },
+  { id: "tend-your-plot", cond: { kind: "fans", value: 8000 } },
+  { id: "stain-my-memory", cond: { kind: "revenue", value: 25000 } },
+  { id: "one-by-none", cond: { kind: "shows", value: 120 } },
   // Play differently (variety + skill)
   { id: "we-are-still-awake", cond: { kind: "feat", flag: FEAT.winDiy, label: "Win a DIY-aligned run" } },
   { id: "bliss-to-eviction", cond: { kind: "beatMode", mode: "festival" } },
