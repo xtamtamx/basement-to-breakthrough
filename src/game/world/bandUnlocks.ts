@@ -37,6 +37,8 @@ export const STARTER_BAND_IDS: ReadonlySet<string> = new Set([
   "weight-of-the-word",      // METAL
   "believe-what-we-sold-you",// ALTERNATIVE
   "termites-in-his-teeth",   // METAL
+  "seven-miles-to-wall-drug",// EMO  (Inside — foundational, low-pop)
+  "she-was-a-dead-end",      // EMO  (Clockwise — foundational, low-pop)
 ]);
 
 /**
