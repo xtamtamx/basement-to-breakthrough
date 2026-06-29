@@ -93,7 +93,6 @@ const BAND_UNLOCKS: BandUnlockRule[] = [
   { id: "stuck-on-repeat", cond: { kind: "runs", value: 8 } },
   { id: "tend-your-plot", cond: { kind: "fans", value: 8000 } },
   { id: "stain-my-memory", cond: { kind: "revenue", value: 25000 } },
-  { id: "one-by-none", cond: { kind: "shows", value: 120 } },
   // Play differently (variety + skill)
   { id: "we-are-still-awake", cond: { kind: "feat", flag: FEAT.winDiy, label: "Win a DIY-aligned run" } },
   { id: "bliss-to-eviction", cond: { kind: "beatMode", mode: "festival" } },

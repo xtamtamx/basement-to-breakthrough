@@ -254,28 +254,6 @@ export const initialBands: Band[] = [
     isRealArtist: false,
   },
   {
-    id: "one-by-none",
-    name: "One By None",
-    bio: "The older siblings nobody outgrew — they were screaming in the same flooded basements a few years before the melodic kids showed up and politely turned it into a movement. Raw, foundational, and faintly annoyed that everyone they taught now headlines.",
-    genre: Genre.HARDCORE,
-    subgenres: ["melodic hardcore","metallic hardcore"],
-    traits: [
-      {
-        id: "scene-revered",
-        name: "Scene Revered",
-        description: "Cred money cannot buy",
-        type: TraitType.PERSONALITY,
-        modifier: {"authenticity":12},
-      },
-    ],
-    popularity: 34,
-    authenticity: 92,
-    energy: 88,
-    technicalSkill: 70,
-    technicalRequirements: [],
-    isRealArtist: false,
-  },
-  {
     id: "stain-my-memory",
     name: "Stain My Memory",
     bio: "Fuzzed-out, heart-on-sleeve basement emo from the newest underground crop, all hiss and feeling and four chords that ache. The quiet favorite nobody name-drops to keep the room small.",
