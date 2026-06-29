@@ -1,6 +1,7 @@
 import { useGameStore } from '@stores/gameStore';
-import { Show } from '@game/types';
+import { Show, Band } from '@game/types';
 import { prodLog } from '@utils/devLogger';
+import { projectBaseAttendance } from './attendanceProjection';
 
 export enum PromotionType {
   FLYERS = 'FLYERS',
@@ -216,33 +217,39 @@ export class ShowPromotionSystem {
     return true;
   }
   
-  // Calculate expected attendance based on promotion
+  // Calculate expected attendance based on promotion. Uses the SAME projected-
+  // crowd helper as the booking preview (projectBaseAttendance) so the Promote
+  // screen agrees with what the player saw at booking and with the actual result —
+  // then layers this show's promotion + hype on top.
   private calculateExpectedAttendance(show: ScheduledShow): void {
     const state = useGameStore.getState();
     const venue = state.venues.find(v => v.id === show.venueId);
-    const band = state.allBands.find(b => b.id === show.bandId);
-    
-    if (!venue || !band) {
+    const lineupIds = show.lineup && show.lineup.length ? show.lineup : [show.bandId];
+    const bands = lineupIds
+      .map((id) => state.allBands.find((b) => b.id === id))
+      .filter((b): b is Band => !!b);
+
+    if (!venue || bands.length === 0) {
       show.expectedAttendance = 0;
       return;
     }
-    
-    // Base attendance calculation
-    const baseAttendance = Math.floor(
-      venue.capacity * 
-      (band.popularity / 100) * 
-      (venue.atmosphere / 100)
-    );
-    
-    // Apply promotion effectiveness
-    const promotedAttendance = Math.floor(baseAttendance * show.totalPromotionEffectiveness);
-    
-    // Apply hype bonus
-    const hypeMultiplier = 1 + (show.hype / 200); // Up to 50% bonus at max hype
-    
+
+    const currentCity = state.cities?.find((c) => c.id === state.currentCityId);
+    const base = projectBaseAttendance({
+      bands,
+      venue,
+      cityPrimaryGenre: currentCity?.primaryGenre,
+      currentCityId: state.currentCityId,
+      factionStandings: state.factionStandings ?? {},
+      eventCapacityPenalty: state.eventCapacityPenalty,
+    });
+
+    // Promotion effectiveness + hype bonus (up to 50% at max hype) on top.
+    const hypeMultiplier = 1 + (show.hype / 200);
+    const effectiveCapacity = Math.max(1, venue.capacity - (state.eventCapacityPenalty ?? 0));
     show.expectedAttendance = Math.min(
-      Math.floor(promotedAttendance * hypeMultiplier),
-      venue.capacity
+      Math.floor(base * show.totalPromotionEffectiveness * hypeMultiplier),
+      effectiveCapacity,
     );
   }
   

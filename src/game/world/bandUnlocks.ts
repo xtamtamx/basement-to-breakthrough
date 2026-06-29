@@ -115,15 +115,15 @@ const BAND_UNLOCKS: BandUnlockRule[] = [
   { id: "quarter-life-crisis", cond: { kind: "fans", value: 2000 } },
   { id: "couch-fort-collapse", cond: { kind: "revenue", value: 12000 } },
 
-  // Long Island Easter egg — the home scene's legends. HIDDEN (SECRET_BAND_IDS)
-  // AND gated on a private flag normal play never sets, so they're a friends/demo
-  // unlock, not something a public playtester can stumble into. Flip the flag via
-  // unlockLongIsland() (a deliberate secret trigger) to reveal all five at once.
-  { id: "tell-all-frenemies", cond: { kind: "feat", flag: FEAT.longIsland, label: "Long Island" } },
-  { id: "forty-hour-delay", cond: { kind: "feat", flag: FEAT.longIsland, label: "Long Island" } },
-  { id: "your-favorite-weakness", cond: { kind: "feat", flag: FEAT.longIsland, label: "Long Island" } },
-  { id: "worship-and-trouble", cond: { kind: "feat", flag: FEAT.longIsland, label: "Long Island" } },
-  { id: "bliss-to-eviction", cond: { kind: "feat", flag: FEAT.longIsland, label: "Long Island" } },
+  // Long Island Easter egg — the home scene's legends. SECRET (hidden, no "???"
+  // teaser) but earned through DEMO PROGRESSION: scene-veteran milestones spread
+  // late so they pop as surprise reveals. unlockLongIsland() still reveals all five
+  // at once (for showing friends) — both paths coexist.
+  { id: "tell-all-frenemies", cond: { kind: "runs", value: 2 } },
+  { id: "forty-hour-delay", cond: { kind: "runs", value: 4 } },
+  { id: "your-favorite-weakness", cond: { kind: "fans", value: 5000 } },
+  { id: "worship-and-trouble", cond: { kind: "beatMode", mode: "festival" } },
+  { id: "bliss-to-eviction", cond: { kind: "stakeTier", value: 3 } },
 ];
 
 /**

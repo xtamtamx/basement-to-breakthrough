@@ -9,6 +9,7 @@ import { bandFactionBadge } from '@game/world/factionDisplay';
 import { factionSystem } from '@game/mechanics/FactionSystem';
 import { difficultySystem } from '@game/mechanics/DifficultySystem';
 import { cityGenreFit, homeCityFit } from '@game/world/citySynergy';
+import { projectBaseAttendance } from '@game/mechanics/attendanceProjection';
 import { isVenueUnlocked } from '@game/world/venueProgression';
 import { tutorialManager } from '@game/tutorial/TutorialManager';
 import { COMBO_MULT_CAP } from '@game/constants/runConstants';
@@ -119,14 +120,9 @@ export const ShowBuilderView: React.FC = () => {
     // Hometown crowd: the headliner playing its OWN home city (band-specific, stacks).
     const homeFit = homeCityFit(selectedBands[0].homeCity, currentCityId);
 
-    // Expected attendance — mirror the engine's deterministic shape (crowd scales
-    // with venue atmosphere, +20% per extra band on the bill) so the preview
-    // doesn't oversell the room. See TurnResolutionEngine.executeShow.
-    const avgPopularity = selectedBands.reduce((sum, b) => sum + b.popularity, 0) / selectedBands.length;
-    const venueBonus = selectedVenue.atmosphere / 100;
-    const billMultiplier = 1 + 0.2 * Math.max(0, selectedBands.length - 1);
     // Bill chemistry — how the bands get along (faction affinity + co-billing
-    // drift). Pure, so this preview matches what executeShow applies.
+    // drift). Pure, so this preview matches what executeShow applies. (Kept for the
+    // chemistry display; the attendance number itself comes from the shared helper.)
     const lineupChem = computeLineupChemistry(selectedBands);
     // Faction show-modifier (your standing with the headliner's faction). Computed
     // PURELY from store standings via the same getShowModifiersFrom + clamps the
@@ -140,9 +136,16 @@ export const ShowBuilderView: React.FC = () => {
     // THIS turn — mirror the engine's floored reduction so the preview doesn't
     // oversell a room the cops just capped.
     const effectiveCapacity = Math.max(1, selectedVenue.capacity - (eventCapacityPenalty ?? 0));
-    const baseAttendance = Math.floor(effectiveCapacity * (avgPopularity / 100) * venueBonus);
-    const expectedAttendance = Math.floor(baseAttendance * billMultiplier * totalMultiplier * sceneFit.multiplier * homeFit.multiplier * lineupChem.mult * factionAttMult);
-    const finalAttendance = Math.min(expectedAttendance, effectiveCapacity);
+    // Projected (pre-promo) crowd via the SHARED helper, so this preview and the
+    // Promote screen's expected attendance can never disagree (projectBaseAttendance).
+    const finalAttendance = projectBaseAttendance({
+      bands: selectedBands,
+      venue: selectedVenue,
+      cityPrimaryGenre: currentCity?.primaryGenre,
+      currentCityId,
+      factionStandings,
+      eventCapacityPenalty,
+    });
 
     // Revenue includes bar sales where the venue has a bar (matches the engine),
     // times the faction money modifier.

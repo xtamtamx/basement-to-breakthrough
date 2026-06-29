@@ -27,7 +27,7 @@ vi.mock('@game/mechanics/StakesManager', () => ({
   STAKE_TIERS: [{ name: 'Open Mic' }, { name: 'Pay to Play' }, { name: 'Sellout Pressure' }, { name: 'No Future' }],
 }));
 
-import { isBandUnlocked, bandLockInfo, recordBandUnlocks, recordRunFeats, isBandHidden, STARTER_BAND_IDS } from '../bandUnlocks';
+import { isBandUnlocked, bandLockInfo, recordBandUnlocks, recordRunFeats, isBandHidden, unlockLongIsland, STARTER_BAND_IDS } from '../bandUnlocks';
 
 const names = [
   { id: 'frostbitten-cul-de-sac', name: 'Enthrone The Frost' },
@@ -84,19 +84,23 @@ describe('bandUnlocks (variety-weighted)', () => {
     ]));
   });
 
-  it('Long Island bands stay HIDDEN through normal play; reveal only via the secret flag', () => {
-    expect(isBandHidden('tell-all-frenemies')).toBe(true);   // secret + locked
-    expect(isBandHidden('road-dogs')).toBe(false);           // locked but not secret
+  it('Long Island bands are SECRET (hidden, no teaser) but unlock via progression', () => {
+    expect(isBandHidden('tell-all-frenemies')).toBe(true);   // secret + locked → hidden, no teaser
+    expect(isBandHidden('road-dogs')).toBe(false);           // locked but NOT secret → shows as a "???" teaser
     expect(isBandHidden('basement-punks')).toBe(false);      // starter
-    // No amount of normal-play progress unlocks them...
-    h.stats.totalRuns = 50; h.stats.totalFans = 999999; h.beaten.add('hardcore'); h.stakeTier = 3;
-    expect(recordBandUnlocks([{ id: 'tell-all-frenemies', name: 'x' }]).map((b) => b.id)).not.toContain('tell-all-frenemies');
-    expect(isBandHidden('tell-all-frenemies')).toBe(true);
-    // ...only the private trigger does.
-    h.unlocks.add('feat_long_island');
+    // progression earns it (tell-all-frenemies gates on runs >= 2) and it stops being hidden
+    h.stats.totalRuns = 2;
     const fresh = recordBandUnlocks([{ id: 'tell-all-frenemies', name: 'Tell All Your Frenemies' }]).map((b) => b.id);
     expect(fresh).toContain('tell-all-frenemies');
     expect(isBandHidden('tell-all-frenemies')).toBe(false);
+  });
+
+  it('unlockLongIsland() reveals all five at once (friends/demo path)', () => {
+    expect(isBandUnlocked('worship-and-trouble')).toBe(false);
+    unlockLongIsland();
+    for (const id of ['tell-all-frenemies', 'your-favorite-weakness', 'worship-and-trouble', 'forty-hour-delay', 'bliss-to-eviction']) {
+      expect(isBandUnlocked(id)).toBe(true);
+    }
   });
 
   it('a loss records no feats; unlock is idempotent', () => {
