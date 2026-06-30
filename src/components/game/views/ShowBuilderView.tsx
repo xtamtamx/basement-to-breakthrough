@@ -15,7 +15,7 @@ import { projectBaseAttendance } from '@game/mechanics/attendanceProjection';
 import { isVenueUnlocked } from '@game/world/venueProgression';
 import { tutorialManager } from '@game/tutorial/TutorialManager';
 import { COMBO_MULT_CAP } from '@game/constants/runConstants';
-import { Calendar, MapPin, Users, Music, AlertCircle, TrendingUp, Check, Ban } from 'lucide-react';
+import { Calendar, MapPin, Users, AlertCircle, TrendingUp, Check, Ban } from 'lucide-react';
 
 /** Step header with a numbered pill that lights up once its step is reachable. */
 const StepHeader: React.FC<{
@@ -282,26 +282,6 @@ export const ShowBuilderView: React.FC = () => {
             color: '#b9b3d6',
             margin: '4px 0 0'
           }}>Lineup, venue, price — make it a night.</p>
-        </div>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          flexShrink: 0
-        }}>
-          <span className="snes-chip snes-pixel" style={{
-            fontSize: '9px'
-          }}>
-            <Music size={12} color="#4cc9f0" />
-            {scheduledShows.length}
-          </span>
-          <span className="snes-chip snes-pixel" style={{
-            fontSize: '9px',
-            borderColor: '#0a0814',
-            color: money >= 100 ? '#3ad17e' : '#ff5c57'
-          }}>
-            ${money}
-          </span>
         </div>
       </div>
 

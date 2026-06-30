@@ -9,7 +9,6 @@ import { PromotionView } from "./views/PromotionView";
 import { ProgressionView } from "./views/ProgressionView";
 import { TourView } from "./views/TourView";
 import { MobileBottomNav } from "./MobileBottomNav";
-import { SynergyBar } from "./SynergyBar";
 import { SynergyAcquireModal } from "./SynergyAcquireModal";
 import { EventCardModal } from "./EventCardModal";
 import { captureRuntimeSnapshot } from "@game/persistence/runtimeSnapshot";
@@ -30,7 +29,8 @@ import { RunEndState } from "@game/constants/runConstants";
 import { gameAudio } from "@utils/gameAudio";
 import { GameErrorBoundary } from "@components/ErrorBoundary";
 import { saveGameManager } from "@game/persistence/SaveGameManager";
-import { Settings, Save, MapPin, Target } from 'lucide-react';
+import { synergyManager } from "@game/mechanics/SynergyManager";
+import { Settings, Save, MapPin, Target, Music, Brain } from 'lucide-react';
 
 type ViewType = "city" | "bands" | "shows" | "promotion" | "synergies" | "jobs" | "progression" | "tour";
 
@@ -93,8 +93,8 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
   const resolvingRef = useRef(false);
   const confirm = useConfirm();
 
-  // synergyManager is a singleton OUTSIDE Zustand, so the SynergyBar won't
-  // re-render on acquire/replace unless we bump this counter to force it.
+  // synergyManager is a singleton OUTSIDE Zustand, so the HUD instinct chip
+  // won't re-derive on acquire/replace unless we bump this counter to force it.
   const [synergyVersion, setSynergyVersion] = useState(0);
   const pendingSynergyOffer = useGameStore((s) => s.pendingSynergyOffer);
   const pendingEventCard = useGameStore((s) => s.pendingEventCard);
@@ -118,6 +118,24 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
   const stress = useGameStore((s) => s.stress);
   const currentCityName = useGameStore(
     (s) => s.cities.find((c) => c.id === s.currentCityId)?.name ?? "",
+  );
+  // Booked-shows count for the HUD chip (folded up from the Shows-view header,
+  // where it was duplicated alongside a redundant cash readout).
+  const scheduledShowCount = useGameStore(
+    (s) => s.scheduledShows.filter((sh) => sh.status === "SCHEDULED").length,
+  );
+  // Instinct counts for the HUD chip. synergyManager is a singleton outside
+  // Zustand, so re-derive when an instinct is acquired (synergyVersion) or a
+  // turn resolves (currentRound) rather than on every store write.
+  const { equippedInstincts, maxInstincts } = React.useMemo(
+    () => ({
+      equippedInstincts: synergyManager.getEquippedSynergies().length,
+      maxInstincts: synergyManager.getMaxSlots(),
+    }),
+    // Re-derive on instinct acquire (synergyVersion) / turn resolve (currentRound),
+    // not on every store write — the singleton's getters aren't reactive deps.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [synergyVersion, currentRound],
   );
 
   // The bed intensifies as the scene grows: chill basements → driving punk →
@@ -297,6 +315,28 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
 
           {/* Quick Actions */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            {/* Instincts — count folded up from the old always-on under-HUD strip.
+                Tap to view & slot in the Synergies view. Carries the tutorial anchor. */}
+            <button
+              onClick={() => handleViewChange('synergies')}
+              data-tut="instincts"
+              aria-label={`Instincts ${equippedInstincts} of ${maxInstincts}`}
+              title="Instincts — tap to view & slot"
+              style={{ height: 44, minWidth: 44, padding: '0 9px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', background: '#1f1a3a', color: '#c77dff', border: '2px solid #0a0814', boxShadow: 'inset 1px 1px 0 #3a2f5c', cursor: 'pointer', borderRadius: 0 }}
+            >
+              <Brain size={14} />
+              <span className="snes-pixel" style={{ fontSize: '8px', letterSpacing: 0 }}>{equippedInstincts}/{maxInstincts}</span>
+            </button>
+            {/* Booked-shows count — folded up from the Shows-view header (was duplicated there). */}
+            <button
+              onClick={() => handleViewChange('shows')}
+              aria-label={`${scheduledShowCount} show${scheduledShowCount === 1 ? '' : 's'} booked`}
+              title="Shows on the calendar — tap to book"
+              style={{ height: 44, minWidth: 44, padding: '0 9px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', background: '#1f1a3a', color: '#4cc9f0', border: '2px solid #0a0814', boxShadow: 'inset 1px 1px 0 #3a2f5c', cursor: 'pointer', borderRadius: 0 }}
+            >
+              <Music size={14} />
+              <span className="snes-pixel" style={{ fontSize: '8px', letterSpacing: 0 }}>{scheduledShowCount}</span>
+            </button>
             {objectivesTotal > 0 && (
               <button
                 onClick={() => setShowObjectives(true)}
@@ -325,16 +365,6 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
           </div>
         </div>
       </header>
-
-      {/* Equipped synergies (player-facing: "instincts") — always visible just
-          under the HUD. Keyed on version+round so the singleton-backed bar
-          re-renders on acquire and after each turn (trigger counts). */}
-      <div data-tut="instincts" style={{ flexShrink: 0, padding: '6px 10px 0' }}>
-        <SynergyBar
-          key={`${synergyVersion}-${currentRound}`}
-          onSlotClick={() => handleViewChange('synergies')}
-        />
-      </div>
 
       {/* View Content. Navigation is tap-only via the bottom nav — the old
           swipe-to-switch gesture was too touchy and kept hijacking the map's
