@@ -234,7 +234,7 @@ export const initialBands: Band[] = [
   {
     id: "the-walking-worried",
     name: "The Walking Worried",
-    bio: "Yes, the little bat's on every patch, and yes, those weepy choruses will have you sobbing along at the top of your lungs like that's a normal thing to do at a show. Lost one of their own to the highway and got back in the van anyway — because of course they did, and of course you'll follow them anywhere.",
+    bio: "Drifted in from a borough over and the Island adopted them on the spot, then flat refused to give them back. Yes, the little bat's on every patch, and yes, those weepy choruses will have you sobbing along at the top of your lungs like that's normal show behavior. Lost one of their own to the highway and got back in the van anyway — because of course they did, and of course you'll follow them anywhere.",
     genre: Genre.EMO,
     subgenres: ["emo","pop-punk","goth-punk"],
     traits: [
@@ -542,7 +542,7 @@ export const initialBands: Band[] = [
   {
     id: "no-foolin-eyes",
     name: "No Foolin' Eyes",
-    bio: "Three guys who grinded the harbor-town bar circuit for years until their debut quietly limped to gold — all on the back of a frontman who hits notes the rest of us only stumble into by falling down stairs. You could hear exactly which blimp-worshipping arena gods they wanted to be, just with every dial yanked toward the radio. Subtle.",
+    bio: "Blew in from a swamp town down south and made the Island's bar circuit their whole world, grinding it for years until the debut quietly limped to gold — all on a frontman who hits notes the rest of us only stumble into by falling down stairs. You could hear exactly which blimp-worshipping arena gods they wanted to be, just with every dial yanked toward the radio. Subtle. The Island claims them now; argue it at last call if you dare.",
     genre: Genre.ALTERNATIVE,
     subgenres: ["arena-rock","hard-rock"],
     traits: [
