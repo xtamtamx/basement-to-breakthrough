@@ -29,12 +29,9 @@ export const bandUnlockId = (bandId: string): string => `band_${bandId}`;
 // unlock through progression, with the hometown superstar as the capstone.
 export const STARTER_BAND_IDS: ReadonlySet<string> = new Set([
   "the-constant-ache",       // Iron Chic
-  "darker-halftime",         // Backtrack
-  "felony-in-mono-is-dead",  // Crime in Stereo
   "stain-my-memory",         // Somerset Thrower
   "stuck-on-repeat",         // Rule Them All
   "tend-your-plot",          // Victory Garden
-  "save-each-otter",         // Patent Pending
   "cost-of-leaving",         // Incendiary
   "a-practice-in-patients",  // Stand Still
   "would-you-even-notice",   // Koyo
@@ -91,6 +88,10 @@ const BAND_UNLOCKS: BandUnlockRule[] = [
   { id: "weight-of-the-word", cond: { kind: "revenue", value: 10000 } },
   { id: "believe-what-we-sold-you", cond: { kind: "runs", value: 5 } },
   { id: "termites-in-his-teeth", cond: { kind: "fans", value: 3500 } },
+  // Not currently touring (on hiatus / reunion-cycle) → unlockable, not starters.
+  { id: "felony-in-mono-is-dead", cond: { kind: "shows", value: 15 } },
+  { id: "darker-halftime", cond: { kind: "runs", value: 4 } },
+  { id: "save-each-otter", cond: { kind: "fans", value: 1200 } },
   { id: "monocultured", cond: { kind: "shows", value: 75 } },
   { id: "no-foolin-eyes", cond: { kind: "runs", value: 8 } },
   { id: "built-for-greased", cond: { kind: "fans", value: 6000 } },

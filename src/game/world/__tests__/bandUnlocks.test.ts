@@ -47,7 +47,8 @@ beforeEach(() => {
 describe('bandUnlocks (Long Island roster — modern starters / legacy unlocks)', () => {
   it('active starters are unlocked; legacy acts start locked', () => {
     expect(isBandUnlocked('the-constant-ache')).toBe(true);     // active starter (Iron Chic)
-    expect(STARTER_BAND_IDS.has('save-each-otter')).toBe(true); // active starter (Patent Pending)
+    expect(STARTER_BAND_IDS.has('cost-of-leaving')).toBe(true); // active starter (Incendiary)
+    expect(isBandUnlocked('save-each-otter')).toBe(false);      // Patent Pending — not touring, now locked
     expect(isBandUnlocked('automedication')).toBe(false);       // legacy, locked: book 10 shows
     expect(isBandUnlocked('an-affluent-man')).toBe(false);      // capstone, locked: $100k all-time
   });
