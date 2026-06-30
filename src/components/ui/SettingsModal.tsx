@@ -4,6 +4,7 @@ import { gameAudio } from '@utils/gameAudio';
 import { useFxQuality } from '@utils/fxQuality';
 import { haptics } from '@utils/mobile';
 import { useGameStore } from '@stores/gameStore';
+import { safeStorage } from '@utils/safeStorage';
 import { tutorialManager } from '@game/tutorial/TutorialManager';
 import { ColorblindMode } from '@game/types';
 import { useColorblind } from '@hooks/useColorblind';
@@ -36,6 +37,30 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     setEnabled(!enabled);        // simpleAudio SFX
     gameAudio.setEnabled(!enabled); // music bed + gameAudio SFX (separate manager)
     haptics.light();
+  };
+
+  // Wipe everything back to a fresh-install state — so a playtester (or you, on a
+  // dev device with every band long since unlocked) sees the locked roster + the
+  // full progression drip from scratch. Clears progress only, not audio/a11y prefs.
+  const handleResetProgress = async () => {
+    const ok = await confirm({
+      title: 'Reset all progress?',
+      message: 'Wipes every unlocked band, run, high score, and meta-progression back to a fresh install — for a clean playtest. This cannot be undone.',
+      confirmLabel: 'Reset everything',
+      danger: true,
+    });
+    if (!ok) return;
+    [
+      'diy-indie-empire-storage', // active run (zustand persist)
+      'btb-meta-progression',     // band unlocks + lifetime stats + Scene Points
+      'btb-stakes-v1',            // stake-tier unlocks
+      'btb-run-history',
+      'btb-highscores',
+      'btb-tutorial-v2',          // replay onboarding
+      'btb-venue-intro-v1',
+    ].forEach((k) => safeStorage.removeItem(k));
+    haptics.success();
+    window.location.reload();
   };
 
   const handleAbandonRun = async () => {
@@ -355,6 +380,35 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
             >
               Abandon Run (Round {currentRound})
             </button>
+            <button
+              onClick={handleResetProgress}
+              style={{
+                width: '100%',
+                minHeight: '44px',
+                marginTop: '12px',
+                padding: '12px',
+                backgroundColor: '#0a0814',
+                color: '#ff5c57',
+                border: '2px solid #ff5c57',
+                boxShadow: 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814',
+                borderRadius: 0,
+                fontFamily: '"Press Start 2P", monospace',
+                fontSize: '9px',
+                letterSpacing: 0,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                transition: 'none',
+              }}
+            >
+              <RefreshCw size={16} color="#ff5c57" />
+              Reset All Progress
+            </button>
+            <p style={{ fontFamily: '"Press Start 2P", monospace', fontSize: '8px', lineHeight: 1.6, color: '#6f6796', margin: '10px 2px 0' }}>
+              Starts fresh: re-locks the roster so you can play the full unlock progression from the top. For playtesting.
+            </p>
           </section>
         </div>
     </SnesModal>
