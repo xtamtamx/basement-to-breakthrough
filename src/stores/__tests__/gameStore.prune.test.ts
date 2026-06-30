@@ -90,16 +90,16 @@ describe('gameStore.loadGame — dangling-reference prune', () => {
   });
 
   it('drops dangling scheduledShows, rosterBandIds, and promotion-Map entries', async () => {
-    // Loaded save knows only b1/v1. References to b2 (removed band) and v2
-    // (removed venue) are dangling.
+    // 'automedication' is a real authored band (survives the authored-authoritative
+    // reconcile); references to b2 (removed band) and v2 (removed venue) are dangling.
     savedState = {
-      allBands: [band('b1')],
+      allBands: [band('automedication')],
       venues: [venue('v1')],
-      rosterBandIds: ['b1', 'b2'], // b2 no longer exists
+      rosterBandIds: ['automedication', 'b2'], // b2 no longer exists
       scheduledShows: [
-        show('s-ok', 'b1', 'v1'),
+        show('s-ok', 'automedication', 'v1'),
         show('s-deadband', 'b2', 'v1'),
-        show('s-deadvenue', 'b1', 'v2'),
+        show('s-deadvenue', 'automedication', 'v2'),
       ],
       runtimeSnapshot: { run: null, scheduledShows: [], difficultyBlocks: { raided: [], unavailable: [] } },
     };
@@ -110,7 +110,7 @@ describe('gameStore.loadGame — dangling-reference prune', () => {
 
     const s = useGameStore.getState();
     expect(s.scheduledShows.map((x) => x.id)).toEqual(['s-ok']);
-    expect(s.rosterBandIds).toEqual(['b1']);
+    expect(s.rosterBandIds).toEqual(['automedication']);
     // The live promotion Map was pruned too.
     expect(showPromotionSystem.getScheduledShows().map((x) => x.id)).toEqual([
       's-ok',
@@ -119,10 +119,10 @@ describe('gameStore.loadGame — dangling-reference prune', () => {
 
   it('is a no-op when everything resolves', async () => {
     savedState = {
-      allBands: [band('b1'), band('b2')],
+      allBands: [band('automedication'), band('life-of-a-speculator')],
       venues: [venue('v1'), venue('v2')],
-      rosterBandIds: ['b1', 'b2'],
-      scheduledShows: [show('s1', 'b1', 'v1'), show('s2', 'b2', 'v2')],
+      rosterBandIds: ['automedication', 'life-of-a-speculator'],
+      scheduledShows: [show('s1', 'automedication', 'v1'), show('s2', 'life-of-a-speculator', 'v2')],
       runtimeSnapshot: { run: null, scheduledShows: [], difficultyBlocks: { raided: [], unavailable: [] } },
     };
     snapshotShows = savedState.scheduledShows as SerializedScheduledShow[];
@@ -131,7 +131,7 @@ describe('gameStore.loadGame — dangling-reference prune', () => {
 
     const s = useGameStore.getState();
     expect(s.scheduledShows).toHaveLength(2);
-    expect(s.rosterBandIds).toEqual(['b1', 'b2']);
+    expect(s.rosterBandIds).toEqual(['automedication', 'life-of-a-speculator']);
     expect(showPromotionSystem.getScheduledShows()).toHaveLength(2);
   });
 });

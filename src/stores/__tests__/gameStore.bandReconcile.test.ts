@@ -48,11 +48,13 @@ describe('gameStore.loadGame — band reconcile against data file', () => {
     expect(s.allBands).toHaveLength(initialBands.length);
   });
 
-  it('leaves a save-only band (removed from the data file) in place', async () => {
+  it('DROPS a save-only band not in the data file (authored roster is authoritative)', async () => {
+    // A stale save (e.g. the parked touring roster after the Long Island swap)
+    // must not resurrect bands the data file no longer ships.
     savedState = {
       allBands: [{ ...initialBands[0], id: 'ghost-band', name: 'Ghost', popularity: 42 }],
       venues: [],
-      rosterBandIds: [],
+      rosterBandIds: ['ghost-band'],
       scheduledShows: [],
       runtimeSnapshot: { run: null, scheduledShows: [], difficultyBlocks: { raided: [], unavailable: [] } },
     };
@@ -60,8 +62,8 @@ describe('gameStore.loadGame — band reconcile against data file', () => {
     await useGameStore.getState().loadGame('any');
 
     const s = useGameStore.getState();
-    const ghost = s.allBands.find((b) => b.id === 'ghost-band');
-    expect(ghost?.name).toBe('Ghost'); // untouched
-    expect(s.allBands).toHaveLength(initialBands.length + 1); // ghost + full authored roster
+    expect(s.allBands.find((b) => b.id === 'ghost-band')).toBeUndefined(); // dropped
+    expect(s.allBands).toHaveLength(initialBands.length); // exactly the authored roster
+    expect(s.rosterBandIds).not.toContain('ghost-band'); // pruneDangling cleared the orphaned ref
   });
 });

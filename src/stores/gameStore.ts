@@ -755,30 +755,30 @@ function reconcileCitiesAgainstData(draft: {
  * reconcileCitiesAgainstData solves. Shared by loadGame (save slot) AND
  * onRehydrateStorage (refresh/relaunch) so both resume paths get the same refresh.
  * The authored roster is passed in (dynamically imported at the call sites) so the
- * band data stays out of the initial bundle. Save-only bands are kept untouched;
- * newly-authored bands appear as free agents. Mutates the passed draft.
+ * band data stays out of the initial bundle. AUTHORED-AUTHORITATIVE (like
+ * reconcileCitiesAgainstData): `allBands` becomes exactly the authored roster —
+ * bands no longer in the data file are DROPPED (e.g. the parked touring roster
+ * after the Long Island swap), so a stale save can't resurrect them;
+ * pruneDanglingReferences then clears any orphaned roster/show refs. Mutates draft.
  */
 const BAND_RUN_STATS = ["popularity", "authenticity", "energy", "technicalSkill"] as const;
 function reconcileBandsAgainstData(draft: { allBands: Band[] }, authored: Band[]): void {
   // Nothing restored yet (e.g. menu boot) — let loadInitialGameData seed instead.
   if (!Array.isArray(draft.allBands) || draft.allBands.length === 0) return;
   if (!Array.isArray(authored) || authored.length === 0) return;
-  const authoredById = new Map(authored.map((b) => [b.id, b]));
-  const savedIds = new Set(draft.allBands.map((b) => b.id));
-  // Refresh content for bands still in the data file (keeping run-mutated stats),
-  // leave any save-only bands untouched, then surface newly-authored bands as free
-  // agents. Roster ids stay valid because every prior band is kept.
-  const refreshed = draft.allBands.map((prior) => {
-    const fresh = authoredById.get(prior.id);
-    if (!fresh) return prior;
+  const savedById = new Map(draft.allBands.map((b) => [b.id, b]));
+  // Rebuild allBands as EXACTLY the authored roster, carrying over run-mutated
+  // stats for any band the save already had. Save-only bands (not in the data
+  // file) are dropped — that's what gets the parked touring roster off an old save.
+  draft.allBands = authored.map((fresh) => {
+    const prior = savedById.get(fresh.id);
+    if (!prior) return fresh;
     const merged: Band = { ...fresh };
     for (const k of BAND_RUN_STATS) {
       if (typeof prior[k] === "number") merged[k] = prior[k];
     }
     return merged;
   });
-  const added = authored.filter((b) => !savedIds.has(b.id));
-  draft.allBands = [...refreshed, ...added];
 }
 
 // Lazy initialization function
