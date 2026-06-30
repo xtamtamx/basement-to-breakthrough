@@ -297,13 +297,10 @@ export const ShowBuilderView: React.FC = () => {
         </div>
       </div>
 
-      {/* Content */}
-      <div style={{
-        flex: 1,
-        overflowY: 'auto',
-        padding: '12px',
-        paddingBottom: 'calc(5rem + env(safe-area-inset-bottom))'
-      }}>
+      {/* Content — landscape two-pane: build inputs scroll on the LEFT; the live
+          payoff + Book stay pinned on the RIGHT, always in view while you pick. */}
+      <div style={{ flex: 1, display: 'flex', gap: '12px', minHeight: 0, padding: '12px', paddingBottom: 'calc(4rem + env(safe-area-inset-bottom))' }}>
+        <div style={{ flex: '1.5 1 0', overflowY: 'auto', minWidth: 0, paddingRight: '2px' }}>
         {/* Upcoming shows — what's booked and when it plays (reactive countdown). */}
         {scheduledShows.filter((s) => s.status === 'SCHEDULED').length > 0 && (
           <div className="snes-panel-inset" style={{ marginBottom: '16px', padding: '10px 12px' }}>
@@ -857,6 +854,40 @@ export const ShowBuilderView: React.FC = () => {
             More turns out = more time for promo to build hype (and to save up for the night).
           </p>
         </div>
+        </div>{/* end LEFT pane */}
+
+        {/* RIGHT pane — the night at a glance + Book, pinned in view */}
+        <div style={{ flex: '1 1 0', overflowY: 'auto', minWidth: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {preview ? (
+            <div className="snes-panel" style={{ padding: '14px' }}>
+              <div className="snes-pixel" style={{ fontSize: '9px', color: '#3ad17e', letterSpacing: 0, marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <TrendingUp size={13} /> The Night
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#b9b3d6', marginBottom: '6px' }}>
+                <span>Crowd</span><span className="snes-pixel" style={{ fontSize: '10px', color: '#ffffff' }}>{preview.expectedAttendance}/{preview.capacity}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#b9b3d6', marginBottom: '6px' }}>
+                <span>Door + bar</span><span className="snes-pixel" style={{ fontSize: '10px', color: '#3ad17e' }}>${preview.grossRevenue}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#b9b3d6', marginBottom: '8px' }}>
+                <span>Costs</span><span className="snes-pixel" style={{ fontSize: '10px', color: '#ff5c57' }}>-${preview.venueCost + preview.bandCost}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '2px solid #2a2350', paddingTop: '8px' }}>
+                <span className="snes-pixel" style={{ fontSize: '9px', color: '#ffffff', letterSpacing: 0 }}>Net</span>
+                <span className="snes-pixel" style={{ fontSize: '13px', letterSpacing: 0, color: preview.netRevenue >= 0 ? '#3ad17e' : '#ff5c57' }}>{preview.netRevenue >= 0 ? '+' : ''}${preview.netRevenue}</span>
+              </div>
+              {preview.synergies.length > 0 && (
+                <div className="snes-pixel" style={{ fontSize: '9px', color: '#ffd23f', letterSpacing: 0, marginTop: '10px' }}>🔥 {preview.synergies.length} combo{preview.synergies.length > 1 ? 's' : ''} firing</div>
+              )}
+              <div style={{ fontSize: '10px', color: '#6f6796', marginTop: '10px', lineHeight: 1.4 }}>
+                {leadTime === 1 ? 'Plays next turn' : `Plays in ${leadTime} turns`} · full breakdown on the left
+              </div>
+            </div>
+          ) : (
+            <div className="snes-panel-inset" style={{ padding: '18px', textAlign: 'center', color: '#6f6796', fontSize: '12px', lineHeight: 1.5 }}>
+              Pick a lineup and a venue to see the night ahead.
+            </div>
+          )}
 
         {/* Book Show Button */}
         <button
@@ -877,6 +908,7 @@ export const ShowBuilderView: React.FC = () => {
            (preview && money < preview.venueCost + preview.bandCost) ? 'Not Enough Cash' :
            'Book This Show'}
         </button>
+        </div>{/* end RIGHT pane */}
       </div>
     </div>
   );
