@@ -502,6 +502,10 @@ export interface Show {
   round?: number;
   fansGained?: number;
   bookingDeposit?: number; // Rent held at booking, refunded when the show resolves
+  /** Absolute turn the show plays on (booking round + lead time). Lets the UI show
+   *  a reactive countdown — "in (scheduledTurn - currentRound) turns" — off the
+   *  store without reaching into the promotion-system singleton. */
+  scheduledTurn?: number;
 }
 
 export interface Bill {

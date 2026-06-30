@@ -1118,7 +1118,9 @@ export const useGameStore = create<GameStore>()(
         const currentMoney = get().money;
         const actualDeposit =
           currentMoney - clamp(currentMoney - deposit, CONSTRAINTS.MIN_MONEY, CONSTRAINTS.MAX_MONEY);
-        const bookedShow = { ...show, bookingDeposit: actualDeposit };
+        // Absolute turn this plays on, so the UI can show a reactive countdown
+        // (scheduledTurn - currentRound) without polling the promotion singleton.
+        const bookedShow = { ...show, bookingDeposit: actualDeposit, scheduledTurn: get().currentRound + turns };
 
         showPromotionSystem.scheduleShow(bookedShow, turns);
 

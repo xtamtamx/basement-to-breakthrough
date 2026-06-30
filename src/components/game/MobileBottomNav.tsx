@@ -6,6 +6,7 @@ import {
 import { useGameStore } from '@stores/gameStore';
 import { showPromotionSystem } from '@game/mechanics/ShowPromotionSystem';
 import { progressionPathSystem } from '@game/mechanics/ProgressionPathSystem';
+import { runManager } from '@game/mechanics/RunManager';
 import { haptics } from '@utils/mobile';
 import { TOURING_ENABLED } from '@/config/featureFlags';
 
@@ -29,6 +30,8 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
     reputation,
     currentRound
   } = useGameStore();
+  // Run length context — constant per run, so reading the singleton at render is fine.
+  const maxTurns = runManager.getCurrentRun()?.config.maxTurns;
 
   const progressionUnlocked = progressionPathSystem.isUnlocked({
     fans,
@@ -377,7 +380,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         <span className="snes-pixel" style={{
           fontSize: '8px',
           color: '#ffd23f'
-        }}>TURN {currentRound}</span>
+        }}>TURN {currentRound}{maxTurns ? `/${maxTurns}` : ''}</span>
       </div>
     </>
   );

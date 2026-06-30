@@ -66,6 +66,7 @@ export const ShowBuilderView: React.FC = () => {
     currentCityId,
     factionStandings,
     eventCapacityPenalty,
+    currentRound,
   } = useGameStore();
   const currentCity = cities.find((c) => c.id === currentCityId);
   // Only venues the scene has unlocked are bookable (scene-growth ladder).
@@ -74,6 +75,7 @@ export const ShowBuilderView: React.FC = () => {
   const [selectedBandIds, setSelectedBandIds] = useState<string[]>([]);
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
   const [ticketPrice, setTicketPrice] = useState(15);
+  const [leadTime, setLeadTime] = useState(3); // turns out to book — promo builds over the wait
   const [expandedCombo, setExpandedCombo] = useState<string | null>(null); // tap-to-reveal explainer
 
   const rosterBands = allBands.filter(b => rosterBandIds.includes(b.id));
@@ -220,7 +222,7 @@ export const ShowBuilderView: React.FC = () => {
     const duringTutorialBuild =
       tutorialManager.isActive() &&
       tutorialManager.getCurrentStep()?.id === 'build-show';
-    scheduleShow(show, duringTutorialBuild ? 1 : undefined);
+    scheduleShow(show, duringTutorialBuild ? 1 : leadTime);
     haptics.success();
     audio.play('cardDrop'); // satisfying "thunk" as the show lands on the calendar
     // A bill with combos stacked on it lands with a flourish, not just a thunk.
@@ -292,6 +294,30 @@ export const ShowBuilderView: React.FC = () => {
         padding: '12px',
         paddingBottom: 'calc(5rem + env(safe-area-inset-bottom))'
       }}>
+        {/* Upcoming shows — what's booked and when it plays (reactive countdown). */}
+        {scheduledShows.filter((s) => s.status === 'SCHEDULED').length > 0 && (
+          <div className="snes-panel-inset" style={{ marginBottom: '16px', padding: '10px 12px' }}>
+            <div className="snes-pixel" style={{ fontSize: '9px', color: '#ffd23f', letterSpacing: 0, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Calendar size={12} /> Upcoming Shows
+            </div>
+            {scheduledShows.filter((s) => s.status === 'SCHEDULED').map((s) => {
+              const inTurns = (s.scheduledTurn ?? currentRound) - currentRound;
+              const headliner = allBands.find((b) => b.id === (s.lineup?.[0] ?? s.bandId));
+              const venue = allVenues.find((v) => v.id === s.venueId);
+              return (
+                <div key={s.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', padding: '3px 0' }}>
+                  <span style={{ fontSize: '11px', color: '#b9b3d6', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
+                    {headliner?.name ?? '???'} · {venue?.name ?? '???'}
+                  </span>
+                  <span className="snes-pixel" style={{ flexShrink: 0, fontSize: '9px', letterSpacing: 0, color: inTurns <= 1 ? '#ff5c57' : '#3ad17e' }}>
+                    {inTurns <= 0 ? 'tonight' : inTurns === 1 ? 'next turn' : `in ${inTurns} turns`}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         {/* Step 1: Select Bands */}
         <section style={{ marginBottom: '16px' }}>
           <StepHeader
@@ -783,6 +809,37 @@ export const ShowBuilderView: React.FC = () => {
             </div>
           </section>
         )}
+
+        {/* When the show plays — explicit lead time so you know what to budget for. */}
+        <div className="snes-panel-inset" style={{ padding: '10px 12px', marginBottom: '12px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <span className="snes-pixel" style={{ fontSize: '9px', color: '#ffffff', letterSpacing: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Calendar size={12} color="#f72585" /> When
+            </span>
+            <span className="snes-pixel" style={{ fontSize: '9px', color: '#3ad17e', letterSpacing: 0 }}>
+              {leadTime === 1 ? 'plays next turn' : `plays in ${leadTime} turns`}
+            </span>
+          </div>
+          <div style={{ display: 'flex', gap: '4px' }}>
+            {[1, 2, 3, 4, 5].map((n) => (
+              <button
+                key={n}
+                onClick={() => { setLeadTime(n); haptics.light(); }}
+                className="snes-pixel btb-press"
+                aria-label={`Book ${n} turn${n > 1 ? 's' : ''} out`}
+                style={{
+                  flex: 1, minHeight: '36px', fontSize: '10px', letterSpacing: 0, cursor: 'pointer',
+                  background: leadTime === n ? '#f72585' : '#0a0814',
+                  color: leadTime === n ? '#1a0a14' : '#6f6796',
+                  border: '2px solid #0a0814', boxShadow: 'inset 1px 1px 0 0 #2a2350', borderRadius: 0,
+                }}
+              >{n}</button>
+            ))}
+          </div>
+          <p style={{ fontSize: '10px', color: '#6f6796', margin: '8px 0 0', lineHeight: 1.4 }}>
+            More turns out = more time for promo to build hype (and to save up for the night).
+          </p>
+        </div>
 
         {/* Book Show Button */}
         <button
