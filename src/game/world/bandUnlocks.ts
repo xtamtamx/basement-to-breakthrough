@@ -24,21 +24,22 @@ export const bandUnlockId = (bandId: string): string => `band_${bandId}`;
  * stay as unlock bait. The balance sim signs the first-3 bands by array order
  * (lowest popularity) and wins on them — keep these in the starter set.
  */
+// STARTERS = the modern, currently-active/touring Long Island bands — the working
+// current scene, signable from the jump. The older/legacy acts (90s/2000s/classic)
+// unlock through progression, with the hometown superstar as the capstone.
 export const STARTER_BAND_IDS: ReadonlySet<string> = new Set([
-  "automedication",          // EMO
-  "life-of-a-speculator",    // PUNK
-  "the-constant-ache",       // PUNK
-  "darker-halftime",         // HARDCORE
-  "felony-in-mono-is-dead",  // EMO
-  "get-warner",              // PUNK
-  "into-the-floodlights",    // INDIE
-  "lucy-grave",              // EMO
-  "this-is-just-the-ending", // HARDCORE
-  "weight-of-the-word",      // METAL
-  "believe-what-we-sold-you",// ALTERNATIVE
-  "termites-in-his-teeth",   // METAL
-  "seven-miles-to-wall-drug",// EMO  (Inside — foundational, low-pop)
-  "she-was-a-dead-end",      // EMO  (Clockwise — foundational, low-pop)
+  "the-constant-ache",       // Iron Chic
+  "darker-halftime",         // Backtrack
+  "felony-in-mono-is-dead",  // Crime in Stereo
+  "stain-my-memory",         // Somerset Thrower
+  "stuck-on-repeat",         // Rule Them All
+  "tend-your-plot",          // Victory Garden
+  "save-each-otter",         // Patent Pending
+  "cost-of-leaving",         // Incendiary
+  "a-practice-in-patients",  // Stand Still
+  "would-you-even-notice",   // Koyo
+  "the-walking-worried",     // Bayside
+  "liminal-criminals",       // Stray From the Path
 ]);
 
 /**
@@ -78,34 +79,35 @@ interface BandUnlockRule { id: string; cond: Cond }
  * legends sit at the end behind the hardest asks.
  */
 const BAND_UNLOCKS: BandUnlockRule[] = [
-  // Steady early drip (cumulative + runs)
-  { id: "save-each-otter", cond: { kind: "shows", value: 10 } },
-  { id: "cost-of-leaving", cond: { kind: "runs", value: 2 } },
-  { id: "monocultured", cond: { kind: "fans", value: 600 } },
-  { id: "making-mountains", cond: { kind: "revenue", value: 4000 } },
-  { id: "no-foolin-eyes", cond: { kind: "shows", value: 25 } },
-  { id: "built-for-greased", cond: { kind: "runs", value: 3 } },
-  { id: "pictures-and-sentences", cond: { kind: "fans", value: 2000 } },
-  { id: "needles-in-the-spaces", cond: { kind: "revenue", value: 10000 } },
-  { id: "release-the-cured", cond: { kind: "shows", value: 50 } },
-  { id: "too-bad-so-beautiful", cond: { kind: "runs", value: 5 } },
-  // The modern wave — the current scene rises as your own matures
-  { id: "would-you-even-notice", cond: { kind: "fans", value: 5000 } },
-  { id: "a-practice-in-patients", cond: { kind: "shows", value: 75 } },
-  { id: "stuck-on-repeat", cond: { kind: "runs", value: 8 } },
-  { id: "tend-your-plot", cond: { kind: "fans", value: 8000 } },
-  { id: "stain-my-memory", cond: { kind: "revenue", value: 25000 } },
-  // Play differently (variety + skill)
-  { id: "we-are-still-awake", cond: { kind: "feat", flag: FEAT.winDiy, label: "Win a DIY-aligned run" } },
+  // The 90s/2000s legacy locals — steady early drip (cumulative + runs)
+  { id: "automedication", cond: { kind: "shows", value: 10 } },
+  { id: "life-of-a-speculator", cond: { kind: "runs", value: 2 } },
+  { id: "seven-miles-to-wall-drug", cond: { kind: "fans", value: 600 } },
+  { id: "she-was-a-dead-end", cond: { kind: "revenue", value: 4000 } },
+  { id: "get-warner", cond: { kind: "shows", value: 25 } },
+  { id: "into-the-floodlights", cond: { kind: "runs", value: 3 } },
+  { id: "lucy-grave", cond: { kind: "fans", value: 2000 } },
+  { id: "this-is-just-the-ending", cond: { kind: "shows", value: 50 } },
+  { id: "weight-of-the-word", cond: { kind: "revenue", value: 10000 } },
+  { id: "believe-what-we-sold-you", cond: { kind: "runs", value: 5 } },
+  { id: "termites-in-his-teeth", cond: { kind: "fans", value: 3500 } },
+  { id: "monocultured", cond: { kind: "shows", value: 75 } },
+  { id: "no-foolin-eyes", cond: { kind: "runs", value: 8 } },
+  { id: "built-for-greased", cond: { kind: "fans", value: 6000 } },
+  { id: "pictures-and-sentences", cond: { kind: "revenue", value: 25000 } },
+  // The bigger legends — play differently (variety + skill)
+  { id: "needles-in-the-spaces", cond: { kind: "feat", flag: FEAT.winDiy, label: "Win a DIY-aligned run" } },
+  { id: "too-bad-so-beautiful", cond: { kind: "feat", flag: FEAT.flawless, label: "Win with zero disasters" } },
+  { id: "we-are-still-awake", cond: { kind: "feat", flag: FEAT.soldOut, label: "Sell out 3 shows in a run" } },
   { id: "bliss-to-eviction", cond: { kind: "beatMode", mode: "festival" } },
-  { id: "the-walking-worried", cond: { kind: "beatMode", mode: "speed" } },
-  { id: "forty-hour-delay", cond: { kind: "beatMode", mode: "classic" } },
-  { id: "worship-and-trouble", cond: { kind: "feat", flag: FEAT.flawless, label: "Win with zero disasters" } },
-  { id: "liminal-criminals", cond: { kind: "feat", flag: FEAT.soldOut, label: "Sell out 3 shows in a run" } },
+  { id: "forty-hour-delay", cond: { kind: "beatMode", mode: "speed" } },
+  { id: "worship-and-trouble", cond: { kind: "beatMode", mode: "classic" } },
   { id: "your-favorite-weakness", cond: { kind: "stakeTier", value: 2 } },  // win Pay to Play
   { id: "tyranny-and-mutiny", cond: { kind: "stakeTier", value: 3 } },      // win Sellout Pressure
   { id: "stay-angry", cond: { kind: "feat", flag: FEAT.winSellout, label: "Win a sellout-aligned run" } },
   { id: "tell-all-frenemies", cond: { kind: "feat", flag: FEAT.winNoFuture, label: "Win a No Future run" } },
+  // The hometown piano kid who got impossibly huge — the capstone.
+  { id: "an-affluent-man", cond: { kind: "revenue", value: 100000 } },
 ];
 
 const RULE_BY_ID = new Map(BAND_UNLOCKS.map((r) => [r.id, r]));

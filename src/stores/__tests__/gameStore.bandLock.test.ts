@@ -15,7 +15,7 @@ const band = (id: string) => ({
 describe('addBandToRoster — lock gate', () => {
   beforeEach(() => {
     useGameStore.setState({
-      allBands: [band('automedication'), band('tell-all-frenemies')],
+      allBands: [band('the-constant-ache'), band('tell-all-frenemies')],
       rosterBandIds: [],
       maxRosterSize: 4,
     });
@@ -27,7 +27,7 @@ describe('addBandToRoster — lock gate', () => {
   });
 
   it('signs a STARTER (unlocked) band', () => {
-    useGameStore.getState().addBandToRoster('automedication'); // starter — always unlocked
-    expect(useGameStore.getState().rosterBandIds).toEqual(['automedication']);
+    useGameStore.getState().addBandToRoster('the-constant-ache'); // active starter — always unlocked
+    expect(useGameStore.getState().rosterBandIds).toEqual(['the-constant-ache']);
   });
 });
