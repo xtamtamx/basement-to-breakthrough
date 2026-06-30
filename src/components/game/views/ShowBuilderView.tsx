@@ -8,6 +8,8 @@ import { computeLineupChemistry } from '@game/mechanics/lineupChemistry';
 import { bandFactionBadge } from '@game/world/factionDisplay';
 import { factionSystem } from '@game/mechanics/FactionSystem';
 import { difficultySystem } from '@game/mechanics/DifficultySystem';
+import { bandBookingFee } from '@game/mechanics/bandEconomy';
+import { isBandUnlocked } from '@game/world/bandUnlocks';
 import { cityGenreFit, homeCityFit } from '@game/world/citySynergy';
 import { projectBaseAttendance } from '@game/mechanics/attendanceProjection';
 import { isVenueUnlocked } from '@game/world/venueProgression';
@@ -78,8 +80,16 @@ export const ShowBuilderView: React.FC = () => {
   const [leadTime, setLeadTime] = useState(3); // turns out to book — promo builds over the wait
   const [expandedCombo, setExpandedCombo] = useState<string | null>(null); // tap-to-reveal explainer
 
-  const rosterBands = allBands.filter(b => rosterBandIds.includes(b.id));
+  const isSigned = (id: string) => rosterBandIds.includes(id);
+  // You can book any UNLOCKED band: signed acts cost only your cut, unsigned acts
+  // are bookable as guests for their full guarantee. Signed first, then cheapest.
+  const bookableBands = allBands
+    .filter((b) => isBandUnlocked(b.id))
+    .sort((a, b) => (isSigned(b.id) ? 1 : 0) - (isSigned(a.id) ? 1 : 0) || a.popularity - b.popularity);
   const selectedBands = allBands.filter(b => selectedBandIds.includes(b.id));
+  // Per-act fee the player actually pays (popularity guarantee × difficulty, cut for signed).
+  const bandFee = (b: { popularity: number; id: string }) =>
+    difficultySystem.getScaledBandCost(bandBookingFee(b.popularity, isSigned(b.id)));
 
   const handleBandToggle = (bandId: string) => {
     if (difficultySystem.isBandUnavailable(bandId)) {
@@ -156,7 +166,7 @@ export const ShowBuilderView: React.FC = () => {
     // bill. The old preview omitted band fees, so it promised a profit on bills
     // that actually lose money — the most misleading number in the game.
     const venueCost = Math.floor(difficultySystem.getScaledVenueCost(selectedVenue.rent));
-    const bandCost = selectedBands.length * difficultySystem.getScaledBandCost();
+    const bandCost = selectedBands.reduce((sum, b) => sum + bandFee(b), 0);
     const netRevenue = grossRevenue - venueCost - bandCost;
 
     return {
@@ -332,19 +342,19 @@ export const ShowBuilderView: React.FC = () => {
             }}>{selectedBandIds.length}/3</span>}
           />
 
-          {rosterBands.length === 0 ? (
+          {bookableBands.length === 0 ? (
             <div className="snes-panel-inset" style={{
               padding: '24px',
               textAlign: 'center',
               color: '#b9b3d6'
             }}>
               <Users size={28} color="#6f6796" style={{ marginBottom: '8px' }} />
-              <p className="snes-pixel" style={{ margin: '0 0 8px', fontSize: '10px', color: '#ffffff' }}>No bands signed yet</p>
-              <p style={{ fontSize: '12px', margin: 0, color: '#b9b3d6' }}>Head to the Bands tab and sign some acts first.</p>
+              <p className="snes-pixel" style={{ margin: '0 0 8px', fontSize: '10px', color: '#ffffff' }}>No bands available</p>
+              <p style={{ fontSize: '12px', margin: 0, color: '#b9b3d6' }}>Unlock acts by playing — then sign them or book them as guests.</p>
             </div>
           ) : (
             <div style={{ display: 'grid', gap: '6px' }}>
-              {rosterBands.map(band => {
+              {bookableBands.map(band => {
                 const isSelected = selectedBandIds.includes(band.id);
                 const isUnavailable = difficultySystem.isBandUnavailable(band.id);
                 const isBlocked = isUnavailable || (!isSelected && selectedBandIds.length >= 3);
@@ -393,8 +403,15 @@ export const ShowBuilderView: React.FC = () => {
                         }}>
                           {isUnavailable
                             ? 'On a drama break this turn'
-                            : `${band.genre} • Pop ${band.popularity} • Auth ${band.authenticity}`}
+                            : `${band.genre} • Pop ${band.popularity}`}
                         </div>
+                        {!isUnavailable && (
+                          <div className="snes-pixel" style={{ fontSize: '8px', marginTop: '5px', letterSpacing: 0, color: isSigned(band.id) ? '#3ad17e' : '#ffd23f' }}>
+                            {isSigned(band.id)
+                              ? `★ SIGNED · $${bandFee(band)} (your cut)`
+                              : `GUEST · $${bandFee(band)} guarantee`}
+                          </div>
+                        )}
                       </div>
                       <span style={{ flexShrink: 0, display: 'flex', alignItems: 'center' }}>
                         {isUnavailable ? (

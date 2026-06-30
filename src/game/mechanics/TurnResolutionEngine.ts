@@ -24,6 +24,7 @@ import { objectiveManager } from './ObjectiveManager';
 import { stakesManager, STAKE_TIERS } from './StakesManager';
 import { isModeBeaten, nextModeAfter } from './modeUnlocks';
 import { recordBandUnlocks, recordRunFeats } from '@game/world/bandUnlocks';
+import { bandBookingFee } from './bandEconomy';
 import { TOURING_ENABLED } from '@/config/featureFlags';
 import { gentrificationSystem } from './GentrificationSystem';
 import { factionSystem } from './FactionSystem';
@@ -906,7 +907,16 @@ export class TurnResolutionEngine {
       (d) => d.id === venue.location.id,
     );
     const districtRentMult = liveDistrict?.rentMultiplier ?? 1;
-    const bandCosts = allShowBands.length * difficultySystem.getScaledBandCost();
+    // Per-band guarantee (popularity-scaled, difficulty-scaled); signed acts cost
+    // only your cut-share. Same formula the ShowBuilder preview shows.
+    const bandCosts = allShowBands.reduce(
+      (sum, b) =>
+        sum +
+        difficultySystem.getScaledBandCost(
+          bandBookingFee(b.popularity, store.rosterBandIds.includes(b.id)),
+        ),
+      0,
+    );
     const venueCost = Math.floor(
       difficultySystem.getScaledVenueCost(venue.rent) *
         districtRentMult *
