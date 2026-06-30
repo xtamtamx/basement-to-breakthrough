@@ -69,6 +69,7 @@ export const ShowBuilderView: React.FC = () => {
     factionStandings,
     eventCapacityPenalty,
     currentRound,
+    hasSynergyDiscovered,
   } = useGameStore();
   const currentCity = cities.find((c) => c.id === currentCityId);
   // Only venues the scene has unlocked are bookable (scene-growth ladder).
@@ -121,9 +122,16 @@ export const ShowBuilderView: React.FC = () => {
   const calculateShowPreview = () => {
     if (!selectedVenue || selectedBands.length === 0) return null;
 
-    // Band+venue combo synergies — cap the product at COMBO_MULT_CAP so the
-    // preview matches what executeShow actually applies (TurnResolutionEngine).
-    const synergies = synergyEngine.calculateSynergies(selectedBands, selectedVenue);
+    // Band+venue combo synergies — but only surface the ones the promoter has
+    // already DISCOVERED. An undiscovered synergy stays hidden until it fires and
+    // is revealed when the show resolves (TurnResolutionEngine discovers it after
+    // the fact), so listing/counting it here would spoil the reveal. The honest
+    // crowd + cash still bake in EVERY synergy (projectBaseAttendance computes its
+    // own full multiplier below), so the money never lies — we only hide the names,
+    // count and ×N readout of combos the player hasn't learned yet.
+    const synergies = synergyEngine
+      .calculateSynergies(selectedBands, selectedVenue)
+      .filter((s) => !!s.id && hasSynergyDiscovered(s.id));
     const totalMultiplier = Math.min(synergyEngine.getTotalMultiplier(synergies), COMBO_MULT_CAP);
     const reputationBonus = synergyEngine.getTotalReputationBonus(synergies);
 

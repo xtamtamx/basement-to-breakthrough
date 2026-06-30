@@ -9,6 +9,8 @@ import { progressionPathSystem } from '@game/mechanics/ProgressionPathSystem';
 import { runManager } from '@game/mechanics/RunManager';
 import { haptics } from '@utils/mobile';
 import { TOURING_ENABLED } from '@/config/featureFlags';
+import { SceneIdentityMeter } from './SceneIdentityMeter';
+import { FactionStandingsMeter } from './FactionStandingsMeter';
 
 type ViewType = "city" | "bands" | "shows" | "promotion" | "synergies" | "jobs" | "progression" | "tour";
 
@@ -66,6 +68,13 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
       icon: <Megaphone size={20} />,
       label: 'Promo',
       badge: showPromotionSystem.getScheduledShows().length
+    },
+    // Day jobs are a core between-shows income loop, so they get a permanent
+    // tab (the unified "all available jobs" list) rather than hiding in More.
+    {
+      id: 'jobs' as ViewType,
+      icon: <Briefcase size={20} />,
+      label: 'Jobs'
     }
   ];
 
@@ -76,11 +85,6 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
       icon: <Map size={18} />,
       label: 'Tour'
     }] : []),
-    {
-      id: 'jobs' as ViewType,
-      icon: <Briefcase size={18} />,
-      label: 'Jobs'
-    },
     {
       id: 'synergies' as ViewType,
       icon: <Zap size={18} />,
@@ -95,6 +99,9 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   ];
 
   const [showMoreMenu, setShowMoreMenu] = React.useState(false);
+  // Which scene meter is expanded inside the More menu (mutually exclusive, so
+  // the two panels never overlap or steal each other's taps).
+  const [openMeter, setOpenMeter] = React.useState<'scene' | 'factions' | null>(null);
 
   return (
     <>
@@ -253,10 +260,31 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
               backgroundColor: '#171327',
               borderTop: '2px solid #f72585',
               boxShadow: 'inset 0 2px 0 0 #3a2f5c',
-              paddingBottom: 'env(safe-area-inset-bottom)'
+              paddingBottom: 'env(safe-area-inset-bottom)',
+              maxHeight: 'calc(100dvh - 64px)',
+              overflowY: 'auto'
             }}
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Scene meters — moved off the city map. These are info panels, not
+                nav: tapping one expands it in place (mutually exclusive) without
+                closing the menu. Side by side to suit the wide-short screen. */}
+            <div style={{ display: 'flex', gap: '12px', padding: '16px 16px 0', alignItems: 'flex-start' }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <SceneIdentityMeter
+                  inline
+                  open={openMeter === 'scene'}
+                  onToggle={() => setOpenMeter((m) => (m === 'scene' ? null : 'scene'))}
+                />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <FactionStandingsMeter
+                  inline
+                  open={openMeter === 'factions'}
+                  onToggle={() => setOpenMeter((m) => (m === 'factions' ? null : 'factions'))}
+                />
+              </div>
+            </div>
             <div style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(3, 1fr)',

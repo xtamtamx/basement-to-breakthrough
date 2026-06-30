@@ -12,15 +12,16 @@ import {
  * a compact, tap-to-expand meter. Collapsed: the current archetype + a marker
  * on a sellout→DIY bar. Expanded: a flavor line + the full five-tier ladder.
  *
- * Pure read of store state — no gameplay effect. Lives over the city map
- * because the town evolves along this same axis (DIY blooms indie shops; a
- * sellout invites the chains), so this is the legend for what the player sees.
+ * Pure read of store state — no gameplay effect. Surfaced in the "More" menu
+ * (pass `inline`); the town still evolves along this same axis (DIY blooms indie
+ * shops; a sellout invites the chains), so it reads as the legend for the
+ * DIY↔sellout drift the player watches on the map.
  *
  * Expand state is lifted to the parent so this and the Faction meter (stacked
  * just below) are mutually exclusive — only one can be open, so they never
  * overlap or steal each other's taps.
  */
-export const SceneIdentityMeter: React.FC<{ open: boolean; onToggle: () => void }> = ({ open, onToggle }) => {
+export const SceneIdentityMeter: React.FC<{ open: boolean; onToggle: () => void; inline?: boolean }> = ({ open, onToggle, inline = false }) => {
   const diyPoints = useGameStore((s) => s.diyPoints);
 
   const tier = getSceneIdentityTier(diyPoints);
@@ -37,10 +38,9 @@ export const SceneIdentityMeter: React.FC<{ open: boolean; onToggle: () => void 
       aria-label={`Scene identity: ${tier.label}. Tap to ${open ? 'collapse' : 'expand'}.`}
       className="snes-panel"
       style={{
-        position: 'absolute',
-        top: '12px',
-        left: '12px',
-        width: open ? '212px' : '168px',
+        ...(inline
+          ? { position: 'relative', width: '100%' }
+          : { position: 'absolute', top: '12px', left: '12px', width: open ? '212px' : '168px', zIndex: 5 }),
         padding: '8px 9px',
         background: 'rgba(23, 19, 39, 0.92)',
         border: '2px solid #0a0814',
@@ -48,7 +48,6 @@ export const SceneIdentityMeter: React.FC<{ open: boolean; onToggle: () => void 
         borderRadius: 0,
         textAlign: 'left',
         cursor: 'pointer',
-        zIndex: 5,
         transition: 'none',
       }}
     >

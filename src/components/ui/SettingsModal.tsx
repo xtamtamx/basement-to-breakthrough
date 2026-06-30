@@ -346,7 +346,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
             }}>
               <p style={{ margin: '0 0 8px 0' }}>• Tap bands and venues to select them</p>
               <p style={{ margin: '0 0 8px 0' }}>• Use navigation tabs to switch between views</p>
-              <p style={{ margin: '0 0 8px 0' }}>• Swipe left/right to navigate quickly</p>
               <p style={{ margin: 0 }}>• Tap the floating button to advance turns</p>
             </div>
           </section>

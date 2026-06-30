@@ -13,8 +13,6 @@ import { CityShop, SHOP_DEFS } from '@game/world/cityShops';
 import { CityLandmark } from '@game/world/landmarks';
 import { unlockedVenues } from '@game/world/venueProgression';
 import { dayJobSystem } from '@game/mechanics/DayJobSystem';
-import { SceneIdentityMeter } from '../SceneIdentityMeter';
-import { FactionStandingsMeter } from '../FactionStandingsMeter';
 
 // Maps store district ids onto the core DistrictType used by DistrictInfo.
 const STORE_DISTRICT_TYPE: Record<string, CoreDistrictType> = {
@@ -54,8 +52,6 @@ export const CityView: React.FC = () => {
   const [selectedShop, setSelectedShop] = useState<CityShop | null>(null);
   const [selectedLandmark, setSelectedLandmark] = useState<CityLandmark | null>(null);
   const [jobRefresh, setJobRefresh] = useState(0);
-  // Which top-left meter is expanded (mutually exclusive so they never overlap).
-  const [openMeter, setOpenMeter] = useState<'scene' | 'factions' | null>(null);
 
   // Ensure initial data is loaded (run once on mount via getState to avoid
   // depending on the ever-changing store snapshot)
@@ -206,18 +202,6 @@ export const CityView: React.FC = () => {
                 onLandmarkClick={(lm) => { setSelectedLandmark(lm); haptics.light(); }}
               />
             </div>
-
-            {/* Scene Identity (sellout↔DIY axis) + Scene Politics (faction standings),
-                stacked top-left. Mutually exclusive expand so the panels never
-                overlap or steal each other's taps. */}
-            <SceneIdentityMeter
-              open={openMeter === 'scene'}
-              onToggle={() => setOpenMeter((m) => (m === 'scene' ? null : 'scene'))}
-            />
-            <FactionStandingsMeter
-              open={openMeter === 'factions'}
-              onToggle={() => setOpenMeter((m) => (m === 'factions' ? null : 'factions'))}
-            />
 
             {/* Compact Stats Overlay */}
             <div style={{

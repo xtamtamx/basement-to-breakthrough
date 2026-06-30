@@ -9,7 +9,7 @@ import { FACTION_DISPLAY_COLOR } from '@game/world/factionDisplay';
  * with each of the five scene factions. Standings are the persisted store field
  * (factionStandings); the FactionSystem singleton supplies only the static defs.
  * Tap to expand the full ladder. Pure read — no gameplay logic. Sits under the
- * Scene Identity meter over the city map.
+ * Scene Identity meter in the "More" menu (pass `inline`).
  */
 
 const standingColor = (s: number): string => (s > 0 ? '#3ad17e' : s < 0 ? '#ff5c57' : '#6f6796');
@@ -17,7 +17,7 @@ const standingColor = (s: number): string => (s > 0 ? '#3ad17e' : s < 0 ? '#ff5c
 // −100..100 → 0..1 for the bar marker.
 const pct = (s: number): number => (Math.max(-100, Math.min(100, s)) + 100) / 200;
 
-export const FactionStandingsMeter: React.FC<{ open: boolean; onToggle: () => void }> = ({ open, onToggle }) => {
+export const FactionStandingsMeter: React.FC<{ open: boolean; onToggle: () => void; inline?: boolean }> = ({ open, onToggle, inline = false }) => {
   const standings = useGameStore((s) => s.factionStandings);
 
   const factions = factionSystem.getAllFactions();
@@ -36,10 +36,9 @@ export const FactionStandingsMeter: React.FC<{ open: boolean; onToggle: () => vo
       aria-label="Faction standings. Tap to expand."
       className="snes-panel"
       style={{
-        position: 'absolute',
-        top: '92px',
-        left: '12px',
-        width: open ? '212px' : '168px',
+        ...(inline
+          ? { position: 'relative', width: '100%' }
+          : { position: 'absolute', top: '92px', left: '12px', width: open ? '212px' : '168px', zIndex: 5 }),
         padding: '8px 9px',
         background: 'rgba(23, 19, 39, 0.92)',
         border: '2px solid #0a0814',
@@ -47,7 +46,6 @@ export const FactionStandingsMeter: React.FC<{ open: boolean; onToggle: () => vo
         borderRadius: 0,
         textAlign: 'left',
         cursor: 'pointer',
-        zIndex: 5,
         transition: 'none',
       }}
     >

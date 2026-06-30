@@ -8,7 +8,6 @@ import { DayJobView } from "./views/DayJobView";
 import { PromotionView } from "./views/PromotionView";
 import { ProgressionView } from "./views/ProgressionView";
 import { TourView } from "./views/TourView";
-import { TOURING_ENABLED } from "@/config/featureFlags";
 import { MobileBottomNav } from "./MobileBottomNav";
 import { SynergyBar } from "./SynergyBar";
 import { SynergyAcquireModal } from "./SynergyAcquireModal";
@@ -32,7 +31,6 @@ import { gameAudio } from "@utils/gameAudio";
 import { GameErrorBoundary } from "@components/ErrorBoundary";
 import { saveGameManager } from "@game/persistence/SaveGameManager";
 import { Settings, Save, MapPin, Target } from 'lucide-react';
-import { useSwipeable } from 'react-swipeable';
 
 type ViewType = "city" | "bands" | "shows" | "promotion" | "synergies" | "jobs" | "progression" | "tour";
 
@@ -233,28 +231,6 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
     onExitToMenu?.();
   };
 
-  // Swipe navigation
-  // Matches the bottom nav's reading order (primaries then secondaries) so
-  // swiping lands where the nav implies — they used to disagree (swipe right
-  // from Promo went to Jobs while the nav's next tab was Tour).
-  const viewOrder: ViewType[] = (["city", "bands", "shows", "promotion", "tour", "jobs", "synergies", "progression"] as ViewType[])
-    .filter((v) => v !== "tour" || TOURING_ENABLED);
-  const currentIndex = viewOrder.indexOf(currentView);
-  
-  const swipeHandlers = useSwipeable({
-    onSwipedLeft: () => {
-      if (currentIndex < viewOrder.length - 1) {
-        handleViewChange(viewOrder[currentIndex + 1]);
-      }
-    },
-    onSwipedRight: () => {
-      if (currentIndex > 0) {
-        handleViewChange(viewOrder[currentIndex - 1]);
-      }
-    },
-    trackMouse: false
-  });
-
   const views = {
     city: CityView,
     bands: BandsView,
@@ -360,10 +336,10 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
         />
       </div>
 
-      {/* View Content with Swipe Support. The city MAP pans/scrolls under your
-          finger, so view-swipe is disabled there (it was hijacking map drags and
-          flipping tabs); navigate off the map via the bottom nav. */}
-      <main className="flex-1 overflow-hidden relative" {...(currentView === 'city' ? {} : swipeHandlers)}>
+      {/* View Content. Navigation is tap-only via the bottom nav — the old
+          swipe-to-switch gesture was too touchy and kept hijacking the map's
+          drag and flipping tabs by accident. */}
+      <main className="flex-1 overflow-hidden relative">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentView}
@@ -384,20 +360,6 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
             </GameErrorBoundary>
           </motion.div>
         </AnimatePresence>
-        
-        {/* Swipe Indicators */}
-        <div className="absolute bottom-24 left-0 right-0 flex justify-center gap-1 pointer-events-none">
-          {viewOrder.map((view, index) => (
-            <div
-              key={view}
-              className={`h-1.5 transition-all ${
-                index === currentIndex
-                  ? 'w-6 bg-pink-500'
-                  : 'w-1.5 bg-gray-600'
-              }`}
-            />
-          ))}
-        </div>
       </main>
 
       {/* Mobile Bottom Navigation */}
