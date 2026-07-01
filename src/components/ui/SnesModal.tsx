@@ -13,6 +13,9 @@ interface SnesModalProps {
   title?: React.ReactNode;
   /** Extra content on the right of the header, left of the close button. */
   headerRight?: React.ReactNode;
+  /** Optional pinned footer (e.g. the primary CTA) — stays in view while the body
+   *  scrolls, so the action never scrolls off the short landscape screen. */
+  footer?: React.ReactNode;
   /** 'center' (default) or 'sheet' (slides up from the bottom edge, full-width). */
   variant?: 'center' | 'sheet';
   /** Override the sheet max-width (center variant only). */
@@ -39,6 +42,7 @@ export const SnesModal: React.FC<SnesModalProps> = ({
   ariaLabel,
   title,
   headerRight,
+  footer,
   variant = 'center',
   maxWidth,
   accent,
@@ -95,7 +99,8 @@ export const SnesModal: React.FC<SnesModalProps> = ({
             </div>
           </div>
         )}
-        {children}
+        <div className="snes-modal__body">{children}</div>
+        {footer != null && <div className="snes-modal__footer">{footer}</div>}
       </div>
     </div>,
     document.body,

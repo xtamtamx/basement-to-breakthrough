@@ -17,6 +17,7 @@
   --snes-bg: #171327;       /* panel base (deep indigo-charcoal) */
   --snes-bg-2: #0f0b1e;     /* inset / field background */
   --snes-edge-lt: #3a2f5c;  /* bevel highlight (top-left) */
+  --snes-bg-3: #1f1a3a;     /* raised control fill (HUD icon buttons, chips) */
   --snes-line: #2a2350;     /* dividers / subtle borders */
 
   --snes-magenta: #f72585;  /* primary / venues */
@@ -201,22 +202,38 @@
   border-radius: 0;
   padding: 16px;
   max-height: 84vh;
-  overflow-y: auto;
+  /* Flex column so the header (and optional footer) stay PINNED while only the
+     body scrolls — on the short landscape screen the title/close and the primary
+     CTA must never scroll out of reach. */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   animation: snes-sheet-in 0.22s cubic-bezier(0.2, 0.9, 0.3, 1) both;
 }
+/* Scrolling content region between the pinned header and footer. */
+.snes-modal__body { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+/* Optional pinned footer (primary CTA row). */
+.snes-modal__footer { flex-shrink: 0; margin-top: var(--s3); }
 /* Bottom-sheet variant — slides up from the bottom edge, full-width. */
 .snes-modal--sheet { align-items: flex-end; padding: 0; }
 .snes-modal--sheet .snes-modal__sheet { max-width: 100%; max-height: 88vh; border-top-width: 3px; }
 @keyframes snes-overlay-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes snes-sheet-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 /* Shared modal header + 44px close button (used by the <SnesModal> shell). */
-.snes-modal__header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s2); margin-bottom: var(--s3); }
+.snes-modal__header { flex-shrink: 0; display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s2); margin-bottom: var(--s3); }
 .snes-modal__title { font-family: var(--snes-font); font-size: var(--t-lg); line-height: 1.3; color: var(--snes-magenta); margin: 0; letter-spacing: 0; text-shadow: 2px 2px 0 var(--snes-void); }
 .snes-close { width: 44px; height: 44px; flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center;
   background: var(--snes-bg-2); color: var(--snes-ink-dim); border: 2px solid var(--snes-void);
   box-shadow: inset 1px 1px 0 var(--snes-edge-lt); cursor: pointer; border-radius: 0; transition: transform 0.04s steps(1), color 0.1s; }
 .snes-close:hover { color: var(--snes-ink); }
 .snes-close:active { transform: translate(1px, 1px); }
+/* Shared HUD action button — the 44px raised pixel key repeated across the header
+   (instincts / objectives / save / settings). Icon color is set per-button. */
+.snes-hud-btn { height: 44px; min-width: 44px; padding: 0 9px; display: flex; align-items: center;
+  justify-content: center; gap: 4px; background: var(--snes-bg-3); border: 2px solid var(--snes-void);
+  box-shadow: inset 1px 1px 0 var(--snes-edge-lt); border-radius: 0; cursor: pointer;
+  transition: transform 0.04s steps(1); }
+.snes-hud-btn:active { transform: translate(1px, 1px); }
 
 /* Chunky stepped progress bar. */
 .snes-progress {

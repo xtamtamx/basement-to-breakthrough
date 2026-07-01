@@ -131,7 +131,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
             <button
               key={view.id}
               data-tut={`nav-${view.id}`}
-              className="mobile-bottom-nav__btn"
+              className="mobile-bottom-nav__btn btb-press"
               onClick={() => handleViewChange(view.id)}
               style={{
                 display: 'flex',
@@ -177,7 +177,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
                 )}
               </div>
               <span className="mobile-bottom-nav__label snes-pixel" style={{
-                fontSize: '7px',
+                fontSize: '9px',
                 letterSpacing: '0'
               }}>{view.label}</span>
             </button>
@@ -185,7 +185,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           
           {/* More Menu */}
           <button
-            className="mobile-bottom-nav__btn"
+            className="mobile-bottom-nav__btn btb-press"
             aria-label="More"
             aria-haspopup="menu"
             aria-expanded={showMoreMenu}
@@ -217,7 +217,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           >
             <Grid3X3 size={18} />
             <span className="mobile-bottom-nav__label snes-pixel" style={{
-              fontSize: '7px',
+              fontSize: '9px',
               letterSpacing: '0'
             }}>More</span>
             {/* Roll a dot up to the collapsed button when a hidden secondary view

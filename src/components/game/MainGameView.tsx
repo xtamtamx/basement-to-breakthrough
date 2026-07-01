@@ -294,11 +294,11 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
                 must be visible, not a surprise that pops in only at 50. */}
             <span
               className="snes-chip"
-              style={{ borderColor: stress > 80 ? '#ff5c57' : stress > 50 ? '#ffd23f' : '#2a2350' }}
+              style={{ borderColor: stress > 80 ? 'var(--snes-red)' : stress > 50 ? 'var(--snes-gold)' : 'var(--snes-line)' }}
               title={`Stress ${stress}/100 — band burns out at 100`}
             >
-              <span style={{ color: stress > 80 ? '#ff5c57' : stress > 50 ? '#ffd23f' : '#6f6796' }}>⚠</span>
-              <span style={{ color: stress > 50 ? undefined : '#9b94c0' }}>{stress}</span>
+              <span style={{ color: stress > 80 ? 'var(--snes-red)' : stress > 50 ? 'var(--snes-gold)' : 'var(--snes-ink-mute)' }}>⚠</span>
+              <span style={{ color: stress > 50 ? undefined : 'var(--snes-ink-dim)' }}>{stress}</span>
             </span>
           </div>
 
@@ -317,33 +317,37 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
               data-tut="instincts"
               aria-label={`Instincts ${equippedInstincts} of ${maxInstincts}`}
               title="Instincts — tap to view & slot"
-              style={{ height: 44, minWidth: 44, padding: '0 9px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', background: '#1f1a3a', color: '#c77dff', border: '2px solid #0a0814', boxShadow: 'inset 1px 1px 0 #3a2f5c', cursor: 'pointer', borderRadius: 0 }}
+              className="snes-hud-btn"
+              style={{ color: 'var(--snes-purple)' }}
             >
               <Brain size={14} />
-              <span className="snes-pixel" style={{ fontSize: '8px', letterSpacing: 0 }}>{equippedInstincts}/{maxInstincts}</span>
+              <span className="snes-pixel" style={{ fontSize: '9px', letterSpacing: 0 }}>{equippedInstincts}/{maxInstincts}</span>
             </button>
             {objectivesTotal > 0 && (
               <button
                 onClick={() => setShowObjectives(true)}
                 aria-label="Challenges"
                 data-tut="challenges"
-                style={{ height: 44, minWidth: 44, padding: '0 9px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', background: '#1f1a3a', color: objectivesDone > 0 ? '#3ad17e' : '#c77dff', border: '2px solid #0a0814', boxShadow: 'inset 1px 1px 0 #3a2f5c', cursor: 'pointer', borderRadius: 0 }}
+                className="snes-hud-btn"
+                style={{ color: objectivesDone > 0 ? 'var(--snes-green)' : 'var(--snes-purple)' }}
               >
                 <Target size={14} />
-                <span className="snes-pixel" style={{ fontSize: '8px', letterSpacing: 0 }}>{objectivesDone}/{objectivesTotal}</span>
+                <span className="snes-pixel" style={{ fontSize: '9px', letterSpacing: 0 }}>{objectivesDone}/{objectivesTotal}</span>
               </button>
             )}
             <button
               onClick={() => setShowSaveLoad(true)}
               aria-label="Save/Load"
-              style={{ width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1f1a3a', color: '#b9b3d6', border: '2px solid #0a0814', boxShadow: 'inset 1px 1px 0 #3a2f5c', cursor: 'pointer', borderRadius: 0 }}
+              className="snes-hud-btn"
+              style={{ color: 'var(--snes-ink-dim)' }}
             >
               <Save size={15} />
             </button>
             <button
               onClick={() => setShowSettings(true)}
               aria-label="Settings"
-              style={{ width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1f1a3a', color: '#b9b3d6', border: '2px solid #0a0814', boxShadow: 'inset 1px 1px 0 #3a2f5c', cursor: 'pointer', borderRadius: 0 }}
+              className="snes-hud-btn"
+              style={{ color: 'var(--snes-ink-dim)' }}
             >
               <Settings size={15} />
             </button>
