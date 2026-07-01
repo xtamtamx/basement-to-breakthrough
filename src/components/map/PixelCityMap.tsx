@@ -1687,10 +1687,19 @@ export const PixelCityMap: React.FC<PixelCityMapProps> = ({ onDistrictClick, onV
 
       ctx.font = '7px "Press Start 2P", monospace';
       ctx.textBaseline = 'middle';
+      // Visible world rect (the ctx is translated by -camera then scaled by z),
+      // so labels can be clamped inside the screen instead of clipping at the
+      // edges ("ANGSTYVILLE HO…").
+      const viewL = cameraRef.current.x / z + 3;
+      const viewR = (cameraRef.current.x + size.w) / z - 3;
       plan.quarters.forEach((q) => {
+        const qL = q.tx * TILE, qR = (q.tx + q.tw) * TILE;
+        if (qR < viewL || qL > viewR) return; // district fully offscreen — no label
         const label = q.district.name.toUpperCase();
         const w = ctx.measureText(label).width + 12;
-        const cx = (q.tx + q.tw / 2) * TILE;
+        // Center on the district, then pull the label box fully into view.
+        let cx = (q.tx + q.tw / 2) * TILE;
+        if (viewR - viewL > w) cx = Math.max(viewL + w / 2, Math.min(viewR - w / 2, cx));
         const y = Math.max(2, (q.ty - 1)) * TILE;
         ctx.fillStyle = 'rgba(10, 10, 14, 0.82)';
         ctx.fillRect(cx - w / 2, y, w, 14);
