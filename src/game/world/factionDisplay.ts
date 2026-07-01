@@ -31,11 +31,18 @@ export interface FactionBadge {
   color: string;
 }
 
-/** The faction a band reads as (membership trait or best alignment), for display
- *  — or null if unaffiliated. Pure; safe to call from render. */
+/** The faction badge to show on a band card — ONLY an explicitly authored
+ *  `faction-<id>` membership trait, never a guessed affiliation. `getBandFaction`
+ *  falls back to a crude authenticity/skill/popularity alignment when a band has
+ *  no faction trait, which mislabels the curated roster (e.g. tagging a modern
+ *  hardcore act "Old Guard"). Surfacing a guess AS a band's identity reads as a
+ *  bug, so we don't: authored bands with no faction trait show no badge. Gameplay
+ *  (chemistry, standings) still uses getBandFaction's alignment elsewhere — this
+ *  only governs the visible label. Pure; safe to call from render. */
 export function bandFactionBadge(band: Band): FactionBadge | null {
-  const id = factionSystem.getBandFaction(band);
-  if (!id) return null;
+  const trait = band.traits.find((t) => t.id.startsWith('faction-'));
+  if (!trait) return null;
+  const id = trait.id.slice('faction-'.length);
   const f = factionSystem.getFaction(id);
   return { id, name: FACTION_SHORT_NAME[id] ?? f?.name ?? id, color: FACTION_DISPLAY_COLOR[id] ?? '#b9b3d6' };
 }

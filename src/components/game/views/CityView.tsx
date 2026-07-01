@@ -106,8 +106,8 @@ export const CityView: React.FC = () => {
               color: '#b9b3d6',
               marginTop: '4px'
             }}>
-              <span className="snes-pixel" style={{ fontSize: '8px', color: '#b9b3d6' }}>🏘️ {liveDistrict?.sceneStrength ?? selectedDistrictInfo?.sceneStrength}%</span>
-              <span className="snes-pixel" style={{ fontSize: '8px', color: '#b9b3d6' }}>💰 {liveDistrict?.rentMultiplier ?? selectedDistrictInfo?.rentMultiplier}x</span>
+              <span className="snes-pixel" style={{ fontSize: '8px', color: '#b9b3d6' }} title="Scene strength — how established the underground scene is in this district. Grows as you throw DIY shows; higher means bigger built-in crowds and unlocks more venues/landmarks here.">🏘️ Scene {liveDistrict?.sceneStrength ?? selectedDistrictInfo?.sceneStrength}%</span>
+              <span className="snes-pixel" style={{ fontSize: '8px', color: '#b9b3d6' }} title="Rent multiplier — how pricey venues are in this district vs. baseline.">💰 Rent {liveDistrict?.rentMultiplier ?? selectedDistrictInfo?.rentMultiplier}x</span>
             </div>
           </div>
           <button
@@ -220,7 +220,7 @@ export const CityView: React.FC = () => {
                 <span style={{ color: '#b9b3d6' }}>Venues</span>
                 <span style={{ color: '#ffffff' }}>{unlockedVenues(gameStore.venues, gameStore.peakReputation).length}</span>
               </div>
-              <div className="snes-chip">
+              <div className="snes-chip" title="Scene strength (city average) — how established your underground scene is. Grows as you throw DIY shows; higher means bigger built-in crowds and unlocks more venues/landmarks.">
                 <TrendingUp size={12} color="#3ad17e" />
                 <span style={{ color: '#b9b3d6' }}>Scene</span>
                 <span style={{ color: '#ffffff' }}>
