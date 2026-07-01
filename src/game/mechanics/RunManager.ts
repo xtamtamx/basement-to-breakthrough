@@ -103,7 +103,10 @@ class RunManager {
       name: 'Classic Run',
       description: 'Build your scene from basement shows to legendary venues',
       startingMoney: 500,
-      startingReputation: 10,
+      // New promoter in town: start at zero rep so only The Basement is open and
+      // you can juggle a single show — the scene (venues + booking slots) ramps up
+      // as you earn reputation.
+      startingReputation: 0,
       startingConnections: 5,
       maxTurns: 50,
       winConditions: [

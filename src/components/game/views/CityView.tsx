@@ -203,17 +203,17 @@ export const CityView: React.FC = () => {
               />
             </div>
 
-            {/* Compact Stats Overlay */}
+            {/* Compact city-stats overlay — pinned top-left, just under the HUD.
+                (Was floating in the bottom-left where it stacked awkwardly with the
+                fixed TURN indicator.) */}
             <div style={{
               position: 'absolute',
               left: '12px',
-              // Sit clear ABOVE the fixed TURN indicator (which lives at
-              // 3rem+inset+0.5rem and is ~2rem tall) so the two don't overlap
-              // in the bottom-left corner.
-              bottom: 'calc(3rem + env(safe-area-inset-bottom) + 4rem)',
+              top: '12px',
               display: 'flex',
-              gap: '12px',
-              alignItems: 'center'
+              gap: '8px',
+              alignItems: 'center',
+              flexWrap: 'wrap'
             }}>
               <div className="snes-chip">
                 <Building2 size={12} color="#f72585" />

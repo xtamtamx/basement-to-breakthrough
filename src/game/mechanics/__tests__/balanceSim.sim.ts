@@ -41,6 +41,7 @@ function acceptSynergyOffer(turn: number): void {
   s.setPendingSynergyOffer(null);
 }
 import { isVenueUnlocked } from '@game/world/venueProgression';
+import { bookingCapacity } from '@game/world/bookingCapacity';
 import { isCityUnlocked } from '@game/world/cityUnlocks';
 import { Show } from '@game/types';
 
@@ -80,6 +81,12 @@ function signRoster(target = 3): void {
 // they pick an affordable room and scale the bill to their budget.
 function bookBestShow(): void {
   const s = useGameStore.getState();
+  // Respect the booking-capacity ramp: don't stockpile past your unlocked slots
+  // (shows still awaiting their date; one playing this turn no longer holds one).
+  const inPipeline = s.scheduledShows.filter(
+    (sh) => sh.status === 'SCHEDULED' && (sh.scheduledTurn ?? s.currentRound) > s.currentRound,
+  ).length;
+  if (inPipeline >= bookingCapacity(s.peakReputation)) return;
   const roster = s.allBands.filter(
     (b) =>
       s.rosterBandIds.includes(b.id) && !difficultySystem.isBandUnavailable(b.id),

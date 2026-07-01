@@ -13,6 +13,7 @@ import { isBandUnlocked } from '@game/world/bandUnlocks';
 import { cityGenreFit, homeCityFit } from '@game/world/citySynergy';
 import { projectBaseAttendance } from '@game/mechanics/attendanceProjection';
 import { isVenueUnlocked } from '@game/world/venueProgression';
+import { bookingCapacity, nextBookingSlotAt } from '@game/world/bookingCapacity';
 import { tutorialManager } from '@game/tutorial/TutorialManager';
 import { COMBO_MULT_CAP } from '@game/constants/runConstants';
 import { Calendar, MapPin, Users, AlertCircle, TrendingUp, Check, Ban } from 'lucide-react';
@@ -209,12 +210,24 @@ export const ShowBuilderView: React.FC = () => {
     prevSynergyCount.current = synergyCount;
   }, [synergyCount]);
 
+  // Booking-capacity ramp: only so many shows can sit in the promo pipeline at
+  // once. Counts shows still AWAITING their date — one playing this turn has
+  // finished promoting and no longer holds a slot. Grows with peak reputation.
+  const bookingSlots = bookingCapacity(peakReputation);
+  const showsInPipeline = scheduledShows.filter(
+    (s) => s.status === 'SCHEDULED' && (s.scheduledTurn ?? currentRound) > currentRound,
+  ).length;
+  const atBookingCap = showsInPipeline >= bookingSlots;
+  const nextSlotRep = nextBookingSlotAt(peakReputation);
+
   // Gate booking on the TRUE outlay (rent + every band's fee), not just rent —
   // otherwise a near-broke player books a bill they can't afford to resolve.
+  // Also gate on booking capacity so you can't over-book past your slots.
   const canBook =
     selectedBands.length > 0 &&
     !!selectedVenue &&
     !!preview &&
+    !atBookingCap &&
     money >= preview.venueCost + preview.bandCost;
 
   const handleBookShow = () => {
@@ -846,6 +859,16 @@ export const ShowBuilderView: React.FC = () => {
 
         {/* RIGHT pane — the night at a glance + Book, pinned in view */}
         <div style={{ flex: '1 1 0', overflowY: 'auto', minWidth: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {/* Booking-capacity ramp — how many shows you can have cooking at once.
+              Starts at 1 (new promoter) and unlocks more slots as your scene grows. */}
+          <div className="snes-panel-inset" style={{ padding: '8px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+            <span className="snes-pixel" style={{ fontSize: '8px', color: atBookingCap ? '#ff5c57' : '#4cc9f0', letterSpacing: 0 }}>
+              📋 Booking slots {showsInPipeline}/{bookingSlots}
+            </span>
+            <span style={{ fontSize: '9px', color: '#6f6796' }}>
+              {nextSlotRep != null ? `+1 slot at ${nextSlotRep} rep` : 'maxed out'}
+            </span>
+          </div>
           {preview ? (
             <div className="snes-panel" style={{ padding: '14px' }}>
               <div className="snes-pixel" style={{ fontSize: '9px', color: '#3ad17e', letterSpacing: 0, marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -891,7 +914,8 @@ export const ShowBuilderView: React.FC = () => {
           }}
         >
           <Calendar size={20} />
-          {!selectedBands.length ? 'Pick a Band First' :
+          {atBookingCap ? `${bookingSlots} slot${bookingSlots > 1 ? 's' : ''} full — let one play` :
+           !selectedBands.length ? 'Pick a Band First' :
            !selectedVenue ? 'Pick a Venue' :
            (preview && money < preview.venueCost + preview.bandCost) ? 'Not Enough Cash' :
            'Book This Show'}

@@ -45,7 +45,7 @@ export const initialVenues: Venue[] = [
     hasSecurity: false,
     isPermanent: true,
     bookingDifficulty: 2,
-    unlockReputation: 0,
+    unlockReputation: 5,
   },
 
   {
@@ -66,7 +66,7 @@ export const initialVenues: Venue[] = [
     hasSecurity: false,
     isPermanent: true,
     bookingDifficulty: 2,
-    unlockReputation: 5,
+    unlockReputation: 10,
   },
 
   // ── Tier 1: dive bars (~15 rep) ────────────────────────────────────────────
