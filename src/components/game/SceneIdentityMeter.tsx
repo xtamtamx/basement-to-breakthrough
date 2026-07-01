@@ -42,7 +42,6 @@ export const SceneIdentityMeter: React.FC<{ open: boolean; onToggle: () => void;
           ? { position: 'relative', width: '100%' }
           : { position: 'absolute', top: '12px', left: '12px', width: open ? '212px' : '168px', zIndex: 5 }),
         padding: '8px 9px',
-        background: 'rgba(23, 19, 39, 0.92)',
         border: '2px solid var(--snes-void)',
         boxShadow: 'inset 2px 2px 0 0 var(--snes-edge-lt), inset -2px -2px 0 0 var(--snes-void)',
         borderRadius: 0,
@@ -58,9 +57,9 @@ export const SceneIdentityMeter: React.FC<{ open: boolean; onToggle: () => void;
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          fontSize: '7px',
+          fontSize: '9px',
           letterSpacing: 0,
-          color: 'var(--snes-ink-mute)',
+          color: 'var(--snes-ink-dim)',
           marginBottom: '6px',
         }}
       >
@@ -87,8 +86,8 @@ export const SceneIdentityMeter: React.FC<{ open: boolean; onToggle: () => void;
             left: `${pct * 100}%`,
             width: '3px',
             marginLeft: '-1.5px',
-            background: '#f7efe0',
-            boxShadow: '0 0 0 1px var(--snes-void)',
+            background: 'var(--snes-ink)',
+            boxShadow: '0 0 0 1px var(--snes-edge-lt)',
           }}
         />
       </div>
@@ -99,8 +98,8 @@ export const SceneIdentityMeter: React.FC<{ open: boolean; onToggle: () => void;
         style={{
           display: 'flex',
           justifyContent: 'space-between',
-          fontSize: '6px',
-          color: 'var(--snes-ink-mute)',
+          fontSize: '8px',
+          color: 'var(--snes-ink-dim)',
           marginTop: '3px',
         }}
       >
@@ -150,7 +149,7 @@ export const SceneIdentityMeter: React.FC<{ open: boolean; onToggle: () => void;
                     display: 'flex',
                     alignItems: 'center',
                     gap: '5px',
-                    fontSize: '7px',
+                    fontSize: '9px',
                     color: current ? t.color : 'var(--snes-ink-mute)',
                     opacity: current ? 1 : 0.7,
                   }}

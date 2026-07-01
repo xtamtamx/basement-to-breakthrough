@@ -40,7 +40,6 @@ export const FactionStandingsMeter: React.FC<{ open: boolean; onToggle: () => vo
           ? { position: 'relative', width: '100%' }
           : { position: 'absolute', top: '92px', left: '12px', width: open ? '212px' : '168px', zIndex: 5 }),
         padding: '8px 9px',
-        background: 'rgba(23, 19, 39, 0.92)',
         border: '2px solid var(--snes-void)',
         boxShadow: 'inset 2px 2px 0 0 var(--snes-edge-lt), inset -2px -2px 0 0 var(--snes-void)',
         borderRadius: 0,
@@ -56,9 +55,9 @@ export const FactionStandingsMeter: React.FC<{ open: boolean; onToggle: () => vo
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          fontSize: '7px',
+          fontSize: '9px',
           letterSpacing: 0,
-          color: 'var(--snes-ink-mute)',
+          color: 'var(--snes-ink-dim)',
           marginBottom: '7px',
         }}
       >
@@ -75,7 +74,7 @@ export const FactionStandingsMeter: React.FC<{ open: boolean; onToggle: () => vo
                 width: '9px', height: '9px', background: r.color, borderRadius: '50%',
                 boxShadow: '0 0 0 1px var(--snes-void)', opacity: r.standing === 0 ? 0.5 : 1,
               }} />
-              <span className="snes-pixel" style={{ fontSize: '7px', letterSpacing: 0, color: standingColor(r.standing) }}>
+              <span className="snes-pixel" style={{ fontSize: '9px', letterSpacing: 0, color: standingColor(r.standing) }}>
                 {r.standing > 0 ? '+' : ''}{r.standing}
               </span>
             </div>
@@ -98,8 +97,8 @@ export const FactionStandingsMeter: React.FC<{ open: boolean; onToggle: () => vo
                 </span>
               </div>
               {/* bar: red ◄ neutral ► green, marker at the standing */}
-              <div style={{ position: 'relative', height: '6px', background: 'linear-gradient(90deg, #ff5c57 0%, #2a2350 50%, #3ad17e 100%)', boxShadow: 'inset 0 0 0 1px #0a0814' }}>
-                <div aria-hidden style={{ position: 'absolute', top: '-2px', bottom: '-2px', left: `${pct(r.standing) * 100}%`, width: '3px', marginLeft: '-1.5px', background: '#f7efe0', boxShadow: '0 0 0 1px var(--snes-void)' }} />
+              <div style={{ position: 'relative', height: '6px', background: 'linear-gradient(90deg, var(--snes-red) 0%, var(--snes-line) 50%, var(--snes-green) 100%)', boxShadow: 'inset 0 0 0 1px var(--snes-void)' }}>
+                <div aria-hidden style={{ position: 'absolute', top: '-2px', bottom: '-2px', left: `${pct(r.standing) * 100}%`, width: '3px', marginLeft: '-1.5px', background: 'var(--snes-ink)', boxShadow: '0 0 0 1px var(--snes-edge-lt)' }} />
               </div>
             </div>
           ))}

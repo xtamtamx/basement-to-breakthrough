@@ -32,8 +32,10 @@ const StepHeader: React.FC<{
   trailing?: React.ReactNode;
 }> = ({ step, title, active, trailing }) => (
   <h3 className="snes-pixel" style={{
-    fontSize: '10px',
-    color: active ? 'var(--snes-ink)' : 'var(--snes-ink-mute)',
+    fontSize: '11px',
+    /* Sits on the void wall between paper cards — needs the on-void token
+       (ink is near-invisible on the dark wall in the paper skins). */
+    color: active ? 'var(--skin-on-void, var(--snes-ink))' : 'var(--skin-on-void-dim, var(--snes-ink-mute))',
     margin: '0 0 8px',
     textTransform: 'uppercase',
     letterSpacing: 0,
@@ -890,10 +892,11 @@ export const ShowBuilderView: React.FC = () => {
                 className="snes-pixel btb-press"
                 aria-label={`Book ${n} turn${n > 1 ? 's' : ''} out`}
                 style={{
-                  flex: 1, minHeight: '36px', fontSize: '10px', letterSpacing: 0, cursor: 'pointer',
-                  background: leadTime === n ? 'var(--snes-magenta)' : 'var(--snes-void)',
-                  color: leadTime === n ? '#f7efe0' : 'var(--snes-ink-mute)',
-                  border: '2px solid var(--snes-void)', boxShadow: 'inset 1px 1px 0 0 var(--snes-line)', borderRadius: 0,
+                  flex: 1, minHeight: '36px', fontSize: '11px', letterSpacing: 0, cursor: 'pointer',
+                  background: leadTime === n ? 'var(--snes-magenta)' : 'var(--snes-bg-3)',
+                  color: leadTime === n ? '#f7efe0' : 'var(--snes-ink-dim)',
+                  border: leadTime === n ? '2px solid var(--snes-void)' : '2px solid var(--snes-line)',
+                  boxShadow: 'inset 1px 1px 0 0 var(--snes-edge-lt)', borderRadius: 0,
                 }}
               >{n}</button>
             ))}
@@ -965,7 +968,8 @@ export const ShowBuilderView: React.FC = () => {
             padding: '16px',
             fontSize: '12px',
             minHeight: '44px',
-            color: canBook ? '#f7efe0' : 'var(--snes-ink-mute)'
+            /* disabled state sits on the void wall — needs the on-void token */
+            color: canBook ? '#f7efe0' : 'var(--skin-on-void-dim, var(--snes-ink-mute))'
           }}
         >
           <Calendar size={20} />

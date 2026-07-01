@@ -27,7 +27,6 @@ const RESULT_CONFIGS: Record<
     subtitle: string;
     icon: string;
     accent: string;
-    gradient: string;
   }
 > = {
   BREAKTHROUGH_WIN: {
@@ -35,28 +34,24 @@ const RESULT_CONFIGS: Record<
     subtitle: 'From a moldy basement to the big stage. The scene will pretend it always believed in you.',
     icon: 'guitar',
     accent: 'var(--snes-gold)',
-    gradient: 'linear-gradient(180deg, #713f12 0%, #7c2d12 100%)',
   },
   BURNOUT_LOSS: {
     title: 'BURNOUT',
     subtitle: 'The stress was too much. Even your tinnitus needs a vacation.',
     icon: 'skull',
     accent: 'var(--snes-red)',
-    gradient: 'linear-gradient(180deg, #7f1d1d 0%, #111827 100%)',
   },
   EVICTION_LOSS: {
     title: 'EVICTED',
     subtitle: "Can't pay rent, can't book shows. Your parents' couch awaits.",
     icon: 'home',
     accent: '#9ca3af',
-    gradient: 'linear-gradient(180deg, #1f2937 0%, #111827 100%)',
   },
   FADE_OUT_LOSS: {
     title: 'FADE OUT',
     subtitle: 'The scene moved on without you. Another name for the "whatever happened to..." thread.',
     icon: 'skull',
     accent: 'var(--snes-purple)',
-    gradient: 'linear-gradient(180deg, #581c87 0%, #111827 100%)',
   },
 };
 
@@ -106,7 +101,9 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
         aria-modal="true"
         aria-label={`${config.title} — ${config.subtitle}`}
         style={{
-          backgroundImage: config.gradient,
+          /* Paper sheet per skin — the win/loss identity lives in the accent
+             border + title, not a dark legacy gradient (which drowned the text). */
+          backgroundColor: 'var(--snes-bg)',
           border: `3px solid ${config.accent}`,
           borderRadius: 0, // SNES frame: square corners, void outer ring + hard drop
           maxWidth: '680px',
@@ -173,7 +170,7 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
                   fontSize: '34px',
                   fontWeight: 900,
                   lineHeight: 1,
-                  background: 'rgba(0,0,0,0.35)',
+                  background: 'var(--snes-bg-2)',
                   boxShadow: `0 0 12px 0 ${color}66`,
                 }}
                 aria-label={`Grade ${grade}`}
@@ -185,7 +182,7 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
         </div>
 
         {/* Stats */}
-        <div style={{ backgroundColor: 'rgba(0,0,0,0.4)', padding: '12px 20px' }}>
+        <div style={{ backgroundColor: 'var(--snes-bg-2)', padding: '12px 20px' }}>
           <div
             style={{
               fontSize: '11px',
@@ -236,7 +233,7 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
 
         {/* Ceremony: score, fame, and scene legacy */}
         {ceremony && (
-          <div style={{ backgroundColor: 'rgba(0,0,0,0.25)', padding: '12px 20px' }}>
+          <div style={{ backgroundColor: 'var(--snes-bg-2)', padding: '12px 20px' }}>
             <div
               style={{
                 display: 'flex',
@@ -431,7 +428,7 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
         {!isWin && (
           <div
             style={{
-              backgroundColor: 'rgba(0,0,0,0.15)',
+              backgroundColor: 'var(--snes-bg-2)',
               padding: '8px 20px',
               textAlign: 'center',
               fontSize: '12px',
@@ -454,7 +451,7 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
             gap: '10px',
             flexShrink: 0,
             borderTop: '1px solid rgba(255,255,255,0.1)',
-            backgroundColor: 'rgba(0,0,0,0.25)',
+            backgroundColor: 'var(--snes-bg-2)',
           }}
         >
           {canClimb && (

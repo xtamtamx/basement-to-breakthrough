@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { CityView } from "./views/CityView";
 import { BandsView } from "./views/BandsView";
 import { ShowBuilderView } from "./views/ShowBuilderView";
@@ -364,27 +364,28 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
       {/* View Content. Navigation is tap-only via the bottom nav — the old
           swipe-to-switch gesture was too touchy and kept hijacking the map's
           drag and flipping tabs by accident. */}
+      {/* No AnimatePresence here on purpose: mode="wait" made every tab switch
+          a fade-out THEN fade-in (a dead ~400ms black gap between views — felt
+          clunky, and stalled forever in throttled tabs). Instant swap + a quick
+          fade-in of the incoming view reads snappy and can't hang. */}
       <main className="flex-1 overflow-hidden relative">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentView}
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -50 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            className="h-full"
-          >
-            <GameErrorBoundary viewName={currentView}>
-              {currentView === "promotion" ? (
-                <PromotionView onNavigate={handleViewChange} />
-              ) : currentView === "tour" ? (
-                <TourView onNavigate={handleViewChange} />
-              ) : (
-                <CurrentViewComponent />
-              )}
-            </GameErrorBoundary>
-          </motion.div>
-        </AnimatePresence>
+        <motion.div
+          key={currentView}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.12, ease: "easeOut" }}
+          className="h-full"
+        >
+          <GameErrorBoundary viewName={currentView}>
+            {currentView === "promotion" ? (
+              <PromotionView onNavigate={handleViewChange} />
+            ) : currentView === "tour" ? (
+              <TourView onNavigate={handleViewChange} />
+            ) : (
+              <CurrentViewComponent />
+            )}
+          </GameErrorBoundary>
+        </motion.div>
       </main>
 
       {/* Mobile Bottom Navigation */}

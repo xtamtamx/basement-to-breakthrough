@@ -122,7 +122,7 @@ export const DayJobView: React.FC = () => {
           <section style={{ marginBottom: '16px' }}>
             <h3 className="snes-pixel" style={{
               fontSize: '11px',
-              color: 'var(--snes-ink-dim)',
+              color: 'var(--skin-on-void, var(--snes-ink-dim))',
               textTransform: 'uppercase',
               letterSpacing: 0,
               margin: '0 0 8px 2px'
@@ -299,7 +299,7 @@ export const DayJobView: React.FC = () => {
         <section>
           <h3 className="snes-pixel" style={{
             fontSize: '11px',
-            color: 'var(--snes-ink-dim)',
+            color: 'var(--skin-on-void, var(--snes-ink-dim))',
             textTransform: 'uppercase',
             letterSpacing: 0,
             margin: '0 0 8px 2px'

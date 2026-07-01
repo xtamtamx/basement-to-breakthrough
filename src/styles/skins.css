@@ -44,6 +44,10 @@
   --skin-hand: "Marker Felt", "Comic Sans MS", "Bradley Hand", cursive;
   --skin-card-shadow: 2px 3px 0 rgba(0,0,0,0.28);
   --skin-logo-font: var(--skin-hand);
+  /* Text sitting directly on the --snes-void wall (section labels between paper
+     cards). Needs its own token: void is DARK here but LIGHT in corporate. */
+  --skin-on-void: #f0e8d4;
+  --skin-on-void-dim: #a89a7e;
 }
 
 /* Marker font for all the chrome text (labels, numbers, headings). Prose that
@@ -219,6 +223,8 @@
   --skin-zine-body: "Oswald", "Arial Narrow", system-ui, sans-serif;
   --skin-logo-font: var(--skin-zine-head);
   --skin-card-shadow: 3px 3px 0 rgba(0,0,0,0.42);
+  --skin-on-void: #efece2;
+  --skin-on-void-dim: #a09a8a;
   /* subtle xerox streak grain, layered under the paper color per surface */
   --skin-grain: repeating-linear-gradient(0deg, rgba(0,0,0,0.045) 0 1px, transparent 1px 3px);
 }
@@ -428,6 +434,9 @@
   --skin-corp: "Helvetica Neue", "Helvetica", "Arial", system-ui, sans-serif;
   --skin-logo-font: var(--skin-corp);
   --skin-card-shadow: 0 1px 2px rgba(17, 35, 63, 0.12);
+  /* corporate void is LIGHT gray, so on-void text is navy ink */
+  --skin-on-void: #11233f;
+  --skin-on-void-dim: #5b6b80;
   --skin-barcode: repeating-linear-gradient(90deg, var(--snes-ink) 0 2px, transparent 2px 3px, var(--snes-ink) 3px 4px, transparent 4px 6px);
 }
 [data-skin="corporate-leaning"] .snes-title,
