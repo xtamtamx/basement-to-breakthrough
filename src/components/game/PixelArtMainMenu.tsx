@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { PixelButton } from '@components/ui/PixelButton';
+import { PixelIcon } from '@components/ui/PixelIcon';
 import { haptics } from '@utils/mobile';
 import { getTitleTier } from '@game/world/titleStage';
 import { gameAudio } from '@utils/gameAudio';
@@ -79,7 +80,9 @@ const Mug = () => (
 const Ticket: React.FC<{ className?: string }> = ({ className }) => (
   <div className={`ticket${className ? ` ${className}` : ''}`}>
     <div className="t-main">
-      <span className="t-kicker">★ GOOD FOR ONE DRINK ★</span>
+      <span className="t-kicker" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+        <PixelIcon name="fame" size={13} /> GOOD FOR ONE DRINK <PixelIcon name="fame" size={13} />
+      </span>
       <div className="t-headline">
         <Mug />
         <div className="t-words">
@@ -329,17 +332,21 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
         <div className="menu-col">
           <div className="menu-buttons">
             {hasSavedGame && onContinueGame && (
-              <PixelButton variant="primary" size="lg" fullWidth onClick={() => { haptics.medium(); onContinueGame(); }} icon="▶️">Continue</PixelButton>
+              <PixelButton variant="primary" size="lg" fullWidth onClick={() => { haptics.medium(); onContinueGame(); }} icon={<PixelIcon name="play" size={14} />}>Continue</PixelButton>
             )}
-            <PixelButton variant={hasSavedGame ? 'secondary' : 'primary'} size="lg" fullWidth onClick={() => { haptics.medium(); onStartGame(); }} icon="🎸">New Game</PixelButton>
+            <PixelButton variant={hasSavedGame ? 'secondary' : 'primary'} size="lg" fullWidth onClick={() => { haptics.medium(); onStartGame(); }} icon={<PixelIcon name="guitar" size={14} />}>New Game</PixelButton>
             {onUpgrades && (
-              <PixelButton variant="secondary" size="lg" fullWidth onClick={() => { haptics.light(); onUpgrades(); }} icon="⭐">Scene Points</PixelButton>
+              <PixelButton variant="secondary" size="lg" fullWidth onClick={() => { haptics.light(); onUpgrades(); }} icon={<PixelIcon name="fame" size={14} />}>Scene Points</PixelButton>
             )}
             {onSettings && (
-              <PixelButton variant="ghost" size="lg" fullWidth onClick={() => { haptics.light(); onSettings(); }} icon="⚙️">Settings</PixelButton>
+              <PixelButton variant="ghost" size="lg" fullWidth onClick={() => { haptics.light(); onSettings(); }} icon={<PixelIcon name="gear" size={14} />}>Settings</PixelButton>
             )}
           </div>
-          <div className="menu-footer"><p className="version">v1.0.0 • Made with ❤ and 🤘</p></div>
+          <div className="menu-footer">
+            <p className="version" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              v1.0.0 • Made with <PixelIcon name="fans" size={12} /> and <PixelIcon name="guitar" size={12} />
+            </p>
+          </div>
         </div>
       </div>
 
@@ -635,7 +642,7 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
         [data-revealed="true"] .menu-buttons > *:nth-child(4){transition-delay:.8s}
         .menu-footer { text-align: center; opacity: 0; transition: opacity .6s ease 1s; }
         [data-revealed="true"] .menu-footer { opacity: 1; }
-        .version { font-size: 7px; color: #c2b2d2; margin: 0; letter-spacing: 1px; text-transform: uppercase; text-shadow: 1px 1px 1px #000; }
+        .version { font-size: 9px; color: #d4c6e0; margin: 0; letter-spacing: 1px; text-transform: uppercase; text-shadow: 1px 1px 1px #000; }
 
         .pixel-main-menu { --accent: #f72585; }
         .pixel-main-menu[data-tier="dive"] { --accent: #4cc9f0; }

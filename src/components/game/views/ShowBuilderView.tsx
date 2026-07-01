@@ -21,6 +21,8 @@ import { metaProgressionManager } from '@game/mechanics/MetaProgressionManager';
 import { tutorialManager } from '@game/tutorial/TutorialManager';
 import { COMBO_MULT_CAP } from '@game/constants/runConstants';
 import { Calendar, MapPin, Users, AlertCircle, TrendingUp, Check, Ban } from 'lucide-react';
+import { PixelIcon } from '@components/ui/PixelIcon';
+import { BandLogo } from '@components/ui/BandLogo';
 
 /** Step header with a numbered pill that lights up once its step is reachable. */
 const StepHeader: React.FC<{
@@ -59,9 +61,6 @@ const StepHeader: React.FC<{
     {trailing}
   </h3>
 );
-
-// Prose/name font — band names read as human names, not chrome (canon: Inter).
-const SANS = "'Inter', system-ui, -apple-system, sans-serif";
 
 export const ShowBuilderView: React.FC = () => {
   const {
@@ -336,7 +335,7 @@ export const ShowBuilderView: React.FC = () => {
         {/* Upcoming shows — what's booked and when it plays (reactive countdown). */}
         {scheduledShows.filter((s) => s.status === 'SCHEDULED').length > 0 && (
           <div className="snes-panel-inset" style={{ marginBottom: '16px', padding: '10px 12px' }}>
-            <div className="snes-pixel" style={{ fontSize: '9px', color: 'var(--snes-gold)', letterSpacing: 0, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <div className="snes-pixel" style={{ fontSize: '11px', color: 'var(--snes-gold)', letterSpacing: 0, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
               <Calendar size={12} /> Upcoming Shows
             </div>
             {scheduledShows.filter((s) => s.status === 'SCHEDULED').map((s) => {
@@ -346,7 +345,7 @@ export const ShowBuilderView: React.FC = () => {
               return (
                 <div key={s.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', padding: '3px 0' }}>
                   <span style={{ fontSize: '11px', color: 'var(--snes-ink-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
-                    {headliner?.name ?? '???'} · {venue?.name ?? '???'}
+                    {headliner ? <BandLogo band={headliner} variant="inline" /> : '???'} · {venue?.name ?? '???'}
                   </span>
                   <span className="snes-pixel" style={{ flexShrink: 0, fontSize: '9px', letterSpacing: 0, color: inTurns <= 1 ? 'var(--snes-red)' : 'var(--snes-green)' }}>
                     {inTurns <= 0 ? 'tonight' : inTurns === 1 ? 'next turn' : `in ${inTurns} turns`}
@@ -426,7 +425,7 @@ export const ShowBuilderView: React.FC = () => {
                             const fb = bandFactionBadge(band);
                             return fb ? <span title={fb.name} style={{ width: '8px', height: '8px', borderRadius: '50%', background: fb.color, flexShrink: 0 }} /> : null;
                           })()}
-                          <span style={{ fontFamily: SANS, fontWeight: 700, fontSize: '13.5px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{band.name}</span>
+                          <BandLogo band={band} variant="row" style={{ minWidth: 0 }} />
                         </div>
                         <div style={{
                           fontSize: '11px',
@@ -437,17 +436,21 @@ export const ShowBuilderView: React.FC = () => {
                             : `${band.genre} • Pop ${band.popularity}`}
                         </div>
                         {!isUnavailable && (
-                          <div className="snes-pixel" style={{ fontSize: '9px', marginTop: '5px', letterSpacing: 0, color: isSigned(band.id) ? 'var(--snes-green)' : 'var(--snes-gold)' }}>
-                            {isSigned(band.id)
-                              ? `★ SIGNED · $${bandFee(band)} (your cut)`
-                              : `GUEST · $${bandFee(band)} guarantee`}
+                          <div className="snes-pixel" style={{ fontSize: '11px', marginTop: '5px', letterSpacing: 0, display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap', color: isSigned(band.id) ? 'var(--snes-green)' : 'var(--snes-gold)' }}>
+                            {isSigned(band.id) ? (
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                <PixelIcon name="fame" size={12} /> SIGNED · ${bandFee(band)} (your cut)
+                              </span>
+                            ) : (
+                              <span>GUEST · ${bandFee(band)} guarantee</span>
+                            )}
                             {bandDeposit(band.popularity, isSigned(band.id)) > 0 && (
-                              <span style={{ color: 'var(--snes-purple)' }}> · ${bandDeposit(band.popularity, isSigned(band.id))} deposit up front</span>
+                              <span style={{ color: 'var(--snes-purple)' }}>· ${bandDeposit(band.popularity, isSigned(band.id))} deposit up front</span>
                             )}
                           </div>
                         )}
                         {!isUnavailable && resp.note && (
-                          <div className="snes-pixel" style={{ fontSize: '9px', marginTop: '3px', letterSpacing: 0, color: resp.tone === 'good' ? 'var(--snes-green)' : resp.tone === 'bad' ? 'var(--snes-red)' : 'var(--snes-ink-mute)' }}>
+                          <div className="snes-pixel" style={{ fontSize: '11px', marginTop: '3px', letterSpacing: 0, color: resp.tone === 'good' ? 'var(--snes-green)' : resp.tone === 'bad' ? 'var(--snes-red)' : 'var(--snes-ink-dim)' }}>
                             {resp.note}
                           </div>
                         )}
@@ -595,7 +598,7 @@ export const ShowBuilderView: React.FC = () => {
             }}>
               <span className="snes-pixel" style={{
                 color: 'var(--snes-ink-dim)',
-                fontSize: '9px',
+                fontSize: '11px',
                 textTransform: 'uppercase',
                 letterSpacing: 0
               }}>Door Price</span>
@@ -624,7 +627,7 @@ export const ShowBuilderView: React.FC = () => {
                 key micro-decision; surface it right at the slider, not buried in
                 the preview below. */}
             {preview && (
-              <div className="snes-pixel" style={{ marginTop: '8px', fontSize: '9px', color: 'var(--snes-ink-dim)', textAlign: 'center', letterSpacing: 0 }}>
+              <div className="snes-pixel" style={{ marginTop: '8px', fontSize: '11px', color: 'var(--snes-ink-dim)', textAlign: 'center', letterSpacing: 0 }}>
                 <span style={{ color: 'var(--snes-purple)' }}>~{preview.expectedAttendance}</span> in
                 <span style={{ color: 'var(--snes-ink-mute)' }}> · </span>
                 <span style={{ color: 'var(--snes-green)' }}>${preview.grossRevenue}</span> door
@@ -670,8 +673,8 @@ export const ShowBuilderView: React.FC = () => {
                   padding: '8px 10px',
                   marginBottom: '16px',
                 }}>
-                  <span className="snes-pixel" style={{ fontSize: '9px', color: preview.sceneFit.tier === 'perfect' ? 'var(--snes-gold)' : 'var(--snes-cyan)', letterSpacing: 0 }}>
-                    🔥 {preview.sceneFit.label} in {currentCity?.name} (+{Math.round((preview.sceneFit.multiplier - 1) * 100)}% crowd)
+                  <span className="snes-pixel" style={{ fontSize: '11px', color: preview.sceneFit.tier === 'perfect' ? 'var(--snes-gold)' : 'var(--snes-cyan)', letterSpacing: 0, display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <PixelIcon name="fire" size={12} /> {preview.sceneFit.label} in {currentCity?.name} (+{Math.round((preview.sceneFit.multiplier - 1) * 100)}% crowd)
                   </span>
                 </div>
               )}
@@ -683,8 +686,8 @@ export const ShowBuilderView: React.FC = () => {
                   padding: '8px 10px',
                   marginBottom: '16px',
                 }}>
-                  <span className="snes-pixel" style={{ fontSize: '9px', color: 'var(--snes-green)', letterSpacing: 0 }}>
-                    🏠 {preview.homeFit.label} — {currentCity?.name} turns out (+{Math.round((preview.homeFit.multiplier - 1) * 100)}% crowd)
+                  <span className="snes-pixel" style={{ fontSize: '11px', color: 'var(--snes-green)', letterSpacing: 0, display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <PixelIcon name="home" size={12} /> {preview.homeFit.label} — {currentCity?.name} turns out (+{Math.round((preview.homeFit.multiplier - 1) * 100)}% crowd)
                   </span>
                 </div>
               )}
@@ -698,11 +701,11 @@ export const ShowBuilderView: React.FC = () => {
                   padding: '8px 10px',
                   marginBottom: '16px',
                 }}>
-                  <div className="snes-pixel" style={{ fontSize: '9px', color: preview.lineupChem.hostile ? 'var(--snes-red)' : 'var(--snes-green)', letterSpacing: 0, marginBottom: preview.lineupChem.conflicts.length ? '6px' : 0 }}>
-                    🎸 Bill Chemistry {Math.round((preview.lineupChem.mult - 1) * 100) >= 0 ? '+' : ''}{Math.round((preview.lineupChem.mult - 1) * 100)}% crowd
+                  <div className="snes-pixel" style={{ fontSize: '11px', color: preview.lineupChem.hostile ? 'var(--snes-red)' : 'var(--snes-green)', letterSpacing: 0, marginBottom: preview.lineupChem.conflicts.length ? '6px' : 0, display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <PixelIcon name="guitar" size={12} /> Bill Chemistry {Math.round((preview.lineupChem.mult - 1) * 100) >= 0 ? '+' : ''}{Math.round((preview.lineupChem.mult - 1) * 100)}% crowd
                   </div>
                   {preview.lineupChem.conflicts.map((c, i) => (
-                    <div key={i} className="snes-pixel" style={{ fontSize: '9px', color: 'var(--snes-ink-dim)', letterSpacing: 0, lineHeight: 1.6 }}>{c}</div>
+                    <div key={i} className="snes-pixel" style={{ fontSize: '11px', color: 'var(--snes-ink-dim)', letterSpacing: 0, lineHeight: 1.6 }}>{c}</div>
                   ))}
                 </div>
               )}
@@ -714,8 +717,8 @@ export const ShowBuilderView: React.FC = () => {
                   padding: '8px 10px',
                   marginBottom: '16px',
                 }}>
-                  <div className="snes-pixel" style={{ fontSize: '9px', color: preview.factionAttPct >= 0 ? 'var(--snes-purple)' : 'var(--snes-red)', letterSpacing: 0 }}>
-                    🎭 Faction Standing {preview.factionAttPct >= 0 ? '+' : ''}{preview.factionAttPct}% crowd
+                  <div className="snes-pixel" style={{ fontSize: '11px', color: preview.factionAttPct >= 0 ? 'var(--snes-purple)' : 'var(--snes-red)', letterSpacing: 0, display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <PixelIcon name="faction" size={12} /> Faction Standing {preview.factionAttPct >= 0 ? '+' : ''}{preview.factionAttPct}% crowd
                   </div>
                 </div>
               )}
@@ -724,12 +727,15 @@ export const ShowBuilderView: React.FC = () => {
               {preview.synergies.length > 0 && (
                 <div style={{ marginBottom: '16px' }}>
                   <h4 className="snes-pixel btb-glow" style={{
-                    fontSize: '9px',
+                    fontSize: '11px',
                     color: 'var(--snes-green)',
                     margin: '0 0 8px',
                     textTransform: 'uppercase',
-                    letterSpacing: 0
-                  }}>Synergies Firing 🔥</h4>
+                    letterSpacing: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px'
+                  }}>Synergies Firing <PixelIcon name="fire" size={12} /></h4>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                     {preview.synergies.map((synergy, idx) => {
                       const id = synergy.id ?? String(idx);
@@ -747,7 +753,7 @@ export const ShowBuilderView: React.FC = () => {
                             backgroundColor: open ? 'var(--snes-bg-3)' : 'var(--snes-bg-2)',
                             border: '2px solid var(--snes-green)',
                             color: 'var(--snes-green)',
-                            fontSize: '9px',
+                            fontSize: '11px',
                             letterSpacing: 0,
                             borderRadius: 0,
                             cursor: 'pointer'
@@ -763,18 +769,18 @@ export const ShowBuilderView: React.FC = () => {
                     const s = preview.synergies.find((x, i) => (x.id ?? String(i)) === expandedCombo);
                     if (!s) return null;
                     return (
-                      <div className="snes-pixel" style={{ marginTop: '8px', padding: '8px 10px', backgroundColor: 'var(--snes-bg-2)', border: '2px solid var(--snes-green)', fontSize: '9px', lineHeight: 1.6, letterSpacing: 0 }}>
+                      <div className="snes-pixel" style={{ marginTop: '8px', padding: '8px 10px', backgroundColor: 'var(--snes-bg-2)', border: '2px solid var(--snes-green)', fontSize: '11px', lineHeight: 1.6, letterSpacing: 0 }}>
                         <div style={{ color: 'var(--snes-ink-dim)' }}>{s.description}</div>
-                        <div style={{ marginTop: '6px', color: 'var(--snes-green)' }}>
+                        <div style={{ marginTop: '6px', color: 'var(--snes-green)', display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
                           +{Math.round((s.multiplier - 1) * 100)}% crowd
-                          {s.reputationBonus > 0 && <span style={{ color: 'var(--snes-gold)' }}> · +{s.reputationBonus} ★ rep</span>}
+                          {s.reputationBonus > 0 && <span style={{ color: 'var(--snes-gold)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>· +{s.reputationBonus} <PixelIcon name="fame" size={12} /> rep</span>}
                         </div>
                       </div>
                     );
                   })()}
                   {preview.reputationBonus > 0 && (
-                    <div className="snes-pixel" style={{ fontSize: '9px', color: 'var(--snes-gold)', letterSpacing: 0, marginTop: '6px' }}>
-                      +{preview.reputationBonus} ★ rep from combos
+                    <div className="snes-pixel" style={{ fontSize: '11px', color: 'var(--snes-gold)', letterSpacing: 0, marginTop: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      +{preview.reputationBonus} <PixelIcon name="fame" size={12} /> rep from combos
                     </div>
                   )}
                 </div>
@@ -790,7 +796,7 @@ export const ShowBuilderView: React.FC = () => {
                   padding: '12px'
                 }}>
                   <div className="snes-pixel" style={{
-                    fontSize: '9px',
+                    fontSize: '11px',
                     color: 'var(--snes-ink-dim)',
                     marginBottom: '8px',
                     textTransform: 'uppercase',
@@ -817,7 +823,7 @@ export const ShowBuilderView: React.FC = () => {
                   padding: '12px'
                 }}>
                   <div className="snes-pixel" style={{
-                    fontSize: '9px',
+                    fontSize: '11px',
                     color: 'var(--snes-ink-dim)',
                     marginBottom: '8px',
                     textTransform: 'uppercase',
@@ -838,15 +844,15 @@ export const ShowBuilderView: React.FC = () => {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px' }}>
                     <span style={{ color: 'var(--snes-ink-dim)' }}>Gross Revenue</span>
-                    <span className="snes-pixel" style={{ color: 'var(--snes-green)', fontSize: '9px' }}>+${preview.grossRevenue}</span>
+                    <span className="snes-pixel" style={{ color: 'var(--snes-green)', fontSize: '11px' }}>+${preview.grossRevenue}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px' }}>
                     <span style={{ color: 'var(--snes-ink-dim)' }}>Venue Rent</span>
-                    <span className="snes-pixel" style={{ color: 'var(--snes-red)', fontSize: '9px' }}>-${preview.venueCost}</span>
+                    <span className="snes-pixel" style={{ color: 'var(--snes-red)', fontSize: '11px' }}>-${preview.venueCost}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px' }}>
                     <span style={{ color: 'var(--snes-ink-dim)' }}>Band Fees{selectedBands.length > 1 ? ` (×${selectedBands.length})` : ''}</span>
-                    <span className="snes-pixel" style={{ color: 'var(--snes-red)', fontSize: '9px' }}>-${preview.bandCost}</span>
+                    <span className="snes-pixel" style={{ color: 'var(--snes-red)', fontSize: '11px' }}>-${preview.bandCost}</span>
                   </div>
                   <div style={{
                     display: 'flex',
@@ -855,7 +861,7 @@ export const ShowBuilderView: React.FC = () => {
                     paddingTop: '10px',
                     borderTop: '2px solid var(--snes-line)'
                   }}>
-                    <span className="snes-pixel" style={{ color: 'var(--snes-ink)', fontSize: '9px' }}>Net Profit</span>
+                    <span className="snes-pixel" style={{ color: 'var(--snes-ink)', fontSize: '11px' }}>Net Profit</span>
                     <span className="snes-pixel" style={{ fontSize: '11px', color: preview.netRevenue >= 0 ? 'var(--snes-green)' : 'var(--snes-red)' }}>
                       {preview.netRevenue >= 0 ? '+' : '-'}${Math.abs(preview.netRevenue)}
                     </span>
@@ -869,10 +875,10 @@ export const ShowBuilderView: React.FC = () => {
         {/* When the show plays — explicit lead time so you know what to budget for. */}
         <div className="snes-panel-inset" style={{ padding: '10px 12px', marginBottom: '12px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <span className="snes-pixel" style={{ fontSize: '9px', color: 'var(--snes-ink)', letterSpacing: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span className="snes-pixel" style={{ fontSize: '11px', color: 'var(--snes-ink)', letterSpacing: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
               <Calendar size={12} color="var(--snes-magenta)" /> When
             </span>
-            <span className="snes-pixel" style={{ fontSize: '9px', color: 'var(--snes-green)', letterSpacing: 0 }}>
+            <span className="snes-pixel" style={{ fontSize: '11px', color: 'var(--snes-green)', letterSpacing: 0 }}>
               {leadTime === 1 ? 'plays next turn' : `plays in ${leadTime} turns`}
             </span>
           </div>
@@ -903,16 +909,16 @@ export const ShowBuilderView: React.FC = () => {
           {/* Booking-capacity ramp — how many shows you can have cooking at once.
               Starts at 1 (new promoter) and unlocks more slots as your scene grows. */}
           <div className="snes-panel-inset" style={{ padding: '8px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-            <span className="snes-pixel" style={{ fontSize: '9px', color: atBookingCap ? 'var(--snes-red)' : 'var(--snes-cyan)', letterSpacing: 0 }}>
-              📋 Booking slots {showsInPipeline}/{bookingSlots}
+            <span className="snes-pixel" style={{ fontSize: '11px', color: atBookingCap ? 'var(--snes-red)' : 'var(--snes-cyan)', letterSpacing: 0, display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <PixelIcon name="clipboard" size={12} /> Booking slots {showsInPipeline}/{bookingSlots}
             </span>
-            <span style={{ fontSize: '9px', color: 'var(--snes-ink-mute)' }}>
+            <span style={{ fontSize: '11px', color: 'var(--snes-ink-dim)' }}>
               {nextSlotRep != null ? `+1 slot at ${nextSlotRep} rep` : 'maxed out'}
             </span>
           </div>
           {preview ? (
             <div className="snes-panel" style={{ padding: '14px' }}>
-              <div className="snes-pixel" style={{ fontSize: '9px', color: 'var(--snes-green)', letterSpacing: 0, marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div className="snes-pixel" style={{ fontSize: '11px', color: 'var(--snes-green)', letterSpacing: 0, marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <TrendingUp size={13} /> The Night
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--snes-ink-dim)', marginBottom: '6px' }}>
@@ -925,18 +931,18 @@ export const ShowBuilderView: React.FC = () => {
                 <span>Costs</span><span className="snes-pixel" style={{ fontSize: '10px', color: 'var(--snes-red)' }}>-${preview.venueCost + preview.bandCost}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '2px solid var(--snes-line)', paddingTop: '8px' }}>
-                <span className="snes-pixel" style={{ fontSize: '9px', color: 'var(--snes-ink)', letterSpacing: 0 }}>Net</span>
+                <span className="snes-pixel" style={{ fontSize: '11px', color: 'var(--snes-ink)', letterSpacing: 0 }}>Net</span>
                 <span className="snes-pixel" style={{ fontSize: '13px', letterSpacing: 0, color: preview.netRevenue >= 0 ? 'var(--snes-green)' : 'var(--snes-red)' }}>{preview.netRevenue >= 0 ? '+' : ''}${preview.netRevenue}</span>
               </div>
               {preview.synergies.length > 0 && (
-                <div className="snes-pixel" style={{ fontSize: '9px', color: 'var(--snes-gold)', letterSpacing: 0, marginTop: '10px' }}>🔥 {preview.synergies.length} combo{preview.synergies.length > 1 ? 's' : ''} firing</div>
+                <div className="snes-pixel" style={{ fontSize: '11px', color: 'var(--snes-gold)', letterSpacing: 0, marginTop: '10px', display: 'flex', alignItems: 'center', gap: '5px' }}><PixelIcon name="fire" size={12} /> {preview.synergies.length} combo{preview.synergies.length > 1 ? 's' : ''} firing</div>
               )}
               {/* Cash-flow timing: what leaves your balance NOW (rent + big-act
                   deposits) vs. the rest, paid from the door on show day. */}
               {upFrontDue > 0 && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'var(--snes-ink-dim)', marginTop: '10px' }}>
                   <span>Due at booking{bandDepositTotal > 0 ? ' (deposit)' : ''}</span>
-                  <span className="snes-pixel" style={{ fontSize: '9px', color: 'var(--snes-gold)' }}>${upFrontDue}</span>
+                  <span className="snes-pixel" style={{ fontSize: '11px', color: 'var(--snes-gold)' }}>${upFrontDue}</span>
                 </div>
               )}
               <div style={{ fontSize: '10px', color: 'var(--snes-ink-mute)', marginTop: '10px', lineHeight: 1.4 }}>

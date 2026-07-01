@@ -45,6 +45,8 @@ const GLYPHS: Record<string, string[]> = {
   skull:    ["..#####..",".#######.","#########","##.###.##","##.###.##","#########",".#.#.#.#.",".#######.","..#.#.#.."],
   flower:   ["...###...","..#####..",".##.#.##.","###.#.###",".##.#.##.","..#####..","...#.#...","...#.#...","..#.#.#.."],
   flask:    ["...###...","...#.#...","...#.#...","..#...#..","..#...#..",".#.###.#.",".#######.",".#######.","..#####.."],
+  play:     ["##.......","####.....","######...","########.","#########","########.","######...","####.....","##......."],
+  gear:     ["...#.#...",".#######.","..#####..","##.###.##","#..###..#","##.###.##","..#####..",".#######.","...#.#..."],
 };
 
 // Forgiving concept aliases → canonical glyph, so callers can use intuitive names.
@@ -73,6 +75,18 @@ const ALIASES: Record<string, string> = {
   shows: 'calendar', schedule: 'calendar', date: 'calendar',
   booking: 'clipboard',
   banner: 'faction', politics: 'faction',
+  settings: 'gear', options: 'gear',
+  continue: 'play', start: 'play',
+  horns: 'guitar', ghost: 'skull', dizzy: 'skull', dead: 'skull',
+  // venue types → nearest glyph
+  bar: 'home', club: 'home', basement: 'home',
+  hall: 'building', theater: 'building', theatre: 'building',
+  festival: 'building', stadium: 'building', arena: 'building', warehouse: 'building',
+  mic: 'note', microphone: 'note',
+  // equipment → nearest glyph
+  pa: 'megaphone', speaker: 'megaphone', sound: 'megaphone',
+  lighting: 'sparkle', lights: 'sparkle',
+  stage: 'building', backline: 'guitar', recording: 'note', equipment: 'clipboard',
 };
 
 export type PixelIconName = keyof typeof GLYPHS | keyof typeof ALIASES;

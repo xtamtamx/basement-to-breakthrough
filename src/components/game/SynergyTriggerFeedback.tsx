@@ -4,6 +4,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { SynergyTriggerResult } from '@game/mechanics/SynergyManager';
+import { PixelIcon } from '@components/ui/PixelIcon';
 
 interface SynergyTriggerFeedbackProps {
   results: SynergyTriggerResult[];
@@ -53,7 +54,9 @@ export const SynergyTriggerFeedback: React.FC<SynergyTriggerFeedbackProps> = ({
                    shadow-2xl shadow-yellow-500/30 animate-synergy-trigger"
       >
         <div className="flex items-center gap-3">
-          <div className="text-3xl animate-pulse">✨</div>
+          <div className="animate-pulse text-yellow-300" style={{ display: 'flex' }}>
+            <PixelIcon name="sparkle" size={28} />
+          </div>
           <div>
             <div className="text-lg font-bold text-yellow-300">
               {current.synergyName} Triggered!
@@ -115,11 +118,11 @@ export const FloatingEffect: React.FC<FloatingEffectProps> = ({
   const colorClass = isPositive ? 'text-green-400' : 'text-red-400';
   const prefix = isPositive ? '+' : '';
 
-  const typeIcons = {
-    money: '$',
-    reputation: '⭐',
-    fans: '👥',
-    stress: '😰',
+  const typeIcons: Record<FloatingEffectProps['type'], string> = {
+    money: 'money',
+    reputation: 'fame',
+    fans: 'fans',
+    stress: 'stress',
   };
 
   const style = position
@@ -130,9 +133,10 @@ export const FloatingEffect: React.FC<FloatingEffectProps> = ({
     <div
       className={`fixed ${colorClass} font-bold text-lg pointer-events-none
                   animate-float-up z-50`}
-      style={style}
+      style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', ...style }}
     >
-      {prefix}{value} {typeIcons[type]}
+      <span>{prefix}{value}</span>
+      <PixelIcon name={typeIcons[type]} size={14} />
     </div>
   );
 };

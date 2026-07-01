@@ -17,6 +17,7 @@ const instinctTriggerLabel = (id: string): string | null => {
 import { audio } from '@utils/simpleAudio';
 import { haptics } from '@utils/mobile';
 import { mapFx } from '@components/effects/mapFxBus';
+import { PixelIcon } from '@components/ui/PixelIcon';
 import { Users, DollarSign, Star } from 'lucide-react';
 
 interface TurnResultsModalProps {
@@ -185,8 +186,11 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
           fontSize: '12px',
           color: bigNight ? 'var(--snes-gold)' : 'var(--snes-magenta)',
           letterSpacing: 0,
-          lineHeight: 1.5
-        }}>{anySoldOut ? '🎉 Sold-Out Night!' : 'Post-Show Damage Report'}</span>
+          lineHeight: 1.5,
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '6px'
+        }}>{anySoldOut ? <><PixelIcon name="soldout" size={14} />Sold-Out Night!</> : 'Post-Show Damage Report'}</span>
       }
     >
           {/* Content */}
@@ -249,11 +253,11 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ color: 'var(--snes-ink-dim)', fontSize: '13px' }}>Revenue</span>
-                  <span className="snes-pixel" style={{ color: 'var(--snes-green)', fontSize: '9px', letterSpacing: 0 }}>+${totalRevenue}</span>
+                  <span className="snes-pixel" style={{ color: 'var(--snes-green)', fontSize: '11px', letterSpacing: 0 }}>+${totalRevenue}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ color: 'var(--snes-ink-dim)', fontSize: '13px' }}>Costs</span>
-                  <span className="snes-pixel" style={{ color: 'var(--snes-red)', fontSize: '9px', letterSpacing: 0 }}>-${totalCosts}</span>
+                  <span className="snes-pixel" style={{ color: 'var(--snes-red)', fontSize: '11px', letterSpacing: 0 }}>-${totalCosts}</span>
                 </div>
                 {totalUpkeep > 0 && (
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px' }}>
@@ -276,7 +280,7 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
                   justifyContent: 'space-between',
                   alignItems: 'center'
                 }}>
-                  <span className="snes-pixel" style={{ color: 'var(--snes-ink)', fontSize: '9px', letterSpacing: 0 }}>Net Profit</span>
+                  <span className="snes-pixel" style={{ color: 'var(--snes-ink)', fontSize: '11px', letterSpacing: 0 }}>Net Profit</span>
                   <span className="snes-pixel" style={{
                     color: totalProfit >= 0 ? 'var(--snes-green)' : 'var(--snes-red)',
                     fontSize: '11px',
@@ -306,7 +310,7 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
               }}>
                 <Users size={20} color="var(--snes-purple)" />
                 <div>
-                  <div className="snes-pixel" style={{ color: 'var(--snes-ink-dim)', fontSize: '7px', letterSpacing: 0, marginBottom: '6px' }}>Fans</div>
+                  <div className="snes-pixel" style={{ color: 'var(--snes-ink-dim)', fontSize: '11px', letterSpacing: 0, marginBottom: '6px' }}>Fans</div>
                   <div className="snes-pixel" style={{ color: 'var(--snes-ink)', fontSize: '10px', letterSpacing: 0 }}>
                     <CountUp value={totalFans} plus />
                   </div>
@@ -324,7 +328,7 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
               }}>
                 <Star size={20} color="var(--snes-gold)" />
                 <div>
-                  <div className="snes-pixel" style={{ color: 'var(--snes-ink-dim)', fontSize: '7px', letterSpacing: 0, marginBottom: '6px' }}>Reputation</div>
+                  <div className="snes-pixel" style={{ color: 'var(--snes-ink-dim)', fontSize: '11px', letterSpacing: 0, marginBottom: '6px' }}>Reputation</div>
                   <div className="snes-pixel" style={{ color: 'var(--snes-ink)', fontSize: '10px', letterSpacing: 0 }}>
                     <CountUp value={totalRep} plus />
                   </div>
@@ -366,7 +370,7 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
                           {details.bandName} @ {details.venueName}
                         </span>
                         <span className="snes-pixel" style={{
-                          fontSize: '9px',
+                          fontSize: '11px',
                           letterSpacing: 0,
                           color: result.revenue - result.financials.costs > 0 ? 'var(--snes-green)' : 'var(--snes-red)'
                         }}>
@@ -377,24 +381,27 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
                         <span>{result.attendance}/{details.capacity} attended • +{result.fansGained} fans</span>
                         {details.capacity > 0 && result.attendance >= details.capacity && (
                           <span className="snes-pixel btb-pop btb-shake" style={{
-                            fontSize: '7px', letterSpacing: 0, color: '#1e1509',
-                            backgroundColor: 'var(--snes-gold)', padding: '2px 5px'
-                          }}>🎉 SOLD OUT</span>
+                            fontSize: '9px', letterSpacing: 0, color: '#1e1509',
+                            backgroundColor: 'var(--snes-gold)', padding: '2px 5px',
+                            display: 'inline-flex', alignItems: 'center', gap: '4px'
+                          }}><PixelIcon name="soldout" size={10} /> SOLD OUT</span>
                         )}
                         {result.incidentOccurred && (
                           <span className="snes-pixel btb-pop" style={{
-                            fontSize: '7px', letterSpacing: 0, color: '#f7efe0',
-                            backgroundColor: 'var(--snes-red)', padding: '2px 5px'
-                          }}>🚨 INCIDENT</span>
+                            fontSize: '9px', letterSpacing: 0, color: '#f7efe0',
+                            backgroundColor: 'var(--snes-red)', padding: '2px 5px',
+                            display: 'inline-flex', alignItems: 'center', gap: '4px'
+                          }}><PixelIcon name="warning" size={10} /> INCIDENT</span>
                         )}
                       </div>
                       {result.venueSynergies && result.venueSynergies.length > 0 && (
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '8px' }}>
                           {result.venueSynergies.map((s, i) => (
                             <span key={i} className="snes-pixel" title={s.description} style={{
-                              fontSize: '7px', letterSpacing: 0, color: 'var(--snes-green)',
-                              border: '2px solid var(--snes-green)', backgroundColor: 'var(--snes-bg-2)', padding: '3px 5px'
-                            }}>🔥 {s.name}</span>
+                              fontSize: '9px', letterSpacing: 0, color: 'var(--snes-green)',
+                              border: '2px solid var(--snes-green)', backgroundColor: 'var(--snes-bg-2)', padding: '3px 5px',
+                              display: 'inline-flex', alignItems: 'center', gap: '4px'
+                            }}><PixelIcon name="fire" size={10} /> {s.name}</span>
                           ))}
                         </div>
                       )}
@@ -402,28 +409,32 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '8px' }}>
                           {(result.politics.factionAttendancePct !== 0 || result.politics.factionRepPct !== 0) && (
                             <span className="snes-pixel" style={{
-                              fontSize: '7px', letterSpacing: 0, color: 'var(--snes-purple)',
-                              border: '2px solid var(--snes-purple)', backgroundColor: 'var(--snes-bg-2)', padding: '3px 5px'
-                            }}>🎭 Faction{result.politics.factionAttendancePct !== 0 ? ` ${result.politics.factionAttendancePct >= 0 ? '+' : ''}${result.politics.factionAttendancePct}% crowd` : ''}{result.politics.factionRepPct !== 0 ? ` ${result.politics.factionRepPct >= 0 ? '+' : ''}${result.politics.factionRepPct}% rep` : ''}</span>
+                              fontSize: '9px', letterSpacing: 0, color: 'var(--snes-purple)',
+                              border: '2px solid var(--snes-purple)', backgroundColor: 'var(--snes-bg-2)', padding: '3px 5px',
+                              display: 'inline-flex', alignItems: 'center', gap: '4px'
+                            }}><PixelIcon name="faction" size={10} /> Faction{result.politics.factionAttendancePct !== 0 ? ` ${result.politics.factionAttendancePct >= 0 ? '+' : ''}${result.politics.factionAttendancePct}% crowd` : ''}{result.politics.factionRepPct !== 0 ? ` ${result.politics.factionRepPct >= 0 ? '+' : ''}${result.politics.factionRepPct}% rep` : ''}</span>
                           )}
                           {result.politics.lineupPct !== 0 && (
                             <span className="snes-pixel" style={{
-                              fontSize: '7px', letterSpacing: 0, color: 'var(--snes-green)',
-                              border: '2px solid var(--snes-green)', backgroundColor: 'var(--snes-bg-2)', padding: '3px 5px'
-                            }}>🎸 Bill {result.politics.lineupPct >= 0 ? '+' : ''}{result.politics.lineupPct}% crowd</span>
+                              fontSize: '9px', letterSpacing: 0, color: 'var(--snes-green)',
+                              border: '2px solid var(--snes-green)', backgroundColor: 'var(--snes-bg-2)', padding: '3px 5px',
+                              display: 'inline-flex', alignItems: 'center', gap: '4px'
+                            }}><PixelIcon name="guitar" size={10} /> Bill {result.politics.lineupPct >= 0 ? '+' : ''}{result.politics.lineupPct}% crowd</span>
                           )}
                           {result.politics.conflicts.map((c, i) => (
                             <span key={i} className="snes-pixel" style={{
-                              fontSize: '7px', letterSpacing: 0, color: 'var(--snes-red)',
-                              border: '2px solid var(--snes-red)', backgroundColor: 'var(--snes-bg-2)', padding: '3px 5px'
-                            }}>⚡ {c}</span>
+                              fontSize: '9px', letterSpacing: 0, color: 'var(--snes-red)',
+                              border: '2px solid var(--snes-red)', backgroundColor: 'var(--snes-bg-2)', padding: '3px 5px',
+                              display: 'inline-flex', alignItems: 'center', gap: '4px'
+                            }}><PixelIcon name="energy" size={10} /> {c}</span>
                           ))}
                         </div>
                       )}
                       {result.combosDiscovered && result.combosDiscovered.length > 0 && (
                         <div className="snes-pixel btb-pop btb-glow" style={{
-                          fontSize: '8px', letterSpacing: 0, color: 'var(--snes-gold)', marginTop: '8px'
-                        }}>✨ NEW SYNERGY DISCOVERED!</div>
+                          fontSize: '11px', letterSpacing: 0, color: 'var(--snes-gold)', marginTop: '8px',
+                          display: 'flex', alignItems: 'center', gap: '5px'
+                        }}><PixelIcon name="sparkle" size={12} /> NEW SYNERGY DISCOVERED!</div>
                       )}
                     </div>
                     );
@@ -436,15 +447,16 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
             {synergyEffects.filter((s) => s.triggered).length > 0 && (
               <div style={{ marginBottom: '20px' }}>
                 <h3 className="snes-pixel" style={{
-                  fontSize: '10px', color: 'var(--snes-purple)', marginTop: 0, marginBottom: '12px', letterSpacing: 0
-                }}>Instincts That Kicked In 🧠</h3>
+                  fontSize: '10px', color: 'var(--snes-purple)', marginTop: 0, marginBottom: '12px', letterSpacing: 0,
+                  display: 'flex', alignItems: 'center', gap: '6px'
+                }}>Instincts That Kicked In <PixelIcon name="instinct" size={13} /></h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   {synergyEffects.filter((s) => s.triggered).map((s, i) => (
                     <div key={i} style={{
                       backgroundColor: 'var(--snes-bg-2)', border: '2px solid var(--snes-void)',
                       borderLeft: '4px solid var(--snes-purple)', padding: '8px 10px'
                     }}>
-                      <span className="snes-pixel" style={{ fontSize: '8px', color: 'var(--snes-purple)', letterSpacing: 0 }}>
+                      <span className="snes-pixel" style={{ fontSize: '11px', color: 'var(--snes-purple)', letterSpacing: 0 }}>
                         {s.synergyName}
                       </span>
                       <div style={{ color: 'var(--snes-ink-dim)', fontSize: '11px', marginTop: '3px' }}>
@@ -453,7 +465,7 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
                       {(() => {
                         const t = instinctTriggerLabel(s.synergyId);
                         return (t || s.conditionDescription) ? (
-                          <div style={{ color: 'var(--snes-ink-mute)', fontSize: '9px', marginTop: '4px' }}>
+                          <div style={{ color: 'var(--snes-ink-dim)', fontSize: '11px', marginTop: '4px' }}>
                             {t && `fires at ${t}`}{t && s.conditionDescription ? ' · ' : ''}{s.conditionDescription}
                           </div>
                         ) : null;
@@ -485,7 +497,7 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
                 <p style={{ color: 'var(--snes-ink-dim)', fontSize: '13px', margin: '0 0 8px 0', lineHeight: 1.5 }}>
                   {dayJobResult.message}
                 </p>
-                <div className="snes-pixel" style={{ fontSize: '8px', color: 'var(--snes-ink-dim)', letterSpacing: 0, lineHeight: 1.6 }}>
+                <div className="snes-pixel" style={{ fontSize: '11px', color: 'var(--snes-ink-dim)', letterSpacing: 0, lineHeight: 1.6 }}>
                   +${dayJobResult.money} • Stress +{dayJobResult.stressGain}%
                   {dayJobResult.reputationLoss > 0 ? ` • −${dayJobResult.reputationLoss} rep` : ''}
                   {dayJobResult.fanLoss > 0 ? ` • −${dayJobResult.fanLoss} fans` : ''}

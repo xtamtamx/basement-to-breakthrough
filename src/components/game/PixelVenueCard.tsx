@@ -1,6 +1,7 @@
 import React from 'react';
 import { Venue, VenueType } from '@game/types';
 import { haptics } from '@utils/mobile';
+import { PixelIcon } from '@components/ui/PixelIcon';
 
 interface PixelVenueCardProps {
   venue: Venue;
@@ -28,15 +29,15 @@ export const PixelVenueCard: React.FC<PixelVenueCardProps> = ({
 
   const getVenueIcon = (type: VenueType) => {
     switch (type) {
-      case VenueType.BASEMENT: return '🏠';
-      case VenueType.DIVE_BAR: return '🍺';
-      case VenueType.PUNK_CLUB: return '🎵';
-      case VenueType.METAL_VENUE: return '🎤';
-      case VenueType.CONCERT_HALL: return '🏟️';
-      case VenueType.FESTIVAL_GROUNDS: return '⛺';
-      case VenueType.WAREHOUSE: return '🏭';
-      case VenueType.UNDERGROUND: return '🚇';
-      default: return '📍';
+      case VenueType.BASEMENT: return 'home';
+      case VenueType.DIVE_BAR: return 'home';
+      case VenueType.PUNK_CLUB: return 'home';
+      case VenueType.METAL_VENUE: return 'note';
+      case VenueType.CONCERT_HALL: return 'building';
+      case VenueType.FESTIVAL_GROUNDS: return 'building';
+      case VenueType.WAREHOUSE: return 'building';
+      case VenueType.UNDERGROUND: return 'building';
+      default: return 'pin';
     }
   };
 
@@ -105,8 +106,8 @@ export const PixelVenueCard: React.FC<PixelVenueCardProps> = ({
       <div className="relative z-10">
         {/* Header with icon and name */}
         <div className="flex items-start gap-2 mb-2">
-          <span className="text-2xl" style={{ filter: 'grayscale(1) contrast(2)' }}>
-            {getVenueIcon(venue.type)}
+          <span style={{ display: 'inline-flex', alignItems: 'center', color: getVenueColor(venue.type) }}>
+            <PixelIcon name={getVenueIcon(venue.type)} size={20} />
           </span>
           <div className="flex-1">
             <h3 className="pixel-text pixel-text-shadow" style={{ color: 'var(--pixel-white)' }}>
@@ -119,8 +120,9 @@ export const PixelVenueCard: React.FC<PixelVenueCardProps> = ({
         </div>
 
         {/* Location */}
-        <div className="pixel-text pixel-text-sm mb-2" style={{ color: 'var(--pixel-gray)' }}>
-          📍 {venue.location.name.toUpperCase()}
+        <div className="pixel-text pixel-text-sm mb-2 flex items-center" style={{ gap: '4px', color: 'var(--pixel-gray)' }}>
+          <PixelIcon name="pin" size={12} />
+          {venue.location.name.toUpperCase()}
         </div>
 
         {/* Capacity */}

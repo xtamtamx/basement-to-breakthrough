@@ -7,6 +7,7 @@ import React, { useEffect } from 'react';
 import { EventCard } from '@game/mechanics/EventCardSystem';
 import { useGameStore } from '@stores/gameStore';
 import { SnesModal } from '@components/ui/SnesModal';
+import { PixelIcon } from '@components/ui/PixelIcon';
 import { audio } from '@utils/simpleAudio';
 import { haptics } from '@utils/mobile';
 
@@ -23,7 +24,8 @@ const TYPE_COLOR: Record<EventCard['type'], string> = {
   legendary: 'var(--snes-purple)',
 };
 
-const RES_ICON: Record<string, string> = { money: '$', reputation: '★', fans: '♦', stress: '⚠', connections: '🔗' };
+// Resource → PixelIcon glyph name (icon inherits currentColor from the delta pill).
+const RES_ICON: Record<string, string> = { money: 'money', reputation: 'fame', fans: 'fans', stress: 'stress', connections: 'faction' };
 // A choice's NET resource deltas — its resource_change effects, summed. The cost
 // is already baked in here as a negative (e.g. -$100), so this shows the WHOLE
 // trade (what you pay AND what you get), not just the cost.
@@ -111,7 +113,7 @@ export const EventCardModal: React.FC<EventCardModalProps> = ({ event, onClose }
             <span
               className="snes-pixel"
               style={{
-                fontSize: '8px',
+                fontSize: '9px',
                 color: accent,
                 letterSpacing: 0,
                 textTransform: 'uppercase',
@@ -136,7 +138,7 @@ export const EventCardModal: React.FC<EventCardModalProps> = ({ event, onClose }
             {event.description}
           </p>
           {event.flavorText && (
-            <p style={{ color: 'var(--snes-ink-mute)', fontSize: '12px', fontStyle: 'italic', lineHeight: 1.5, margin: '14px 0 0' }}>
+            <p style={{ color: 'var(--snes-ink-dim)', fontSize: '12px', fontStyle: 'italic', lineHeight: 1.5, margin: '14px 0 0' }}>
               {event.flavorText}
             </p>
           )}
@@ -162,7 +164,7 @@ export const EventCardModal: React.FC<EventCardModalProps> = ({ event, onClose }
                 style={{
                   width: '100%',
                   minHeight: '44px',
-                  fontSize: '9px',
+                  fontSize: '11px',
                   textAlign: 'left',
                   lineHeight: 1.5,
                   cursor: 'pointer',
@@ -176,8 +178,9 @@ export const EventCardModal: React.FC<EventCardModalProps> = ({ event, onClose }
                     return (
                       <span style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '7px' }}>
                         {outs.map(({ res, delta }) => (
-                          <span key={res} className="snes-pixel" style={{ fontSize: '8px', letterSpacing: 0, color: isGood(res, delta) ? 'var(--snes-green)' : 'var(--snes-red)' }}>
-                            {delta > 0 ? '+' : ''}{delta} {RES_ICON[res] || res}
+                          <span key={res} className="snes-pixel" style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontSize: '9px', letterSpacing: 0, color: isGood(res, delta) ? 'var(--snes-green)' : 'var(--snes-red)' }}>
+                            {delta > 0 ? '+' : ''}{delta}
+                            {RES_ICON[res] ? <PixelIcon name={RES_ICON[res]} size={12} /> : <span>{res}</span>}
                           </span>
                         ))}
                       </span>

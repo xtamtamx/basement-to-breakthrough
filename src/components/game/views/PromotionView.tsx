@@ -4,6 +4,7 @@ import { showPromotionSystem, PromotionType, PROMOTION_ACTIVITIES } from '@game/
 import { captureRuntimeSnapshot } from '@game/persistence/runtimeSnapshot';
 import { haptics } from '@utils/mobile';
 import { Megaphone, Radio, Globe, Users, TrendingUp, Clock, Star, Handshake } from 'lucide-react';
+import { PixelIcon } from '@components/ui/PixelIcon';
 
 type ViewType = "city" | "bands" | "shows" | "promotion" | "synergies" | "jobs" | "progression";
 
@@ -70,7 +71,7 @@ export const PromotionView: React.FC<PromotionViewProps> = ({ onNavigate }) => {
       padding: '4px 10px',
     }}>
       {icon}
-      <span className="snes-pixel" style={{ color, fontSize: '9px', letterSpacing: 0 }}>{value}</span>
+      <span className="snes-pixel" style={{ color, fontSize: '11px', letterSpacing: 0 }}>{value}</span>
     </div>
   );
 
@@ -122,7 +123,7 @@ export const PromotionView: React.FC<PromotionViewProps> = ({ onNavigate }) => {
             color="var(--snes-ink)"
           />
           <StatPill
-            icon={<span className="snes-pixel" style={{ color: money >= 100 ? 'var(--snes-green)' : 'var(--snes-red)', fontSize: '9px', letterSpacing: 0 }}>$</span>}
+            icon={<PixelIcon name="money" size={13} color={money >= 100 ? 'var(--snes-green)' : 'var(--snes-red)'} />}
             value={money}
             color={money >= 100 ? 'var(--snes-green)' : 'var(--snes-red)'}
           />
@@ -145,7 +146,9 @@ export const PromotionView: React.FC<PromotionViewProps> = ({ onNavigate }) => {
             padding: '48px 24px',
             color: 'var(--snes-ink-dim)'
           }}>
-            <div style={{ fontSize: '44px', marginBottom: '14px', lineHeight: 1 }}>📢</div>
+            <div style={{ marginBottom: '14px', lineHeight: 1, color: 'var(--snes-magenta)' }}>
+              <PixelIcon name="megaphone" size={40} />
+            </div>
             <h3 className="snes-pixel" style={{
               fontSize: '12px',
               color: 'var(--snes-ink)',
@@ -172,8 +175,8 @@ export const PromotionView: React.FC<PromotionViewProps> = ({ onNavigate }) => {
             {/* Show List */}
             <section style={{ marginBottom: '16px' }}>
               <h3 className="snes-pixel" style={{
-                fontSize: '9px',
-                color: 'var(--snes-ink-mute)',
+                fontSize: '11px',
+                color: 'var(--snes-ink-dim)',
                 textTransform: 'uppercase',
                 letterSpacing: 0,
                 margin: '0 0 8px 2px'
@@ -234,7 +237,7 @@ export const PromotionView: React.FC<PromotionViewProps> = ({ onNavigate }) => {
                             marginTop: '6px'
                           }}>
                             <span className="snes-pixel" style={{
-                              fontSize: '9px',
+                              fontSize: '11px',
                               display: 'flex',
                               alignItems: 'center',
                               gap: '4px',
@@ -245,7 +248,7 @@ export const PromotionView: React.FC<PromotionViewProps> = ({ onNavigate }) => {
                               {show.turnsUntilShow} turns
                             </span>
                             <span className="snes-pixel" style={{
-                              fontSize: '9px',
+                              fontSize: '11px',
                               display: 'flex',
                               alignItems: 'center',
                               gap: '4px',
@@ -267,8 +270,8 @@ export const PromotionView: React.FC<PromotionViewProps> = ({ onNavigate }) => {
                           flexShrink: 0
                         }}>
                           <p className="snes-pixel" style={{
-                            fontSize: '9px',
-                            color: 'var(--snes-ink-mute)',
+                            fontSize: '11px',
+                            color: 'var(--snes-ink-dim)',
                             margin: '0 0 4px',
                             textTransform: 'uppercase',
                             letterSpacing: 0
@@ -300,8 +303,8 @@ export const PromotionView: React.FC<PromotionViewProps> = ({ onNavigate }) => {
             {selectedShow && promotionReport && (
               <section>
                 <h3 className="snes-pixel" style={{
-                  fontSize: '9px',
-                  color: 'var(--snes-ink-mute)',
+                  fontSize: '11px',
+                  color: 'var(--snes-ink-dim)',
                   textTransform: 'uppercase',
                   letterSpacing: 0,
                   margin: '0 0 8px 2px'
@@ -315,7 +318,7 @@ export const PromotionView: React.FC<PromotionViewProps> = ({ onNavigate }) => {
                     marginBottom: '12px'
                   }}>
                     <h4 className="snes-pixel" style={{
-                      fontSize: '9px',
+                      fontSize: '11px',
                       color: 'var(--snes-green)',
                       textTransform: 'uppercase',
                       letterSpacing: 0,
@@ -324,7 +327,7 @@ export const PromotionView: React.FC<PromotionViewProps> = ({ onNavigate }) => {
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                       {promotionReport.activePromotions.map((promo, i) => (
                         <div key={i} className="snes-pixel" style={{
-                          fontSize: '9px',
+                          fontSize: '11px',
                           display: 'flex',
                           alignItems: 'center',
                           gap: '5px',
@@ -404,20 +407,24 @@ export const PromotionView: React.FC<PromotionViewProps> = ({ onNavigate }) => {
                               gap: '6px'
                             }}>
                               <span className="snes-pixel" style={{
-                                fontSize: '9px',
+                                fontSize: '11px',
                                 color: !canAfford ? 'var(--snes-red)' : 'var(--snes-ink-dim)',
                                 backgroundColor: 'var(--snes-bg-2)',
                                 border: '2px solid var(--snes-void)',
                                 boxShadow: 'inset 1px 1px 0 0 var(--snes-edge-lt), inset -1px -1px 0 0 var(--snes-void)',
                                 borderRadius: 0,
                                 padding: '3px 8px',
-                                letterSpacing: 0
+                                letterSpacing: 0,
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px'
                               }}>
-                                ${activity.cost}
+                                <PixelIcon name="money" size={11} />
+                                {activity.cost}
                               </span>
                               {activity.requiresConnections && (
                                 <span className="snes-pixel" style={{
-                                  fontSize: '9px',
+                                  fontSize: '11px',
                                   color: connections <= 0 ? 'var(--snes-red)' : 'var(--snes-ink-dim)',
                                   backgroundColor: 'var(--snes-bg-2)',
                                   border: '2px solid var(--snes-void)',
@@ -431,7 +438,7 @@ export const PromotionView: React.FC<PromotionViewProps> = ({ onNavigate }) => {
                               )}
                               {activity.requiresReputation && (
                                 <span className="snes-pixel" style={{
-                                  fontSize: '9px',
+                                  fontSize: '11px',
                                   color: reputation < activity.requiresReputation ? 'var(--snes-red)' : 'var(--snes-ink-dim)',
                                   backgroundColor: 'var(--snes-bg-2)',
                                   border: '2px solid var(--snes-void)',
@@ -451,7 +458,7 @@ export const PromotionView: React.FC<PromotionViewProps> = ({ onNavigate }) => {
                               flexWrap: 'wrap',
                               gap: '8px',
                               marginTop: '8px',
-                              fontSize: '9px',
+                              fontSize: '11px',
                               color: 'var(--snes-green)',
                               letterSpacing: 0
                             }}>
@@ -487,7 +494,7 @@ export const PromotionView: React.FC<PromotionViewProps> = ({ onNavigate }) => {
                             <span className="snes-pixel" style={{
                               flexShrink: 0,
                               alignSelf: 'center',
-                              fontSize: '9px',
+                              fontSize: '11px',
                               color: 'var(--snes-green)',
                               letterSpacing: 0
                             }}>Active</span>
@@ -504,8 +511,8 @@ export const PromotionView: React.FC<PromotionViewProps> = ({ onNavigate }) => {
                   marginTop: '14px'
                 }}>
                   <h4 className="snes-pixel" style={{
-                    fontSize: '9px',
-                    color: 'var(--snes-ink-mute)',
+                    fontSize: '11px',
+                    color: 'var(--snes-ink-dim)',
                     textTransform: 'uppercase',
                     letterSpacing: 0,
                     margin: '0 0 12px'
@@ -516,21 +523,21 @@ export const PromotionView: React.FC<PromotionViewProps> = ({ onNavigate }) => {
                     gap: '12px'
                   }}>
                     <div>
-                      <p className="snes-pixel" style={{ fontSize: '9px', color: 'var(--snes-ink-mute)', margin: '0 0 6px', textTransform: 'uppercase', letterSpacing: 0 }}>Base Attendance</p>
+                      <p className="snes-pixel" style={{ fontSize: '11px', color: 'var(--snes-ink-dim)', margin: '0 0 6px', textTransform: 'uppercase', letterSpacing: 0 }}>Base Attendance</p>
                       <p className="snes-pixel" style={{ fontSize: '12px', color: 'var(--snes-ink)', margin: 0, lineHeight: 1, letterSpacing: 0 }}>{promotionReport.baseAttendance}</p>
                     </div>
                     <div>
-                      <p className="snes-pixel" style={{ fontSize: '9px', color: 'var(--snes-ink-mute)', margin: '0 0 6px', textTransform: 'uppercase', letterSpacing: 0 }}>Promotion Boost</p>
+                      <p className="snes-pixel" style={{ fontSize: '11px', color: 'var(--snes-ink-dim)', margin: '0 0 6px', textTransform: 'uppercase', letterSpacing: 0 }}>Promotion Boost</p>
                       <p className="snes-pixel" style={{ fontSize: '12px', color: 'var(--snes-magenta)', margin: 0, lineHeight: 1, letterSpacing: 0 }}>
                         +{((promotionReport.totalMultiplier - 1) * 100).toFixed(0)}%
                       </p>
                     </div>
                     <div>
-                      <p className="snes-pixel" style={{ fontSize: '9px', color: 'var(--snes-ink-mute)', margin: '0 0 6px', textTransform: 'uppercase', letterSpacing: 0 }}>Expected Total</p>
+                      <p className="snes-pixel" style={{ fontSize: '11px', color: 'var(--snes-ink-dim)', margin: '0 0 6px', textTransform: 'uppercase', letterSpacing: 0 }}>Expected Total</p>
                       <p className="snes-pixel" style={{ fontSize: '12px', color: 'var(--snes-green)', margin: 0, lineHeight: 1, letterSpacing: 0 }}>{promotionReport.expectedAttendance}</p>
                     </div>
                     <div>
-                      <p className="snes-pixel" style={{ fontSize: '9px', color: 'var(--snes-ink-mute)', margin: '0 0 6px', textTransform: 'uppercase', letterSpacing: 0 }}>Promotion Level</p>
+                      <p className="snes-pixel" style={{ fontSize: '11px', color: 'var(--snes-ink-dim)', margin: '0 0 6px', textTransform: 'uppercase', letterSpacing: 0 }}>Promotion Level</p>
                       <p className="snes-pixel" style={{ fontSize: '12px', color: 'var(--snes-ink)', margin: 0, lineHeight: 1, letterSpacing: 0 }}>{promotionReport.currentLevel}/5</p>
                     </div>
                   </div>

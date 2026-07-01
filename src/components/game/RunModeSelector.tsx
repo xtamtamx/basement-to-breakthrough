@@ -5,7 +5,8 @@ import { isModeUnlocked, modeUnlockRequiresId, modeOrderIndex } from "@game/mech
 import { TOURING_ENABLED } from "@/config/featureFlags";
 import { BASE_ROSTER_SLOTS } from "@game/constants/runConstants";
 import { haptics } from "@utils/mobile";
-import { X, DollarSign, Clock, Users, Trophy, Lock, Flame } from "lucide-react";
+import { X, DollarSign, Clock, Users } from "lucide-react";
+import { PixelIcon } from "@components/ui/PixelIcon";
 import { useEscapeToClose } from "@hooks/useEscapeToClose";
 
 interface RunModeSelectorProps {
@@ -14,10 +15,10 @@ interface RunModeSelectorProps {
 }
 
 const MODE_ICON: Record<string, string> = {
-  classic: "🎸",
-  speed: "⚡",
-  hardcore: "💀",
-  festival: "🎪",
+  classic: "guitar",
+  speed: "energy",
+  hardcore: "skull",
+  festival: "building",
 };
 
 const MODE_ACCENT: Record<string, string> = {
@@ -131,13 +132,13 @@ export const RunModeSelector: React.FC<RunModeSelectorProps> = ({ onSelect, onCl
                   }}
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
-                    <span style={{ fontSize: "20px", lineHeight: 1, filter: "grayscale(1)", opacity: 0.5 }}>{MODE_ICON[config.id] ?? "🎸"}</span>
+                    <span style={{ lineHeight: 1, opacity: 0.5, color: "var(--snes-ink-mute)", display: "flex" }}><PixelIcon name={MODE_ICON[config.id] ?? "guitar"} size={18} /></span>
                     <h3 className="snes-pixel" style={{ fontSize: "11px", color: "var(--snes-ink-mute)", margin: 0, letterSpacing: 0, flex: 1 }}>{config.name}</h3>
-                    <Lock size={15} color="var(--snes-ink-mute)" />
+                    <PixelIcon name="lock" size={14} color="var(--snes-ink-mute)" />
                   </div>
                   <p style={{ fontSize: "12px", color: "var(--snes-ink-mute)", margin: "0 0 8px", lineHeight: 1.4, fontStyle: "italic" }}>{config.description}</p>
-                  <div className="snes-pixel" style={{ fontSize: "8px", letterSpacing: 0, color: "var(--snes-gold)", backgroundColor: "var(--snes-bg-2)", border: "2px solid var(--snes-edge-lt)", padding: "7px 8px", display: "flex", alignItems: "center", gap: "6px", lineHeight: 1.5 }}>
-                    <Lock size={11} color="var(--snes-gold)" style={{ flexShrink: 0 }} />
+                  <div className="snes-pixel" style={{ fontSize: "11px", letterSpacing: 0, color: "var(--snes-gold)", backgroundColor: "var(--snes-bg-2)", border: "2px solid var(--snes-edge-lt)", padding: "7px 8px", display: "flex", alignItems: "center", gap: "6px", lineHeight: 1.5 }}>
+                    <PixelIcon name="lock" size={12} color="var(--snes-gold)" style={{ flexShrink: 0 }} />
                     Win {reqName} to unlock this mode
                   </div>
                 </div>
@@ -163,20 +164,20 @@ export const RunModeSelector: React.FC<RunModeSelectorProps> = ({ onSelect, onCl
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
-                  <span style={{ fontSize: "20px", lineHeight: 1 }}>{MODE_ICON[config.id] ?? "🎸"}</span>
+                  <span style={{ lineHeight: 1, color: accent, display: "flex" }}><PixelIcon name={MODE_ICON[config.id] ?? "guitar"} size={18} /></span>
                   <h3 className="snes-pixel" style={{ fontSize: "11px", color: "var(--snes-ink)", margin: 0, letterSpacing: 0 }}>{config.name}</h3>
                 </div>
                 <p style={{ fontSize: "12px", color: "var(--snes-ink-dim)", margin: "0 0 8px", lineHeight: 1.4, fontStyle: "italic" }}>{config.description}</p>
 
                 {/* Key stats (turns reflect the chosen stake) */}
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: perks.length ? "6px" : "8px" }}>
-                  <span className="snes-chip" style={{ fontSize: "8px", color: "var(--snes-green)" }}>
+                  <span className="snes-chip" style={{ fontSize: "10px", color: "var(--snes-green)" }}>
                     <DollarSign size={11} />{config.startingMoney}
                   </span>
-                  <span className="snes-chip" style={{ fontSize: "8px", color: "var(--snes-ink-dim)" }}>
+                  <span className="snes-chip" style={{ fontSize: "10px", color: "var(--snes-ink-dim)" }}>
                     <Clock size={11} />{effTurns} turns
                   </span>
-                  <span className="snes-chip" style={{ fontSize: "8px", color: accent, borderColor: accent }}>
+                  <span className="snes-chip" style={{ fontSize: "10px", color: accent, borderColor: accent }}>
                     <Users size={11} />{slots} slots
                   </span>
                 </div>
@@ -193,15 +194,15 @@ export const RunModeSelector: React.FC<RunModeSelectorProps> = ({ onSelect, onCl
                 )}
 
                 {/* Win conditions */}
-                <div style={{ display: "flex", alignItems: "start", gap: "6px", fontSize: "11px", color: "var(--snes-ink-mute)", marginBottom: "10px" }}>
-                  <Trophy size={12} color="var(--snes-gold)" style={{ flexShrink: 0, marginTop: "1px" }} />
+                <div style={{ display: "flex", alignItems: "start", gap: "6px", fontSize: "11px", color: "var(--snes-ink-dim)", marginBottom: "10px" }}>
+                  <PixelIcon name="trophy" size={12} color="var(--snes-gold)" style={{ flexShrink: 0, marginTop: "1px" }} />
                   <span style={{ lineHeight: 1.4 }}>{config.winConditions.map((w) => w.description).join(" + ")}</span>
                 </div>
 
                 {/* Stake selector */}
                 <div style={{ borderTop: "2px solid var(--snes-line)", paddingTop: "10px" }}>
-                  <div className="snes-pixel" style={{ fontSize: "7px", color: "var(--snes-purple)", letterSpacing: 0, marginBottom: "6px", display: "flex", alignItems: "center", gap: "5px" }}>
-                    <Flame size={11} color="var(--snes-purple)" /> STAKE
+                  <div className="snes-pixel" style={{ fontSize: "9px", color: "var(--snes-purple)", letterSpacing: 0, marginBottom: "6px", display: "flex", alignItems: "center", gap: "5px" }}>
+                    <PixelIcon name="fire" size={11} color="var(--snes-purple)" /> STAKE
                   </div>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: "5px", marginBottom: "6px" }}>
                     {STAKE_TIERS.map((s) => {
@@ -229,7 +230,7 @@ export const RunModeSelector: React.FC<RunModeSelectorProps> = ({ onSelect, onCl
                             gap: "3px",
                           }}
                         >
-                          {!unlocked && <Lock size={9} />}
+                          {!unlocked && <PixelIcon name="lock" size={10} />}
                           {s.name}
                         </button>
                       );
@@ -248,9 +249,9 @@ export const RunModeSelector: React.FC<RunModeSelectorProps> = ({ onSelect, onCl
                   <button
                     onClick={() => pick(config, tier)}
                     className="snes-btn snes-pixel"
-                    style={{ width: "100%", minHeight: "44px", fontSize: "9px", cursor: "pointer", color: "#f7efe0", backgroundColor: accent, borderColor: accent }}
+                    style={{ width: "100%", minHeight: "44px", fontSize: "11px", cursor: "pointer", color: "#f7efe0", backgroundColor: accent, borderColor: accent, display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}
                   >
-                    ▶ Play — {stake.name}
+                    <PixelIcon name="play" size={12} /> Play — {stake.name}
                   </button>
                 </div>
               </div>

@@ -6,6 +6,7 @@ import { formatMoney } from '@utils/formatters';
 import { haptics } from '@utils/mobile';
 import { Tab } from '@headlessui/react';
 import { X } from 'lucide-react';
+import { PixelIcon } from '@components/ui/PixelIcon';
 
 interface VenueUpgradeModalProps {
   venue: Venue;
@@ -45,9 +46,11 @@ const effectChips = (fx: import('@game/types').EquipmentEffects) =>
 
 // Five-pip quality meter (gold filled / dim empty).
 const stars = (quality: number) => (
-  <div style={{ display: 'flex', gap: '2px', marginTop: '4px' }}>
+  <div style={{ display: 'flex', alignItems: 'center', gap: '2px', marginTop: '4px' }}>
     {[...Array(5)].map((_, i) => (
-      <span key={i} style={{ fontSize: '9px', color: i < quality ? 'var(--snes-gold)' : 'var(--snes-line)' }}>★</span>
+      <span key={i} style={{ color: i < quality ? 'var(--snes-gold)' : 'var(--snes-line)', display: 'flex' }}>
+        <PixelIcon name="fame" size={10} />
+      </span>
     ))}
   </div>
 );
@@ -103,14 +106,14 @@ export const VenueUpgradeModal: React.FC<VenueUpgradeModalProps> = ({
     else haptics.error();
   };
 
-  const getEquipmentIcon = (type: EquipmentType) => {
+  const getEquipmentIcon = (type: EquipmentType): string => {
     switch (type) {
-      case EquipmentType.PA_SYSTEM: return '🔊';
-      case EquipmentType.LIGHTING: return '💡';
-      case EquipmentType.STAGE: return '🎪';
-      case EquipmentType.BACKLINE: return '🎸';
-      case EquipmentType.RECORDING: return '🎙️';
-      default: return '📦';
+      case EquipmentType.PA_SYSTEM: return 'megaphone';
+      case EquipmentType.LIGHTING: return 'sparkle';
+      case EquipmentType.STAGE: return 'building';
+      case EquipmentType.BACKLINE: return 'guitar';
+      case EquipmentType.RECORDING: return 'note';
+      default: return 'clipboard';
     }
   };
 
@@ -210,7 +213,7 @@ export const VenueUpgradeModal: React.FC<VenueUpgradeModalProps> = ({
                             <p style={{ fontSize: '12px', color: 'var(--snes-ink-dim)', margin: '5px 0 0', lineHeight: 1.4 }}>{upgrade.description}</p>
                           </div>
                           <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                            <div className="snes-pixel" style={{ fontSize: '9px', color: 'var(--snes-green)', letterSpacing: 0 }}>{formatMoney(upgrade.cost)}</div>
+                            <div className="snes-pixel" style={{ fontSize: '11px', color: 'var(--snes-green)', letterSpacing: 0 }}>{formatMoney(upgrade.cost)}</div>
                             {upgrade.upkeepCost ? (
                               <div style={{ fontSize: '11px', color: 'var(--snes-ink-mute)', marginTop: '3px' }}>+{formatMoney(upgrade.upkeepCost)}/turn</div>
                             ) : null}
@@ -229,7 +232,7 @@ export const VenueUpgradeModal: React.FC<VenueUpgradeModalProps> = ({
                           onClick={() => handleUpgrade(upgrade.id)}
                           disabled={!affordable}
                           className={actionBtn(affordable, 'snes-btn')}
-                          style={{ width: '100%', minHeight: '44px', fontSize: '9px', cursor: affordable ? 'pointer' : 'not-allowed' }}
+                          style={{ width: '100%', minHeight: '44px', fontSize: '11px', cursor: affordable ? 'pointer' : 'not-allowed' }}
                         >
                           {affordable ? 'Purchase Upgrade' : 'Insufficient Funds'}
                         </button>
@@ -255,7 +258,7 @@ export const VenueUpgradeModal: React.FC<VenueUpgradeModalProps> = ({
                       <div key={equipment.id} className="snes-panel-inset" style={{ padding: '12px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', gap: '10px', marginBottom: '8px' }}>
                           <div style={{ display: 'flex', alignItems: 'start', gap: '10px', minWidth: 0 }}>
-                            <span style={{ fontSize: '22px', lineHeight: 1 }}>{getEquipmentIcon(equipment.type)}</span>
+                            <span style={{ color: 'var(--snes-cyan)', lineHeight: 1, marginTop: '1px' }}><PixelIcon name={getEquipmentIcon(equipment.type)} size={20} /></span>
                             <div style={{ minWidth: 0 }}>
                               <h3 className="snes-pixel" style={{ fontSize: '10px', color: 'var(--snes-ink)', margin: 0, letterSpacing: 0, lineHeight: 1.4 }}>{equipment.name}</h3>
                               <p style={{ fontSize: '12px', color: 'var(--snes-ink-dim)', margin: '5px 0 0', lineHeight: 1.4 }}>{equipment.description}</p>
@@ -263,7 +266,7 @@ export const VenueUpgradeModal: React.FC<VenueUpgradeModalProps> = ({
                             </div>
                           </div>
                           <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                            <div className="snes-pixel" style={{ fontSize: '9px', color: 'var(--snes-green)', letterSpacing: 0 }}>{formatMoney(equipment.purchasePrice)}</div>
+                            <div className="snes-pixel" style={{ fontSize: '11px', color: 'var(--snes-green)', letterSpacing: 0 }}>{formatMoney(equipment.purchasePrice)}</div>
                             <div style={{ fontSize: '11px', color: 'var(--snes-ink-mute)', marginTop: '3px' }}>rent {formatMoney(equipment.rentalPrice)}</div>
                             <div style={{ fontSize: '11px', color: 'var(--snes-ink-mute)' }}>upkeep {formatMoney(equipment.maintenanceCost)}/t</div>
                           </div>
@@ -302,7 +305,7 @@ export const VenueUpgradeModal: React.FC<VenueUpgradeModalProps> = ({
                       <div key={equipment.id} className="snes-panel-inset" style={{ padding: '12px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', gap: '10px' }}>
                           <div style={{ display: 'flex', alignItems: 'start', gap: '10px', minWidth: 0 }}>
-                            <span style={{ fontSize: '22px', lineHeight: 1 }}>{getEquipmentIcon(equipment.type)}</span>
+                            <span style={{ color: 'var(--snes-cyan)', lineHeight: 1, marginTop: '1px' }}><PixelIcon name={getEquipmentIcon(equipment.type)} size={20} /></span>
                             <div style={{ minWidth: 0 }}>
                               <h3 className="snes-pixel" style={{ fontSize: '10px', color: 'var(--snes-ink)', margin: 0, letterSpacing: 0, lineHeight: 1.4 }}>{equipment.name}</h3>
                               {stars(equipment.quality)}
@@ -330,7 +333,7 @@ export const VenueUpgradeModal: React.FC<VenueUpgradeModalProps> = ({
                           <button
                             onClick={() => handleRepairEquipment(equipment.id)}
                             className="snes-btn snes-btn--cyan snes-btn--sm snes-pixel"
-                            style={{ width: '100%', minHeight: '44px', marginTop: '10px', fontSize: '9px', cursor: 'pointer' }}
+                            style={{ width: '100%', minHeight: '44px', marginTop: '10px', fontSize: '11px', cursor: 'pointer' }}
                           >
                             Repair
                           </button>

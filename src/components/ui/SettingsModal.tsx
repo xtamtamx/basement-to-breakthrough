@@ -79,7 +79,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
   // Reusable inline tokens for the SNES look
   const sectionHeader: React.CSSProperties = {
-    fontFamily: '"Press Start 2P", monospace',
     fontSize: '11px',
     letterSpacing: 0,
     color: 'var(--snes-magenta)',
@@ -104,7 +103,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         <div>
           {/* Audio Settings */}
           <section style={{ marginBottom: '32px' }}>
-            <h3 style={sectionHeader}>
+            <h3 className="snes-pixel" style={sectionHeader}>
               {enabled ? <Volume2 size={18} color="var(--snes-magenta)" /> : <VolumeX size={18} color="var(--snes-magenta)" />}
               Audio
             </h3>
@@ -117,9 +116,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 alignItems: 'center',
                 justifyContent: 'space-between'
               }}>
-                <span style={{
-                  fontFamily: '"Press Start 2P", monospace',
-                  fontSize: '9px',
+                <span className="snes-pixel" style={{
+                  fontSize: '11px',
                   letterSpacing: 0,
                   color: 'var(--snes-ink)'
                 }}>Sound Effects</span>
@@ -161,20 +159,19 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 alignItems: 'center',
                 justifyContent: 'space-between'
               }}>
-                <span style={{
-                  fontFamily: '"Press Start 2P", monospace',
-                  fontSize: '9px',
+                <span className="snes-pixel" style={{
+                  fontSize: '11px',
                   letterSpacing: 0,
                   color: 'var(--snes-ink)'
                 }}>Visual FX</span>
                 <button
                   onClick={() => { cycleFx(); haptics.light(); }}
+                  className="snes-pixel"
                   style={{
                     minWidth: '64px',
                     minHeight: '44px',
                     padding: '0 14px',
-                    fontFamily: '"Press Start 2P", monospace',
-                    fontSize: '9px',
+                    fontSize: '11px',
                     textTransform: 'uppercase',
                     color: fxQuality === 'ultra' ? 'var(--snes-magenta)' : fxQuality === 'high' ? 'var(--snes-green)' : fxQuality === 'low' ? 'var(--snes-gold)' : 'var(--snes-ink-mute)',
                     backgroundColor: 'var(--snes-bg-3)',
@@ -196,15 +193,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                   alignItems: 'center',
                   marginBottom: '12px'
                 }}>
-                  <span style={{
-                    fontFamily: '"Press Start 2P", monospace',
-                    fontSize: '9px',
+                  <span className="snes-pixel" style={{
+                    fontSize: '11px',
                     letterSpacing: 0,
                     color: 'var(--snes-ink-dim)'
                   }}>Volume</span>
-                  <span style={{
-                    fontFamily: '"Press Start 2P", monospace',
-                    fontSize: '9px',
+                  <span className="snes-pixel" style={{
+                    fontSize: '11px',
                     letterSpacing: 0,
                     color: 'var(--snes-ink)'
                   }}>{Math.round(volume * 100)}%</span>
@@ -234,13 +229,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
           {/* Accessibility */}
           <section style={{ marginBottom: '32px' }}>
-            <h3 style={sectionHeader}>Accessibility</h3>
+            <h3 className="snes-pixel" style={sectionHeader}>Accessibility</h3>
 
             <div style={insetCard}>
-              <label style={{
+              <label className="snes-pixel" style={{
                 display: 'block',
-                fontFamily: '"Press Start 2P", monospace',
-                fontSize: '9px',
+                fontSize: '11px',
                 letterSpacing: 0,
                 color: 'var(--snes-ink-dim)',
                 marginBottom: '12px'
@@ -274,7 +268,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
           {/* Tutorial */}
           <section style={{ marginBottom: '32px' }}>
-            <h3 style={sectionHeader}>Tutorial</h3>
+            <h3 className="snes-pixel" style={sectionHeader}>Tutorial</h3>
             <button
               onClick={() => {
                 tutorialManager.resetProgress();
@@ -282,6 +276,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 onClose();
                 haptics.success();
               }}
+              className="snes-pixel"
               style={{
                 width: '100%',
                 minHeight: '44px',
@@ -291,8 +286,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 border: '2px solid var(--snes-void)',
                 boxShadow: 'inset 2px 2px 0 0 var(--snes-edge-lt), inset -2px -2px 0 0 var(--snes-void)',
                 borderRadius: 0,
-                fontFamily: '"Press Start 2P", monospace',
-                fontSize: '9px',
+                fontSize: '11px',
                 letterSpacing: 0,
                 cursor: 'pointer',
                 display: 'flex',
@@ -309,7 +303,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
           {/* Game Info */}
           <section style={{ marginBottom: '32px' }}>
-            <h3 style={sectionHeader}>
+            <h3 className="snes-pixel" style={sectionHeader}>
               <Info size={18} color="var(--snes-magenta)" />
               About
             </h3>
@@ -334,7 +328,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
           {/* Controls Guide */}
           <section style={{ marginBottom: '32px' }}>
-            <h3 style={sectionHeader}>
+            <h3 className="snes-pixel" style={sectionHeader}>
               <Gamepad2 size={18} color="var(--snes-magenta)" />
               Controls
             </h3>
@@ -355,12 +349,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
             borderTop: '2px solid var(--snes-line)',
             paddingTop: '24px'
           }}>
-            <h3 style={{ ...sectionHeader, color: 'var(--snes-red)' }}>
+            <h3 className="snes-pixel" style={{ ...sectionHeader, color: 'var(--snes-red)' }}>
               <AlertTriangle size={18} color="var(--snes-red)" />
               Danger Zone
             </h3>
             <button
               onClick={handleAbandonRun}
+              className="snes-pixel"
               style={{
                 width: '100%',
                 minHeight: '44px',
@@ -370,8 +365,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 border: '2px solid var(--snes-void)',
                 boxShadow: 'inset 2px 2px 0 0 var(--snes-edge-lt), inset -2px -2px 0 0 var(--snes-void)',
                 borderRadius: 0,
-                fontFamily: '"Press Start 2P", monospace',
-                fontSize: '9px',
+                fontSize: '11px',
                 letterSpacing: 0,
                 cursor: 'pointer',
                 transition: 'none'
@@ -381,6 +375,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
             </button>
             <button
               onClick={handleResetProgress}
+              className="snes-pixel"
               style={{
                 width: '100%',
                 minHeight: '44px',
@@ -391,8 +386,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 border: '2px solid var(--snes-red)',
                 boxShadow: 'inset 2px 2px 0 0 var(--snes-edge-lt), inset -2px -2px 0 0 var(--snes-line)',
                 borderRadius: 0,
-                fontFamily: '"Press Start 2P", monospace',
-                fontSize: '9px',
+                fontSize: '11px',
                 letterSpacing: 0,
                 cursor: 'pointer',
                 display: 'flex',
@@ -405,7 +399,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
               <RefreshCw size={16} color="var(--snes-red)" />
               Reset All Progress
             </button>
-            <p style={{ fontFamily: '"Press Start 2P", monospace', fontSize: '8px', lineHeight: 1.6, color: 'var(--snes-ink-mute)', margin: '10px 2px 0' }}>
+            <p className="snes-pixel" style={{ fontSize: '11px', lineHeight: 1.6, color: 'var(--snes-ink-dim)', margin: '10px 2px 0' }}>
               Starts fresh: re-locks the roster so you can play the full unlock progression from the top. For playtesting.
             </p>
           </section>

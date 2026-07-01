@@ -4,6 +4,7 @@ import { dayJobSystem, DayJob, JobCategory } from '@game/mechanics/DayJobSystem'
 import { haptics } from '@utils/mobile';
 import { Briefcase, Clock, DollarSign, Star, Users, X } from 'lucide-react';
 import { SnesModal } from '@/components/ui/SnesModal';
+import { PixelIcon } from '@components/ui/PixelIcon';
 
 // Prose/name font — job names read as names, not chrome (canon: Inter).
 const SANS = "'Inter', system-ui, -apple-system, sans-serif";
@@ -46,14 +47,14 @@ export const DayJobView: React.FC = () => {
     ? availableJobs
     : availableJobs.filter(job => job.category === filterCategory);
 
-  const getCategoryIcon = (category: JobCategory) => {
+  const getCategoryIcon = (category: JobCategory): string => {
     switch (category) {
-      case JobCategory.VENUE: return '🏠';
-      case JobCategory.CORPORATE: return '👔';
-      case JobCategory.COMMUNITY: return '🎸';
-      case JobCategory.SHOP: return '🛍️';
-      case JobCategory.CIVIC: return '🏛️';
-      default: return '💼';
+      case JobCategory.VENUE: return 'home';
+      case JobCategory.CORPORATE: return 'tie';
+      case JobCategory.COMMUNITY: return 'guitar';
+      case JobCategory.SHOP: return 'shop';
+      case JobCategory.CIVIC: return 'building';
+      default: return 'briefcase';
     }
   };
 
@@ -63,7 +64,7 @@ export const DayJobView: React.FC = () => {
       padding: '4px 7px',
       backgroundColor: 'var(--snes-bg-2)',
       color,
-      fontSize: '9px',
+      fontSize: '11px',
       borderRadius: 0,
       border: `2px solid ${bg}`,
       letterSpacing: 0,
@@ -120,8 +121,8 @@ export const DayJobView: React.FC = () => {
         {currentJob && (
           <section style={{ marginBottom: '16px' }}>
             <h3 className="snes-pixel" style={{
-              fontSize: '9px',
-              color: 'var(--snes-ink-mute)',
+              fontSize: '11px',
+              color: 'var(--snes-ink-dim)',
               textTransform: 'uppercase',
               letterSpacing: 0,
               margin: '0 0 8px 2px'
@@ -155,12 +156,12 @@ export const DayJobView: React.FC = () => {
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <DollarSign size={14} color="var(--snes-green)" />
-                      <span className="snes-pixel" style={{ fontSize: '9px', color: 'var(--snes-ink)' }}>+${currentJob.moneyPerTurn}/turn</span>
+                      <span className="snes-pixel" style={{ fontSize: '11px', color: 'var(--snes-ink)' }}>+${currentJob.moneyPerTurn}/turn</span>
                     </div>
                     {currentJob.reputationChange !== 0 && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <Star size={14} color={currentJob.reputationChange > 0 ? 'var(--snes-gold)' : 'var(--snes-red)'} />
-                        <span className="snes-pixel" style={{ fontSize: '9px', color: 'var(--snes-ink)' }}>
+                        <span className="snes-pixel" style={{ fontSize: '11px', color: 'var(--snes-ink)' }}>
                           {currentJob.reputationChange > 0 ? '+' : ''}{currentJob.reputationChange} rep/turn
                         </span>
                       </div>
@@ -168,7 +169,7 @@ export const DayJobView: React.FC = () => {
                     {currentJob.fanChange !== 0 && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <Users size={14} color={currentJob.fanChange > 0 ? 'var(--snes-purple)' : 'var(--snes-red)'} />
-                        <span className="snes-pixel" style={{ fontSize: '9px', color: 'var(--snes-ink)' }}>
+                        <span className="snes-pixel" style={{ fontSize: '11px', color: 'var(--snes-ink)' }}>
                           {currentJob.fanChange > 0 ? '+' : ''}{currentJob.fanChange} fans/turn
                         </span>
                       </div>
@@ -176,7 +177,7 @@ export const DayJobView: React.FC = () => {
                     {currentJob.stressGain > 0 && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <Clock size={14} color="var(--snes-gold)" />
-                        <span className="snes-pixel" style={{ fontSize: '9px', color: 'var(--snes-ink)' }}>+{currentJob.stressGain}% stress/turn</span>
+                        <span className="snes-pixel" style={{ fontSize: '11px', color: 'var(--snes-ink)' }}>+{currentJob.stressGain}% stress/turn</span>
                       </div>
                     )}
                   </div>
@@ -189,9 +190,13 @@ export const DayJobView: React.FC = () => {
                       fontSize: '11px',
                       color: 'var(--snes-gold)',
                       fontWeight: 600,
-                      lineHeight: 1.4
+                      lineHeight: 1.4,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
                     }}>
-                      ⚠️ Burning out — high stress is dragging your performance down
+                      <PixelIcon name="warning" size={13} />
+                      Burning out — high stress is dragging your performance down
                     </div>
                   )}
                 </div>
@@ -207,7 +212,7 @@ export const DayJobView: React.FC = () => {
                     border: '2px solid var(--snes-void)',
                     borderRadius: 0,
                     boxShadow: 'inset 2px 2px 0 0 var(--snes-edge-lt), inset -2px -2px 0 0 var(--snes-void)',
-                    fontSize: '9px',
+                    fontSize: '11px',
                     letterSpacing: 0,
                     cursor: 'pointer',
                     display: 'flex',
@@ -239,7 +244,7 @@ export const DayJobView: React.FC = () => {
               onClick={() => setFilterCategory('all')}
               className="snes-pixel"
               style={{
-                padding: '8px 12px',
+                padding: '6px 10px',
                 backgroundColor: filterCategory === 'all' ? 'var(--snes-magenta)' : 'var(--snes-bg)',
                 color: filterCategory === 'all' ? '#f7efe0' : 'var(--snes-ink-dim)',
                 border: '2px solid var(--snes-void)',
@@ -247,11 +252,11 @@ export const DayJobView: React.FC = () => {
                 boxShadow: filterCategory === 'all'
                   ? 'inset 2px 2px 0 0 var(--snes-edge-lt), inset -2px -2px 0 0 var(--snes-void), 0 0 0 1px var(--snes-magenta)'
                   : 'inset 2px 2px 0 0 var(--snes-edge-lt), inset -2px -2px 0 0 var(--snes-void)',
-                fontSize: '9px',
+                fontSize: '11px',
                 letterSpacing: 0,
                 cursor: 'pointer',
                 whiteSpace: 'nowrap',
-                minHeight: '44px',
+                minHeight: '40px',
                 transition: 'none'
               }}
             >
@@ -263,7 +268,10 @@ export const DayJobView: React.FC = () => {
                 onClick={() => setFilterCategory(category)}
                 className="snes-pixel"
                 style={{
-                  padding: '8px 12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  padding: '6px 10px',
                   backgroundColor: filterCategory === category ? 'var(--snes-magenta)' : 'var(--snes-bg)',
                   color: filterCategory === category ? '#f7efe0' : 'var(--snes-ink-dim)',
                   border: '2px solid var(--snes-void)',
@@ -271,16 +279,17 @@ export const DayJobView: React.FC = () => {
                   boxShadow: filterCategory === category
                     ? 'inset 2px 2px 0 0 var(--snes-edge-lt), inset -2px -2px 0 0 var(--snes-void), 0 0 0 1px var(--snes-magenta)'
                     : 'inset 2px 2px 0 0 var(--snes-edge-lt), inset -2px -2px 0 0 var(--snes-void)',
-                  fontSize: '9px',
+                  fontSize: '11px',
                   letterSpacing: 0,
                   cursor: 'pointer',
                   whiteSpace: 'nowrap',
-                  minHeight: '44px',
+                  minHeight: '40px',
                   textTransform: 'capitalize',
                   transition: 'none'
                 }}
               >
-                {getCategoryIcon(category)} {category.replace('_', ' ').toLowerCase()}
+                <PixelIcon name={getCategoryIcon(category)} size={14} />
+                {category.replace('_', ' ').toLowerCase()}
               </button>
             ))}
           </div>
@@ -289,8 +298,8 @@ export const DayJobView: React.FC = () => {
         {/* Available Jobs */}
         <section>
           <h3 className="snes-pixel" style={{
-            fontSize: '9px',
-            color: 'var(--snes-ink-mute)',
+            fontSize: '11px',
+            color: 'var(--snes-ink-dim)',
             textTransform: 'uppercase',
             letterSpacing: 0,
             margin: '0 0 8px 2px'
@@ -303,7 +312,9 @@ export const DayJobView: React.FC = () => {
               padding: '40px 24px',
               textAlign: 'center'
             }}>
-              <div style={{ fontSize: '36px', marginBottom: '10px', lineHeight: 1 }}>💼</div>
+              <div style={{ marginBottom: '10px', lineHeight: 1, color: 'var(--snes-ink-mute)' }}>
+                <PixelIcon name="briefcase" size={36} />
+              </div>
               <p style={{ color: 'var(--snes-ink-dim)', fontSize: '13px', margin: 0 }}>No gigs in this category right now</p>
             </div>
           ) : (
@@ -344,8 +355,8 @@ export const DayJobView: React.FC = () => {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        fontSize: '20px'
-                      }}>{getCategoryIcon(job.category)}</div>
+                        color: 'var(--snes-ink-dim)'
+                      }}><PixelIcon name={getCategoryIcon(job.category)} size={20} /></div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <h4 style={{
                           fontFamily: SANS,
@@ -357,10 +368,16 @@ export const DayJobView: React.FC = () => {
                         }}>{job.name}</h4>
                         {venue && (
                           <p style={{
-                            fontSize: '11px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '5px',
+                            fontSize: '13px',
                             color: 'var(--snes-ink-dim)',
-                            margin: '0 0 3px'
-                          }}>📍 {venue.location.name}</p>
+                            margin: '0 0 6px'
+                          }}>
+                            <PixelIcon name="pin" size={12} />
+                            {venue.location.name}
+                          </p>
                         )}
                         <p style={{
                           fontSize: '12px',
@@ -404,19 +421,21 @@ export const DayJobView: React.FC = () => {
                           <div className="snes-pixel" style={{
                             display: 'flex',
                             flexWrap: 'wrap',
-                            gap: '8px',
+                            gap: '10px',
                             marginTop: '7px',
-                            fontSize: '9px',
+                            fontSize: '11px',
                             letterSpacing: 0
                           }}>
                             {job.requirements.minReputation && (
-                              <span style={{ color: reputation >= job.requirements.minReputation ? 'var(--snes-green)' : 'var(--snes-red)' }}>
-                                {reputation >= job.requirements.minReputation ? '✓' : '✕'} {job.requirements.minReputation}+ REP
+                              <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: reputation >= job.requirements.minReputation ? 'var(--snes-green)' : 'var(--snes-red)' }}>
+                                <PixelIcon name={reputation >= job.requirements.minReputation ? 'check' : 'x'} size={11} />
+                                {job.requirements.minReputation}+ REP
                               </span>
                             )}
                             {job.requirements.minConnections && (
-                              <span style={{ color: connections >= job.requirements.minConnections ? 'var(--snes-green)' : 'var(--snes-red)' }}>
-                                {connections >= job.requirements.minConnections ? '✓' : '✕'} {job.requirements.minConnections}+ CONN
+                              <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: connections >= job.requirements.minConnections ? 'var(--snes-green)' : 'var(--snes-red)' }}>
+                                <PixelIcon name={connections >= job.requirements.minConnections ? 'check' : 'x'} size={11} />
+                                {job.requirements.minConnections}+ CONN
                               </span>
                             )}
                           </div>
@@ -456,9 +475,13 @@ export const DayJobView: React.FC = () => {
                   fontSize: '12px',
                   color: 'var(--snes-gold)',
                   fontWeight: 600,
-                  lineHeight: 1.4
+                  lineHeight: 1.4,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
                 }}>
-                  ⚠️ This kicks {currentJob.name} to the curb
+                  <PixelIcon name="warning" size={13} />
+                  This kicks {currentJob.name} to the curb
                 </div>
               )}
 
@@ -474,7 +497,7 @@ export const DayJobView: React.FC = () => {
                     border: '2px solid var(--snes-void)',
                     borderRadius: 0,
                     boxShadow: 'inset 2px 2px 0 0 var(--snes-edge-lt), inset -2px -2px 0 0 var(--snes-void)',
-                    fontSize: '9px',
+                    fontSize: '11px',
                     letterSpacing: 0,
                     cursor: 'pointer',
                     minHeight: '44px',
@@ -494,7 +517,7 @@ export const DayJobView: React.FC = () => {
                     border: '2px solid var(--snes-void)',
                     borderRadius: 0,
                     boxShadow: 'inset 2px 2px 0 0 var(--snes-edge-lt), inset -2px -2px 0 0 var(--snes-void)',
-                    fontSize: '9px',
+                    fontSize: '11px',
                     letterSpacing: 0,
                     cursor: 'pointer',
                     display: 'flex',
