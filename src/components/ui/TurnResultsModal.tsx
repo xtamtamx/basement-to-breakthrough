@@ -393,7 +393,7 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
                           {result.venueSynergies.map((s, i) => (
                             <span key={i} className="snes-pixel" title={s.description} style={{
                               fontSize: '7px', letterSpacing: 0, color: 'var(--snes-green)',
-                              border: '2px solid var(--snes-green)', backgroundColor: '#0a1410', padding: '3px 5px'
+                              border: '2px solid var(--snes-green)', backgroundColor: 'var(--snes-bg-2)', padding: '3px 5px'
                             }}>🔥 {s.name}</span>
                           ))}
                         </div>
@@ -403,19 +403,19 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
                           {(result.politics.factionAttendancePct !== 0 || result.politics.factionRepPct !== 0) && (
                             <span className="snes-pixel" style={{
                               fontSize: '7px', letterSpacing: 0, color: 'var(--snes-purple)',
-                              border: '2px solid var(--snes-purple)', backgroundColor: '#160f24', padding: '3px 5px'
+                              border: '2px solid var(--snes-purple)', backgroundColor: 'var(--snes-bg-2)', padding: '3px 5px'
                             }}>🎭 Faction{result.politics.factionAttendancePct !== 0 ? ` ${result.politics.factionAttendancePct >= 0 ? '+' : ''}${result.politics.factionAttendancePct}% crowd` : ''}{result.politics.factionRepPct !== 0 ? ` ${result.politics.factionRepPct >= 0 ? '+' : ''}${result.politics.factionRepPct}% rep` : ''}</span>
                           )}
                           {result.politics.lineupPct !== 0 && (
                             <span className="snes-pixel" style={{
                               fontSize: '7px', letterSpacing: 0, color: 'var(--snes-green)',
-                              border: '2px solid var(--snes-green)', backgroundColor: '#0a1410', padding: '3px 5px'
+                              border: '2px solid var(--snes-green)', backgroundColor: 'var(--snes-bg-2)', padding: '3px 5px'
                             }}>🎸 Bill {result.politics.lineupPct >= 0 ? '+' : ''}{result.politics.lineupPct}% crowd</span>
                           )}
                           {result.politics.conflicts.map((c, i) => (
                             <span key={i} className="snes-pixel" style={{
                               fontSize: '7px', letterSpacing: 0, color: 'var(--snes-red)',
-                              border: '2px solid var(--snes-red)', backgroundColor: '#1f0f0f', padding: '3px 5px'
+                              border: '2px solid var(--snes-red)', backgroundColor: 'var(--snes-bg-2)', padding: '3px 5px'
                             }}>⚡ {c}</span>
                           ))}
                         </div>

@@ -132,10 +132,10 @@ export const PixelButton: React.FC<PixelButtonProps> = ({
     ...style,
   };
 
-  const hoverStyle = variant === 'primary' ? { background: '#ff4d9e' } :
+  const hoverStyle = variant === 'primary' ? { background: 'var(--snes-magenta)' } :
                     variant === 'secondary' ? { background: 'var(--snes-line)', color: 'var(--snes-cyan)' } :
-                    variant === 'success' ? { background: '#54e094' } :
-                    variant === 'danger' ? { background: '#ff7a76' } :
+                    variant === 'success' ? { background: 'var(--snes-green)' } :
+                    variant === 'danger' ? { background: 'var(--snes-red)' } :
                     variant === 'ghost' ? { background: 'var(--snes-bg-3)', color: 'var(--snes-cyan)' } :
                     {};
 

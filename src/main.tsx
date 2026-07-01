@@ -36,6 +36,10 @@ if (import.meta.env.PROD && !isNative) {
   purgeServiceWorkerOnNative();
 }
 
+// Default UI skin so pre-game menus (run select, scene points) wear the Sharpie
+// look too; MainGameView updates it from diyPoints once a run is live.
+document.documentElement.dataset.skin = 'balanced';
+
 createRoot(document.getElementById('root')!).render(
   // Respect the OS "Reduce Motion" setting globally: framer-motion drops
   // transform/layout animations (page slides, scale-ins) for users who ask

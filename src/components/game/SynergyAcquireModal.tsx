@@ -21,10 +21,10 @@ interface SynergyAcquireModalProps {
 
 /** Rarity → neon-punk SNES accent color (header / borders). */
 const RARITY_COLOR: Record<SynergyRarity, string> = {
-  COMMON: '#6f6796',
-  UNCOMMON: '#3ad17e',
-  RARE: '#4cc9f0',
-  LEGENDARY: '#c77dff',
+  COMMON: 'var(--snes-ink-mute)',
+  UNCOMMON: 'var(--snes-green)',
+  RARE: 'var(--snes-cyan)',
+  LEGENDARY: 'var(--snes-purple)',
 };
 
 /** LEGENDARY gets a subtle outer glow; others are flat. */
@@ -220,7 +220,7 @@ export const SynergyAcquireModal: React.FC<SynergyAcquireModalProps> = ({
                         textAlign: 'left',
                         padding: '8px 10px',
                         minHeight: '44px',
-                        background: selected ? '#2a1218' : 'var(--snes-bg-3)',
+                        background: selected ? 'var(--snes-bg-3)' : 'var(--snes-bg-3)',
                         border: `2px solid ${selected ? 'var(--snes-red)' : 'var(--snes-void)'}`,
                         borderRadius: 0,
                         boxShadow: selected ? 'none' : 'inset 1px 1px 0 0 #3a2f5c',

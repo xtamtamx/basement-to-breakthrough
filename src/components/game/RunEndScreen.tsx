@@ -139,7 +139,6 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
                 color: isWin ? 'var(--snes-gold)' : 'var(--snes-ink)',
                 letterSpacing: 0,
                 lineHeight: 1.35,
-                textShadow: '2px 2px 0 var(--snes-void)',
               }}
             >
               {config.title}

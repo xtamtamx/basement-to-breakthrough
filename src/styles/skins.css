@@ -39,12 +39,12 @@
   --snes-ink-dim: #4b4436;   /* softer ink (secondary) */
   --snes-ink-mute: #897d64;  /* faint ink (hints/disabled) */
 
-  --snes-magenta: #b23a29;   /* marker red — primary accent */
-  --snes-cyan: #2f6285;      /* marker blue — secondary/info */
-  --snes-gold: #b0801f;      /* marker amber — reputation/warn */
-  --snes-green: #3f7d34;     /* marker green — money/success */
-  --snes-purple: #7a4a86;    /* marker purple — fans/social */
-  --snes-red: #bd3b28;       /* marker red — danger */
+  --snes-magenta: #ac3423;   /* marker red — primary accent */
+  --snes-cyan: #285974;      /* marker blue — secondary/info */
+  --snes-gold: #8a6012;      /* dark ochre — legible on cream (was too pale) */
+  --snes-green: #34702b;     /* marker green — money/success */
+  --snes-purple: #6f3f7d;    /* marker purple — fans/social */
+  --snes-red: #b5341f;       /* marker red — danger */
 
   --skin-hand: "Marker Felt", "Comic Sans MS", "Bradley Hand", cursive;
   --skin-card-shadow: 2px 3px 0 rgba(0,0,0,0.28);
@@ -135,3 +135,40 @@
 
 /* Divider → a pencil rule. */
 [data-skin="balanced"] .snes-divider { background: var(--snes-line); }
+
+/* Native form controls (Settings dropdowns, inputs) — force onto paper so they
+   don't sit as dark boxes on the cream sheet. */
+[data-skin="balanced"] select,
+[data-skin="balanced"] input,
+[data-skin="balanced"] textarea {
+  background: var(--snes-bg-2);
+  color: var(--snes-ink);
+  border: 2px solid var(--snes-ink);
+  border-radius: 4px;
+  font-family: var(--skin-hand);
+  -webkit-appearance: none;
+  appearance: none;
+}
+[data-skin="balanced"] select option { color: #211c16; background: #ece2cd; }
+/* Range sliders (ticket price, volume) — marker-red thumb + inked track. */
+[data-skin="balanced"] input[type="range"] {
+  accent-color: var(--snes-magenta);
+  background: var(--snes-bg-2);
+  border: 2px solid var(--snes-ink);
+  height: 12px;
+}
+
+/* Scrollbars use the separate --pixel-* palette (neon purple) — re-skin them to
+   a muted marker gauge so they don't flare purple against the paper. */
+[data-skin="balanced"] ::-webkit-scrollbar-track {
+  background: var(--snes-bg-2);
+  border: 2px solid var(--snes-line);
+}
+[data-skin="balanced"] ::-webkit-scrollbar-thumb {
+  background: var(--snes-ink-mute);
+  border: 2px solid var(--snes-ink);
+  box-shadow: none;
+}
+[data-skin="balanced"] ::-webkit-scrollbar-thumb:hover {
+  background: var(--snes-ink-dim);
+}

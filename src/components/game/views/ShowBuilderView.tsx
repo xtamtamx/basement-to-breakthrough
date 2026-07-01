@@ -320,7 +320,6 @@ export const ShowBuilderView: React.FC = () => {
             color: 'var(--snes-magenta)',
             margin: 0,
             letterSpacing: 0,
-            textShadow: '2px 2px 0 var(--snes-void)'
           }}>Book a Show</h2>
           <p style={{
             fontSize: '11px',
@@ -613,7 +612,7 @@ export const ShowBuilderView: React.FC = () => {
                 width: '100%',
                 height: '12px',
                 borderRadius: 0,
-                background: `linear-gradient(to right, #f72585 0%, #f72585 ${(ticketPrice - 5) / 45 * 100}%, #0f0b1e ${(ticketPrice - 5) / 45 * 100}%, #0f0b1e 100%)`,
+                background: `linear-gradient(to right, var(--snes-magenta) 0%, var(--snes-magenta) ${(ticketPrice - 5) / 45 * 100}%, var(--snes-bg-3) ${(ticketPrice - 5) / 45 * 100}%, var(--snes-bg-3) 100%)`,
                 border: '2px solid var(--snes-void)',
                 outline: 'none',
                 cursor: 'pointer',
@@ -745,7 +744,7 @@ export const ShowBuilderView: React.FC = () => {
                           style={{
                             padding: '6px 9px',
                             minHeight: '32px',
-                            backgroundColor: open ? '#13301f' : 'var(--snes-bg-2)',
+                            backgroundColor: open ? 'var(--snes-bg-3)' : 'var(--snes-bg-2)',
                             border: '2px solid var(--snes-green)',
                             color: 'var(--snes-green)',
                             fontSize: '9px',
@@ -764,7 +763,7 @@ export const ShowBuilderView: React.FC = () => {
                     const s = preview.synergies.find((x, i) => (x.id ?? String(i)) === expandedCombo);
                     if (!s) return null;
                     return (
-                      <div className="snes-pixel" style={{ marginTop: '8px', padding: '8px 10px', backgroundColor: '#0a1410', border: '2px solid #1f3a28', fontSize: '9px', lineHeight: 1.6, letterSpacing: 0 }}>
+                      <div className="snes-pixel" style={{ marginTop: '8px', padding: '8px 10px', backgroundColor: 'var(--snes-bg-2)', border: '2px solid var(--snes-green)', fontSize: '9px', lineHeight: 1.6, letterSpacing: 0 }}>
                         <div style={{ color: 'var(--snes-ink-dim)' }}>{s.description}</div>
                         <div style={{ marginTop: '6px', color: 'var(--snes-green)' }}>
                           +{Math.round((s.multiplier - 1) * 100)}% crowd

@@ -55,7 +55,7 @@ export const DistrictViewBasic: React.FC<DistrictViewBasicProps> = ({
       >
         <h2
           className="snes-pixel"
-          style={{ fontSize: "14px", color: C.magenta, margin: 0, letterSpacing: 0, textShadow: `2px 2px 0 ${C.void}` }}
+          style={{ fontSize: "14px", color: C.magenta, margin: 0, letterSpacing: 0 }}
         >
           {name}
         </h2>

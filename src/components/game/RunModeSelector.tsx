@@ -92,7 +92,7 @@ export const RunModeSelector: React.FC<RunModeSelectorProps> = ({ onSelect, onCl
         {/* Header */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: "4px" }}>
           <div>
-            <h2 className="snes-pixel" style={{ fontSize: "13px", color: "var(--snes-magenta)", margin: "0 0 4px", letterSpacing: 0, textShadow: "2px 2px 0 var(--snes-void)" }}>
+            <h2 className="snes-pixel" style={{ fontSize: "13px", color: "var(--snes-magenta)", margin: "0 0 4px", letterSpacing: 0 }}>
               Pick Your Run
             </h2>
             <p style={{ fontSize: "11px", color: "var(--snes-ink-dim)", margin: 0 }}>
@@ -125,7 +125,7 @@ export const RunModeSelector: React.FC<RunModeSelectorProps> = ({ onSelect, onCl
                     textAlign: "left",
                     padding: "12px",
                     border: "2px solid var(--snes-line)",
-                    boxShadow: "inset 2px 2px 0 0 #241f3d, inset -2px -2px 0 0 var(--snes-void)",
+                    boxShadow: "inset 2px 2px 0 0 var(--snes-line), inset -2px -2px 0 0 var(--snes-void)",
                     borderRadius: 0,
                     opacity: 0.85,
                   }}
@@ -135,7 +135,7 @@ export const RunModeSelector: React.FC<RunModeSelectorProps> = ({ onSelect, onCl
                     <h3 className="snes-pixel" style={{ fontSize: "11px", color: "var(--snes-ink-mute)", margin: 0, letterSpacing: 0, flex: 1 }}>{config.name}</h3>
                     <Lock size={15} color="var(--snes-ink-mute)" />
                   </div>
-                  <p style={{ fontSize: "12px", color: "#56507a", margin: "0 0 8px", lineHeight: 1.4, fontStyle: "italic" }}>{config.description}</p>
+                  <p style={{ fontSize: "12px", color: "var(--snes-ink-mute)", margin: "0 0 8px", lineHeight: 1.4, fontStyle: "italic" }}>{config.description}</p>
                   <div className="snes-pixel" style={{ fontSize: "8px", letterSpacing: 0, color: "var(--snes-gold)", backgroundColor: "var(--snes-bg-2)", border: "2px solid var(--snes-edge-lt)", padding: "7px 8px", display: "flex", alignItems: "center", gap: "6px", lineHeight: 1.5 }}>
                     <Lock size={11} color="var(--snes-gold)" style={{ flexShrink: 0 }} />
                     Win {reqName} to unlock this mode
@@ -223,7 +223,7 @@ export const RunModeSelector: React.FC<RunModeSelectorProps> = ({ onSelect, onCl
                             cursor: unlocked ? "pointer" : "not-allowed",
                             color: selected ? "#f7efe0" : unlocked ? "var(--snes-purple)" : "#4b4470",
                             backgroundColor: selected ? "var(--snes-purple)" : "var(--snes-bg-2)",
-                            border: `2px solid ${selected ? "var(--snes-purple)" : unlocked ? "var(--snes-edge-lt)" : "#241f3d"}`,
+                            border: `2px solid ${selected ? "var(--snes-purple)" : unlocked ? "var(--snes-edge-lt)" : "var(--snes-line)"}`,
                             display: "flex",
                             alignItems: "center",
                             gap: "3px",
