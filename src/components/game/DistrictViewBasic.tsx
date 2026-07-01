@@ -7,143 +7,89 @@ interface DistrictViewBasicProps {
   districtInfo?: DistrictInfo;
 }
 
-const DISTRICT_DETAILS: Record<
-  string,
-  {
-    name: string;
-    color: string;
-    description: string;
-    venueTypes: string[];
-    jobTypes: string[];
-  }
-> = {
-  downtown: {
-    name: "Downtown",
-    color: "#3B82F6",
-    description: "Corporate venues and mainstream clubs",
-    venueTypes: ["Concert Hall", "Corporate Venue", "Chain Bar"],
-    jobTypes: ["Office Temp", "Marketing Intern", "Barista"],
-  },
-  warehouse: {
-    name: "Warehouse District",
-    color: "#EF4444",
-    description: "Underground venues and DIY spaces",
-    venueTypes: ["Warehouse", "DIY Space", "Underground Club"],
-    jobTypes: ["Loading Dock", "Night Security", "Forklift Operator"],
-  },
-  college: {
-    name: "College Town",
-    color: "#10B981",
-    description: "Student venues and campus spots",
-    venueTypes: ["House Show", "Student Center", "Coffee Shop"],
-    jobTypes: ["TA", "Campus Food", "Library Assistant"],
-  },
-  residential: {
-    name: "Residential",
-    color: "#F59E0B",
-    description: "House shows and neighborhood bars",
-    venueTypes: ["House Show", "Dive Bar", "Garage"],
-    jobTypes: ["Dog Walker", "Delivery", "Grocery Clerk"],
-  },
-  arts: {
-    name: "Arts District",
-    color: "#8B5CF6",
-    description: "Creative spaces and galleries",
-    venueTypes: ["Gallery", "Artist Loft", "Experimental Space"],
-    jobTypes: ["Gallery Assistant", "Screen Printing", "Art Handler"],
-  },
+// Token aliases (BandsView convention) so this reads in the canonical language.
+const C = {
+  void: "var(--snes-void)",
+  ink: "var(--snes-ink)",
+  dim: "var(--snes-ink-dim)",
+  mute: "var(--snes-ink-mute)",
+  magenta: "var(--snes-magenta)",
+  cyan: "var(--snes-cyan)",
+  gold: "var(--snes-gold)",
+  green: "var(--snes-green)",
 };
+const SANS = "'Inter', system-ui, -apple-system, sans-serif";
 
+/**
+ * District detail card — a clean, on-brand read of the ONE district you tapped.
+ * (Rebuilt 2026-07-01: the old version was raw Tailwind grays with hardcoded fake
+ * data — '0' venues, '3' jobs, generic district types that don't match the demo.
+ * districtInfo actually arrives with cells:[]/neighbors:[] too, so size/connections
+ * were always 0. Now it shows only the real, reliable fields.)
+ */
 export const DistrictViewBasic: React.FC<DistrictViewBasicProps> = ({
   districtInfo,
 }) => {
-  const districtType = districtInfo?.type || "downtown";
-  const details = DISTRICT_DETAILS[districtType];
-  const districtSize = districtInfo?.cells.length || 0;
-  const connections = districtInfo?.neighbors.length || 0;
+  const name = districtInfo?.name || "District";
+  const scene = Math.max(0, Math.min(100, Math.round(districtInfo?.sceneStrength ?? 0)));
+  const rent = districtInfo?.rentMultiplier ?? 1;
 
   return (
-    <div className="w-full h-full min-h-[500px] bg-gray-900 rounded-lg p-8">
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "16px",
+        background: C.void,
+      }}
+    >
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-center"
+        transition={{ duration: 0.2, ease: "easeOut" }}
+        className="snes-panel"
+        style={{ width: "100%", maxWidth: "540px", padding: "20px", borderColor: C.magenta }}
       >
-        <h1
-          className="text-4xl font-bold mb-2 uppercase tracking-wider"
-          style={{ color: details.color }}
+        <h2
+          className="snes-pixel"
+          style={{ fontSize: "14px", color: C.magenta, margin: 0, letterSpacing: 0, textShadow: `2px 2px 0 ${C.void}` }}
         >
-          {details.name}
-        </h1>
-        <p className="text-gray-400 mb-8 text-lg">{details.description}</p>
+          {name}
+        </h2>
+        <p style={{ fontFamily: SANS, fontSize: "13px", color: C.dim, margin: "8px 0 16px", lineHeight: 1.5 }}>
+          The scene here is only as loud as you make it. Book the rooms, work the block, and watch this corner of the Island grow.
+        </p>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto mb-8">
-          <div className="bg-gray-800 p-4 rounded-lg border-2 border-gray-700">
-            <div className="text-2xl mb-1">🏘️</div>
-            <div className="text-xs text-gray-400">District Size</div>
-            <div className="text-lg font-bold text-white">
-              {districtSize} blocks
+        <div style={{ display: "flex", gap: "10px" }}>
+          <div className="snes-panel-inset" style={{ flex: 1, padding: "12px" }}>
+            <div className="snes-pixel" style={{ fontSize: "9px", color: C.mute, letterSpacing: 0, marginBottom: "8px" }}>
+              SCENE STRENGTH
             </div>
-          </div>
-
-          <div className="bg-gray-800 p-4 rounded-lg border-2 border-gray-700">
-            <div className="text-2xl mb-1">🔗</div>
-            <div className="text-xs text-gray-400">Connections</div>
-            <div className="text-lg font-bold text-blue-400">{connections}</div>
-          </div>
-
-          <div className="bg-gray-800 p-4 rounded-lg border-2 border-gray-700">
-            <div className="text-2xl mb-1">🎵</div>
-            <div className="text-xs text-gray-400">Venues</div>
-            <div className="text-lg font-bold text-pink-400">0</div>
-          </div>
-
-          <div className="bg-gray-800 p-4 rounded-lg border-2 border-gray-700">
-            <div className="text-2xl mb-1">💼</div>
-            <div className="text-xs text-gray-400">Jobs Available</div>
-            <div className="text-lg font-bold text-green-400">3</div>
-          </div>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-          <div className="bg-gray-800 p-6 rounded-lg border-2 border-gray-700">
-            <h3 className="text-lg font-bold mb-3 text-white">
-              Available Venues
-            </h3>
-            <div className="space-y-2">
-              {details.venueTypes.map((venue, i) => (
-                <div
-                  key={i}
-                  className="text-sm text-gray-400 bg-gray-900 p-2 rounded"
-                >
-                  🏢 {venue}
-                </div>
-              ))}
+            <div className="snes-progress" style={{ height: "10px", marginBottom: "6px" }}>
+              <div className="snes-progress__fill" style={{ width: `${scene}%`, background: C.cyan }} />
             </div>
+            <div className="snes-pixel" style={{ fontSize: "12px", color: C.cyan, letterSpacing: 0 }}>{scene}%</div>
           </div>
 
-          <div className="bg-gray-800 p-6 rounded-lg border-2 border-gray-700">
-            <h3 className="text-lg font-bold mb-3 text-white">
-              Job Opportunities
-            </h3>
-            <div className="space-y-2">
-              {details.jobTypes.map((job, i) => (
-                <div
-                  key={i}
-                  className="text-sm text-gray-400 bg-gray-900 p-2 rounded"
-                >
-                  💼 {job}
-                </div>
-              ))}
+          <div className="snes-panel-inset" style={{ flex: 1, padding: "12px" }}>
+            <div className="snes-pixel" style={{ fontSize: "9px", color: C.mute, letterSpacing: 0, marginBottom: "8px" }}>
+              RENT
+            </div>
+            <div className="snes-pixel" style={{ fontSize: "18px", color: rent > 1 ? C.gold : C.green, letterSpacing: 0 }}>
+              {rent}×
+            </div>
+            <div style={{ fontFamily: SANS, fontSize: "11px", color: C.dim, marginTop: "4px" }}>
+              {rent > 1 ? "pricier rooms" : "affordable rooms"}
             </div>
           </div>
         </div>
 
-        <div className="mt-8 p-4 bg-gray-800 rounded-lg border-2 border-gray-700">
-          <p className="text-sm text-gray-400">
-            🏗️ Build venues • 💼 Find jobs • 🎤 Book shows
-          </p>
-        </div>
+        <p style={{ fontFamily: SANS, fontSize: "12px", color: C.mute, margin: "16px 0 0", lineHeight: 1.5 }}>
+          Tap <span style={{ color: C.dim }}>Back</span> to the map, then tap a venue to book a show — or a shop to pick up work.
+        </p>
       </motion.div>
     </div>
   );

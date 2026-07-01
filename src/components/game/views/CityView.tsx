@@ -5,6 +5,7 @@ import { haptics } from '@utils/mobile';
 import { DistrictViewBasic } from '../DistrictViewBasic';
 import { DistrictInfo } from '@/game/generation/CityGenerator';
 import { VenueUpgradeModal } from '@/components/venue/VenueUpgradeModal';
+import { SnesModal } from '@/components/ui/SnesModal';
 import { ZoomOut, Building2, TrendingUp, MapPin, X } from 'lucide-react';
 import { MapTile, VenueData, WorkplaceData } from '@/components/map/MapTypes';
 import { DistrictType as CoreDistrictType } from '@/game/types/core';
@@ -723,21 +724,13 @@ export const CityView: React.FC = () => {
         );
         const accent = selectedShop.category === 'civic' ? '#ffd23f' : '#4cc9f0';
         return (
-          <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(8, 6, 18, 0.86)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'fadeIn 0.2s ease-out', padding: '20px' }} onClick={() => setSelectedShop(null)}>
-            <div style={{ backgroundColor: '#171327', border: '2px solid #0a0814', borderTopWidth: '3px', borderTopColor: accent, boxShadow: 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814', borderRadius: '0', padding: '16px', paddingBottom: 'calc(16px + env(safe-area-inset-bottom))', width: '100%', maxWidth: '440px', maxHeight: '80vh', overflowY: 'auto', animation: 'slideUp 0.3s ease-out' }} onClick={(e) => e.stopPropagation()}>
-              <div style={{ width: '36px', height: '3px', backgroundColor: '#3a2f5c', borderRadius: '0', margin: '0 auto 12px' }} />
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
-                <div style={{ flex: 1 }}>
-                  <h2 className="snes-pixel" style={{ fontSize: '12px', color: '#ffffff', margin: '0 0 6px' }}>{selectedShop.name}</h2>
-                  <p style={{ fontSize: '12px', color: accent, margin: 0, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <MapPin size={12} color={accent} /><span>{SHOP_DEFS[selectedShop.kind].label} · Day Jobs</span>
-                  </p>
-                </div>
-                <button onClick={() => setSelectedShop(null)} style={{ width: '32px', height: '32px', borderRadius: '0', backgroundColor: '#1f1a3a', border: '2px solid #0a0814', color: '#b9b3d6', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><X size={18} /></button>
-              </div>
+          <SnesModal variant="sheet" accent={accent} onClose={() => setSelectedShop(null)} title={selectedShop.name}>
+              <p style={{ fontSize: '12px', color: accent, margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <MapPin size={12} color={accent} /><span>{SHOP_DEFS[selectedShop.kind].label} · Day Jobs</span>
+              </p>
               {currentJob && (
-                <div style={{ backgroundColor: '#0f0b1e', border: '2px solid #4cc9f0', borderRadius: '0', padding: '8px 12px', marginBottom: '12px', fontSize: '12px', color: '#4cc9f0' }}>
-                  Currently working: <span style={{ fontWeight: 700, color: '#ffffff' }}>{currentJob.name}</span>
+                <div style={{ backgroundColor: 'var(--snes-bg-2)', border: '2px solid var(--snes-cyan)', borderRadius: '0', padding: '8px 12px', marginBottom: '12px', fontSize: '12px', color: 'var(--snes-cyan)' }}>
+                  Currently working: <span style={{ fontWeight: 700, color: 'var(--snes-ink)' }}>{currentJob.name}</span>
                 </div>
               )}
               <div key={jobRefresh} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -767,8 +760,7 @@ export const CityView: React.FC = () => {
                   );
                 })}
               </div>
-            </div>
-          </div>
+          </SnesModal>
         );
       })()}
 
@@ -781,17 +773,9 @@ export const CityView: React.FC = () => {
         if (selectedLandmark.effect.sceneFloor != null) fx.push(`Holds scene strength ≥ ${selectedLandmark.effect.sceneFloor}`);
         if (selectedLandmark.effect.passiveMoney != null) fx.push(`+$${selectedLandmark.effect.passiveMoney}/turn passive income`);
         return (
-          <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(8, 6, 18, 0.86)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'fadeIn 0.2s ease-out', padding: '20px' }} onClick={() => setSelectedLandmark(null)}>
-            <div style={{ backgroundColor: '#171327', border: '2px solid #0a0814', borderTopWidth: '3px', borderTopColor: accent, boxShadow: 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814', borderRadius: '0', padding: '16px', paddingBottom: 'calc(16px + env(safe-area-inset-bottom))', width: '100%', maxWidth: '440px', animation: 'slideUp 0.3s ease-out' }} onClick={(e) => e.stopPropagation()}>
-              <div style={{ width: '36px', height: '3px', backgroundColor: '#3a2f5c', borderRadius: '0', margin: '0 auto 12px' }} />
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
-                <div style={{ flex: 1 }}>
-                  <h2 className="snes-pixel" style={{ fontSize: '12px', color: '#ffffff', margin: '0 0 6px', lineHeight: 1.4 }}>★ {selectedLandmark.name}</h2>
-                  <p className="snes-pixel" style={{ fontSize: '8px', color: accent, margin: 0 }}>{tag}</p>
-                </div>
-                <button onClick={() => setSelectedLandmark(null)} style={{ width: '32px', height: '32px', borderRadius: '0', backgroundColor: '#1f1a3a', border: '2px solid #0a0814', color: '#b9b3d6', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><X size={18} /></button>
-              </div>
-              <p style={{ fontSize: '13px', color: '#b9b3d6', fontStyle: 'italic', lineHeight: 1.5, margin: '0 0 12px' }}>{selectedLandmark.blurb}</p>
+          <SnesModal variant="sheet" accent={accent} onClose={() => setSelectedLandmark(null)} title={`★ ${selectedLandmark.name}`}>
+              <p className="snes-pixel" style={{ fontSize: '9px', color: accent, margin: '0 0 10px', letterSpacing: 0 }}>{tag}</p>
+              <p style={{ fontSize: '13px', color: 'var(--snes-ink-dim)', fontStyle: 'italic', lineHeight: 1.5, margin: '0 0 12px' }}>{selectedLandmark.blurb}</p>
               {fx.length > 0 ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   {fx.map((f, i) => (
@@ -801,8 +785,7 @@ export const CityView: React.FC = () => {
               ) : (
                 <div className="snes-panel-inset" style={{ fontSize: '12px', color: '#6f6796', padding: '8px 12px' }}>A monument to how far you&apos;ve come. No mechanical effect.</div>
               )}
-            </div>
-          </div>
+          </SnesModal>
         );
       })()}
 
