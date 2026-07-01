@@ -1,0 +1,137 @@
+/**
+ * SKIN ENGINE — the UI's "production style" morphs with the player's DIY↔sellout
+ * standing. `data-skin` is set on <html> from the scene-identity tier
+ * (src/game/world/uiSkin.ts): a 5-step spectrum
+ *
+ *   pure-diy · diy-leaning · balanced(start) · corporate-leaning · full-sellout
+ *
+ * mapping to three production languages that blend at the poles:
+ *   BALANCED  → hand-drawn SHARPIE (you just got here, scrawling your own flyers)
+ *   DIY side  → cut-&-paste ZINE (ransom-note logos, xerox, tape)   [Phase 2]
+ *   SELLOUT   → uniform CORPORATE print (barcodes, fees, Helvetica) [Phase 2]
+ *
+ * A skin re-tints the --snes-* tokens AND restyles the .snes-* component classes
+ * beneath its [data-skin="…"] selector, so anything on the design system reskins
+ * for free. (Inline-hex views migrate onto tokens in the rollout sweep.)
+ *
+ * Semantic status colors stay legible in every skin — only their exact hue is
+ * nudged to fit the medium (marker greens, xerox reds, corporate blues).
+ */
+
+/* ============================================================= *
+ * BALANCED — hand-drawn Sharpie (the default / start state)
+ * Paper & cardboard surfaces on a warm venue-dark backdrop, marker ink,
+ * wobbly hand-drawn borders, Marker Felt for headings/labels/names.
+ * ============================================================= */
+[data-skin="balanced"],
+[data-skin="diy-leaning"],
+[data-skin="corporate-leaning"],
+[data-skin="pure-diy"],
+[data-skin="full-sellout"] {
+  /* Phase 1: every tier falls back to Sharpie until its skin is authored. */
+  --snes-void: #1e1519;      /* warm venue-dark backdrop */
+  --snes-bg: #ece2cd;        /* kraft/cream paper (panels, bars) */
+  --snes-bg-2: #e0d3b6;      /* darker paper (insets, fields) */
+  --snes-bg-3: #d8c9a8;      /* raised control fill */
+  --snes-edge-lt: #f5eeda;   /* paper top highlight */
+  --snes-line: #bfb08c;      /* pencil rule / divider */
+  --snes-ink: #211c16;       /* marker ink (primary text) */
+  --snes-ink-dim: #4b4436;   /* softer ink (secondary) */
+  --snes-ink-mute: #897d64;  /* faint ink (hints/disabled) */
+
+  --snes-magenta: #b23a29;   /* marker red — primary accent */
+  --snes-cyan: #2f6285;      /* marker blue — secondary/info */
+  --snes-gold: #b0801f;      /* marker amber — reputation/warn */
+  --snes-green: #3f7d34;     /* marker green — money/success */
+  --snes-purple: #7a4a86;    /* marker purple — fans/social */
+  --snes-red: #bd3b28;       /* marker red — danger */
+
+  --skin-hand: "Marker Felt", "Comic Sans MS", "Bradley Hand", cursive;
+  --skin-card-shadow: 2px 3px 0 rgba(0,0,0,0.28);
+}
+
+/* Marker font for all the chrome text (labels, numbers, headings). Prose that
+   opts into a sans stays sans; band names get Marker Felt in the view sweep. */
+[data-skin="balanced"] .snes-pixel,
+[data-skin="balanced"] .snes-title,
+[data-skin="balanced"] .snes-modal__title {
+  font-family: var(--skin-hand);
+  letter-spacing: 0.3px;
+  -webkit-font-smoothing: antialiased;
+  text-shadow: none;
+}
+[data-skin="balanced"] .snes-modal__title { color: var(--snes-ink); }
+
+/* Panels → paper cards with hand-inked, slightly-irregular borders. */
+[data-skin="balanced"] .snes-panel,
+[data-skin="balanced"] .snes-panel-inset {
+  background: var(--snes-bg);
+  border: 2px solid var(--snes-ink);
+  box-shadow: var(--skin-card-shadow);
+  border-radius: 7px 4px 8px 5px;   /* wobble */
+}
+[data-skin="balanced"] .snes-panel-inset {
+  background: var(--snes-bg-2);
+  box-shadow: none;
+  border-radius: 5px 7px 4px 6px;
+}
+
+/* Bars (HUD header + bottom nav) → a strip of taped cardboard. */
+[data-skin="balanced"] .snes-bar,
+[data-skin="balanced"] .snes-bar--top,
+[data-skin="balanced"] .snes-bar--bottom {
+  background: var(--snes-bg);
+  border-color: var(--snes-ink);
+  box-shadow: inset 0 0 0 1px var(--snes-line);
+  color: var(--snes-ink);
+}
+[data-skin="balanced"] .snes-bar--top { border-bottom: 2px solid var(--snes-ink); }
+[data-skin="balanced"] .snes-bar--bottom { border-top: 2px solid var(--snes-ink); }
+
+/* Chips → little paper tickets. */
+[data-skin="balanced"] .snes-chip {
+  background: var(--snes-bg-2);
+  border: 2px solid var(--snes-ink);
+  box-shadow: 1px 1px 0 rgba(0,0,0,0.2);
+  color: var(--snes-ink);
+  border-radius: 4px 6px 4px 6px;
+}
+
+/* Buttons → scrawled marker boxes. */
+[data-skin="balanced"] .snes-btn,
+[data-skin="balanced"] .snes-hud-btn,
+[data-skin="balanced"] .snes-close {
+  font-family: var(--skin-hand);
+  background: var(--snes-bg-2);
+  color: var(--snes-ink);
+  border: 2px solid var(--snes-ink);
+  box-shadow: 2px 2px 0 rgba(0,0,0,0.3);
+  border-radius: 10px 6px 11px 7px;
+  letter-spacing: 0.5px;
+}
+[data-skin="balanced"] .snes-btn { background: var(--snes-magenta); color: #f7efe0; }
+[data-skin="balanced"] .snes-btn--ghost { background: transparent; color: var(--snes-ink); }
+[data-skin="balanced"] .snes-btn--cyan { background: var(--snes-cyan); color: #f7efe0; }
+[data-skin="balanced"] .snes-btn--green { background: var(--snes-green); color: #f7efe0; }
+[data-skin="balanced"] .snes-btn--gold { background: var(--snes-gold); color: #1e1509; }
+[data-skin="balanced"] .snes-btn:active,
+[data-skin="balanced"] .snes-hud-btn:active,
+[data-skin="balanced"] .snes-close:active { transform: translate(1px, 2px); box-shadow: 1px 1px 0 rgba(0,0,0,0.3); }
+
+/* Modals → a paper card pinned to the dark wall. */
+[data-skin="balanced"] .snes-modal__sheet {
+  background: var(--snes-bg);
+  border: 2px solid var(--snes-ink);
+  border-top: 3px solid var(--snes-magenta);
+  box-shadow: 3px 4px 0 rgba(0,0,0,0.4);
+  border-radius: 8px;
+}
+
+/* Progress meters → an inked gauge on paper. */
+[data-skin="balanced"] .snes-progress {
+  background: var(--snes-bg-2);
+  border: 2px solid var(--snes-ink);
+}
+
+/* Divider → a pencil rule. */
+[data-skin="balanced"] .snes-divider { background: var(--snes-line); }

@@ -30,6 +30,7 @@ import { gameAudio } from "@utils/gameAudio";
 import { GameErrorBoundary } from "@components/ErrorBoundary";
 import { saveGameManager } from "@game/persistence/SaveGameManager";
 import { synergyManager } from "@game/mechanics/SynergyManager";
+import { applyUiSkin } from "@game/world/uiSkin";
 import { Settings, Save, MapPin, Target, Brain } from 'lucide-react';
 
 type ViewType = "city" | "bands" | "shows" | "promotion" | "synergies" | "jobs" | "progression" | "tour";
@@ -116,6 +117,10 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
   const reputation = useGameStore((s) => s.reputation);
   const fans = useGameStore((s) => s.fans);
   const stress = useGameStore((s) => s.stress);
+  // The UI's whole production style morphs with the DIY↔sellout standing —
+  // set the skin on <html> so it cascades everywhere (incl. portaled modals).
+  const diyPoints = useGameStore((s) => s.diyPoints);
+  useEffect(() => { applyUiSkin(diyPoints); }, [diyPoints]);
   const currentCityName = useGameStore(
     (s) => s.cities.find((c) => c.id === s.currentCityId)?.name ?? "",
   );
@@ -261,7 +266,7 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
     <div
       className="h-full flex flex-col"
       style={{
-        background: '#0a0814',
+        background: 'var(--snes-void)',
         // Keep the HUD + content clear of the notch / Dynamic Island (which sits
         // on a SIDE in landscape) and the top inset (portrait). The fixed bottom
         // nav handles its own insets.
