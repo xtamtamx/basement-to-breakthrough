@@ -189,7 +189,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px;
+  /* Keep the dialog clear of the notch / Dynamic Island (on a SIDE in landscape)
+     and the home indicator by insetting the overlay by the safe areas. */
+  padding: calc(16px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
   animation: snes-overlay-in 0.18s ease both;
 }
 .snes-modal__sheet {
@@ -215,7 +217,7 @@
 /* Optional pinned footer (primary CTA row). */
 .snes-modal__footer { flex-shrink: 0; margin-top: var(--s3); }
 /* Bottom-sheet variant — slides up from the bottom edge, full-width. */
-.snes-modal--sheet { align-items: flex-end; padding: 0; }
+.snes-modal--sheet { align-items: flex-end; padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
 .snes-modal--sheet .snes-modal__sheet { max-width: 100%; max-height: 88vh; border-top-width: 3px; }
 @keyframes snes-overlay-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes snes-sheet-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }

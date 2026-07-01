@@ -253,7 +253,7 @@ export const CityView: React.FC = () => {
           alignItems: 'center',
           justifyContent: 'center',
           animation: 'fadeIn 0.2s ease-out',
-          padding: '20px'
+          padding: 'calc(20px + env(safe-area-inset-top)) calc(20px + env(safe-area-inset-right)) calc(20px + env(safe-area-inset-bottom)) calc(20px + env(safe-area-inset-left))'
         }} onClick={(e) => {
           e.stopPropagation();
           setSelectedTileData(null);
@@ -499,7 +499,7 @@ export const CityView: React.FC = () => {
           alignItems: 'center',
           justifyContent: 'center',
           animation: 'fadeIn 0.2s ease-out',
-          padding: '20px'
+          padding: 'calc(20px + env(safe-area-inset-top)) calc(20px + env(safe-area-inset-right)) calc(20px + env(safe-area-inset-bottom)) calc(20px + env(safe-area-inset-left))'
         }} onClick={(e) => {
           e.stopPropagation();
           setSelectedTileData(null);

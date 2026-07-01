@@ -261,6 +261,8 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
               borderTop: '2px solid #f72585',
               boxShadow: 'inset 0 2px 0 0 #3a2f5c',
               paddingBottom: 'env(safe-area-inset-bottom)',
+              paddingLeft: 'env(safe-area-inset-left)',
+              paddingRight: 'env(safe-area-inset-right)',
               maxHeight: 'calc(100dvh - 64px)',
               overflowY: 'auto'
             }}
@@ -358,7 +360,9 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         }}
         style={{
           position: 'fixed',
-          right: '12px',
+          // Fixed to the viewport, so it must clear the Dynamic Island / notch,
+          // which sits on a SIDE in landscape — inset by the right safe area.
+          right: 'calc(12px + env(safe-area-inset-right))',
           width: '48px',
           height: '48px',
           // Amber when nothing's booked (pairs with the no-shows confirm), pink when ready.
@@ -396,7 +400,8 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
       {/* Turn Indicator */}
       <div className="mobile-bottom-nav__turn-indicator" style={{
         position: 'fixed',
-        left: '12px',
+        // Clear the Dynamic Island / notch (on a SIDE in landscape) via the left inset.
+        left: 'calc(12px + env(safe-area-inset-left))',
         backgroundColor: '#0f0b1e',
         border: '2px solid #0a0814',
         boxShadow: 'inset 1px 1px 0 0 #2a2350',

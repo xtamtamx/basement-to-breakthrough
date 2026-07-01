@@ -96,7 +96,8 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 9999,
-        padding: '12px',
+        // Clear the notch / Dynamic Island (on a SIDE in landscape) + home indicator.
+        padding: 'calc(12px + env(safe-area-inset-top)) calc(12px + env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left))',
       }}
     >
       <div
