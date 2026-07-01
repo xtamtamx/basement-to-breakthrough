@@ -25,6 +25,7 @@ import { stakesManager, STAKE_TIERS } from './StakesManager';
 import { isModeBeaten, nextModeAfter } from './modeUnlocks';
 import { recordBandUnlocks, recordRunFeats } from '@game/world/bandUnlocks';
 import { bandBookingFee } from './bandEconomy';
+import { bandResponseMult } from './bandResponse';
 import { TOURING_ENABLED } from '@/config/featureFlags';
 import { gentrificationSystem } from './GentrificationSystem';
 import { factionSystem } from './FactionSystem';
@@ -908,12 +909,14 @@ export class TurnResolutionEngine {
     );
     const districtRentMult = liveDistrict?.rentMultiplier ?? 1;
     // Per-band guarantee (popularity-scaled, difficulty-scaled); signed acts cost
-    // only your cut-share. Same formula the ShowBuilder preview shows.
+    // only your cut-share, then bent by how the band responds to your alignment +
+    // reputation. Same formula the ShowBuilder preview shows.
     const bandCosts = allShowBands.reduce(
       (sum, b) =>
         sum +
         difficultySystem.getScaledBandCost(
-          bandBookingFee(b.popularity, store.rosterBandIds.includes(b.id)),
+          bandBookingFee(b.popularity, store.rosterBandIds.includes(b.id)) *
+            bandResponseMult(b, store.diyPoints, store.reputation),
         ),
       0,
     );

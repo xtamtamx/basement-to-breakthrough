@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useGameStore } from '@stores/gameStore';
-import { Venue, Show } from '@game/types';
+import { Venue, Show, Band } from '@game/types';
 import { haptics } from '@utils/mobile';
 import { audio } from '@utils/simpleAudio';
 import { synergyEngine } from '@game/mechanics/SynergyEngine';
@@ -9,6 +9,7 @@ import { bandFactionBadge } from '@game/world/factionDisplay';
 import { factionSystem } from '@game/mechanics/FactionSystem';
 import { difficultySystem } from '@game/mechanics/DifficultySystem';
 import { bandBookingFee, bandDeposit } from '@game/mechanics/bandEconomy';
+import { bandResponse, bandResponseMult } from '@game/mechanics/bandResponse';
 import { isBandUnlocked } from '@game/world/bandUnlocks';
 import { cityGenreFit, homeCityFit } from '@game/world/citySynergy';
 import { projectBaseAttendance } from '@game/mechanics/attendanceProjection';
@@ -70,6 +71,8 @@ export const ShowBuilderView: React.FC = () => {
     factionStandings,
     eventCapacityPenalty,
     currentRound,
+    diyPoints,
+    reputation,
     hasSynergyDiscovered,
   } = useGameStore();
   const currentCity = cities.find((c) => c.id === currentCityId);
@@ -89,9 +92,13 @@ export const ShowBuilderView: React.FC = () => {
     .filter((b) => isBandUnlocked(b.id))
     .sort((a, b) => (isSigned(b.id) ? 1 : 0) - (isSigned(a.id) ? 1 : 0) || a.popularity - b.popularity);
   const selectedBands = allBands.filter(b => selectedBandIds.includes(b.id));
-  // Per-act fee the player actually pays (popularity guarantee × difficulty, cut for signed).
-  const bandFee = (b: { popularity: number; id: string }) =>
-    difficultySystem.getScaledBandCost(bandBookingFee(b.popularity, isSigned(b.id)));
+  // Per-act fee the player actually pays: popularity guarantee × difficulty, cut for
+  // signed, then bent by how the band responds to your alignment + reputation. Same
+  // formula the resolver charges.
+  const bandFee = (b: Band) =>
+    difficultySystem.getScaledBandCost(
+      bandBookingFee(b.popularity, isSigned(b.id)) * bandResponseMult(b, diyPoints, reputation),
+    );
 
   const handleBandToggle = (bandId: string) => {
     if (difficultySystem.isBandUnavailable(bandId)) {
@@ -367,6 +374,8 @@ export const ShowBuilderView: React.FC = () => {
                 const isSelected = selectedBandIds.includes(band.id);
                 const isUnavailable = difficultySystem.isBandUnavailable(band.id);
                 const isBlocked = isUnavailable || (!isSelected && selectedBandIds.length >= 3);
+                // How this act reads YOU (alignment + rep) — shown as the result.
+                const resp = bandResponse(band, diyPoints, reputation);
                 return (
                   <button
                     key={band.id}
@@ -422,6 +431,11 @@ export const ShowBuilderView: React.FC = () => {
                             {bandDeposit(band.popularity, isSigned(band.id)) > 0 && (
                               <span style={{ color: '#c77dff' }}> · ${bandDeposit(band.popularity, isSigned(band.id))} deposit up front</span>
                             )}
+                          </div>
+                        )}
+                        {!isUnavailable && resp.note && (
+                          <div className="snes-pixel" style={{ fontSize: '8px', marginTop: '3px', letterSpacing: 0, color: resp.tone === 'good' ? '#3ad17e' : resp.tone === 'bad' ? '#ff5c57' : '#6f6796' }}>
+                            {resp.note}
                           </div>
                         )}
                       </div>
