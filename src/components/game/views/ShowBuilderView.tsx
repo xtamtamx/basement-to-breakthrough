@@ -15,6 +15,9 @@ import { cityGenreFit, homeCityFit } from '@game/world/citySynergy';
 import { projectBaseAttendance } from '@game/mechanics/attendanceProjection';
 import { isVenueUnlocked } from '@game/world/venueProgression';
 import { bookingCapacity, nextBookingSlotAt } from '@game/world/bookingCapacity';
+import { resolveVenueCost } from '@game/mechanics/showCosts';
+import { runManager } from '@game/mechanics/RunManager';
+import { metaProgressionManager } from '@game/mechanics/MetaProgressionManager';
 import { tutorialManager } from '@game/tutorial/TutorialManager';
 import { COMBO_MULT_CAP } from '@game/constants/runConstants';
 import { Calendar, MapPin, Users, AlertCircle, TrendingUp, Check, Ban } from 'lucide-react';
@@ -64,6 +67,7 @@ export const ShowBuilderView: React.FC = () => {
     venues: allVenues,
     peakReputation,
     money,
+    districts,
     scheduledShows,
     scheduleShow,
     cities,
@@ -178,10 +182,17 @@ export const ShowBuilderView: React.FC = () => {
     // Revenue includes bar sales where the venue has a bar (matches the engine),
     // times the faction money modifier.
     const grossRevenue = Math.floor((finalAttendance * ticketPrice + (selectedVenue.hasBar ? finalAttendance * 5 : 0)) * factionMoneyMult);
-    // Costs: the scaled venue rent PLUS the per-band fee paid to every act on the
-    // bill. The old preview omitted band fees, so it promised a profit on bills
-    // that actually lose money — the most misleading number in the game.
-    const venueCost = Math.floor(difficultySystem.getScaledVenueCost(selectedVenue.rent));
+    // Costs: the real venue rent (SAME formula the resolver charges — difficulty +
+    // district + gentrification + run + meta + city-signature, via resolveVenueCost)
+    // PLUS the per-band fee for every act. The preview used to apply only difficulty
+    // scaling, so a priced room could resolve at ~1.8× and a "break-even" bill quietly
+    // lost money — the most misleading number in the game.
+    const venueCost = resolveVenueCost(selectedVenue, {
+      districts,
+      currentCityId,
+      runVenueRentMult: runManager.getRunModifiers().venueRentMultiplier,
+      metaVenueDiscountMult: metaProgressionManager.getRunStartBonuses().venueDiscountMultiplier,
+    });
     const bandCost = selectedBands.reduce((sum, b) => sum + bandFee(b), 0);
     const netRevenue = grossRevenue - venueCost - bandCost;
 

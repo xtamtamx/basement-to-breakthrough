@@ -26,6 +26,7 @@ import { isModeBeaten, nextModeAfter } from './modeUnlocks';
 import { recordBandUnlocks, recordRunFeats } from '@game/world/bandUnlocks';
 import { bandBookingFee } from './bandEconomy';
 import { bandResponseMult } from './bandResponse';
+import { resolveVenueCost } from './showCosts';
 import { TOURING_ENABLED } from '@/config/featureFlags';
 import { gentrificationSystem } from './GentrificationSystem';
 import { factionSystem } from './FactionSystem';
@@ -901,13 +902,6 @@ export class TurnResolutionEngine {
     );
 
     // Calculate costs with difficulty scaling; escalation turns raise costs.
-    // Rent also creeps up with district gentrification and the run's rent
-    // modifier (Hardcore), and varies by the district's base rentMultiplier
-    // (looked up live — the value the City view shows the player).
-    const liveDistrict = store.districts.find(
-      (d) => d.id === venue.location.id,
-    );
-    const districtRentMult = liveDistrict?.rentMultiplier ?? 1;
     // Per-band guarantee (popularity-scaled, difficulty-scaled); signed acts cost
     // only your cut-share, then bent by how the band responds to your alignment +
     // reputation. Same formula the ShowBuilder preview shows.
@@ -920,14 +914,12 @@ export class TurnResolutionEngine {
         ),
       0,
     );
-    const venueCost = Math.floor(
-      difficultySystem.getScaledVenueCost(venue.rent) *
-        districtRentMult *
-        gentrificationSystem.getRentMultiplier(venue.location.id) *
-        runMods.venueRentMultiplier *
-        metaBonuses.venueDiscountMultiplier *
-        (sig?.rentMult ?? 1),
-    );
+    const venueCost = resolveVenueCost(venue, {
+      districts: store.districts,
+      currentCityId: store.currentCityId,
+      runVenueRentMult: runMods.venueRentMultiplier,
+      metaVenueDiscountMult: metaBonuses.venueDiscountMultiplier,
+    });
     let totalCosts = bandCosts + venueCost;
     if (isEscalation) {
       totalCosts = Math.floor(totalCosts * ESCALATION_COST_MULTIPLIER);
