@@ -30,7 +30,7 @@ import { gameAudio } from "@utils/gameAudio";
 import { GameErrorBoundary } from "@components/ErrorBoundary";
 import { saveGameManager } from "@game/persistence/SaveGameManager";
 import { synergyManager } from "@game/mechanics/SynergyManager";
-import { Settings, Save, MapPin, Target, Music, Brain } from 'lucide-react';
+import { Settings, Save, MapPin, Target, Brain } from 'lucide-react';
 
 type ViewType = "city" | "bands" | "shows" | "promotion" | "synergies" | "jobs" | "progression" | "tour";
 
@@ -118,11 +118,6 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
   const stress = useGameStore((s) => s.stress);
   const currentCityName = useGameStore(
     (s) => s.cities.find((c) => c.id === s.currentCityId)?.name ?? "",
-  );
-  // Booked-shows count for the HUD chip (folded up from the Shows-view header,
-  // where it was duplicated alongside a redundant cash readout).
-  const scheduledShowCount = useGameStore(
-    (s) => s.scheduledShows.filter((sh) => sh.status === "SCHEDULED").length,
   );
   // Instinct counts for the HUD chip. synergyManager is a singleton outside
   // Zustand, so re-derive when an instinct is acquired (synergyVersion) or a
@@ -326,16 +321,6 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
             >
               <Brain size={14} />
               <span className="snes-pixel" style={{ fontSize: '8px', letterSpacing: 0 }}>{equippedInstincts}/{maxInstincts}</span>
-            </button>
-            {/* Booked-shows count — folded up from the Shows-view header (was duplicated there). */}
-            <button
-              onClick={() => handleViewChange('shows')}
-              aria-label={`${scheduledShowCount} show${scheduledShowCount === 1 ? '' : 's'} booked`}
-              title="Shows on the calendar — tap to book"
-              style={{ height: 44, minWidth: 44, padding: '0 9px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', background: '#1f1a3a', color: '#4cc9f0', border: '2px solid #0a0814', boxShadow: 'inset 1px 1px 0 #3a2f5c', cursor: 'pointer', borderRadius: 0 }}
-            >
-              <Music size={14} />
-              <span className="snes-pixel" style={{ fontSize: '8px', letterSpacing: 0 }}>{scheduledShowCount}</span>
             </button>
             {objectivesTotal > 0 && (
               <button
