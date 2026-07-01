@@ -82,11 +82,11 @@ export const SynergyView: React.FC = () => {
           Synergy Discovery
         </h2>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
-          <span className="snes-chip snes-pixel" style={{ fontSize: '8px' }}>
+          <span className="snes-chip snes-pixel" style={{ fontSize: '9px' }}>
             <Lock size={11} color="#6f6796" />
             <span style={{ color: '#b9b3d6' }}>{undiscoveredCount} Hidden</span>
           </span>
-          <span className="snes-chip snes-pixel" style={{ fontSize: '8px' }}>
+          <span className="snes-chip snes-pixel" style={{ fontSize: '9px' }}>
             <Zap size={11} color="#f72585" />
             <span style={{ color: '#f72585' }}>{discoveredSynergies.length} Found</span>
           </span>
@@ -112,7 +112,7 @@ export const SynergyView: React.FC = () => {
                   color: active ? '#1a0a14' : '#6f6796',
                   border: '2px solid #0a0814',
                   borderRadius: 0,
-                  fontSize: '8px',
+                  fontSize: '9px',
                   textTransform: 'uppercase',
                   cursor: 'pointer',
                   minHeight: '44px',
@@ -245,8 +245,8 @@ export const SynergyView: React.FC = () => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                <span className="snes-pixel" style={{ fontSize: '8px', color: '#b9b3d6' }}>Overall</span>
-                <span className="snes-pixel" style={{ fontSize: '8px', color: '#ffffff' }}>
+                <span className="snes-pixel" style={{ fontSize: '9px', color: '#b9b3d6' }}>Overall</span>
+                <span className="snes-pixel" style={{ fontSize: '9px', color: '#ffffff' }}>
                   {discoveredSynergies.length}/{allSynergies.length}
                 </span>
               </div>
@@ -266,10 +266,10 @@ export const SynergyView: React.FC = () => {
               return (
                 <div key={tier}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                    <span className="snes-pixel" style={{ fontSize: '7px', color: getTierHex(tier) }}>
+                    <span className="snes-pixel" style={{ fontSize: '9px', color: getTierHex(tier) }}>
                       {tier.charAt(0).toUpperCase() + tier.slice(1)}
                     </span>
-                    <span className="snes-pixel" style={{ fontSize: '7px', color: '#ffffff' }}>
+                    <span className="snes-pixel" style={{ fontSize: '9px', color: '#ffffff' }}>
                       {discoveredInTier}/{tierSynergies.length}
                     </span>
                   </div>

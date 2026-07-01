@@ -4,6 +4,9 @@ import { dayJobSystem, DayJob, JobCategory } from '@game/mechanics/DayJobSystem'
 import { haptics } from '@utils/mobile';
 import { Briefcase, Clock, DollarSign, Star, Users, X } from 'lucide-react';
 
+// Prose/name font — job names read as names, not chrome (canon: Inter).
+const SANS = "'Inter', system-ui, -apple-system, sans-serif";
+
 export const DayJobView: React.FC = () => {
   const { reputation, connections, venues, stress } = useGameStore();
   const [availableJobs, setAvailableJobs] = useState<DayJob[]>([]);
@@ -59,7 +62,7 @@ export const DayJobView: React.FC = () => {
       padding: '4px 7px',
       backgroundColor: '#0f0b1e',
       color,
-      fontSize: '8px',
+      fontSize: '9px',
       borderRadius: 0,
       border: `2px solid ${bg}`,
       letterSpacing: 0,
@@ -116,7 +119,7 @@ export const DayJobView: React.FC = () => {
         {currentJob && (
           <section style={{ marginBottom: '16px' }}>
             <h3 className="snes-pixel" style={{
-              fontSize: '8px',
+              fontSize: '9px',
               color: '#6f6796',
               textTransform: 'uppercase',
               letterSpacing: 0,
@@ -127,11 +130,13 @@ export const DayJobView: React.FC = () => {
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', gap: '10px' }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <h4 className="snes-pixel" style={{
-                    fontSize: '11px',
+                  <h4 style={{
+                    fontFamily: SANS,
+                    fontWeight: 700,
+                    fontSize: '14px',
                     color: '#ffffff',
                     margin: '0 0 6px',
-                    lineHeight: 1.4
+                    lineHeight: 1.3
                   }}>{currentJob.name}</h4>
                   <p style={{
                     fontSize: '12px',
@@ -149,12 +154,12 @@ export const DayJobView: React.FC = () => {
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <DollarSign size={14} color="#3ad17e" />
-                      <span className="snes-pixel" style={{ fontSize: '8px', color: '#ffffff' }}>+${currentJob.moneyPerTurn}/turn</span>
+                      <span className="snes-pixel" style={{ fontSize: '9px', color: '#ffffff' }}>+${currentJob.moneyPerTurn}/turn</span>
                     </div>
                     {currentJob.reputationChange !== 0 && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <Star size={14} color={currentJob.reputationChange > 0 ? '#ffd23f' : '#ff5c57'} />
-                        <span className="snes-pixel" style={{ fontSize: '8px', color: '#ffffff' }}>
+                        <span className="snes-pixel" style={{ fontSize: '9px', color: '#ffffff' }}>
                           {currentJob.reputationChange > 0 ? '+' : ''}{currentJob.reputationChange} rep/turn
                         </span>
                       </div>
@@ -162,7 +167,7 @@ export const DayJobView: React.FC = () => {
                     {currentJob.fanChange !== 0 && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <Users size={14} color={currentJob.fanChange > 0 ? '#c77dff' : '#ff5c57'} />
-                        <span className="snes-pixel" style={{ fontSize: '8px', color: '#ffffff' }}>
+                        <span className="snes-pixel" style={{ fontSize: '9px', color: '#ffffff' }}>
                           {currentJob.fanChange > 0 ? '+' : ''}{currentJob.fanChange} fans/turn
                         </span>
                       </div>
@@ -170,7 +175,7 @@ export const DayJobView: React.FC = () => {
                     {currentJob.stressGain > 0 && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <Clock size={14} color="#ffd23f" />
-                        <span className="snes-pixel" style={{ fontSize: '8px', color: '#ffffff' }}>+{currentJob.stressGain}% stress/turn</span>
+                        <span className="snes-pixel" style={{ fontSize: '9px', color: '#ffffff' }}>+{currentJob.stressGain}% stress/turn</span>
                       </div>
                     )}
                   </div>
@@ -241,7 +246,7 @@ export const DayJobView: React.FC = () => {
                 boxShadow: filterCategory === 'all'
                   ? 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814, 0 0 0 1px #f72585'
                   : 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814',
-                fontSize: '8px',
+                fontSize: '9px',
                 letterSpacing: 0,
                 cursor: 'pointer',
                 whiteSpace: 'nowrap',
@@ -265,7 +270,7 @@ export const DayJobView: React.FC = () => {
                   boxShadow: filterCategory === category
                     ? 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814, 0 0 0 1px #f72585'
                     : 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814',
-                  fontSize: '8px',
+                  fontSize: '9px',
                   letterSpacing: 0,
                   cursor: 'pointer',
                   whiteSpace: 'nowrap',
@@ -283,7 +288,7 @@ export const DayJobView: React.FC = () => {
         {/* Available Jobs */}
         <section>
           <h3 className="snes-pixel" style={{
-            fontSize: '8px',
+            fontSize: '9px',
             color: '#6f6796',
             textTransform: 'uppercase',
             letterSpacing: 0,
@@ -341,11 +346,13 @@ export const DayJobView: React.FC = () => {
                         fontSize: '20px'
                       }}>{getCategoryIcon(job.category)}</div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <h4 className="snes-pixel" style={{
-                          fontSize: '10px',
+                        <h4 style={{
+                          fontFamily: SANS,
+                          fontWeight: 700,
+                          fontSize: '14px',
                           color: '#ffffff',
                           margin: '0 0 5px',
-                          lineHeight: 1.4
+                          lineHeight: 1.3
                         }}>{job.name}</h4>
                         {venue && (
                           <p style={{
@@ -398,7 +405,7 @@ export const DayJobView: React.FC = () => {
                             flexWrap: 'wrap',
                             gap: '8px',
                             marginTop: '7px',
-                            fontSize: '8px',
+                            fontSize: '9px',
                             letterSpacing: 0
                           }}>
                             {job.requirements.minReputation && (
@@ -454,7 +461,7 @@ export const DayJobView: React.FC = () => {
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', gap: '10px', marginBottom: '10px' }}>
                 <h3 className="snes-pixel" style={{
-                  fontSize: '8px',
+                  fontSize: '9px',
                   color: '#6f6796',
                   textTransform: 'uppercase',
                   letterSpacing: 0,

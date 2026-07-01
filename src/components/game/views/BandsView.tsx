@@ -189,7 +189,7 @@ export const BandsView: React.FC = () => {
         <div style={{ flex: 1 }} />
 
         {/* Sort segmented */}
-        <span className="snes-pixel" style={{ fontSize: '8px', color: C.mute, letterSpacing: 0, flexShrink: 0 }}>SORT</span>
+        <span className="snes-pixel" style={{ fontSize: '9px', color: C.mute, letterSpacing: 0, flexShrink: 0 }}>SORT</span>
         <div style={{ display: 'flex', gap: '3px', background: C.bg2, border: `2px solid ${C.void}`, boxShadow: `inset 1px 1px 0 0 ${C.edge}`, padding: '2px', flexShrink: 0 }}>
           {SORTS.map((s) => segBtn(sort === s.id, () => setSort(s.id), s.label, s.id, C.gold))}
         </div>
@@ -240,7 +240,7 @@ export const BandsView: React.FC = () => {
                         display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', overflowWrap: 'anywhere',
                       }}>{band.name}</h3>
                       {band.isRealArtist && (
-                        <span className="snes-pixel" style={{ flexShrink: 0, padding: '1px 4px', background: C.bg2, border: `2px solid ${C.magenta}`, color: C.magenta, fontSize: '8px', letterSpacing: 0 }}>REAL</span>
+                        <span className="snes-pixel" style={{ flexShrink: 0, padding: '1px 4px', background: C.bg2, border: `2px solid ${C.magenta}`, color: C.magenta, fontSize: '9px', letterSpacing: 0 }}>REAL</span>
                       )}
                     </div>
                     <div style={{ fontFamily: SANS, fontSize: '11px', color: C.dim, margin: '2px 0 0', display: 'flex', alignItems: 'center', gap: '5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -286,7 +286,7 @@ export const BandsView: React.FC = () => {
                   <Lock size={11} /> Locked · {lockedCount}
                 </span>
                 <span style={{ flex: 1, height: '2px', background: C.line }} />
-                <span className="snes-pixel" style={{ fontSize: '8px', color: C.mute, letterSpacing: 0 }}>keep playing to unlock</span>
+                <span className="snes-pixel" style={{ fontSize: '9px', color: C.mute, letterSpacing: 0 }}>keep playing to unlock</span>
               </div>
             )}
 
@@ -309,7 +309,7 @@ export const BandsView: React.FC = () => {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <h3 style={{ fontFamily: SANS, fontWeight: 800, fontSize: '14px', color: C.mute, margin: 0, lineHeight: 1.2, letterSpacing: '2px' }}>???</h3>
-                      <span className="snes-pixel" style={{ flexShrink: 0, fontSize: '8px', color: C.mute, letterSpacing: 0 }}>{titleCase(band.genre)}</span>
+                      <span className="snes-pixel" style={{ flexShrink: 0, fontSize: '9px', color: C.mute, letterSpacing: 0 }}>{titleCase(band.genre)}</span>
                     </div>
                     <div style={{ fontFamily: SANS, fontSize: '11px', color: C.dim, margin: '3px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {lock.hint}
@@ -319,7 +319,7 @@ export const BandsView: React.FC = () => {
                         <div className="snes-progress" style={{ flex: 1 }}>
                           <div className="snes-progress__fill" style={{ width: `${pct}%`, background: C.gold }} />
                         </div>
-                        <span className="snes-pixel" style={{ fontSize: '8px', color: C.mute, letterSpacing: 0, flexShrink: 0 }}>
+                        <span className="snes-pixel" style={{ fontSize: '9px', color: C.mute, letterSpacing: 0, flexShrink: 0 }}>
                           {fmtN(Math.min(pr.current, pr.target))}/{fmtN(pr.target)}
                         </span>
                       </div>
@@ -357,7 +357,7 @@ export const BandsView: React.FC = () => {
                   <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: fb.color }} />{fb.name}
                 </span>
               )}
-              {isInRoster && <span className="snes-pixel" style={{ fontSize: '8px', color: C.green, letterSpacing: 0, border: `2px solid ${C.green}`, padding: '2px 5px' }}>SIGNED</span>}
+              {isInRoster && <span className="snes-pixel" style={{ fontSize: '9px', color: C.green, letterSpacing: 0, border: `2px solid ${C.green}`, padding: '2px 5px' }}>SIGNED</span>}
             </div>
             {TOURING_ENABLED && detailBand.homeCity && detailBand.homeCity !== currentCityId && (
               <p style={{ fontFamily: SANS, fontSize: '12px', color: C.cyan, margin: '0 0 12px' }}>
