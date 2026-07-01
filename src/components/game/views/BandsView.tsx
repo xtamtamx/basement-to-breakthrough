@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Band, Genre } from '@game/types';
+import { Band } from '@game/types';
 import { haptics } from '@utils/mobile';
 import { audio } from '@utils/simpleAudio';
 import { useGameStore } from '@stores/gameStore';
@@ -9,6 +9,9 @@ import { UserPlus, Check, Briefcase } from 'lucide-react';
 import { bandFactionBadge } from '@game/world/factionDisplay';
 import { metaSnapshot, bandLockInfo, isBandHidden, type BandLockInfo } from '@game/world/bandUnlocks';
 import { SnesModal } from '@components/ui/SnesModal';
+import { PixelIcon } from '@components/ui/PixelIcon';
+import { genreIcon } from '@components/ui/genreIcon';
+import { BandLogo } from '@components/ui/BandLogo';
 import { getCity } from '@/data/cities';
 import { TOURING_ENABLED } from '@/config/featureFlags';
 import { Lock, Home } from 'lucide-react';
@@ -27,20 +30,12 @@ const C = {
 };
 const SANS = "'Inter', system-ui, -apple-system, sans-serif";
 
-const GENRE_ICON: Partial<Record<Genre, string>> = {
-  [Genre.PUNK]: '🎸', [Genre.METAL]: '🤘', [Genre.HARDCORE]: '👊',
-  [Genre.GRUNGE]: '🧥', [Genre.INDIE]: '🌼', [Genre.EMO]: '🖤',
-  [Genre.DOOM]: '💀', [Genre.SLUDGE]: '🛢️', [Genre.NOISE]: '📻',
-  [Genre.POWERVIOLENCE]: '⚡', [Genre.EXPERIMENTAL]: '🔬',
-  [Genre.ALTERNATIVE]: '🎵', [Genre.ELECTRONIC]: '🎹',
-};
-const genreIcon = (g: Genre) => GENRE_ICON[g] ?? '🎵';
 const titleCase = (s: string) => s.charAt(0) + s.slice(1).toLowerCase();
 const fmtN = (n: number) => (n >= 1000 ? `${+(n / 1000).toFixed(1)}k` : `${n}`);
 
 const SORTS: { id: Sort; label: string }[] = [
-  { id: 'popularity', label: '★ Top' },
-  { id: 'authenticity', label: '✦ Cred' },
+  { id: 'popularity', label: 'Top' },
+  { id: 'authenticity', label: 'Cred' },
   { id: 'name', label: 'A–Z' },
   { id: 'genre', label: 'Genre' },
 ];
@@ -175,9 +170,9 @@ export const BandsView: React.FC = () => {
           className="snes-chip btb-press"
           onClick={() => { setShowSlots(true); haptics.light(); }}
           title="Roster slots — tap for the breakdown"
-          style={{ flexShrink: 0, fontSize: '10px', cursor: 'pointer', color: rosterFull ? C.red : C.green, borderColor: C.void }}
+          style={{ flexShrink: 0, fontSize: '11px', cursor: 'pointer', color: rosterFull ? C.red : C.green, borderColor: C.void, display: 'inline-flex', alignItems: 'center', gap: '5px' }}
         >
-          ♫ {rosterBandIds.length}/{maxRosterSize}{rosterFull ? ' · FULL' : ''}
+          <PixelIcon name="note" size={12} />{rosterBandIds.length}/{maxRosterSize}{rosterFull ? ' · FULL' : ''}
         </button>
 
         {/* Filter segmented */}
@@ -202,7 +197,7 @@ export const BandsView: React.FC = () => {
       }}>
         {visible.length === 0 && lockedTeasers.length === 0 ? (
           <div className="snes-panel-inset" style={{ textAlign: 'center', padding: '36px 24px', border: `2px solid ${C.gold}`, color: C.dim }}>
-            <div style={{ fontSize: '40px', marginBottom: '10px' }}>🎸</div>
+            <div style={{ marginBottom: '10px', color: C.mute }}><PixelIcon name="guitar" size={40} /></div>
             <h3 className="snes-pixel" style={{ fontSize: '11px', color: C.ink, margin: '0 0 8px', letterSpacing: 0 }}>
               {filter === 'roster' ? 'Empty roster' : 'No bands here'}
             </h3>
@@ -229,16 +224,13 @@ export const BandsView: React.FC = () => {
                     display: 'flex', gap: '8px', alignItems: 'center', minWidth: 0,
                   }}
                 >
-                  <div className="snes-panel-inset" style={{ fontSize: '18px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '36px', height: '36px' }}>
-                    {genreIcon(band.genre)}
+                  <div className="snes-panel-inset" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '36px', height: '36px', color: C.ink }}>
+                    <PixelIcon name={genreIcon(band.genre)} size={20} />
                   </div>
 
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                      <h3 style={{
-                        fontFamily: SANS, fontWeight: 700, fontSize: '13.5px', color: C.ink, margin: 0, lineHeight: 1.2,
-                        display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', overflowWrap: 'anywhere',
-                      }}>{band.name}</h3>
+                      <BandLogo band={band} variant="card" style={{ color: C.ink }} />
                       {band.isRealArtist && (
                         <span className="snes-pixel" style={{ flexShrink: 0, padding: '1px 4px', background: C.bg2, border: `2px solid ${C.magenta}`, color: C.magenta, fontSize: '9px', letterSpacing: 0 }}>REAL</span>
                       )}
@@ -252,10 +244,10 @@ export const BandsView: React.FC = () => {
                         </span>
                       )}
                     </div>
-                    <div style={{ display: 'flex', gap: '10px', marginTop: '4px', fontFamily: SANS }}>
-                      <span title="Popularity" style={{ fontSize: '11px', fontWeight: 700, color: C.magenta }}>★{band.popularity}</span>
-                      <span title="Energy" style={{ fontSize: '11px', fontWeight: 700, color: C.gold }}>⚡{band.energy}</span>
-                      <span title="Authenticity" style={{ fontSize: '11px', fontWeight: 700, color: C.green }}>✦{band.authenticity}</span>
+                    <div style={{ display: 'flex', gap: '12px', marginTop: '4px', fontFamily: SANS }}>
+                      <span title="Popularity" style={{ fontSize: '12px', fontWeight: 700, color: C.magenta, display: 'inline-flex', alignItems: 'center', gap: '3px' }}><PixelIcon name="fame" size={11} />{band.popularity}</span>
+                      <span title="Energy" style={{ fontSize: '12px', fontWeight: 700, color: C.gold, display: 'inline-flex', alignItems: 'center', gap: '3px' }}><PixelIcon name="energy" size={11} />{band.energy}</span>
+                      <span title="Authenticity" style={{ fontSize: '12px', fontWeight: 700, color: C.green, display: 'inline-flex', alignItems: 'center', gap: '3px' }}><PixelIcon name="sparkle" size={11} />{band.authenticity}</span>
                     </div>
                   </div>
 
@@ -339,8 +331,8 @@ export const BandsView: React.FC = () => {
         const fb = bandFactionBadge(detailBand);
         return (
           <SnesModal onClose={() => setDetailId(null)} ariaLabel={detailBand.name} maxWidth={460}
-            headerRight={<span style={{ fontSize: '22px' }}>{genreIcon(detailBand.genre)}</span>}>
-            <h2 style={{ fontFamily: SANS, fontWeight: 800, fontSize: '20px', color: C.ink, margin: '0 0 4px', lineHeight: 1.15 }}>{detailBand.name}</h2>
+            headerRight={<span style={{ color: C.ink, display: 'inline-flex' }}><PixelIcon name={genreIcon(detailBand.genre)} size={22} /></span>}>
+            <BandLogo band={detailBand} variant="hero" style={{ display: 'block', color: C.ink, margin: '0 0 4px' }} />
             <div style={{ fontFamily: SANS, fontSize: '13px', color: C.dim, margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
               <span>{titleCase(detailBand.genre)}</span>
               {TOURING_ENABLED && detailBand.homeCity && (() => {
@@ -360,8 +352,8 @@ export const BandsView: React.FC = () => {
               {isInRoster && <span className="snes-pixel" style={{ fontSize: '9px', color: C.green, letterSpacing: 0, border: `2px solid ${C.green}`, padding: '2px 5px' }}>SIGNED</span>}
             </div>
             {TOURING_ENABLED && detailBand.homeCity && detailBand.homeCity !== currentCityId && (
-              <p style={{ fontFamily: SANS, fontSize: '12px', color: C.cyan, margin: '0 0 12px' }}>
-                🏠 Draws a hometown crowd in {getCity(detailBand.homeCity)?.name ?? detailBand.homeCity} — tour there for a bigger show.
+              <p style={{ fontFamily: SANS, fontSize: '12px', color: C.cyan, margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <PixelIcon name="home" size={13} /> Draws a hometown crowd in {getCity(detailBand.homeCity)?.name ?? detailBand.homeCity} — tour there for a bigger show.
               </p>
             )}
 
@@ -371,8 +363,8 @@ export const BandsView: React.FC = () => {
               {STAT_ROWS(detailBand).map(([label, val, color]) => (
                 <div key={label}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                    <span className="snes-pixel" style={{ fontSize: '9px', color: C.dim, letterSpacing: 0 }}>{label}</span>
-                    <span className="snes-pixel" style={{ fontSize: '9px', color, letterSpacing: 0 }}>{val}</span>
+                    <span className="snes-pixel" style={{ fontSize: '10px', color: C.dim, letterSpacing: 0 }}>{label}</span>
+                    <span className="snes-pixel" style={{ fontSize: '10px', color, letterSpacing: 0 }}>{val}</span>
                   </div>
                   <div className="snes-progress"><div className="snes-progress__fill" style={{ width: `${val}%`, background: color }} /></div>
                 </div>
@@ -386,8 +378,8 @@ export const BandsView: React.FC = () => {
                   {detailBand.relationships.map((rel) => {
                     const friendly = rel.relationship >= 0;
                     return (
-                      <span key={rel.bandId} style={{ fontFamily: SANS, fontSize: '12px', fontWeight: 600, padding: '5px 10px', background: C.bg2, border: `2px solid ${friendly ? C.green : C.red}`, color: friendly ? C.green : C.red }}>
-                        {friendly ? '👫' : '⚔️'} {allBands.find((b) => b.id === rel.bandId)?.name ?? '???'}
+                      <span key={rel.bandId} style={{ fontFamily: SANS, fontSize: '12px', fontWeight: 600, padding: '5px 10px', background: C.bg2, border: `2px solid ${friendly ? C.green : C.red}`, color: friendly ? C.green : C.red, display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                        <PixelIcon name={friendly ? 'fans' : 'warning'} size={12} /> {allBands.find((b) => b.id === rel.bandId)?.name ?? '???'}
                       </span>
                     );
                   })}

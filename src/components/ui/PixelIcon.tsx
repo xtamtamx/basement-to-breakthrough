@@ -1,0 +1,132 @@
+import React from 'react';
+
+/**
+ * PixelIcon — the app's hand-authored pixel-art icon set, replacing raw emoji.
+ *
+ * Each glyph is a tiny bitmap (rows of '#' = filled cell, '.'/' ' = empty)
+ * rendered as <rect> cells inside an SVG with `fill="currentColor"`. Because it
+ * inherits the current text color, every icon tints automatically per
+ * --snes-* token AND per `data-skin` (Sharpie ink / zine black / corporate navy)
+ * — exactly the morph emoji could never do. `preserveAspectRatio` keeps
+ * non-square glyphs centered inside the square size box.
+ *
+ * Usage: <PixelIcon name="money" size={14} />  (color comes from `color:`/currentColor)
+ */
+
+const GLYPHS: Record<string, string[]> = {
+  fame:     ["....#....","....#....","...###...","#########",".#######.","..#####..","..#####..",".##...##.",".#.....#."],
+  fans:     [".##...##.","#########","#########","#########",".#######.","..#####..","...###...","....#....","........."],
+  money:    ["....#....","..#####..",".#..#..#.",".#..#....","..#####..","....#..#.",".#..#..#.","..#####..","....#...."],
+  stress:   ["....#....","....#....","...###...","..#####..","..#####..",".#######.",".#######.","..#####..","...###..."],
+  energy:   ["....###..","...###...","..###....",".#######.","....###..","...###...","..###....",".##......","........."],
+  warning:  ["....#....","...###...","...###...","..##.##..","..#.#.##.",".##...##.",".##.#.##.","#########","........."],
+  check:    ["........","......##",".....##.","....##..","#...##..","##.##...",".###....","..#....."],
+  x:        ["#.......#","##.....##",".##...##.","..##.##..","...###...","..##.##..",".##...##.","##.....##","#.......#"],
+  lock:     ["..#####..",".#.....#.",".#.....#.","#########","#########","#..###..#","#...#...#","#########","........."],
+  unlock:   ["..#####..",".#.....#.",".#.......",".#.......","#########","#########","#..###..#","#...#...#","#########"],
+  pin:      ["..#####..",".#######.","#########","#..###..#","#..###..#","#########",".#######.","..#####..","...###...","....#....","....#...."],
+  fire:     ["....#....","...##....","..###.#..","..###.##.",".#######.","#########","#########",".#######.","..#####.."],
+  instinct: ["..#####..",".#.....#.","#.......#","#.......#",".#.....#.","..#####..","..#####..","...###...","..#####.."],
+  trophy:   ["#########","#.#####.#","#.#####.#",".#####...","..###....","..###....","..#####..",".#######.","........."],
+  target:   ["..#####..",".#.....#.","#..###..#","#.#...#.#","#.#.#.#.#","#.#...#.#","#..###..#",".#.....#.","..#####.."],
+  sparkle:  ["....#....","....#....","...###...","#########","...###...","....#....","....#....",".........","........."],
+  soldout:  ["#...#...#",".#..#..#.","..#.#.#..","...###...","###...###","...###...","..#.#.#..",".#..#..#.","#...#...#"],
+  home:     ["....#....","...###...","..#####..",".#######.","#########","#.#####.#","#.#.#.#.#","#.#.#.#.#","#.#####.#"],
+  building: ["....#....","...###...","..#####..",".#######.","#########","#.#.#.#.#","#.#.#.#.#","#.#.#.#.#","#########"],
+  note:     ["....####.","....#..#.","....#..#.","....#..#.","..###..#.",".####.###","####..###",".##...##.","........."],
+  guitar:   ["......##.",".....##..","....##...","...##....",".####....","#####....","######...","#####....",".###....."],
+  shop:     [".##...##.",".##...##.","#########","#.......#","#.......#","#.......#","#.......#","#########","........."],
+  tie:      ["..#####..","..#...#..","...###...","....#....","...###...","..#####..","..#####..","...###...","....#...."],
+  briefcase:["...###...","...#.#...","#########","#.......#","#...#...#","#.......#","#########",".........","........."],
+  megaphone:[".......#.","......##.","....####.","..######.","########.","..######.","....####.","....#..#.","...#...#."],
+  calendar: [".#.....#.",".#.....#.","#########","#########","#.#.#.#.#","#.......#","#.#.#.#.#","#.......#","#########"],
+  clipboard:["...###...","..#.#.#..",".#######.",".#.....#.",".#.###.#.",".#.....#.",".#.###.#.",".#.....#.",".#######."],
+  faction:  ["#........","#####....","#####....","#####....","#........","#........","#........","#........","#........"],
+  skull:    ["..#####..",".#######.","#########","##.###.##","##.###.##","#########",".#.#.#.#.",".#######.","..#.#.#.."],
+  flower:   ["...###...","..#####..",".##.#.##.","###.#.###",".##.#.##.","..#####..","...#.#...","...#.#...","..#.#.#.."],
+  flask:    ["...###...","...#.#...","...#.#...","..#...#..","..#...#..",".#.###.#.",".#######.",".#######.","..#####.."],
+};
+
+// Forgiving concept aliases → canonical glyph, so callers can use intuitive names.
+const ALIASES: Record<string, string> = {
+  star: 'fame', rep: 'fame', reputation: 'fame',
+  people: 'fans', fan: 'fans', heart: 'fans',
+  cash: 'money', dollar: 'money', coin: 'money',
+  bolt: 'energy',
+  caution: 'warning', alert: 'warning',
+  close: 'x', ban: 'x', cross: 'x',
+  locked: 'lock', unlocked: 'unlock',
+  location: 'pin', 'map-pin': 'pin', mappin: 'pin',
+  flame: 'fire', synergy: 'fire', scene: 'fire', streak: 'fire',
+  brain: 'instinct', idea: 'instinct', bulb: 'instinct',
+  objective: 'target',
+  twinkle: 'sparkle',
+  celebrate: 'soldout', party: 'soldout',
+  house: 'home', venue: 'home',
+  civic: 'building',
+  music: 'note',
+  community: 'guitar', bill: 'guitar',
+  bag: 'shop', merch: 'shop',
+  corporate: 'tie',
+  job: 'briefcase', dayjob: 'briefcase', work: 'briefcase',
+  promo: 'megaphone', promotion: 'megaphone', announce: 'megaphone',
+  shows: 'calendar', schedule: 'calendar', date: 'calendar',
+  booking: 'clipboard',
+  banner: 'faction', politics: 'faction',
+};
+
+export type PixelIconName = keyof typeof GLYPHS | keyof typeof ALIASES;
+
+interface PixelIconProps {
+  name: string;
+  /** Rendered square size in px (default 16). */
+  size?: number;
+  /** Fill color; defaults to currentColor so it inherits text color + skin. */
+  color?: string;
+  className?: string;
+  /** Accessible label. When omitted the icon is decorative (aria-hidden). */
+  title?: string;
+  style?: React.CSSProperties;
+}
+
+export const PixelIcon: React.FC<PixelIconProps> = ({
+  name,
+  size = 16,
+  color = 'currentColor',
+  className,
+  title,
+  style,
+}) => {
+  const key = GLYPHS[name] ? name : ALIASES[name];
+  const rows = key ? GLYPHS[key] : undefined;
+  if (!rows) return null;
+
+  const cols = Math.max(...rows.map((r) => r.length));
+  const h = rows.length;
+  const cells: React.ReactNode[] = [];
+  for (let y = 0; y < rows.length; y++) {
+    const row = rows[y];
+    for (let x = 0; x < row.length; x++) {
+      if (row[x] === '#') cells.push(<rect key={`${x}-${y}`} x={x} y={y} width={1} height={1} />);
+    }
+  }
+
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox={`0 0 ${cols} ${h}`}
+      shapeRendering="crispEdges"
+      fill={color}
+      className={className}
+      role={title ? 'img' : undefined}
+      aria-label={title}
+      aria-hidden={title ? undefined : true}
+      style={{ display: 'inline-block', flexShrink: 0, verticalAlign: 'middle', ...style }}
+    >
+      {cells}
+    </svg>
+  );
+};
+
+export default PixelIcon;

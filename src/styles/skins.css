@@ -23,12 +23,7 @@
  * Paper & cardboard surfaces on a warm venue-dark backdrop, marker ink,
  * wobbly hand-drawn borders, Marker Felt for headings/labels/names.
  * ============================================================= */
-[data-skin="balanced"],
-[data-skin="diy-leaning"],
-[data-skin="corporate-leaning"],
-[data-skin="pure-diy"],
-[data-skin="full-sellout"] {
-  /* Phase 1: every tier falls back to Sharpie until its skin is authored. */
+[data-skin="balanced"] {
   --snes-void: #1e1519;      /* warm venue-dark backdrop */
   --snes-bg: #ece2cd;        /* kraft/cream paper (panels, bars) */
   --snes-bg-2: #e0d3b6;      /* darker paper (insets, fields) */
@@ -48,6 +43,7 @@
 
   --skin-hand: "Marker Felt", "Comic Sans MS", "Bradley Hand", cursive;
   --skin-card-shadow: 2px 3px 0 rgba(0,0,0,0.28);
+  --skin-logo-font: var(--skin-hand);
 }
 
 /* Marker font for all the chrome text (labels, numbers, headings). Prose that
@@ -172,3 +168,462 @@
 [data-skin="balanced"] ::-webkit-scrollbar-thumb:hover {
   background: var(--snes-ink-dim);
 }
+
+/* ============================================================= *
+ * ZINE — cut-&-paste xerox (the DIY pole)
+ * Newsprint paper, photocopy black, spray-can accents. Bebas Neue
+ * ransom headlines, Oswald body. Hard black borders, xerox grain,
+ * tape at the corners. pure-diy = grittiest; diy-leaning blends warmer
+ * toward the Sharpie cream.
+ * ============================================================= */
+[data-skin="pure-diy"] {
+  --snes-void: #171514;      /* photocopier-lid black */
+  --snes-bg: #e7e4da;        /* newsprint */
+  --snes-bg-2: #d8d3c5;      /* darker newsprint (fields) */
+  --snes-bg-3: #cbc5b4;      /* raised control */
+  --snes-edge-lt: #f3f1e8;   /* paper highlight */
+  --snes-line: #9d988a;      /* gray photocopy rule */
+  --snes-ink: #121110;       /* xerox black */
+  --snes-ink-dim: #38352f;   /* dark gray */
+  --snes-ink-mute: #6c6659;  /* faded gray */
+
+  --snes-magenta: #cf1852;   /* spray-can pink-red — primary */
+  --snes-cyan: #1b6c8b;      /* photocopy blue */
+  --snes-gold: #9a6a0d;      /* highlighter ochre */
+  --snes-green: #2c6a26;     /* stencil green */
+  --snes-purple: #67386f;    /* fans */
+  --snes-red: #bf2416;       /* spray red */
+}
+[data-skin="diy-leaning"] {
+  --snes-void: #1a1614;
+  --snes-bg: #e9e0cc;        /* newsprint drifting toward cream */
+  --snes-bg-2: #ded2b9;
+  --snes-bg-3: #d2c6ab;
+  --snes-edge-lt: #f5efdd;
+  --snes-line: #b3a888;
+  --snes-ink: #171310;
+  --snes-ink-dim: #423b30;
+  --snes-ink-mute: #857a64;
+
+  --snes-magenta: #c0273f;   /* warmer spray */
+  --snes-cyan: #235f77;
+  --snes-gold: #8f6410;
+  --snes-green: #316b28;
+  --snes-purple: #6a3f74;
+  --snes-red: #b53420;
+}
+
+/* ---- ZINE shared class treatment (both zine tiers) ---- */
+[data-skin="pure-diy"], [data-skin="diy-leaning"] {
+  --skin-zine-head: "Bebas Neue", "Oswald", "Arial Narrow", sans-serif;
+  --skin-zine-body: "Oswald", "Arial Narrow", system-ui, sans-serif;
+  --skin-logo-font: var(--skin-zine-head);
+  --skin-card-shadow: 3px 3px 0 rgba(0,0,0,0.42);
+  /* subtle xerox streak grain, layered under the paper color per surface */
+  --skin-grain: repeating-linear-gradient(0deg, rgba(0,0,0,0.045) 0 1px, transparent 1px 3px);
+}
+[data-skin="pure-diy"] .snes-title,
+[data-skin="pure-diy"] .snes-modal__title,
+[data-skin="diy-leaning"] .snes-title,
+[data-skin="diy-leaning"] .snes-modal__title {
+  font-family: var(--skin-zine-head);
+  font-weight: 400;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--snes-ink);
+  text-shadow: 2px 2px 0 var(--snes-magenta);
+  -webkit-font-smoothing: antialiased;
+}
+[data-skin="pure-diy"] .snes-pixel,
+[data-skin="diy-leaning"] .snes-pixel {
+  font-family: var(--skin-zine-body);
+  letter-spacing: 0.2px;
+  text-shadow: none;
+  -webkit-font-smoothing: antialiased;
+}
+/* Panels → cut newsprint scraps: hard black border, xerox grain, hard shadow. */
+[data-skin="pure-diy"] .snes-panel,
+[data-skin="pure-diy"] .snes-panel-inset,
+[data-skin="diy-leaning"] .snes-panel,
+[data-skin="diy-leaning"] .snes-panel-inset {
+  background-color: var(--snes-bg);
+  background-image: var(--skin-grain);
+  border: 2px solid var(--snes-ink);
+  box-shadow: var(--skin-card-shadow);
+  border-radius: 0;
+}
+[data-skin="pure-diy"] .snes-panel-inset,
+[data-skin="diy-leaning"] .snes-panel-inset {
+  background-color: var(--snes-bg-2);
+  box-shadow: inset 0 0 0 1px var(--snes-line);
+}
+/* Bars → a photocopied strip. */
+[data-skin="pure-diy"] .snes-bar,
+[data-skin="pure-diy"] .snes-bar--top,
+[data-skin="pure-diy"] .snes-bar--bottom,
+[data-skin="diy-leaning"] .snes-bar,
+[data-skin="diy-leaning"] .snes-bar--top,
+[data-skin="diy-leaning"] .snes-bar--bottom {
+  background-color: var(--snes-bg);
+  background-image: var(--skin-grain);
+  color: var(--snes-ink);
+  box-shadow: none;
+}
+[data-skin="pure-diy"] .snes-bar--top,
+[data-skin="diy-leaning"] .snes-bar--top { border-bottom: 3px solid var(--snes-ink); }
+[data-skin="pure-diy"] .snes-bar--bottom,
+[data-skin="diy-leaning"] .snes-bar--bottom { border-top: 3px solid var(--snes-ink); }
+/* Chips → cut-out ticket scraps, slightly askew (alternating tilt). */
+[data-skin="pure-diy"] .snes-chip,
+[data-skin="diy-leaning"] .snes-chip {
+  background: var(--snes-edge-lt);
+  border: 2px solid var(--snes-ink);
+  box-shadow: 1px 1px 0 rgba(0,0,0,0.35);
+  color: var(--snes-ink);
+  border-radius: 0;
+  transform: rotate(-1.5deg);
+}
+[data-skin="pure-diy"] .snes-chip:nth-child(even),
+[data-skin="diy-leaning"] .snes-chip:nth-child(even) { transform: rotate(1.5deg); }
+/* Buttons → spray-stencil stamps. */
+[data-skin="pure-diy"] .snes-btn,
+[data-skin="pure-diy"] .snes-hud-btn,
+[data-skin="pure-diy"] .snes-close,
+[data-skin="diy-leaning"] .snes-btn,
+[data-skin="diy-leaning"] .snes-hud-btn,
+[data-skin="diy-leaning"] .snes-close {
+  font-family: var(--skin-zine-head);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  background: var(--snes-bg-2);
+  color: var(--snes-ink);
+  border: 2px solid var(--snes-ink);
+  box-shadow: 3px 3px 0 rgba(0,0,0,0.4);
+  border-radius: 0;
+}
+[data-skin="pure-diy"] .snes-btn,
+[data-skin="diy-leaning"] .snes-btn { background: var(--snes-magenta); color: #f4efe6; }
+[data-skin="pure-diy"] .snes-btn--ghost,
+[data-skin="diy-leaning"] .snes-btn--ghost { background: transparent; color: var(--snes-ink); }
+[data-skin="pure-diy"] .snes-btn--cyan,
+[data-skin="diy-leaning"] .snes-btn--cyan { background: var(--snes-cyan); color: #f4efe6; }
+[data-skin="pure-diy"] .snes-btn--green,
+[data-skin="diy-leaning"] .snes-btn--green { background: var(--snes-green); color: #f4efe6; }
+[data-skin="pure-diy"] .snes-btn--gold,
+[data-skin="diy-leaning"] .snes-btn--gold { background: var(--snes-gold); color: #1a1205; }
+[data-skin="pure-diy"] .snes-btn--danger,
+[data-skin="diy-leaning"] .snes-btn--danger { background: var(--snes-red); color: #f4efe6; }
+[data-skin="pure-diy"] .snes-btn:active,
+[data-skin="pure-diy"] .snes-hud-btn:active,
+[data-skin="pure-diy"] .snes-close:active,
+[data-skin="diy-leaning"] .snes-btn:active,
+[data-skin="diy-leaning"] .snes-hud-btn:active,
+[data-skin="diy-leaning"] .snes-close:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 rgba(0,0,0,0.4); }
+/* Modal → a torn flyer taped to the wall. */
+[data-skin="pure-diy"] .snes-modal__sheet,
+[data-skin="diy-leaning"] .snes-modal__sheet {
+  position: relative;
+  background-color: var(--snes-bg);
+  background-image: var(--skin-grain);
+  border: 2px solid var(--snes-ink);
+  border-top: 4px solid var(--snes-magenta);
+  box-shadow: 4px 5px 0 rgba(0,0,0,0.45);
+  border-radius: 0;
+}
+/* strips of tape at the top corners */
+[data-skin="pure-diy"] .snes-modal__sheet::before,
+[data-skin="pure-diy"] .snes-modal__sheet::after,
+[data-skin="diy-leaning"] .snes-modal__sheet::before,
+[data-skin="diy-leaning"] .snes-modal__sheet::after {
+  content: "";
+  position: absolute;
+  top: -9px;
+  width: 74px;
+  height: 22px;
+  background: rgba(214, 196, 128, 0.55);
+  border: 1px solid rgba(0,0,0,0.15);
+  pointer-events: none;
+}
+[data-skin="pure-diy"] .snes-modal__sheet::before,
+[data-skin="diy-leaning"] .snes-modal__sheet::before { left: 22px; transform: rotate(-5deg); }
+[data-skin="pure-diy"] .snes-modal__sheet::after,
+[data-skin="diy-leaning"] .snes-modal__sheet::after { right: 22px; transform: rotate(4deg); }
+/* Progress → a spray bar; badge → a stamp; divider → a torn rule. */
+[data-skin="pure-diy"] .snes-progress,
+[data-skin="diy-leaning"] .snes-progress { background: var(--snes-bg-2); border: 2px solid var(--snes-ink); }
+[data-skin="pure-diy"] .snes-progress__fill,
+[data-skin="diy-leaning"] .snes-progress__fill { background: var(--snes-magenta); box-shadow: none; }
+[data-skin="pure-diy"] .snes-badge,
+[data-skin="diy-leaning"] .snes-badge {
+  font-family: var(--skin-zine-head); letter-spacing: 0.5px;
+  background: var(--snes-ink); color: var(--snes-edge-lt); border: 1px solid var(--snes-ink); border-radius: 0;
+}
+[data-skin="pure-diy"] .snes-tab.is-active,
+[data-skin="diy-leaning"] .snes-tab.is-active { color: var(--snes-magenta); }
+[data-skin="pure-diy"] .snes-divider,
+[data-skin="diy-leaning"] .snes-divider { background: var(--snes-ink); }
+/* Native controls + scrollbar → newsprint. */
+[data-skin="pure-diy"] select,
+[data-skin="pure-diy"] input,
+[data-skin="pure-diy"] textarea,
+[data-skin="diy-leaning"] select,
+[data-skin="diy-leaning"] input,
+[data-skin="diy-leaning"] textarea {
+  background: var(--snes-edge-lt); color: var(--snes-ink);
+  border: 2px solid var(--snes-ink); border-radius: 0;
+  font-family: var(--skin-zine-body); -webkit-appearance: none; appearance: none;
+}
+[data-skin="pure-diy"] input[type="range"],
+[data-skin="diy-leaning"] input[type="range"] { accent-color: var(--snes-magenta); height: 12px; }
+[data-skin="pure-diy"] ::-webkit-scrollbar-track,
+[data-skin="diy-leaning"] ::-webkit-scrollbar-track { background: var(--snes-bg-2); border: 2px solid var(--snes-ink); }
+[data-skin="pure-diy"] ::-webkit-scrollbar-thumb,
+[data-skin="diy-leaning"] ::-webkit-scrollbar-thumb { background: var(--snes-ink); border: 2px solid var(--snes-bg); box-shadow: none; }
+
+/* ============================================================= *
+ * CORPORATE — uniform Ticketmaster print (the sellout pole)
+ * Sterile white, corporate navy ink, ticketing-blue accents.
+ * System Helvetica, tight tracking, flat 1px borders, no wobble,
+ * barcode accents. full-sellout = starkest; corporate-leaning warmer.
+ * ============================================================= */
+[data-skin="full-sellout"] {
+  --snes-void: #c8ced6;      /* sterile cool-gray backdrop */
+  --snes-bg: #ffffff;        /* clean white panels */
+  --snes-bg-2: #f3f5f8;      /* off-white field */
+  --snes-bg-3: #e9edf2;      /* raised control */
+  --snes-edge-lt: #ffffff;
+  --snes-line: #cdd4dd;      /* cool gray rule */
+  --snes-ink: #11233f;       /* corporate navy */
+  --snes-ink-dim: #46566d;
+  --snes-ink-mute: #8a97a8;
+
+  --snes-magenta: #0b5cd6;   /* ticketing blue — primary */
+  --snes-cyan: #0a7ea4;      /* info blue */
+  --snes-gold: #b6881a;      /* premium gold */
+  --snes-green: #1a8f4c;     /* money green */
+  --snes-purple: #6b4fbf;    /* fans violet */
+  --snes-red: #d0021b;       /* fee red */
+}
+[data-skin="corporate-leaning"] {
+  --snes-void: #d4cfc2;      /* warm gray, drifting from Sharpie */
+  --snes-bg: #fbfaf6;        /* warm off-white */
+  --snes-bg-2: #f1efe7;
+  --snes-bg-3: #e7e3d8;
+  --snes-edge-lt: #ffffff;
+  --snes-line: #cfc9ba;
+  --snes-ink: #23303f;       /* softer navy */
+  --snes-ink-dim: #50596a;
+  --snes-ink-mute: #8c8b8a;
+
+  --snes-magenta: #1f5fc0;   /* softened corporate blue */
+  --snes-cyan: #2079a0;
+  --snes-gold: #a67c18;
+  --snes-green: #298a4e;
+  --snes-purple: #6a4bb0;
+  --snes-red: #c62438;
+}
+
+/* ---- CORPORATE shared class treatment (both corporate tiers) ---- */
+[data-skin="corporate-leaning"], [data-skin="full-sellout"] {
+  --skin-corp: "Helvetica Neue", "Helvetica", "Arial", system-ui, sans-serif;
+  --skin-logo-font: var(--skin-corp);
+  --skin-card-shadow: 0 1px 2px rgba(17, 35, 63, 0.12);
+  --skin-barcode: repeating-linear-gradient(90deg, var(--snes-ink) 0 2px, transparent 2px 3px, var(--snes-ink) 3px 4px, transparent 4px 6px);
+}
+[data-skin="corporate-leaning"] .snes-title,
+[data-skin="corporate-leaning"] .snes-modal__title,
+[data-skin="corporate-leaning"] .snes-pixel,
+[data-skin="full-sellout"] .snes-title,
+[data-skin="full-sellout"] .snes-modal__title,
+[data-skin="full-sellout"] .snes-pixel {
+  font-family: var(--skin-corp);
+  letter-spacing: -0.2px;
+  text-transform: none;
+  text-shadow: none;
+  -webkit-font-smoothing: antialiased;
+}
+[data-skin="corporate-leaning"] .snes-title,
+[data-skin="corporate-leaning"] .snes-modal__title,
+[data-skin="full-sellout"] .snes-title,
+[data-skin="full-sellout"] .snes-modal__title { font-weight: 700; color: var(--snes-ink); }
+/* Panels → sterile printed cards: flat 1px border, whisper of shadow, no wobble. */
+[data-skin="corporate-leaning"] .snes-panel,
+[data-skin="corporate-leaning"] .snes-panel-inset,
+[data-skin="full-sellout"] .snes-panel,
+[data-skin="full-sellout"] .snes-panel-inset {
+  background: var(--snes-bg);
+  border: 1px solid var(--snes-line);
+  box-shadow: var(--skin-card-shadow);
+  border-radius: 3px;
+}
+[data-skin="full-sellout"] .snes-panel,
+[data-skin="full-sellout"] .snes-panel-inset { border-radius: 0; }
+[data-skin="corporate-leaning"] .snes-panel-inset,
+[data-skin="full-sellout"] .snes-panel-inset { background: var(--snes-bg-2); box-shadow: none; }
+/* Bars → clean printed header with a thin accent rule. */
+[data-skin="corporate-leaning"] .snes-bar,
+[data-skin="corporate-leaning"] .snes-bar--top,
+[data-skin="corporate-leaning"] .snes-bar--bottom,
+[data-skin="full-sellout"] .snes-bar,
+[data-skin="full-sellout"] .snes-bar--top,
+[data-skin="full-sellout"] .snes-bar--bottom {
+  background: var(--snes-bg);
+  color: var(--snes-ink);
+  box-shadow: none;
+}
+[data-skin="corporate-leaning"] .snes-bar--top,
+[data-skin="full-sellout"] .snes-bar--top { border-bottom: 2px solid var(--snes-magenta); }
+[data-skin="corporate-leaning"] .snes-bar--bottom,
+[data-skin="full-sellout"] .snes-bar--bottom { border-top: 1px solid var(--snes-line); }
+/* Chips → printed ticket stubs with a tiny barcode. */
+[data-skin="corporate-leaning"] .snes-chip,
+[data-skin="full-sellout"] .snes-chip {
+  position: relative;
+  background: var(--snes-bg);
+  border: 1px solid var(--snes-line);
+  box-shadow: none;
+  color: var(--snes-ink);
+  border-radius: 2px;
+  padding-left: 12px;
+}
+[data-skin="corporate-leaning"] .snes-chip::before,
+[data-skin="full-sellout"] .snes-chip::before {
+  content: ""; position: absolute; left: 3px; top: 3px; bottom: 3px; width: 5px;
+  background: var(--skin-barcode); opacity: 0.7;
+}
+/* Buttons → flat solid corporate keys. */
+[data-skin="corporate-leaning"] .snes-btn,
+[data-skin="corporate-leaning"] .snes-hud-btn,
+[data-skin="corporate-leaning"] .snes-close,
+[data-skin="full-sellout"] .snes-btn,
+[data-skin="full-sellout"] .snes-hud-btn,
+[data-skin="full-sellout"] .snes-close {
+  font-family: var(--skin-corp);
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  background: var(--snes-bg-3);
+  color: var(--snes-ink);
+  border: 1px solid var(--snes-line);
+  box-shadow: none;
+  border-radius: 3px;
+}
+[data-skin="full-sellout"] .snes-btn,
+[data-skin="full-sellout"] .snes-hud-btn,
+[data-skin="full-sellout"] .snes-close { border-radius: 0; }
+[data-skin="corporate-leaning"] .snes-btn,
+[data-skin="full-sellout"] .snes-btn { background: var(--snes-magenta); color: #ffffff; border-color: var(--snes-magenta); }
+[data-skin="corporate-leaning"] .snes-btn--ghost,
+[data-skin="full-sellout"] .snes-btn--ghost { background: transparent; color: var(--snes-ink); }
+[data-skin="corporate-leaning"] .snes-btn--cyan,
+[data-skin="full-sellout"] .snes-btn--cyan { background: var(--snes-cyan); color: #ffffff; border-color: var(--snes-cyan); }
+[data-skin="corporate-leaning"] .snes-btn--green,
+[data-skin="full-sellout"] .snes-btn--green { background: var(--snes-green); color: #ffffff; border-color: var(--snes-green); }
+[data-skin="corporate-leaning"] .snes-btn--gold,
+[data-skin="full-sellout"] .snes-btn--gold { background: var(--snes-gold); color: #ffffff; border-color: var(--snes-gold); }
+[data-skin="corporate-leaning"] .snes-btn--danger,
+[data-skin="full-sellout"] .snes-btn--danger { background: var(--snes-red); color: #ffffff; border-color: var(--snes-red); }
+[data-skin="corporate-leaning"] .snes-btn:active,
+[data-skin="corporate-leaning"] .snes-hud-btn:active,
+[data-skin="corporate-leaning"] .snes-close:active,
+[data-skin="full-sellout"] .snes-btn:active,
+[data-skin="full-sellout"] .snes-hud-btn:active,
+[data-skin="full-sellout"] .snes-close:active { transform: translateY(1px); box-shadow: none; }
+/* Modal → a printed e-ticket: white, thin blue top rule, barcode footer strip. */
+[data-skin="corporate-leaning"] .snes-modal__sheet,
+[data-skin="full-sellout"] .snes-modal__sheet {
+  position: relative;
+  background: var(--snes-bg);
+  border: 1px solid var(--snes-line);
+  border-top: 3px solid var(--snes-magenta);
+  box-shadow: 0 8px 24px rgba(17, 35, 63, 0.22);
+  border-radius: 4px;
+}
+[data-skin="full-sellout"] .snes-modal__sheet { border-radius: 0; }
+/* Progress → flat blue; badge → flat pill; divider → hairline. */
+[data-skin="corporate-leaning"] .snes-progress,
+[data-skin="full-sellout"] .snes-progress { background: var(--snes-bg-2); border: 1px solid var(--snes-line); }
+[data-skin="corporate-leaning"] .snes-progress__fill,
+[data-skin="full-sellout"] .snes-progress__fill { background: var(--snes-magenta); box-shadow: none; }
+[data-skin="corporate-leaning"] .snes-badge,
+[data-skin="full-sellout"] .snes-badge {
+  font-family: var(--skin-corp); letter-spacing: 0;
+  background: var(--snes-magenta); color: #ffffff; border: none; border-radius: 10px;
+}
+[data-skin="corporate-leaning"] .snes-tab.is-active,
+[data-skin="full-sellout"] .snes-tab.is-active { color: var(--snes-magenta); }
+[data-skin="corporate-leaning"] .snes-divider,
+[data-skin="full-sellout"] .snes-divider { background: var(--snes-line); height: 1px; }
+/* Native controls + scrollbar → sterile. */
+[data-skin="corporate-leaning"] select,
+[data-skin="corporate-leaning"] input,
+[data-skin="corporate-leaning"] textarea,
+[data-skin="full-sellout"] select,
+[data-skin="full-sellout"] input,
+[data-skin="full-sellout"] textarea {
+  background: var(--snes-bg); color: var(--snes-ink);
+  border: 1px solid var(--snes-line); border-radius: 3px;
+  font-family: var(--skin-corp); -webkit-appearance: none; appearance: none;
+}
+[data-skin="corporate-leaning"] input[type="range"],
+[data-skin="full-sellout"] input[type="range"] { accent-color: var(--snes-magenta); height: 6px; }
+[data-skin="corporate-leaning"] ::-webkit-scrollbar-track,
+[data-skin="full-sellout"] ::-webkit-scrollbar-track { background: var(--snes-bg-2); border: none; }
+[data-skin="corporate-leaning"] ::-webkit-scrollbar-thumb,
+[data-skin="full-sellout"] ::-webkit-scrollbar-thumb { background: var(--snes-line); border: 3px solid var(--snes-bg); box-shadow: none; }
+
+/* ============================================================= *
+ * BAND LOGO — procedural, per-skin band-name treatment.
+ * Base sizing is skin-agnostic; the FONT + decoration morph per skin via
+ * --skin-logo-font and the [data-skin] overrides below. Component supplies
+ * the DOM + a seeded per-letter jitter (BandLogo.tsx).
+ * ============================================================= */
+.band-logo {
+  font-family: var(--skin-logo-font, "Inter", system-ui, sans-serif);
+  font-weight: 700;
+  color: inherit;
+  display: inline-block;
+}
+.band-logo--hero { font-size: 20px; line-height: 1.18; }
+.band-logo--card {
+  font-size: 14px; line-height: 1.25;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden; overflow-wrap: anywhere;
+}
+.band-logo--row {
+  font-size: 13.5px; line-height: 1.2; max-width: 100%;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.band-logo--inline { font-size: inherit; }
+.band-logo__ch { display: inline-block; }
+
+/* Sharpie: marker face; the seeded per-letter rotation supplies the scrawl. */
+[data-skin="balanced"] .band-logo { letter-spacing: 0.3px; }
+
+/* Zine: cut-&-paste ransom note — condensed caps, alternating cut-out swatches
+   on some letters (hero/card only), mixed weights. */
+[data-skin="pure-diy"] .band-logo,
+[data-skin="diy-leaning"] .band-logo {
+  text-transform: uppercase; letter-spacing: 1px; font-weight: 400;
+}
+[data-skin="pure-diy"] .band-logo--hero .band-logo__ch:nth-child(3n),
+[data-skin="pure-diy"] .band-logo--card .band-logo__ch:nth-child(3n),
+[data-skin="diy-leaning"] .band-logo--hero .band-logo__ch:nth-child(3n),
+[data-skin="diy-leaning"] .band-logo--card .band-logo__ch:nth-child(3n) {
+  background: var(--snes-magenta); color: var(--snes-edge-lt); padding: 0 2px;
+}
+[data-skin="pure-diy"] .band-logo--hero .band-logo__ch:nth-child(4n),
+[data-skin="pure-diy"] .band-logo--card .band-logo__ch:nth-child(4n),
+[data-skin="diy-leaning"] .band-logo--hero .band-logo__ch:nth-child(4n),
+[data-skin="diy-leaning"] .band-logo--card .band-logo__ch:nth-child(4n) {
+  background: var(--snes-ink); color: var(--snes-edge-lt); padding: 0 2px;
+}
+[data-skin="pure-diy"] .band-logo__ch:nth-child(2n),
+[data-skin="diy-leaning"] .band-logo__ch:nth-child(2n) { font-family: var(--skin-zine-body); }
+
+/* Corporate: uniform print — Helvetica caps, tight tracking, ZERO jitter. */
+[data-skin="corporate-leaning"] .band-logo,
+[data-skin="full-sellout"] .band-logo {
+  text-transform: uppercase; letter-spacing: -0.2px; font-weight: 700;
+}
+[data-skin="corporate-leaning"] .band-logo__ch,
+[data-skin="full-sellout"] .band-logo__ch { transform: none !important; }
