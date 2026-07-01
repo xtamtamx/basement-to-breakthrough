@@ -102,7 +102,7 @@ export const RunModeSelector: React.FC<RunModeSelectorProps> = ({ onSelect, onCl
           <button
             onClick={onClose}
             aria-label="Back"
-            style={{ width: 32, height: 32, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "#1f1a3a", color: "#b9b3d6", border: "2px solid #0a0814", boxShadow: "inset 1px 1px 0 #3a2f5c", cursor: "pointer", borderRadius: 0 }}
+            style={{ width: 44, height: 44, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--snes-bg-3)", color: "var(--snes-ink-dim)", border: "2px solid var(--snes-void)", boxShadow: "inset 1px 1px 0 var(--snes-edge-lt)", cursor: "pointer", borderRadius: 0 }}
           >
             <X size={18} />
           </button>

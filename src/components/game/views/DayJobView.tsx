@@ -3,6 +3,7 @@ import { useGameStore } from '@stores/gameStore';
 import { dayJobSystem, DayJob, JobCategory } from '@game/mechanics/DayJobSystem';
 import { haptics } from '@utils/mobile';
 import { Briefcase, Clock, DollarSign, Star, Users, X } from 'lucide-react';
+import { SnesModal } from '@/components/ui/SnesModal';
 
 // Prose/name font — job names read as names, not chrome (canon: Inter).
 const SANS = "'Inter', system-ui, -apple-system, sans-serif";
@@ -431,68 +432,14 @@ export const DayJobView: React.FC = () => {
 
         {/* Job Action Modal */}
         {selectedJob && (
-          <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(8, 6, 18, 0.86)',
-            zIndex: 50,
-            display: 'flex',
-            alignItems: 'flex-end',
-            justifyContent: 'center',
-            padding: '16px'
-          }}
-          onClick={() => setSelectedJob(null)}
-          >
-            <div style={{
-              backgroundColor: '#171327',
-              border: '2px solid #0a0814',
-              borderTop: '3px solid #f72585',
-              borderRadius: 0,
-              boxShadow: 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814',
-              padding: '20px',
-              paddingBottom: 'calc(20px + env(safe-area-inset-bottom))',
-              width: '100%',
-              maxWidth: '448px'
-            }}
-            onClick={e => e.stopPropagation()}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', gap: '10px', marginBottom: '10px' }}>
-                <h3 className="snes-pixel" style={{
-                  fontSize: '9px',
-                  color: '#6f6796',
-                  textTransform: 'uppercase',
-                  letterSpacing: 0,
-                  margin: 0
-                }}>Take This Job?</h3>
-                <button
-                  onClick={() => setSelectedJob(null)}
-                  aria-label="Close"
-                  style={{
-                    flexShrink: 0,
-                    width: '32px',
-                    height: '32px',
-                    backgroundColor: '#1f1a3a',
-                    border: '2px solid #0a0814',
-                    borderRadius: 0,
-                    color: '#b9b3d6',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    transition: 'none'
-                  }}
-                >
-                  <X size={16} />
-                </button>
-              </div>
-              <h4 className="snes-pixel" style={{
-                fontSize: '11px',
+          <SnesModal variant="sheet" accent="var(--snes-magenta)" onClose={() => setSelectedJob(null)} title="Take This Job?">
+              <h4 style={{
+                fontFamily: SANS,
+                fontWeight: 700,
+                fontSize: '15px',
                 color: '#ffffff',
                 margin: '0 0 6px',
-                lineHeight: 1.4
+                lineHeight: 1.3
               }}>{selectedJob.name}</h4>
               <p style={{
                 fontSize: '12px',
@@ -562,8 +509,7 @@ export const DayJobView: React.FC = () => {
                   Take Job
                 </button>
               </div>
-            </div>
-          </div>
+          </SnesModal>
         )}
       </div>
     </div>

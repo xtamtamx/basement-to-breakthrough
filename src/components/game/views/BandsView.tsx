@@ -150,7 +150,7 @@ export const BandsView: React.FC = () => {
       onClick={() => { onClick(); haptics.light(); }}
       className="snes-pixel btb-press"
       style={{
-        padding: '7px 10px', minHeight: '34px',
+        padding: '7px 10px', minHeight: '44px',
         background: active ? activeColor : 'transparent',
         color: active ? (activeColor === C.magenta ? C.ink : C.void) : C.mute,
         border: active ? `2px solid ${activeColor}` : `2px solid transparent`,
@@ -266,7 +266,7 @@ export const BandsView: React.FC = () => {
                     title={isInRoster ? 'Drop from roster' : lockedOut ? 'Roster full — drop one first' : 'Sign to roster'}
                     className="btb-press"
                     style={{
-                      flexShrink: 0, width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      flexShrink: 0, width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center',
                       background: isInRoster ? C.bg2 : lockedOut ? C.bg2 : C.green,
                       color: isInRoster ? C.red : lockedOut ? C.mute : C.void,
                       border: `2px solid ${isInRoster ? C.red : lockedOut ? C.line : C.void}`,
