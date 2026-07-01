@@ -14,18 +14,18 @@ interface TourViewProps {
 }
 
 const ALIGN_ACCENT: Record<TravelOffer["alignment"], string> = {
-  diy: "#3ad17e",
-  balanced: "#4cc9f0",
-  sellout: "#f72585",
+  diy: "var(--snes-green)",
+  balanced: "var(--snes-cyan)",
+  sellout: "var(--snes-magenta)",
 };
 
 // One effect → a coloured pixel chip ("+$60", "+14 stress", "-6 cred"…).
 const effectChips = (e: TravelEffects) => {
   const chips: { label: string; color: string }[] = [];
-  if (e.money) chips.push({ label: `${e.money > 0 ? "+" : "-"}$${Math.abs(e.money)}`, color: e.money > 0 ? "#3ad17e" : "#ff5c57" });
-  if (e.stress) chips.push({ label: `${e.stress > 0 ? "+" : ""}${e.stress} stress`, color: e.stress > 0 ? "#ffd23f" : "#3ad17e" });
-  if (e.fans) chips.push({ label: `${e.fans > 0 ? "+" : ""}${e.fans} fans`, color: e.fans > 0 ? "#c77dff" : "#ff5c57" });
-  if (e.diyPoints) chips.push({ label: `${e.diyPoints > 0 ? "+" : ""}${e.diyPoints} cred`, color: e.diyPoints > 0 ? "#3ad17e" : "#ff5c57" });
+  if (e.money) chips.push({ label: `${e.money > 0 ? "+" : "-"}$${Math.abs(e.money)}`, color: e.money > 0 ? "var(--snes-green)" : "var(--snes-red)" });
+  if (e.stress) chips.push({ label: `${e.stress > 0 ? "+" : ""}${e.stress} stress`, color: e.stress > 0 ? "var(--snes-gold)" : "var(--snes-green)" });
+  if (e.fans) chips.push({ label: `${e.fans > 0 ? "+" : ""}${e.fans} fans`, color: e.fans > 0 ? "var(--snes-purple)" : "var(--snes-red)" });
+  if (e.diyPoints) chips.push({ label: `${e.diyPoints > 0 ? "+" : ""}${e.diyPoints} cred`, color: e.diyPoints > 0 ? "var(--snes-green)" : "var(--snes-red)" });
   return chips;
 };
 
@@ -78,19 +78,19 @@ export const TourView: React.FC<TourViewProps> = ({ onNavigate }) => {
   };
 
   const chip = (label: string, color: string) => (
-    <span key={label} className="snes-pixel" style={{ fontSize: "8px", color, backgroundColor: "#0f0b1e", border: `2px solid ${color}`, padding: "3px 6px", letterSpacing: 0 }}>
+    <span key={label} className="snes-pixel" style={{ fontSize: "8px", color, backgroundColor: "var(--snes-bg-2)", border: `2px solid ${color}`, padding: "3px 6px", letterSpacing: 0 }}>
       {label}
     </span>
   );
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", backgroundColor: "#0a0814", overflow: "hidden" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", backgroundColor: "var(--snes-void)", overflow: "hidden" }}>
       {/* Header */}
       <div className="snes-bar snes-bar--top" style={{ padding: "10px 14px", paddingTop: "calc(10px + env(safe-area-inset-top))", flexShrink: 0, display: "flex", alignItems: "center", gap: "8px" }}>
-        <MapPin size={18} color="#f72585" />
+        <MapPin size={18} color="var(--snes-magenta)" />
         <div style={{ minWidth: 0 }}>
-          <h2 className="snes-pixel" style={{ fontSize: "12px", color: "#ffffff", margin: 0, letterSpacing: 0 }}>The Tour</h2>
-          <p style={{ fontSize: "11px", color: "#b9b3d6", margin: "3px 0 0" }}>
+          <h2 className="snes-pixel" style={{ fontSize: "12px", color: "var(--snes-ink)", margin: 0, letterSpacing: 0 }}>The Tour</h2>
+          <p style={{ fontSize: "11px", color: "var(--snes-ink-dim)", margin: "3px 0 0" }}>
             Take the scene on the road — book a way to the next town.
           </p>
         </div>
@@ -101,18 +101,18 @@ export const TourView: React.FC<TourViewProps> = ({ onNavigate }) => {
         {cities.map((city) => {
           const isCurrent = city.id === currentCityId;
           const unlocked = isCityUnlocked(city);
-          const accent = isCurrent ? "#ffd23f" : unlocked ? "#4cc9f0" : "#2a2350";
+          const accent = isCurrent ? "var(--snes-gold)" : unlocked ? "var(--snes-cyan)" : "var(--snes-line)";
           const sig = getCitySignature(city.id);
           return (
             <div key={city.id} className={`snes-panel${isCurrent ? " snes-panel--gold" : unlocked ? " snes-panel--cyan" : ""}`} style={{ padding: "12px", opacity: unlocked || isCurrent ? 1 : 0.7 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", gap: "10px" }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
-                    {!unlocked && <Lock size={12} color="#6f6796" />}
-                    <h3 className="snes-pixel" style={{ fontSize: "11px", color: unlocked || isCurrent ? "#ffffff" : "#6f6796", margin: 0, letterSpacing: 0 }}>{city.name}</h3>
+                    {!unlocked && <Lock size={12} color="var(--snes-ink-mute)" />}
+                    <h3 className="snes-pixel" style={{ fontSize: "11px", color: unlocked || isCurrent ? "var(--snes-ink)" : "var(--snes-ink-mute)", margin: 0, letterSpacing: 0 }}>{city.name}</h3>
                   </div>
                   <p className="snes-pixel" style={{ fontSize: "7px", color: accent, margin: "0 0 6px", letterSpacing: 0, textTransform: "uppercase" }}>{city.vibe}</p>
-                  <p style={{ fontSize: "12px", color: "#b9b3d6", margin: 0, lineHeight: 1.4, fontStyle: "italic" }}>
+                  <p style={{ fontSize: "12px", color: "var(--snes-ink-dim)", margin: 0, lineHeight: 1.4, fontStyle: "italic" }}>
                     {unlocked || isCurrent ? city.blurb : `🔒 ${unlockRequirement(city)} (you: ${reputation})`}
                   </p>
                   {(unlocked || isCurrent) && sig && (
@@ -123,11 +123,11 @@ export const TourView: React.FC<TourViewProps> = ({ onNavigate }) => {
                 </div>
                 <div style={{ flexShrink: 0 }}>
                   {isCurrent ? (
-                    <span className="snes-pixel" style={{ fontSize: "7px", color: "#ffd23f", border: "2px solid #ffd23f", padding: "5px 7px", display: "inline-block", textAlign: "center", lineHeight: 1.4 }}>YOU<br />ARE<br />HERE</span>
+                    <span className="snes-pixel" style={{ fontSize: "7px", color: "var(--snes-gold)", border: "2px solid var(--snes-gold)", padding: "5px 7px", display: "inline-block", textAlign: "center", lineHeight: 1.4 }}>YOU<br />ARE<br />HERE</span>
                   ) : unlocked ? (
                     <button className="snes-btn snes-btn--cyan snes-btn--sm" onClick={() => openTravel(city)} style={{ minHeight: "44px" }}>Travel</button>
                   ) : (
-                    <Lock size={20} color="#6f6796" />
+                    <Lock size={20} color="var(--snes-ink-mute)" />
                   )}
                 </div>
               </div>
@@ -143,16 +143,16 @@ export const TourView: React.FC<TourViewProps> = ({ onNavigate }) => {
             <div style={{ width: "36px", height: "3px", backgroundColor: "#374151", borderRadius: "2px", margin: "0 auto 12px" }} />
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: "4px" }}>
               <div>
-                <h2 className="snes-pixel" style={{ fontSize: "12px", color: "#ffffff", margin: "0 0 4px", letterSpacing: 0 }}>Get to {dest.name}</h2>
-                <p style={{ fontSize: "11px", color: "#b9b3d6", margin: 0 }}>How you travel says who you are.</p>
+                <h2 className="snes-pixel" style={{ fontSize: "12px", color: "var(--snes-ink)", margin: "0 0 4px", letterSpacing: 0 }}>Get to {dest.name}</h2>
+                <p style={{ fontSize: "11px", color: "var(--snes-ink-dim)", margin: 0 }}>How you travel says who you are.</p>
               </div>
-              <button onClick={() => setDest(null)} aria-label="Cancel" style={{ width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", background: "#1f1a3a", color: "#b9b3d6", border: "2px solid #0a0814", boxShadow: "inset 1px 1px 0 #3a2f5c", cursor: "pointer", borderRadius: 0 }}>
+              <button onClick={() => setDest(null)} aria-label="Cancel" style={{ width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--snes-bg-3)", color: "var(--snes-ink-dim)", border: "2px solid var(--snes-void)", boxShadow: "inset 1px 1px 0 var(--snes-edge-lt)", cursor: "pointer", borderRadius: 0 }}>
                 <X size={18} />
               </button>
             </div>
 
             {bookedShowCount > 0 && (
-              <div className="snes-panel-inset" style={{ border: "2px solid #ffd23f", padding: "8px 10px", marginTop: "8px", fontSize: "11px", color: "#ffd23f", lineHeight: 1.4 }}>
+              <div className="snes-panel-inset" style={{ border: "2px solid var(--snes-gold)", padding: "8px 10px", marginTop: "8px", fontSize: "11px", color: "var(--snes-gold)", lineHeight: 1.4 }}>
                 ⚠️ Hitting the road cancels your {bookedShowCount} booked show{bookedShowCount > 1 ? "s" : ""} here — deposits refunded.
               </div>
             )}
@@ -164,13 +164,13 @@ export const TourView: React.FC<TourViewProps> = ({ onNavigate }) => {
                   <div key={mode.id} className="snes-panel-inset" style={{ padding: "12px", border: `2px solid ${ac}` }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
                       <span style={{ fontSize: "20px", lineHeight: 1 }}>{mode.icon}</span>
-                      <h3 className="snes-pixel" style={{ fontSize: "10px", color: "#ffffff", margin: 0, letterSpacing: 0 }}>{mode.name}</h3>
+                      <h3 className="snes-pixel" style={{ fontSize: "10px", color: "var(--snes-ink)", margin: 0, letterSpacing: 0 }}>{mode.name}</h3>
                     </div>
-                    <p style={{ fontSize: "12px", color: "#b9b3d6", margin: "0 0 8px", lineHeight: 1.4, fontStyle: "italic" }}>{mode.tagline}</p>
+                    <p style={{ fontSize: "12px", color: "var(--snes-ink-dim)", margin: "0 0 8px", lineHeight: 1.4, fontStyle: "italic" }}>{mode.tagline}</p>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "10px" }}>
                       {effectChips(mode.effects).map((c) => chip(c.label, c.color))}
                     </div>
-                    <button className="snes-btn snes-btn--sm" style={{ width: "100%", minHeight: "40px", background: ac, color: "#0a0814" }} onClick={() => pick(mode)}>
+                    <button className="snes-btn snes-btn--sm" style={{ width: "100%", minHeight: "40px", background: ac, color: "#f7efe0" }} onClick={() => pick(mode)}>
                       <Check size={14} /> Take it
                     </button>
                   </div>

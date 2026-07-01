@@ -91,8 +91,8 @@ export const SynergyAcquireModal: React.FC<SynergyAcquireModalProps> = ({
         <div
           style={{
             padding: '16px 20px',
-            borderBottom: '2px solid #0a0814',
-            backgroundColor: '#0f0b1e',
+            borderBottom: '2px solid var(--snes-void)',
+            backgroundColor: 'var(--snes-bg-2)',
             display: 'flex',
             alignItems: 'center',
             gap: '12px',
@@ -103,7 +103,7 @@ export const SynergyAcquireModal: React.FC<SynergyAcquireModalProps> = ({
           <div style={{ minWidth: 0 }}>
             <h2
               className="snes-pixel"
-              style={{ fontSize: '12px', color: '#ffffff', margin: 0, letterSpacing: 0, lineHeight: 1.5 }}
+              style={{ fontSize: '12px', color: 'var(--snes-ink)', margin: 0, letterSpacing: 0, lineHeight: 1.5 }}
             >
               {synergy.name}
             </h2>
@@ -125,15 +125,15 @@ export const SynergyAcquireModal: React.FC<SynergyAcquireModalProps> = ({
 
         {/* Content */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
-          <p style={{ color: '#b9b3d6', fontSize: '13px', lineHeight: 1.6, margin: '0 0 16px 0' }}>
+          <p style={{ color: 'var(--snes-ink-dim)', fontSize: '13px', lineHeight: 1.6, margin: '0 0 16px 0' }}>
             {synergy.description}
           </p>
 
           {/* Effects */}
           <div
             style={{
-              backgroundColor: '#0f0b1e',
-              border: '2px solid #0a0814',
+              backgroundColor: 'var(--snes-bg-2)',
+              border: '2px solid var(--snes-void)',
               borderRadius: 0,
               boxShadow: 'inset 2px 2px 0 0 #000, inset -2px -2px 0 0 #2a2350',
               padding: '12px',
@@ -142,7 +142,7 @@ export const SynergyAcquireModal: React.FC<SynergyAcquireModalProps> = ({
           >
             <h3
               className="snes-pixel"
-              style={{ fontSize: '9px', color: '#ffffff', margin: '0 0 10px 0', letterSpacing: 0, lineHeight: 1.4 }}
+              style={{ fontSize: '9px', color: 'var(--snes-ink)', margin: '0 0 10px 0', letterSpacing: 0, lineHeight: 1.4 }}
             >
               Effects
             </h3>
@@ -150,18 +150,18 @@ export const SynergyAcquireModal: React.FC<SynergyAcquireModalProps> = ({
               {synergy.effects.map((effect, i) => (
                 <li
                   key={i}
-                  style={{ fontSize: '12px', color: '#3ad17e', display: 'flex', alignItems: 'flex-start', gap: '6px', lineHeight: 1.5 }}
+                  style={{ fontSize: '12px', color: 'var(--snes-green)', display: 'flex', alignItems: 'flex-start', gap: '6px', lineHeight: 1.5 }}
                 >
                   {/* Neutral bullet — the description carries its own sign (a "+"
                       marker turned reductions like "-15%" into "+ -15%"). */}
-                  <span style={{ color: '#3ad17e', fontWeight: 700 }}>▸</span>
+                  <span style={{ color: 'var(--snes-green)', fontWeight: 700 }}>▸</span>
                   <span>{effect.description}</span>
                 </li>
               ))}
             </ul>
             {synergy.condition && (
-              <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '2px solid #2a2350' }}>
-                <span style={{ fontSize: '11px', color: '#ffd23f', lineHeight: 1.5 }}>
+              <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '2px solid var(--snes-line)' }}>
+                <span style={{ fontSize: '11px', color: 'var(--snes-gold)', lineHeight: 1.5 }}>
                   Condition: {synergy.condition.description}
                 </span>
               </div>
@@ -169,16 +169,16 @@ export const SynergyAcquireModal: React.FC<SynergyAcquireModalProps> = ({
           </div>
 
           {/* Trigger Type */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#6f6796' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: 'var(--snes-ink-mute)' }}>
             <span>Triggers:</span>
             <span
               className="snes-pixel"
               style={{
                 fontSize: '8px',
                 letterSpacing: 0,
-                color: '#ffffff',
-                background: '#1f1a3a',
-                border: '2px solid #0a0814',
+                color: 'var(--snes-ink)',
+                background: 'var(--snes-bg-3)',
+                border: '2px solid var(--snes-void)',
                 borderRadius: 0,
                 padding: '4px 6px',
                 textTransform: 'uppercase',
@@ -193,19 +193,19 @@ export const SynergyAcquireModal: React.FC<SynergyAcquireModalProps> = ({
             <div
               style={{
                 marginTop: '16px',
-                backgroundColor: '#0f0b1e',
-                border: '2px solid #ff5c57',
+                backgroundColor: 'var(--snes-bg-2)',
+                border: '2px solid var(--snes-red)',
                 borderRadius: 0,
                 padding: '12px',
               }}
             >
               <h3
                 className="snes-pixel"
-                style={{ fontSize: '9px', color: '#ff5c57', margin: '0 0 10px 0', letterSpacing: 0, lineHeight: 1.4 }}
+                style={{ fontSize: '9px', color: 'var(--snes-red)', margin: '0 0 10px 0', letterSpacing: 0, lineHeight: 1.4 }}
               >
                 Slots full! Choose one to replace:
               </h3>
-              <p style={{ fontSize: '8px', color: '#6f6796', margin: '-4px 0 10px 0', lineHeight: 1.5 }}>
+              <p style={{ fontSize: '8px', color: 'var(--snes-ink-mute)', margin: '-4px 0 10px 0', lineHeight: 1.5 }}>
                 Tap one above to swap it out — or "Skip This One" to keep your current loadout.
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -220,8 +220,8 @@ export const SynergyAcquireModal: React.FC<SynergyAcquireModalProps> = ({
                         textAlign: 'left',
                         padding: '8px 10px',
                         minHeight: '44px',
-                        background: selected ? '#2a1218' : '#1f1a3a',
-                        border: `2px solid ${selected ? '#ff5c57' : '#0a0814'}`,
+                        background: selected ? '#2a1218' : 'var(--snes-bg-3)',
+                        border: `2px solid ${selected ? 'var(--snes-red)' : 'var(--snes-void)'}`,
                         borderRadius: 0,
                         boxShadow: selected ? 'none' : 'inset 1px 1px 0 0 #3a2f5c',
                         cursor: 'pointer',
@@ -231,17 +231,17 @@ export const SynergyAcquireModal: React.FC<SynergyAcquireModalProps> = ({
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <span style={{ fontSize: '18px', lineHeight: 1, flexShrink: 0 }}>{eq.synergy.icon}</span>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ color: '#ffffff', fontWeight: 500, fontSize: '13px' }}>
+                          <div style={{ color: 'var(--snes-ink)', fontWeight: 500, fontSize: '13px' }}>
                             {eq.synergy.name}
                           </div>
-                          <div style={{ fontSize: '11px', color: '#6f6796', lineHeight: 1.4 }}>
+                          <div style={{ fontSize: '11px', color: 'var(--snes-ink-mute)', lineHeight: 1.4 }}>
                             {eq.synergy.description}
                           </div>
                         </div>
                         {selected && (
                           <span
                             className="snes-pixel"
-                            style={{ fontSize: '7px', letterSpacing: 0, color: '#ff5c57', flexShrink: 0 }}
+                            style={{ fontSize: '7px', letterSpacing: 0, color: 'var(--snes-red)', flexShrink: 0 }}
                           >
                             REPLACE
                           </span>
@@ -259,8 +259,8 @@ export const SynergyAcquireModal: React.FC<SynergyAcquireModalProps> = ({
         <div
           style={{
             padding: '16px 20px',
-            borderTop: '2px solid #0a0814',
-            backgroundColor: '#0f0b1e',
+            borderTop: '2px solid var(--snes-void)',
+            backgroundColor: 'var(--snes-bg-2)',
             display: 'flex',
             gap: '12px',
             margin: '0 -16px -16px',

@@ -57,14 +57,14 @@ export const ProgressionView: React.FC = () => {
     display: 'flex',
     flexDirection: 'column',
     height: '100%',
-    backgroundColor: '#0a0814',
+    backgroundColor: 'var(--snes-void)',
     overflow: 'hidden'
   };
 
   const headerStyle: React.CSSProperties = {
-    backgroundColor: '#171327',
-    borderBottom: '2px solid #0a0814',
-    boxShadow: 'inset 0 2px 0 0 #3a2f5c',
+    backgroundColor: 'var(--snes-bg)',
+    borderBottom: '2px solid var(--snes-void)',
+    boxShadow: 'inset 0 2px 0 0 var(--snes-edge-lt)',
     padding: '10px 14px',
     paddingTop: 'calc(10px + env(safe-area-inset-top))',
     flexShrink: 0
@@ -91,11 +91,11 @@ export const ProgressionView: React.FC = () => {
         <div style={headerStyle}>
           <h2 className="snes-pixel" style={{
             fontSize: '12px',
-            color: '#ffffff',
+            color: 'var(--snes-ink)',
             margin: 0,
             letterSpacing: 0
           }}>Progression Paths</h2>
-          <p style={{ fontSize: '12px', color: '#b9b3d6', margin: '3px 0 0' }}>
+          <p style={{ fontSize: '12px', color: 'var(--snes-ink-dim)', margin: '3px 0 0' }}>
             Earn your stripes before the scene lets you pick a lane
           </p>
         </div>
@@ -119,13 +119,13 @@ export const ProgressionView: React.FC = () => {
             <div style={{ fontSize: '40px', marginBottom: '10px', lineHeight: 1 }}>🔒</div>
             <h2 className="snes-pixel" style={{
               fontSize: '12px',
-              color: '#ffd23f',
+              color: 'var(--snes-gold)',
               margin: '0 0 12px',
               letterSpacing: 0,
               lineHeight: 1.5
             }}>Progression Paths Locked</h2>
             <p style={{
-              color: '#b9b3d6',
+              color: 'var(--snes-ink-dim)',
               margin: '0 0 20px',
               fontSize: '13px',
               lineHeight: 1.5
@@ -142,14 +142,14 @@ export const ProgressionView: React.FC = () => {
                   }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '6px', gap: '8px' }}>
                       <h3 className="snes-pixel" style={{
-                        color: done ? '#3ad17e' : '#f72585',
+                        color: done ? 'var(--snes-green)' : 'var(--snes-magenta)',
                         margin: 0,
                         fontSize: '9px',
                         letterSpacing: 0,
                         lineHeight: 1.4
                       }}>{req.name}</h3>
                       <span className="snes-pixel" style={{
-                        color: done ? '#3ad17e' : '#ffffff',
+                        color: done ? 'var(--snes-green)' : 'var(--snes-ink)',
                         fontSize: '9px',
                         letterSpacing: 0,
                         flexShrink: 0
@@ -158,21 +158,21 @@ export const ProgressionView: React.FC = () => {
                       </span>
                     </div>
                     <p style={{
-                      color: '#b9b3d6',
+                      color: 'var(--snes-ink-dim)',
                       margin: '0 0 10px',
                       fontSize: '12px',
                       lineHeight: 1.4
                     }}>{req.description}</p>
                     <div style={{
-                      backgroundColor: '#0f0b1e',
+                      backgroundColor: 'var(--snes-bg-2)',
                       height: '10px',
-                      border: '2px solid #0a0814',
+                      border: '2px solid var(--snes-void)',
                       boxShadow: 'inset 1px 1px 0 0 #0a0814',
                       overflow: 'hidden'
                     }}>
                       <div
                         style={{
-                          backgroundColor: done ? '#3ad17e' : '#f72585',
+                          backgroundColor: done ? 'var(--snes-green)' : 'var(--snes-magenta)',
                           height: '100%',
                           width: `${pct}%`,
                           transition: 'none'
@@ -197,13 +197,13 @@ export const ProgressionView: React.FC = () => {
         <div style={{ ...headerStyle, textAlign: 'center' }}>
           <h2 className="snes-pixel" style={{
             fontSize: '12px',
-            color: '#ffffff',
+            color: 'var(--snes-ink)',
             margin: 0,
             letterSpacing: 0
           }}>Choose Your Path</h2>
           <p style={{
             fontSize: '12px',
-            color: '#b9b3d6',
+            color: 'var(--snes-ink-dim)',
             margin: '3px 0 0'
           }}>This decision will shape the future of your music scene</p>
         </div>
@@ -219,7 +219,7 @@ export const ProgressionView: React.FC = () => {
             <div
               className="snes-panel"
               style={{
-                border: '2px solid #3ad17e',
+                border: '2px solid var(--snes-green)',
                 boxShadow: 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814, 0 0 0 1px #3ad17e',
                 padding: '18px',
                 cursor: 'pointer',
@@ -230,13 +230,13 @@ export const ProgressionView: React.FC = () => {
               <div style={{ fontSize: '34px', marginBottom: '10px', lineHeight: 1 }}>✊</div>
               <h2 className="snes-pixel" style={{
                 fontSize: '13px',
-                color: '#ffffff',
+                color: 'var(--snes-ink)',
                 margin: '0 0 8px',
                 letterSpacing: 0,
                 lineHeight: 1.4
               }}>DIY Collective</h2>
               <p style={{
-                color: '#b9b3d6',
+                color: 'var(--snes-ink-dim)',
                 margin: '0 0 14px',
                 fontSize: '12px',
                 fontStyle: 'italic'
@@ -244,36 +244,36 @@ export const ProgressionView: React.FC = () => {
 
               <div style={{ marginBottom: '14px' }}>
                 <h3 className="snes-pixel" style={{
-                  color: '#3ad17e',
+                  color: 'var(--snes-green)',
                   margin: '0 0 8px',
                   fontSize: '9px',
                   letterSpacing: 0
                 }}>Path Benefits</h3>
                 <ul style={{ margin: 0, paddingLeft: '18px' }}>
-                  <li style={{ color: '#ffffff', marginBottom: '3px', fontSize: '12px' }}>Lower costs, stronger community</li>
-                  <li style={{ color: '#ffffff', marginBottom: '3px', fontSize: '12px' }}>Higher authenticity & reputation</li>
-                  <li style={{ color: '#ffffff', marginBottom: '3px', fontSize: '12px' }}>Unlock co-op venues & mutual aid</li>
-                  <li style={{ color: '#ffffff', marginBottom: '3px', fontSize: '12px' }}>All-ages shows & safer spaces</li>
+                  <li style={{ color: 'var(--snes-ink)', marginBottom: '3px', fontSize: '12px' }}>Lower costs, stronger community</li>
+                  <li style={{ color: 'var(--snes-ink)', marginBottom: '3px', fontSize: '12px' }}>Higher authenticity & reputation</li>
+                  <li style={{ color: 'var(--snes-ink)', marginBottom: '3px', fontSize: '12px' }}>Unlock co-op venues & mutual aid</li>
+                  <li style={{ color: 'var(--snes-ink)', marginBottom: '3px', fontSize: '12px' }}>All-ages shows & safer spaces</li>
                 </ul>
               </div>
 
               <div style={{ marginBottom: '12px' }}>
                 <h3 className="snes-pixel" style={{
-                  color: '#ff5c57',
+                  color: 'var(--snes-red)',
                   margin: '0 0 8px',
                   fontSize: '9px',
                   letterSpacing: 0
                 }}>Path Challenges</h3>
                 <ul style={{ margin: 0, paddingLeft: '18px' }}>
-                  <li style={{ color: '#b9b3d6', marginBottom: '3px', fontSize: '12px' }}>Lower profits & growth caps</li>
-                  <li style={{ color: '#b9b3d6', marginBottom: '3px', fontSize: '12px' }}>Limited venue options</li>
-                  <li style={{ color: '#b9b3d6', marginBottom: '3px', fontSize: '12px' }}>Consensus decision-making</li>
-                  <li style={{ color: '#b9b3d6', marginBottom: '3px', fontSize: '12px' }}>Constant struggle against gentrification</li>
+                  <li style={{ color: 'var(--snes-ink-dim)', marginBottom: '3px', fontSize: '12px' }}>Lower profits & growth caps</li>
+                  <li style={{ color: 'var(--snes-ink-dim)', marginBottom: '3px', fontSize: '12px' }}>Limited venue options</li>
+                  <li style={{ color: 'var(--snes-ink-dim)', marginBottom: '3px', fontSize: '12px' }}>Consensus decision-making</li>
+                  <li style={{ color: 'var(--snes-ink-dim)', marginBottom: '3px', fontSize: '12px' }}>Constant struggle against gentrification</li>
                 </ul>
               </div>
 
               <p style={{
-                color: '#6f6796',
+                color: 'var(--snes-ink-mute)',
                 margin: '12px 0 0',
                 fontStyle: 'italic',
                 textAlign: 'center',
@@ -284,7 +284,7 @@ export const ProgressionView: React.FC = () => {
             <div
               className="snes-panel"
               style={{
-                border: '2px solid #f72585',
+                border: '2px solid var(--snes-magenta)',
                 boxShadow: 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814, 0 0 0 1px #f72585',
                 padding: '18px',
                 cursor: 'pointer',
@@ -295,13 +295,13 @@ export const ProgressionView: React.FC = () => {
               <div style={{ fontSize: '34px', marginBottom: '10px', lineHeight: 1 }}>💰</div>
               <h2 className="snes-pixel" style={{
                 fontSize: '13px',
-                color: '#ffffff',
+                color: 'var(--snes-ink)',
                 margin: '0 0 8px',
                 letterSpacing: 0,
                 lineHeight: 1.4
               }}>Corporate Circuit</h2>
               <p style={{
-                color: '#b9b3d6',
+                color: 'var(--snes-ink-dim)',
                 margin: '0 0 14px',
                 fontSize: '12px',
                 fontStyle: 'italic'
@@ -309,36 +309,36 @@ export const ProgressionView: React.FC = () => {
 
               <div style={{ marginBottom: '14px' }}>
                 <h3 className="snes-pixel" style={{
-                  color: '#3ad17e',
+                  color: 'var(--snes-green)',
                   margin: '0 0 8px',
                   fontSize: '9px',
                   letterSpacing: 0
                 }}>Path Benefits</h3>
                 <ul style={{ margin: 0, paddingLeft: '18px' }}>
-                  <li style={{ color: '#ffffff', marginBottom: '3px', fontSize: '12px' }}>Higher profits & faster growth</li>
-                  <li style={{ color: '#ffffff', marginBottom: '3px', fontSize: '12px' }}>Professional venues & equipment</li>
-                  <li style={{ color: '#ffffff', marginBottom: '3px', fontSize: '12px' }}>Sponsorship opportunities</li>
-                  <li style={{ color: '#ffffff', marginBottom: '3px', fontSize: '12px' }}>Data-driven booking</li>
+                  <li style={{ color: 'var(--snes-ink)', marginBottom: '3px', fontSize: '12px' }}>Higher profits & faster growth</li>
+                  <li style={{ color: 'var(--snes-ink)', marginBottom: '3px', fontSize: '12px' }}>Professional venues & equipment</li>
+                  <li style={{ color: 'var(--snes-ink)', marginBottom: '3px', fontSize: '12px' }}>Sponsorship opportunities</li>
+                  <li style={{ color: 'var(--snes-ink)', marginBottom: '3px', fontSize: '12px' }}>Data-driven booking</li>
                 </ul>
               </div>
 
               <div style={{ marginBottom: '12px' }}>
                 <h3 className="snes-pixel" style={{
-                  color: '#ff5c57',
+                  color: 'var(--snes-red)',
                   margin: '0 0 8px',
                   fontSize: '9px',
                   letterSpacing: 0
                 }}>Path Challenges</h3>
                 <ul style={{ margin: 0, paddingLeft: '18px' }}>
-                  <li style={{ color: '#b9b3d6', marginBottom: '3px', fontSize: '12px' }}>Loss of scene credibility</li>
-                  <li style={{ color: '#b9b3d6', marginBottom: '3px', fontSize: '12px' }}>Unhappy bands & fans</li>
-                  <li style={{ color: '#b9b3d6', marginBottom: '3px', fontSize: '12px' }}>Soulless optimization</li>
-                  <li style={{ color: '#b9b3d6', marginBottom: '3px', fontSize: '12px' }}>Becoming what you once hated</li>
+                  <li style={{ color: 'var(--snes-ink-dim)', marginBottom: '3px', fontSize: '12px' }}>Loss of scene credibility</li>
+                  <li style={{ color: 'var(--snes-ink-dim)', marginBottom: '3px', fontSize: '12px' }}>Unhappy bands & fans</li>
+                  <li style={{ color: 'var(--snes-ink-dim)', marginBottom: '3px', fontSize: '12px' }}>Soulless optimization</li>
+                  <li style={{ color: 'var(--snes-ink-dim)', marginBottom: '3px', fontSize: '12px' }}>Becoming what you once hated</li>
                 </ul>
               </div>
 
               <p style={{
-                color: '#6f6796',
+                color: 'var(--snes-ink-mute)',
                 margin: '12px 0 0',
                 fontStyle: 'italic',
                 textAlign: 'center',
@@ -349,8 +349,8 @@ export const ProgressionView: React.FC = () => {
 
           <p className="snes-panel-inset" style={{
             textAlign: 'center',
-            color: '#ffd23f',
-            borderColor: '#ffd23f',
+            color: 'var(--snes-gold)',
+            borderColor: 'var(--snes-gold)',
             boxShadow: 'inset 2px 2px 0 0 #0a0814, inset -2px -2px 0 0 #0a0814, 0 0 0 1px #ffd23f',
             fontWeight: 600,
             margin: 0,
@@ -363,7 +363,7 @@ export const ProgressionView: React.FC = () => {
   }
 
   const isDIY = progression.currentPath === ProgressionPath.DIY_COLLECTIVE;
-  const pathAccent = isDIY ? '#3ad17e' : '#f72585';
+  const pathAccent = isDIY ? 'var(--snes-green)' : 'var(--snes-magenta)';
 
   // Show progression tree
   return (
@@ -380,7 +380,7 @@ export const ProgressionView: React.FC = () => {
         </h2>
         <p style={{
           fontSize: '12px',
-          color: '#b9b3d6',
+          color: 'var(--snes-ink-dim)',
           margin: '3px 0 0'
         }}>Tier {progression.currentTier} of 5</p>
       </div>
@@ -393,7 +393,7 @@ export const ProgressionView: React.FC = () => {
           marginBottom: '16px'
         }}>
           <h3 className="snes-pixel" style={{
-            color: '#b9b3d6',
+            color: 'var(--snes-ink-dim)',
             margin: '0 0 10px',
             fontSize: '9px',
             letterSpacing: 0
@@ -407,7 +407,7 @@ export const ProgressionView: React.FC = () => {
               <span className="snes-chip snes-pixel" style={{
                 fontSize: '9px',
                 letterSpacing: 0,
-                color: '#ffffff'
+                color: 'var(--snes-ink)'
               }}>
                 Ticket Prices: {(currentEffects.modifiers.ticketPriceMultiplier * 100).toFixed(0)}%
               </span>
@@ -416,7 +416,7 @@ export const ProgressionView: React.FC = () => {
               <span className="snes-chip snes-pixel" style={{
                 fontSize: '9px',
                 letterSpacing: 0,
-                color: '#ffffff'
+                color: 'var(--snes-ink)'
               }}>
                 Band Happiness: {currentEffects.modifiers.bandHappinessModifier > 0 ? '+' : ''}{(currentEffects.modifiers.bandHappinessModifier * 100).toFixed(0)}%
               </span>
@@ -425,7 +425,7 @@ export const ProgressionView: React.FC = () => {
               <span className="snes-chip snes-pixel" style={{
                 fontSize: '9px',
                 letterSpacing: 0,
-                color: '#ffffff'
+                color: 'var(--snes-ink)'
               }}>
                 Venue Costs: {(currentEffects.modifiers.venueRentMultiplier * 100).toFixed(0)}%
               </span>
@@ -437,7 +437,7 @@ export const ProgressionView: React.FC = () => {
         {availableChoices.length > 0 && (
           <div style={{ marginBottom: '20px' }}>
             <h2 className="snes-pixel" style={{
-              color: '#b9b3d6',
+              color: 'var(--snes-ink-dim)',
               margin: '0 0 10px 2px',
               fontSize: '9px',
               letterSpacing: 0
@@ -452,7 +452,7 @@ export const ProgressionView: React.FC = () => {
                   key={choice.id}
                   className="snes-panel"
                   style={{
-                    border: choice.permanent ? '2px solid #ffd23f' : undefined,
+                    border: choice.permanent ? '2px solid var(--snes-gold)' : undefined,
                     boxShadow: choice.permanent
                       ? 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814, 0 0 0 1px #ffd23f'
                       : undefined,
@@ -469,29 +469,29 @@ export const ProgressionView: React.FC = () => {
                       position: 'absolute',
                       top: '8px',
                       right: '8px',
-                      backgroundColor: '#ffd23f',
-                      color: '#3a2e00',
+                      backgroundColor: 'var(--snes-gold)',
+                      color: '#1e1509',
                       padding: '4px 6px',
-                      border: '2px solid #0a0814',
+                      border: '2px solid var(--snes-void)',
                       fontSize: '9px',
                       letterSpacing: 0
                     }}>PERMANENT</span>
                   )}
                   <h3 className="snes-pixel" style={{
-                    color: '#ffffff',
+                    color: 'var(--snes-ink)',
                     margin: '0 0 8px',
                     fontSize: '9px',
                     letterSpacing: 0,
                     lineHeight: 1.4
                   }}>{choice.name}</h3>
                   <p style={{
-                    color: '#b9b3d6',
+                    color: 'var(--snes-ink-dim)',
                     margin: '0 0 10px',
                     fontSize: '12px',
                     lineHeight: 1.4
                   }}>{choice.description}</p>
                   <p style={{
-                    color: '#6f6796',
+                    color: 'var(--snes-ink-mute)',
                     margin: 0,
                     fontStyle: 'italic',
                     fontSize: '11px'
@@ -506,7 +506,7 @@ export const ProgressionView: React.FC = () => {
         {progression.unlockedChoices.length > 0 && (
           <div>
             <h2 className="snes-pixel" style={{
-              color: '#b9b3d6',
+              color: 'var(--snes-ink-dim)',
               margin: '0 0 10px 2px',
               fontSize: '9px',
               letterSpacing: 0
@@ -527,18 +527,18 @@ export const ProgressionView: React.FC = () => {
                     gap: '8px'
                   }}>
                     <span style={{
-                      color: '#ffffff',
+                      color: 'var(--snes-ink)',
                       fontWeight: 600,
                       fontSize: '13px',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '6px'
                     }}>
-                      <span style={{ color: '#3ad17e' }}>✓</span>
+                      <span style={{ color: 'var(--snes-green)' }}>✓</span>
                       {choice.name}
                     </span>
                     <span className="snes-chip snes-pixel" style={{
-                      color: '#b9b3d6',
+                      color: 'var(--snes-ink-dim)',
                       fontSize: '9px',
                       letterSpacing: 0,
                       flexShrink: 0
@@ -572,7 +572,7 @@ export const ProgressionView: React.FC = () => {
           <div
             className="snes-panel"
             style={{
-              borderTop: '3px solid #f72585',
+              borderTop: '3px solid var(--snes-magenta)',
               boxShadow: 'inset 2px 0 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814',
               padding: '20px',
               paddingBottom: 'calc(20px + env(safe-area-inset-bottom))',
@@ -582,20 +582,20 @@ export const ProgressionView: React.FC = () => {
             onClick={e => e.stopPropagation()}
           >
             <h2 className="snes-pixel" style={{
-              color: '#b9b3d6',
+              color: 'var(--snes-ink-dim)',
               margin: '0 0 12px',
               fontSize: '9px',
               letterSpacing: 0
             }}>Confirm Choice</h2>
             <h3 className="snes-pixel" style={{
-              color: '#f72585',
+              color: 'var(--snes-magenta)',
               margin: '0 0 12px',
               fontSize: '11px',
               letterSpacing: 0,
               lineHeight: 1.4
             }}>{selectedChoice.name}</h3>
             <p style={{
-              color: '#b9b3d6',
+              color: 'var(--snes-ink-dim)',
               margin: '0 0 16px',
               fontSize: '13px',
               lineHeight: 1.5
@@ -603,9 +603,9 @@ export const ProgressionView: React.FC = () => {
 
             {selectedChoice.permanent && (
               <p className="snes-panel-inset" style={{
-                borderColor: '#ffd23f',
+                borderColor: 'var(--snes-gold)',
                 boxShadow: 'inset 2px 2px 0 0 #0a0814, inset -2px -2px 0 0 #0a0814, 0 0 0 1px #ffd23f',
-                color: '#ffd23f',
+                color: 'var(--snes-gold)',
                 padding: '10px',
                 fontWeight: 600,
                 fontSize: '12px',
@@ -617,9 +617,9 @@ export const ProgressionView: React.FC = () => {
 
             {selectedChoice.conflicts && selectedChoice.conflicts.length > 0 && (
               <p className="snes-panel-inset" style={{
-                borderColor: '#ffd23f',
+                borderColor: 'var(--snes-gold)',
                 boxShadow: 'inset 2px 2px 0 0 #0a0814, inset -2px -2px 0 0 #0a0814, 0 0 0 1px #ffd23f',
-                color: '#ffd23f',
+                color: 'var(--snes-gold)',
                 padding: '10px',
                 fontWeight: 600,
                 fontSize: '12px',

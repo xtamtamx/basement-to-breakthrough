@@ -33,14 +33,14 @@ const RESULT_CONFIGS: Record<
     title: 'BREAKTHROUGH!',
     subtitle: 'From a moldy basement to the big stage. The scene will pretend it always believed in you.',
     icon: '🎸',
-    accent: '#eab308',
+    accent: 'var(--snes-gold)',
     gradient: 'linear-gradient(180deg, #713f12 0%, #7c2d12 100%)',
   },
   BURNOUT_LOSS: {
     title: 'BURNOUT',
     subtitle: 'The stress was too much. Even your tinnitus needs a vacation.',
     icon: '😵',
-    accent: '#ef4444',
+    accent: 'var(--snes-red)',
     gradient: 'linear-gradient(180deg, #7f1d1d 0%, #111827 100%)',
   },
   EVICTION_LOSS: {
@@ -54,7 +54,7 @@ const RESULT_CONFIGS: Record<
     title: 'FADE OUT',
     subtitle: 'The scene moved on without you. Another name for the "whatever happened to..." thread.',
     icon: '👻',
-    accent: '#a855f7',
+    accent: 'var(--snes-purple)',
     gradient: 'linear-gradient(180deg, #581c87 0%, #111827 100%)',
   },
 };
@@ -114,7 +114,7 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          boxShadow: 'inset 2px 2px 0 0 rgba(255,255,255,0.12), inset -2px -2px 0 0 rgba(0,0,0,0.5), 0 0 0 3px #0a0814, 6px 6px 0 0 #0a0814',
+          boxShadow: 'inset 2px 2px 0 0 rgba(255,255,255,0.12), inset -2px -2px 0 0 rgba(0,0,0,0.5), 0 0 0 3px var(--snes-void), 6px 6px 0 0 var(--snes-void)',
         }}
       >
         {/* Scrollable body — keeps the action buttons pinned on short
@@ -136,15 +136,15 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
               style={{
                 fontSize: '16px',
                 margin: 0,
-                color: isWin ? '#ffd23f' : '#ffffff',
+                color: isWin ? 'var(--snes-gold)' : 'var(--snes-ink)',
                 letterSpacing: 0,
                 lineHeight: 1.35,
-                textShadow: '2px 2px 0 #0a0814',
+                textShadow: '2px 2px 0 var(--snes-void)',
               }}
             >
               {config.title}
             </h1>
-            <p style={{ color: '#b9b3d6', fontSize: '13px', margin: '6px 0 0' }}>
+            <p style={{ color: 'var(--snes-ink-dim)', fontSize: '13px', margin: '6px 0 0' }}>
               {config.subtitle}
             </p>
           </div>
@@ -152,7 +152,7 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
               bumped a letter by a new high score. The run's emotional payoff. */}
           {(() => {
             const GRADES = ['C', 'B', 'A', 'S'];
-            const GRADE_COLOR: Record<string, string> = { S: '#ffd23f', A: '#c77dff', B: '#4cc9f0', C: '#3ad17e', F: '#ff5c57' };
+            const GRADE_COLOR: Record<string, string> = { S: 'var(--snes-gold)', A: 'var(--snes-purple)', B: 'var(--snes-cyan)', C: 'var(--snes-green)', F: 'var(--snes-red)' };
             const idx = Math.min(3, (ceremony?.stakeTier ?? 0) + (ceremony?.newHighScore ? 1 : 0));
             const grade = isWin ? GRADES[idx] : 'F';
             const color = GRADE_COLOR[grade];
@@ -188,7 +188,7 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
             style={{
               fontSize: '10px',
               textTransform: 'uppercase',
-              color: '#6f6796',
+              color: 'var(--snes-ink-mute)',
               fontWeight: 700,
               marginBottom: '8px',
               letterSpacing: '0.06em',
@@ -247,20 +247,20 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
                   style={{
                     fontSize: '10px',
                     textTransform: 'uppercase',
-                    color: '#6f6796',
+                    color: 'var(--snes-ink-mute)',
                     fontWeight: 700,
                   }}
                 >
                   Final Score
                 </div>
-                <div style={{ fontSize: '24px', fontWeight: 900, color: '#ffffff' }}>
+                <div style={{ fontSize: '24px', fontWeight: 900, color: 'var(--snes-ink)' }}>
                   {ceremony.score.toLocaleString()}
                   {ceremony.newHighScore && (
                     <span
                       style={{
                         marginLeft: '8px',
                         fontSize: '12px',
-                        color: '#fde047',
+                        color: 'var(--snes-gold)',
                       }}
                     >
                       ★ NEW BEST
@@ -273,17 +273,17 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
                   style={{
                     fontSize: '10px',
                     textTransform: 'uppercase',
-                    color: '#6f6796',
+                    color: 'var(--snes-ink-mute)',
                     fontWeight: 700,
                   }}
                 >
                   Scene Points Earned
                 </div>
-                <div style={{ fontSize: '24px', fontWeight: 900, color: '#f472b6' }}>
+                <div style={{ fontSize: '24px', fontWeight: 900, color: 'var(--snes-magenta)' }}>
                   +{ceremony.fameEarned}
                 </div>
                 {ceremony.stakeFameMult > 1 && (
-                  <div style={{ fontSize: '10px', fontWeight: 800, color: '#ffd23f' }}>
+                  <div style={{ fontSize: '10px', fontWeight: 800, color: 'var(--snes-gold)' }}>
                     stake bonus ×{ceremony.stakeFameMult}
                   </div>
                 )}
@@ -295,14 +295,14 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
                 className="btb-pop"
                 style={{
                   marginTop: '10px', padding: '10px 12px',
-                  border: '2px solid #4cc9f0', background: 'rgba(76,201,240,0.12)',
+                  border: '2px solid var(--snes-cyan)', background: 'rgba(76,201,240,0.12)',
                   display: 'flex', alignItems: 'center', gap: '8px',
                 }}
               >
                 <span style={{ fontSize: '18px' }}>🏆</span>
                 <span style={{ fontSize: '12px', color: '#cdeffd', fontWeight: 700 }}>
                   Stakes cleared this mode:{' '}
-                  <span style={{ color: '#4cc9f0' }}>{ceremony.stakesCleared}/{ceremony.stakeCount}</span>
+                  <span style={{ color: 'var(--snes-cyan)' }}>{ceremony.stakesCleared}/{ceremony.stakeCount}</span>
                 </span>
               </div>
             )}
@@ -310,9 +310,9 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
             {ceremony.achievements.length > 0 && (
               <div style={{ marginTop: '8px' }}>
                 {ceremony.achievements.map((a) => (
-                  <div key={a.id} style={{ fontSize: '12px', color: '#fef08a' }}>
+                  <div key={a.id} style={{ fontSize: '12px', color: 'var(--snes-gold)' }}>
                     🏆 {a.name}
-                    <span style={{ color: '#6f6796' }}> — {a.description}</span>
+                    <span style={{ color: 'var(--snes-ink-mute)' }}> — {a.description}</span>
                   </div>
                 ))}
               </div>
@@ -320,13 +320,13 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
 
             {ceremony.completedObjectives.length > 0 && (
               <div style={{ marginTop: '8px' }}>
-                <div style={{ fontSize: '10px', textTransform: 'uppercase', color: '#6f6796', fontWeight: 700, marginBottom: '2px' }}>
+                <div style={{ fontSize: '10px', textTransform: 'uppercase', color: 'var(--snes-ink-mute)', fontWeight: 700, marginBottom: '2px' }}>
                   Challenges Cleared (+{ceremony.objectiveBonus} Scene Points)
                 </div>
                 {ceremony.completedObjectives.map((o) => (
-                  <div key={o.id} style={{ fontSize: '12px', color: '#c4b5fd', display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
+                  <div key={o.id} style={{ fontSize: '12px', color: 'var(--snes-purple)', display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
                     <span>🎯 {o.title}</span>
-                    <span style={{ color: '#f472b6', flexShrink: 0 }}>+{o.fameReward}</span>
+                    <span style={{ color: 'var(--snes-magenta)', flexShrink: 0 }}>+{o.fameReward}</span>
                   </div>
                 ))}
               </div>
@@ -338,7 +338,7 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
                 style={{
                   marginTop: '10px',
                   padding: '10px 12px',
-                  border: '2px solid #c77dff',
+                  border: '2px solid var(--snes-purple)',
                   background: 'rgba(199,125,255,0.12)',
                   display: 'flex',
                   alignItems: 'center',
@@ -347,7 +347,7 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
               >
                 <span style={{ fontSize: '18px' }}>🔥</span>
                 <span style={{ fontSize: '12px', color: '#e9d5ff', fontWeight: 700 }}>
-                  New stake unlocked: <span style={{ color: '#c77dff' }}>{ceremony.unlockedStakeName}</span> — play it for a tougher run.
+                  New stake unlocked: <span style={{ color: 'var(--snes-purple)' }}>{ceremony.unlockedStakeName}</span> — play it for a tougher run.
                 </span>
               </div>
             )}
@@ -358,7 +358,7 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
                 style={{
                   marginTop: '10px',
                   padding: '10px 12px',
-                  border: '2px solid #ffd23f',
+                  border: '2px solid var(--snes-gold)',
                   background: 'rgba(255,210,63,0.12)',
                   display: 'flex',
                   alignItems: 'center',
@@ -367,7 +367,7 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
               >
                 <span style={{ fontSize: '18px' }}>🔓</span>
                 <span style={{ fontSize: '12px', color: '#fff3c4', fontWeight: 700 }}>
-                  New mode unlocked: <span style={{ color: '#ffd23f' }}>{ceremony.unlockedModeName}</span>! Choose it from New Game.
+                  New mode unlocked: <span style={{ color: 'var(--snes-gold)' }}>{ceremony.unlockedModeName}</span>! Choose it from New Game.
                 </span>
               </div>
             )}
@@ -378,7 +378,7 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
                 style={{
                   marginTop: '10px',
                   padding: '10px 12px',
-                  border: '2px solid #3ad17e',
+                  border: '2px solid var(--snes-green)',
                   background: 'rgba(58,209,126,0.12)',
                   display: 'flex',
                   alignItems: 'center',
@@ -388,8 +388,8 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
                 <span style={{ fontSize: '18px' }}>🎸</span>
                 <span style={{ fontSize: '12px', color: '#c8f5dd', fontWeight: 700 }}>
                   {ceremony.unlockedBandNames.length === 1
-                    ? <>New band unlocked: <span style={{ color: '#3ad17e' }}>{ceremony.unlockedBandNames[0]}</span> — sign them next run!</>
-                    : <>{ceremony.unlockedBandNames.length} new bands unlocked: <span style={{ color: '#3ad17e' }}>{ceremony.unlockedBandNames.join(', ')}</span>!</>}
+                    ? <>New band unlocked: <span style={{ color: 'var(--snes-green)' }}>{ceremony.unlockedBandNames[0]}</span> — sign them next run!</>
+                    : <>{ceremony.unlockedBandNames.length} new bands unlocked: <span style={{ color: 'var(--snes-green)' }}>{ceremony.unlockedBandNames.join(', ')}</span>!</>}
                 </span>
               </div>
             )}
@@ -402,7 +402,7 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
                 display: 'flex',
                 justifyContent: 'space-between',
                 fontSize: '11px',
-                color: '#6f6796',
+                color: 'var(--snes-ink-mute)',
                 flexWrap: 'wrap',
                 gap: '4px',
               }}
@@ -413,7 +413,7 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
               </span>
               {(ceremony.nextRunBonuses.startingMoney > 0 ||
                 ceremony.nextRunBonuses.startingReputation > 0) && (
-                <span style={{ color: '#4ade80' }}>
+                <span style={{ color: 'var(--snes-green)' }}>
                   Next run: +${ceremony.nextRunBonuses.startingMoney} · +
                   {ceremony.nextRunBonuses.startingReputation} rep
                 </span>
@@ -430,11 +430,11 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
               padding: '8px 20px',
               textAlign: 'center',
               fontSize: '12px',
-              color: '#6f6796',
+              color: 'var(--snes-ink-mute)',
             }}
           >
-            Win by hitting this mode's <span style={{ color: '#fde047' }}>reputation and fan targets</span>{' '}
-            before turn <span style={{ color: '#fde047' }}>{result.maxTurns}</span>
+            Win by hitting this mode's <span style={{ color: 'var(--snes-gold)' }}>reputation and fan targets</span>{' '}
+            before turn <span style={{ color: 'var(--snes-gold)' }}>{result.maxTurns}</span>
           </div>
         )}
         </div>
@@ -459,9 +459,9 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
               style={{
                 width: '100%',
                 padding: '14px',
-                backgroundColor: '#c77dff',
-                color: '#2a0a3a',
-                border: '2px solid #0a0814',
+                backgroundColor: 'var(--snes-purple)',
+                color: '#f7efe0',
+                border: '2px solid var(--snes-void)',
                 borderRadius: 0,
                 boxShadow: 'inset 2px 2px 0 0 rgba(255,255,255,0.4), inset -2px -2px 0 0 rgba(0,0,0,0.4)',
                 fontSize: '11px',
@@ -480,11 +480,11 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
             style={{
               flex: 1,
               padding: '12px',
-              backgroundColor: '#171327',
-              color: '#ffffff',
-              border: '2px solid #0a0814',
+              backgroundColor: 'var(--snes-bg)',
+              color: 'var(--snes-ink)',
+              border: '2px solid var(--snes-void)',
               borderRadius: 0,
-              boxShadow: 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814',
+              boxShadow: 'inset 2px 2px 0 0 var(--snes-edge-lt), inset -2px -2px 0 0 var(--snes-void)',
               fontSize: '10px',
               letterSpacing: 0,
               cursor: 'pointer',
@@ -499,9 +499,9 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
             style={{
               flex: 1,
               padding: '12px',
-              backgroundColor: isWin ? '#ffd23f' : '#3ad17e',
-              color: isWin ? '#3a2e00' : '#062418',
-              border: '2px solid #0a0814',
+              backgroundColor: isWin ? 'var(--snes-gold)' : 'var(--snes-green)',
+              color: isWin ? '#1e1509' : '#f7efe0',
+              border: '2px solid var(--snes-void)',
               borderRadius: 0,
               boxShadow: 'inset 2px 2px 0 0 rgba(255,255,255,0.4), inset -2px -2px 0 0 rgba(0,0,0,0.4)',
               fontSize: '10px',
@@ -538,14 +538,14 @@ const StatBox: React.FC<StatBoxProps> = ({
   highlight,
   negative,
 }) => {
-  const color = negative ? '#f87171' : highlight ? '#fde047' : '#ffffff';
+  const color = negative ? 'var(--snes-red)' : highlight ? 'var(--snes-gold)' : 'var(--snes-ink)';
 
   return (
     <div
       style={{
-        backgroundColor: '#0f0b1e',
-        border: '2px solid #0a0814',
-        boxShadow: 'inset 1px 1px 0 0 #2a2350',
+        backgroundColor: 'var(--snes-bg-2)',
+        border: '2px solid var(--snes-void)',
+        boxShadow: 'inset 1px 1px 0 0 var(--snes-line)',
         borderRadius: 0,
         padding: '8px 10px',
       }}
@@ -553,7 +553,7 @@ const StatBox: React.FC<StatBoxProps> = ({
       <div
         style={{
           fontSize: '9px',
-          color: '#6f6796',
+          color: 'var(--snes-ink-mute)',
           textTransform: 'uppercase',
           marginBottom: '2px',
           letterSpacing: '0.05em',

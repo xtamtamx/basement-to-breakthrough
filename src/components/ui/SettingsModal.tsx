@@ -82,7 +82,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     fontFamily: '"Press Start 2P", monospace',
     fontSize: '11px',
     letterSpacing: 0,
-    color: '#f72585',
+    color: 'var(--snes-magenta)',
     marginTop: 0,
     marginBottom: '16px',
     display: 'flex',
@@ -92,9 +92,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   };
 
   const insetCard: React.CSSProperties = {
-    backgroundColor: '#0f0b1e',
-    border: '2px solid #0a0814',
-    boxShadow: 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814',
+    backgroundColor: 'var(--snes-bg-2)',
+    border: '2px solid var(--snes-void)',
+    boxShadow: 'inset 2px 2px 0 0 var(--snes-edge-lt), inset -2px -2px 0 0 var(--snes-void)',
     borderRadius: 0,
     padding: '16px',
   };
@@ -105,7 +105,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
           {/* Audio Settings */}
           <section style={{ marginBottom: '32px' }}>
             <h3 style={sectionHeader}>
-              {enabled ? <Volume2 size={18} color="#f72585" /> : <VolumeX size={18} color="#f72585" />}
+              {enabled ? <Volume2 size={18} color="var(--snes-magenta)" /> : <VolumeX size={18} color="var(--snes-magenta)" />}
               Audio
             </h3>
 
@@ -121,7 +121,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                   fontFamily: '"Press Start 2P", monospace',
                   fontSize: '9px',
                   letterSpacing: 0,
-                  color: '#ffffff'
+                  color: 'var(--snes-ink)'
                 }}>Sound Effects</span>
                 <button
                   onClick={toggleSound}
@@ -131,10 +131,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                     minWidth: '44px',
                     minHeight: '44px',
                     borderRadius: 0,
-                    backgroundColor: enabled ? '#f72585' : '#0a0814',
+                    backgroundColor: enabled ? 'var(--snes-magenta)' : 'var(--snes-void)',
                     position: 'relative',
-                    border: '2px solid #0a0814',
-                    boxShadow: 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814',
+                    border: '2px solid var(--snes-void)',
+                    boxShadow: 'inset 2px 2px 0 0 var(--snes-edge-lt), inset -2px -2px 0 0 var(--snes-void)',
                     cursor: 'pointer',
                     transition: 'none'
                   }}
@@ -146,9 +146,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                     left: enabled ? '28px' : '4px',
                     width: '16px',
                     height: '16px',
-                    backgroundColor: '#ffffff',
+                    backgroundColor: '#f7efe0',
                     borderRadius: 0,
-                    border: '2px solid #0a0814',
+                    border: '2px solid var(--snes-void)',
                     transition: 'none'
                   }} />
                 </button>
@@ -165,7 +165,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                   fontFamily: '"Press Start 2P", monospace',
                   fontSize: '9px',
                   letterSpacing: 0,
-                  color: '#ffffff'
+                  color: 'var(--snes-ink)'
                 }}>Visual FX</span>
                 <button
                   onClick={() => { cycleFx(); haptics.light(); }}
@@ -176,11 +176,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                     fontFamily: '"Press Start 2P", monospace',
                     fontSize: '9px',
                     textTransform: 'uppercase',
-                    color: fxQuality === 'ultra' ? '#f72585' : fxQuality === 'high' ? '#3ad17e' : fxQuality === 'low' ? '#ffd23f' : '#6f6796',
-                    backgroundColor: '#0a0814',
-                    border: '2px solid #0a0814',
+                    color: fxQuality === 'ultra' ? 'var(--snes-magenta)' : fxQuality === 'high' ? 'var(--snes-green)' : fxQuality === 'low' ? 'var(--snes-gold)' : 'var(--snes-ink-mute)',
+                    backgroundColor: 'var(--snes-void)',
+                    border: '2px solid var(--snes-void)',
                     borderRadius: 0,
-                    boxShadow: 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814',
+                    boxShadow: 'inset 2px 2px 0 0 var(--snes-edge-lt), inset -2px -2px 0 0 var(--snes-void)',
                     cursor: 'pointer',
                     transition: 'none'
                   }}
@@ -200,13 +200,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                     fontFamily: '"Press Start 2P", monospace',
                     fontSize: '9px',
                     letterSpacing: 0,
-                    color: '#b9b3d6'
+                    color: 'var(--snes-ink-dim)'
                   }}>Volume</span>
                   <span style={{
                     fontFamily: '"Press Start 2P", monospace',
                     fontSize: '9px',
                     letterSpacing: 0,
-                    color: '#ffffff'
+                    color: 'var(--snes-ink)'
                   }}>{Math.round(volume * 100)}%</span>
                 </div>
                 <input
@@ -222,7 +222,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                     height: '8px',
                     borderRadius: 0,
                     background: `linear-gradient(to right, #f72585 0%, #f72585 ${volume * 100}%, #0a0814 ${volume * 100}%, #0a0814 100%)`,
-                    border: '2px solid #0a0814',
+                    border: '2px solid var(--snes-void)',
                     outline: 'none',
                     opacity: enabled ? 1 : 0.5,
                     cursor: enabled ? 'pointer' : 'default'
@@ -242,7 +242,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 fontFamily: '"Press Start 2P", monospace',
                 fontSize: '9px',
                 letterSpacing: 0,
-                color: '#b9b3d6',
+                color: 'var(--snes-ink-dim)',
                 marginBottom: '12px'
               }}>Colorblind Mode</label>
               <select
@@ -255,11 +255,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                   width: '100%',
                   minHeight: '44px',
                   padding: '12px',
-                  backgroundColor: '#0a0814',
-                  border: '2px solid #0a0814',
-                  boxShadow: 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814',
+                  backgroundColor: 'var(--snes-void)',
+                  border: '2px solid var(--snes-void)',
+                  boxShadow: 'inset 2px 2px 0 0 var(--snes-edge-lt), inset -2px -2px 0 0 var(--snes-void)',
                   borderRadius: 0,
-                  color: '#ffffff',
+                  color: 'var(--snes-ink)',
                   fontSize: '13px',
                   cursor: 'pointer'
                 }}
@@ -286,10 +286,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 width: '100%',
                 minHeight: '44px',
                 padding: '12px',
-                backgroundColor: '#1f1a3a',
-                color: '#ffffff',
-                border: '2px solid #0a0814',
-                boxShadow: 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814',
+                backgroundColor: 'var(--snes-bg-3)',
+                color: 'var(--snes-ink)',
+                border: '2px solid var(--snes-void)',
+                boxShadow: 'inset 2px 2px 0 0 var(--snes-edge-lt), inset -2px -2px 0 0 var(--snes-void)',
                 borderRadius: 0,
                 fontFamily: '"Press Start 2P", monospace',
                 fontSize: '9px',
@@ -302,7 +302,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 transition: 'none'
               }}
             >
-              <RefreshCw size={16} color="#ffffff" />
+              <RefreshCw size={16} color="var(--snes-ink)" />
               Restart Tutorial
             </button>
           </section>
@@ -310,13 +310,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
           {/* Game Info */}
           <section style={{ marginBottom: '32px' }}>
             <h3 style={sectionHeader}>
-              <Info size={18} color="#f72585" />
+              <Info size={18} color="var(--snes-magenta)" />
               About
             </h3>
             <div style={{
               ...insetCard,
               fontSize: '13px',
-              color: '#b9b3d6',
+              color: 'var(--snes-ink-dim)',
               lineHeight: '1.6'
             }}>
               <p style={{ margin: '0 0 4px 0' }}>Settling Up v0.1.0</p>
@@ -325,7 +325,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 href="/privacy.html"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ color: '#3ad17e', fontSize: '12px', textDecoration: 'underline' }}
+                style={{ color: 'var(--snes-green)', fontSize: '12px', textDecoration: 'underline' }}
               >
                 Privacy Policy
               </a>
@@ -335,13 +335,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
           {/* Controls Guide */}
           <section style={{ marginBottom: '32px' }}>
             <h3 style={sectionHeader}>
-              <Gamepad2 size={18} color="#f72585" />
+              <Gamepad2 size={18} color="var(--snes-magenta)" />
               Controls
             </h3>
             <div style={{
               ...insetCard,
               fontSize: '13px',
-              color: '#b9b3d6',
+              color: 'var(--snes-ink-dim)',
               lineHeight: '1.8'
             }}>
               <p style={{ margin: '0 0 8px 0' }}>• Tap bands and venues to select them</p>
@@ -352,11 +352,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
           {/* Danger Zone */}
           <section style={{
-            borderTop: '2px solid #2a2350',
+            borderTop: '2px solid var(--snes-line)',
             paddingTop: '24px'
           }}>
-            <h3 style={{ ...sectionHeader, color: '#ff5c57' }}>
-              <AlertTriangle size={18} color="#ff5c57" />
+            <h3 style={{ ...sectionHeader, color: 'var(--snes-red)' }}>
+              <AlertTriangle size={18} color="var(--snes-red)" />
               Danger Zone
             </h3>
             <button
@@ -365,10 +365,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 width: '100%',
                 minHeight: '44px',
                 padding: '12px',
-                backgroundColor: '#ff5c57',
-                color: '#3a0a08',
-                border: '2px solid #0a0814',
-                boxShadow: 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814',
+                backgroundColor: 'var(--snes-red)',
+                color: '#f7efe0',
+                border: '2px solid var(--snes-void)',
+                boxShadow: 'inset 2px 2px 0 0 var(--snes-edge-lt), inset -2px -2px 0 0 var(--snes-void)',
                 borderRadius: 0,
                 fontFamily: '"Press Start 2P", monospace',
                 fontSize: '9px',
@@ -386,10 +386,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 minHeight: '44px',
                 marginTop: '12px',
                 padding: '12px',
-                backgroundColor: '#0a0814',
-                color: '#ff5c57',
-                border: '2px solid #ff5c57',
-                boxShadow: 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814',
+                backgroundColor: 'var(--snes-void)',
+                color: 'var(--snes-red)',
+                border: '2px solid var(--snes-red)',
+                boxShadow: 'inset 2px 2px 0 0 var(--snes-edge-lt), inset -2px -2px 0 0 var(--snes-void)',
                 borderRadius: 0,
                 fontFamily: '"Press Start 2P", monospace',
                 fontSize: '9px',
@@ -402,10 +402,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 transition: 'none',
               }}
             >
-              <RefreshCw size={16} color="#ff5c57" />
+              <RefreshCw size={16} color="var(--snes-red)" />
               Reset All Progress
             </button>
-            <p style={{ fontFamily: '"Press Start 2P", monospace', fontSize: '8px', lineHeight: 1.6, color: '#6f6796', margin: '10px 2px 0' }}>
+            <p style={{ fontFamily: '"Press Start 2P", monospace', fontSize: '8px', lineHeight: 1.6, color: 'var(--snes-ink-mute)', margin: '10px 2px 0' }}>
               Starts fresh: re-locks the roster so you can play the full unlock progression from the top. For playtesting.
             </p>
           </section>

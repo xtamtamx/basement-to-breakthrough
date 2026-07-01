@@ -40,9 +40,9 @@ export const SynergyView: React.FC = () => {
   // SNES neon-punk tier palette (legendary=purple, rare=cyan, common=lavender).
   const getTierHex = (tier: string): string => {
     switch (tier) {
-      case 'legendary': return '#c77dff';
-      case 'rare': return '#4cc9f0';
-      default: return '#b9b3d6';
+      case 'legendary': return 'var(--snes-purple)';
+      case 'rare': return 'var(--snes-cyan)';
+      default: return 'var(--snes-ink-dim)';
     }
   };
   const getTierFill = (tier: string): string => {
@@ -73,28 +73,28 @@ export const SynergyView: React.FC = () => {
       display: 'flex',
       flexDirection: 'column',
       height: '100%',
-      backgroundColor: '#0a0814',
+      backgroundColor: 'var(--snes-void)',
       overflow: 'hidden'
     }}>
       {/* Header */}
       <div className="snes-bar snes-bar--top" style={{ padding: '10px 12px', flexShrink: 0 }}>
-        <h2 className="snes-pixel" style={{ fontSize: '12px', color: '#f72585', margin: 0 }}>
+        <h2 className="snes-pixel" style={{ fontSize: '12px', color: 'var(--snes-magenta)', margin: 0 }}>
           Synergy Discovery
         </h2>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
           <span className="snes-chip snes-pixel" style={{ fontSize: '9px' }}>
-            <Lock size={11} color="#6f6796" />
-            <span style={{ color: '#b9b3d6' }}>{undiscoveredCount} Hidden</span>
+            <Lock size={11} color="var(--snes-ink-mute)" />
+            <span style={{ color: 'var(--snes-ink-dim)' }}>{undiscoveredCount} Hidden</span>
           </span>
           <span className="snes-chip snes-pixel" style={{ fontSize: '9px' }}>
-            <Zap size={11} color="#f72585" />
-            <span style={{ color: '#f72585' }}>{discoveredSynergies.length} Found</span>
+            <Zap size={11} color="var(--snes-magenta)" />
+            <span style={{ color: 'var(--snes-magenta)' }}>{discoveredSynergies.length} Found</span>
           </span>
         </div>
       </div>
 
       {/* Filter Tabs */}
-      <div style={{ padding: '10px 12px', backgroundColor: '#171327', borderBottom: '2px solid #2a2350' }}>
+      <div style={{ padding: '10px 12px', backgroundColor: 'var(--snes-bg)', borderBottom: '2px solid var(--snes-line)' }}>
         <div style={{ display: 'flex', gap: '6px' }}>
           {([
             ['all', 'All'],
@@ -108,9 +108,9 @@ export const SynergyView: React.FC = () => {
                 className="snes-pixel"
                 style={{
                   padding: '10px 12px',
-                  backgroundColor: active ? '#f72585' : '#0f0b1e',
-                  color: active ? '#1a0a14' : '#6f6796',
-                  border: '2px solid #0a0814',
+                  backgroundColor: active ? 'var(--snes-magenta)' : 'var(--snes-bg-2)',
+                  color: active ? '#f7efe0' : 'var(--snes-ink-mute)',
+                  border: '2px solid var(--snes-void)',
                   borderRadius: 0,
                   fontSize: '9px',
                   textTransform: 'uppercase',
@@ -118,7 +118,7 @@ export const SynergyView: React.FC = () => {
                   minHeight: '44px',
                   boxShadow: active
                     ? 'inset 2px 2px 0 0 rgba(255,255,255,0.45), inset -2px -2px 0 0 rgba(0,0,0,0.45)'
-                    : 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814',
+                    : 'inset 2px 2px 0 0 var(--snes-edge-lt), inset -2px -2px 0 0 var(--snes-void)',
                   transition: 'none'
                 }}
               >
@@ -134,10 +134,10 @@ export const SynergyView: React.FC = () => {
         {filteredSynergies.length === 0 ? (
           <div className="snes-panel-inset" style={{ textAlign: 'center', padding: '40px 20px', margin: '8px 0' }}>
             <div style={{ fontSize: '48px', marginBottom: '16px' }}>⚡</div>
-            <h3 className="snes-pixel" style={{ fontSize: '12px', color: '#ffffff', marginBottom: '12px' }}>
+            <h3 className="snes-pixel" style={{ fontSize: '12px', color: 'var(--snes-ink)', marginBottom: '12px' }}>
               No Synergies Found
             </h3>
-            <p style={{ fontSize: '13px', color: '#b9b3d6', lineHeight: 1.5 }}>
+            <p style={{ fontSize: '13px', color: 'var(--snes-ink-dim)', lineHeight: 1.5 }}>
               Book shows with different band + venue combinations to discover synergies!
             </p>
           </div>
@@ -177,7 +177,7 @@ export const SynergyView: React.FC = () => {
                             borderRadius: 0,
                             padding: '12px',
                             opacity: isDiscovered ? 1 : 0.6,
-                            boxShadow: 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814',
+                            boxShadow: 'inset 2px 2px 0 0 var(--snes-edge-lt), inset -2px -2px 0 0 var(--snes-void)',
                             cursor: isDiscovered ? 'pointer' : 'default',
                             transition: 'none'
                           }}
@@ -186,13 +186,13 @@ export const SynergyView: React.FC = () => {
                             <div style={{ fontSize: '20px', flexShrink: 0 }}>
                               {isDiscovered
                                 ? React.cloneElement(getTierIcon(synergy.tier), { size: 20, color: getTierHex(synergy.tier) })
-                                : <Lock size={20} color="#6f6796" />}
+                                : <Lock size={20} color="var(--snes-ink-mute)" />}
                             </div>
 
                             <div style={{ flex: 1 }}>
                               <h4 className="snes-pixel" style={{
                                 fontSize: '10px',
-                                color: '#ffffff',
+                                color: 'var(--snes-ink)',
                                 marginBottom: '8px',
                                 lineHeight: 1.4
                               }}>
@@ -201,24 +201,24 @@ export const SynergyView: React.FC = () => {
 
                               {isDiscovered ? (
                                 <>
-                                  <p style={{ fontSize: '12px', color: '#b9b3d6', margin: 0, lineHeight: 1.5 }}>
+                                  <p style={{ fontSize: '12px', color: 'var(--snes-ink-dim)', margin: 0, lineHeight: 1.5 }}>
                                     {synergy.description}
                                   </p>
                                   {expanded === synergy.id && (
                                     <div style={{ marginTop: '8px', fontSize: '11px', lineHeight: 1.6 }}>
-                                      <div style={{ color: '#3ad17e' }}>
+                                      <div style={{ color: 'var(--snes-green)' }}>
                                         +{Math.round((synergy.multiplier - 1) * 100)}% crowd
-                                        {synergy.reputationBonus > 0 && <span style={{ color: '#ffd23f' }}> · +{synergy.reputationBonus} ★ rep</span>}
+                                        {synergy.reputationBonus > 0 && <span style={{ color: 'var(--snes-gold)' }}> · +{synergy.reputationBonus} ★ rep</span>}
                                       </div>
-                                      <div style={{ color: '#b9b3d6', marginTop: '4px' }}><span style={{ color: '#6f6796' }}>How: </span>{synergy.recipe}</div>
+                                      <div style={{ color: 'var(--snes-ink-dim)', marginTop: '4px' }}><span style={{ color: 'var(--snes-ink-mute)' }}>How: </span>{synergy.recipe}</div>
                                     </div>
                                   )}
-                                  <div style={{ fontSize: '9px', color: '#6f6796', marginTop: '6px' }}>
+                                  <div style={{ fontSize: '9px', color: 'var(--snes-ink-mute)', marginTop: '6px' }}>
                                     {expanded === synergy.id ? '▲ hide' : '▼ how it fires'}
                                   </div>
                                 </>
                               ) : (
-                                <p style={{ fontSize: '12px', color: '#6f6796', fontStyle: 'italic', margin: 0 }}>
+                                <p style={{ fontSize: '12px', color: 'var(--snes-ink-mute)', fontStyle: 'italic', margin: 0 }}>
                                   Find the right band + venue pairing to discover this synergy…
                                 </p>
                               )}
@@ -238,15 +238,15 @@ export const SynergyView: React.FC = () => {
         <div className="snes-panel snes-panel--magenta" style={{ marginTop: '24px', padding: '12px' }}>
           <h3 className="snes-pixel" style={{
             fontSize: '10px',
-            color: '#ffffff',
+            color: 'var(--snes-ink)',
             marginBottom: '12px',
             textTransform: 'uppercase'
           }}>Discovery Progress</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                <span className="snes-pixel" style={{ fontSize: '9px', color: '#b9b3d6' }}>Overall</span>
-                <span className="snes-pixel" style={{ fontSize: '9px', color: '#ffffff' }}>
+                <span className="snes-pixel" style={{ fontSize: '9px', color: 'var(--snes-ink-dim)' }}>Overall</span>
+                <span className="snes-pixel" style={{ fontSize: '9px', color: 'var(--snes-ink)' }}>
                   {discoveredSynergies.length}/{allSynergies.length}
                 </span>
               </div>
@@ -269,7 +269,7 @@ export const SynergyView: React.FC = () => {
                     <span className="snes-pixel" style={{ fontSize: '9px', color: getTierHex(tier) }}>
                       {tier.charAt(0).toUpperCase() + tier.slice(1)}
                     </span>
-                    <span className="snes-pixel" style={{ fontSize: '9px', color: '#ffffff' }}>
+                    <span className="snes-pixel" style={{ fontSize: '9px', color: 'var(--snes-ink)' }}>
                       {discoveredInTier}/{tierSynergies.length}
                     </span>
                   </div>

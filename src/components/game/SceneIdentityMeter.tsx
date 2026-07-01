@@ -43,8 +43,8 @@ export const SceneIdentityMeter: React.FC<{ open: boolean; onToggle: () => void;
           : { position: 'absolute', top: '12px', left: '12px', width: open ? '212px' : '168px', zIndex: 5 }),
         padding: '8px 9px',
         background: 'rgba(23, 19, 39, 0.92)',
-        border: '2px solid #0a0814',
-        boxShadow: 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814',
+        border: '2px solid var(--snes-void)',
+        boxShadow: 'inset 2px 2px 0 0 var(--snes-edge-lt), inset -2px -2px 0 0 var(--snes-void)',
         borderRadius: 0,
         textAlign: 'left',
         cursor: 'pointer',
@@ -60,12 +60,12 @@ export const SceneIdentityMeter: React.FC<{ open: boolean; onToggle: () => void;
           justifyContent: 'space-between',
           fontSize: '7px',
           letterSpacing: 0,
-          color: '#6f6796',
+          color: 'var(--snes-ink-mute)',
           marginBottom: '6px',
         }}
       >
         <span>SCENE IDENTITY</span>
-        <span style={{ color: '#6f6796' }}>{open ? '▲' : '▼'}</span>
+        <span style={{ color: 'var(--snes-ink-mute)' }}>{open ? '▲' : '▼'}</span>
       </div>
 
       {/* Spectrum bar: sellout (left) → DIY (right) with a position marker */}
@@ -75,7 +75,7 @@ export const SceneIdentityMeter: React.FC<{ open: boolean; onToggle: () => void;
           height: '8px',
           borderRadius: 0,
           background: 'linear-gradient(90deg, #ff5c57 0%, #ffd23f 50%, #3ad17e 100%)',
-          boxShadow: 'inset 0 0 0 1px #0a0814',
+          boxShadow: 'inset 0 0 0 1px var(--snes-void)',
         }}
       >
         <div
@@ -87,8 +87,8 @@ export const SceneIdentityMeter: React.FC<{ open: boolean; onToggle: () => void;
             left: `${pct * 100}%`,
             width: '3px',
             marginLeft: '-1.5px',
-            background: '#ffffff',
-            boxShadow: '0 0 0 1px #0a0814',
+            background: '#f7efe0',
+            boxShadow: '0 0 0 1px var(--snes-void)',
           }}
         />
       </div>
@@ -100,7 +100,7 @@ export const SceneIdentityMeter: React.FC<{ open: boolean; onToggle: () => void;
           display: 'flex',
           justifyContent: 'space-between',
           fontSize: '6px',
-          color: '#6f6796',
+          color: 'var(--snes-ink-mute)',
           marginTop: '3px',
         }}
       >
@@ -130,7 +130,7 @@ export const SceneIdentityMeter: React.FC<{ open: boolean; onToggle: () => void;
             style={{
               fontSize: '10px',
               lineHeight: 1.4,
-              color: '#b9b3d6',
+              color: 'var(--snes-ink-dim)',
               margin: '6px 0 8px',
               fontStyle: 'italic',
             }}
@@ -151,7 +151,7 @@ export const SceneIdentityMeter: React.FC<{ open: boolean; onToggle: () => void;
                     alignItems: 'center',
                     gap: '5px',
                     fontSize: '7px',
-                    color: current ? t.color : '#6f6796',
+                    color: current ? t.color : 'var(--snes-ink-mute)',
                     opacity: current ? 1 : 0.7,
                   }}
                 >
@@ -162,11 +162,11 @@ export const SceneIdentityMeter: React.FC<{ open: boolean; onToggle: () => void;
                       flexShrink: 0,
                       background: t.color,
                       opacity: current ? 1 : 0.45,
-                      boxShadow: 'inset 0 0 0 1px #0a0814',
+                      boxShadow: 'inset 0 0 0 1px var(--snes-void)',
                     }}
                   />
                   <span>{t.label}</span>
-                  {current && <span style={{ color: '#6f6796' }}>◄ you</span>}
+                  {current && <span style={{ color: 'var(--snes-ink-mute)' }}>◄ you</span>}
                 </div>
               );
             })}

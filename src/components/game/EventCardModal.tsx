@@ -17,10 +17,10 @@ interface EventCardModalProps {
 
 /** Event type → neon-punk SNES accent. */
 const TYPE_COLOR: Record<EventCard['type'], string> = {
-  opportunity: '#3ad17e',
-  crisis: '#ff5c57',
-  wildcard: '#ffd23f',
-  legendary: '#c77dff',
+  opportunity: 'var(--snes-green)',
+  crisis: 'var(--snes-red)',
+  wildcard: 'var(--snes-gold)',
+  legendary: 'var(--snes-purple)',
 };
 
 const RES_ICON: Record<string, string> = { money: '$', reputation: '★', fans: '♦', stress: '⚠', connections: '🔗' };
@@ -86,11 +86,11 @@ export const EventCardModal: React.FC<EventCardModalProps> = ({ event, onClose }
     >
       <div
         style={{
-          backgroundColor: '#171327',
+          backgroundColor: 'var(--snes-bg)',
           overflow: 'hidden',
           boxShadow: glow
-            ? `inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814, ${glow}`
-            : 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814',
+            ? `inset 2px 2px 0 0 var(--snes-edge-lt), inset -2px -2px 0 0 var(--snes-void), ${glow}`
+            : 'inset 2px 2px 0 0 var(--snes-edge-lt), inset -2px -2px 0 0 var(--snes-void)',
           display: 'flex',
           flexDirection: 'column',
         }}
@@ -99,8 +99,8 @@ export const EventCardModal: React.FC<EventCardModalProps> = ({ event, onClose }
         <div
           style={{
             padding: '16px 20px',
-            borderBottom: '2px solid #0a0814',
-            backgroundColor: '#0f0b1e',
+            borderBottom: '2px solid var(--snes-void)',
+            backgroundColor: 'var(--snes-bg-2)',
             display: 'flex',
             alignItems: 'center',
             gap: '12px',
@@ -123,7 +123,7 @@ export const EventCardModal: React.FC<EventCardModalProps> = ({ event, onClose }
             </span>
             <h2
               className="snes-pixel"
-              style={{ fontSize: '11px', color: '#ffffff', margin: 0, letterSpacing: 0, lineHeight: 1.5 }}
+              style={{ fontSize: '11px', color: 'var(--snes-ink)', margin: 0, letterSpacing: 0, lineHeight: 1.5 }}
             >
               {event.name}
             </h2>
@@ -132,11 +132,11 @@ export const EventCardModal: React.FC<EventCardModalProps> = ({ event, onClose }
 
         {/* Content */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
-          <p style={{ color: '#b9b3d6', fontSize: '13px', lineHeight: 1.6, margin: 0 }}>
+          <p style={{ color: 'var(--snes-ink-dim)', fontSize: '13px', lineHeight: 1.6, margin: 0 }}>
             {event.description}
           </p>
           {event.flavorText && (
-            <p style={{ color: '#6f6796', fontSize: '12px', fontStyle: 'italic', lineHeight: 1.5, margin: '14px 0 0' }}>
+            <p style={{ color: 'var(--snes-ink-mute)', fontSize: '12px', fontStyle: 'italic', lineHeight: 1.5, margin: '14px 0 0' }}>
               {event.flavorText}
             </p>
           )}
@@ -146,8 +146,8 @@ export const EventCardModal: React.FC<EventCardModalProps> = ({ event, onClose }
         <div
           style={{
             padding: '16px 20px',
-            borderTop: '2px solid #0a0814',
-            backgroundColor: '#0f0b1e',
+            borderTop: '2px solid var(--snes-void)',
+            backgroundColor: 'var(--snes-bg-2)',
             display: 'flex',
             flexDirection: 'column',
             gap: '10px',
@@ -176,7 +176,7 @@ export const EventCardModal: React.FC<EventCardModalProps> = ({ event, onClose }
                     return (
                       <span style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '7px' }}>
                         {outs.map(({ res, delta }) => (
-                          <span key={res} className="snes-pixel" style={{ fontSize: '8px', letterSpacing: 0, color: isGood(res, delta) ? '#3ad17e' : '#ff5c57' }}>
+                          <span key={res} className="snes-pixel" style={{ fontSize: '8px', letterSpacing: 0, color: isGood(res, delta) ? 'var(--snes-green)' : 'var(--snes-red)' }}>
                             {delta > 0 ? '+' : ''}{delta} {RES_ICON[res] || res}
                           </span>
                         ))}
@@ -185,7 +185,7 @@ export const EventCardModal: React.FC<EventCardModalProps> = ({ event, onClose }
                   }
                   // Fallback: a gate-only cost with no resource effects to display.
                   if (choice.cost) {
-                    return <span style={{ color: '#ff5c57', marginLeft: '6px' }}>(−{choice.cost.amount} {choice.cost.type})</span>;
+                    return <span style={{ color: 'var(--snes-red)', marginLeft: '6px' }}>(−{choice.cost.amount} {choice.cost.type})</span>;
                   }
                   return null;
                 })()}

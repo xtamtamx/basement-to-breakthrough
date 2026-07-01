@@ -50,25 +50,25 @@ const styles = {
   },
   variants: {
     primary: {
-      background: '#f72585',
-      color: '#1a0a14',
+      background: 'var(--snes-magenta)',
+      color: '#f7efe0',
     },
     secondary: {
-      background: '#1f1a3a',
-      color: '#ffffff',
+      background: 'var(--snes-bg-3)',
+      color: 'var(--snes-ink)',
     },
     success: {
-      background: '#3ad17e',
-      color: '#062418',
+      background: 'var(--snes-green)',
+      color: '#f7efe0',
     },
     danger: {
-      background: '#ff5c57',
-      color: '#3a0a08',
+      background: 'var(--snes-red)',
+      color: '#f7efe0',
     },
     ghost: {
-      background: '#171327',
-      color: '#ffffff',
-      boxShadow: 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814, 0 0 0 2px #2a2350',
+      background: 'var(--snes-bg)',
+      color: 'var(--snes-ink)',
+      boxShadow: 'inset 2px 2px 0 0 var(--snes-edge-lt), inset -2px -2px 0 0 var(--snes-void), 0 0 0 2px var(--snes-line)',
     },
   },
   disabled: {
@@ -133,10 +133,10 @@ export const PixelButton: React.FC<PixelButtonProps> = ({
   };
 
   const hoverStyle = variant === 'primary' ? { background: '#ff4d9e' } :
-                    variant === 'secondary' ? { background: '#2a2350', color: '#4cc9f0' } :
+                    variant === 'secondary' ? { background: 'var(--snes-line)', color: 'var(--snes-cyan)' } :
                     variant === 'success' ? { background: '#54e094' } :
                     variant === 'danger' ? { background: '#ff7a76' } :
-                    variant === 'ghost' ? { background: '#1f1a3a', color: '#4cc9f0' } :
+                    variant === 'ghost' ? { background: 'var(--snes-bg-3)', color: 'var(--snes-cyan)' } :
                     {};
 
   const activeStyle = variant !== 'ghost' ? {

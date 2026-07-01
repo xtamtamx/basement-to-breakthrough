@@ -111,9 +111,9 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         bottom: 0,
         left: 0,
         right: 0,
-        backgroundColor: '#171327',
-        borderTop: '2px solid #f72585',
-        boxShadow: 'inset 0 -2px 0 0 #0a0814',
+        backgroundColor: 'var(--snes-bg)',
+        borderTop: '2px solid var(--snes-magenta)',
+        boxShadow: 'inset 0 -2px 0 0 var(--snes-void)',
         zIndex: 40,
         paddingBottom: 'env(safe-area-inset-bottom)',
         // Clear the home indicator + Dynamic Island, which sit on the SIDES in
@@ -142,12 +142,12 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
                 padding: '2px 8px',
                 flex: 1,
                 minHeight: '44px',
-                background: currentView === view.id ? '#1f1a3a' : 'none',
-                borderTop: currentView === view.id ? '2px solid #f72585' : '2px solid transparent',
+                background: currentView === view.id ? 'var(--snes-bg-3)' : 'none',
+                borderTop: currentView === view.id ? '2px solid var(--snes-magenta)' : '2px solid transparent',
                 borderLeft: 'none',
                 borderRight: 'none',
                 borderBottom: 'none',
-                color: currentView === view.id ? '#f72585' : '#6f6796',
+                color: currentView === view.id ? 'var(--snes-magenta)' : 'var(--snes-ink-mute)',
                 cursor: 'pointer',
                 transition: 'none',
                 position: 'relative'
@@ -160,11 +160,11 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
                     position: 'absolute',
                     top: '-4px',
                     right: '-6px',
-                    backgroundColor: '#f72585',
-                    color: '#1a0a14',
+                    backgroundColor: 'var(--snes-magenta)',
+                    color: '#f7efe0',
                     fontSize: '8px',
                     borderRadius: '0',
-                    border: '1px solid #0a0814',
+                    border: '1px solid var(--snes-void)',
                     minWidth: '14px',
                     height: '14px',
                     padding: '0 3px',
@@ -203,14 +203,14 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
               padding: '4px',
               flex: 1,
               minHeight: '44px',
-              background: (showMoreMenu || secondaryViews.some(v => v.id === currentView)) ? '#1f1a3a' : 'none',
-              borderTop: (showMoreMenu || secondaryViews.some(v => v.id === currentView)) ? '2px solid #f72585' : '2px solid transparent',
+              background: (showMoreMenu || secondaryViews.some(v => v.id === currentView)) ? 'var(--snes-bg-3)' : 'none',
+              borderTop: (showMoreMenu || secondaryViews.some(v => v.id === currentView)) ? '2px solid var(--snes-magenta)' : '2px solid transparent',
               borderLeft: 'none',
               borderRight: 'none',
               borderBottom: 'none',
               color: showMoreMenu || secondaryViews.some(v => v.id === currentView)
-                ? '#f72585'
-                : '#6f6796',
+                ? 'var(--snes-magenta)'
+                : 'var(--snes-ink-mute)',
               cursor: 'pointer',
               transition: 'none'
             }}
@@ -229,7 +229,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
                 style={{
                   position: 'absolute', top: '3px', right: 'calc(50% - 16px)',
                   width: '8px', height: '8px', borderRadius: '50%',
-                  background: '#f72585', boxShadow: '0 0 0 1px #0a0814',
+                  background: 'var(--snes-magenta)', boxShadow: '0 0 0 1px var(--snes-void)',
                 }}
               />
             )}
@@ -257,9 +257,9 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
               bottom: '56px',
               left: 0,
               right: 0,
-              backgroundColor: '#171327',
-              borderTop: '2px solid #f72585',
-              boxShadow: 'inset 0 2px 0 0 #3a2f5c',
+              backgroundColor: 'var(--snes-bg)',
+              borderTop: '2px solid var(--snes-magenta)',
+              boxShadow: 'inset 0 2px 0 0 var(--snes-edge-lt)',
               paddingBottom: 'env(safe-area-inset-bottom)',
               paddingLeft: 'env(safe-area-inset-left)',
               paddingRight: 'env(safe-area-inset-right)',
@@ -307,9 +307,9 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
                     gap: '8px',
                     padding: '14px 12px',
                     borderRadius: '0',
-                    backgroundColor: currentView === view.id ? '#f72585' : '#1f1a3a',
-                    color: currentView === view.id ? '#1a0a14' : '#b9b3d6',
-                    border: '2px solid #0a0814',
+                    backgroundColor: currentView === view.id ? 'var(--snes-magenta)' : 'var(--snes-bg-3)',
+                    color: currentView === view.id ? '#f7efe0' : 'var(--snes-ink-dim)',
+                    border: '2px solid var(--snes-void)',
                     boxShadow: 'inset 2px 2px 0 0 rgba(255,255,255,0.12), inset -2px -2px 0 0 rgba(0,0,0,0.4)',
                     cursor: 'pointer',
                     transition: 'none',
@@ -323,11 +323,11 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
                         position: 'absolute',
                         top: '-6px',
                         right: '-8px',
-                        backgroundColor: '#ffd23f',
-                        color: '#3a2e00',
+                        backgroundColor: 'var(--snes-gold)',
+                        color: '#1e1509',
                         fontSize: '8px',
                         borderRadius: '0',
-                        border: '1px solid #0a0814',
+                        border: '1px solid var(--snes-void)',
                         minWidth: '16px',
                         height: '16px',
                         padding: '0 3px',
@@ -366,11 +366,11 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           width: '48px',
           height: '48px',
           // Amber when nothing's booked (pairs with the no-shows confirm), pink when ready.
-          background: scheduledShows.length > 0 ? '#f72585' : '#ffd23f',
-          color: '#1a0a14',
+          background: scheduledShows.length > 0 ? 'var(--snes-magenta)' : 'var(--snes-gold)',
+          color: '#1e1509',
           borderRadius: '0',
-          border: '2px solid #0a0814',
-          boxShadow: 'inset 2px 2px 0 0 rgba(255,255,255,0.45), inset -2px -2px 0 0 rgba(0,0,0,0.45), 4px 4px 0 0 #0a0814',
+          border: '2px solid var(--snes-void)',
+          boxShadow: 'inset 2px 2px 0 0 rgba(255,255,255,0.45), inset -2px -2px 0 0 rgba(0,0,0,0.45), 4px 4px 0 0 var(--snes-void)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -387,7 +387,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
             aria-hidden
             style={{
               position: 'absolute', top: '-6px', left: '-6px', minWidth: '18px', height: '18px',
-              padding: '0 3px', background: '#3ad17e', color: '#062418', border: '2px solid #0a0814',
+              padding: '0 3px', background: 'var(--snes-green)', color: '#f7efe0', border: '2px solid var(--snes-void)',
               fontFamily: '"Press Start 2P", monospace', fontSize: '8px',
               display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1,
             }}
@@ -402,9 +402,9 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         position: 'fixed',
         // Clear the Dynamic Island / notch (on a SIDE in landscape) via the left inset.
         left: 'calc(12px + env(safe-area-inset-left))',
-        backgroundColor: '#0f0b1e',
-        border: '2px solid #0a0814',
-        boxShadow: 'inset 1px 1px 0 0 #2a2350',
+        backgroundColor: 'var(--snes-bg-2)',
+        border: '2px solid var(--snes-void)',
+        boxShadow: 'inset 1px 1px 0 0 var(--snes-line)',
         borderRadius: '0',
         padding: '7px 10px',
         zIndex: 30,
@@ -412,7 +412,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
       }}>
         <span className="snes-pixel" style={{
           fontSize: '8px',
-          color: '#ffd23f'
+          color: 'var(--snes-gold)'
         }}>TURN {currentRound}{maxTurns ? `/${maxTurns}` : ''}</span>
       </div>
     </>

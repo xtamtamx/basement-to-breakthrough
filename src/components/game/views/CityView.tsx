@@ -82,7 +82,7 @@ export const CityView: React.FC = () => {
       display: 'flex',
       flexDirection: 'column',
       height: '100%',
-      backgroundColor: '#0a0814',
+      backgroundColor: 'var(--snes-void)',
       overflow: 'hidden'
     }}>
       {/* Minimal Header for district view */}
@@ -97,18 +97,18 @@ export const CityView: React.FC = () => {
           <div>
             <h3 className="snes-pixel" style={{
               fontSize: '12px',
-              color: '#f72585',
+              color: 'var(--snes-magenta)',
               margin: 0
             }}>{selectedDistrictInfo?.name || 'District'}</h3>
             <div style={{
               display: 'flex',
               gap: '12px',
               fontSize: '11px',
-              color: '#b9b3d6',
+              color: 'var(--snes-ink-dim)',
               marginTop: '4px'
             }}>
-              <span className="snes-pixel" style={{ fontSize: '8px', color: '#b9b3d6' }} title="Scene strength — how established the underground scene is in this district. Grows as you throw DIY shows; higher means bigger built-in crowds and unlocks more venues/landmarks here.">🏘️ Scene {liveDistrict?.sceneStrength ?? selectedDistrictInfo?.sceneStrength}%</span>
-              <span className="snes-pixel" style={{ fontSize: '8px', color: '#b9b3d6' }} title="Rent multiplier — how pricey venues are in this district vs. baseline.">💰 Rent {liveDistrict?.rentMultiplier ?? selectedDistrictInfo?.rentMultiplier}x</span>
+              <span className="snes-pixel" style={{ fontSize: '8px', color: 'var(--snes-ink-dim)' }} title="Scene strength — how established the underground scene is in this district. Grows as you throw DIY shows; higher means bigger built-in crowds and unlocks more venues/landmarks here.">🏘️ Scene {liveDistrict?.sceneStrength ?? selectedDistrictInfo?.sceneStrength}%</span>
+              <span className="snes-pixel" style={{ fontSize: '8px', color: 'var(--snes-ink-dim)' }} title="Rent multiplier — how pricey venues are in this district vs. baseline.">💰 Rent {liveDistrict?.rentMultiplier ?? selectedDistrictInfo?.rentMultiplier}x</span>
             </div>
           </div>
           <button
@@ -121,7 +121,7 @@ export const CityView: React.FC = () => {
               minHeight: '44px'
             }}
           >
-            <ZoomOut size={14} color="#b9b3d6" />
+            <ZoomOut size={14} color="var(--snes-ink-dim)" />
             Back
           </button>
         </div>
@@ -132,7 +132,7 @@ export const CityView: React.FC = () => {
         flex: 1,
         position: 'relative',
         overflow: 'hidden',
-        backgroundColor: '#0a0814'
+        backgroundColor: 'var(--snes-void)'
       }}>
         {viewMode === 'overview' ? (
           <>
@@ -143,7 +143,7 @@ export const CityView: React.FC = () => {
               left: 0,
               right: 0,
               bottom: 0,
-              backgroundColor: '#0a0814'
+              backgroundColor: 'var(--snes-void)'
             }}>
               <PixelCityMap
                 paused={!!(selectedTileData || selectedShop || selectedLandmark || showVenueUpgrade)}
@@ -217,14 +217,14 @@ export const CityView: React.FC = () => {
               flexWrap: 'wrap'
             }}>
               <div className="snes-chip">
-                <Building2 size={12} color="#f72585" />
-                <span style={{ color: '#b9b3d6' }}>Venues</span>
-                <span style={{ color: '#ffffff' }}>{unlockedVenues(gameStore.venues, gameStore.peakReputation).length}</span>
+                <Building2 size={12} color="var(--snes-magenta)" />
+                <span style={{ color: 'var(--snes-ink-dim)' }}>Venues</span>
+                <span style={{ color: 'var(--snes-ink)' }}>{unlockedVenues(gameStore.venues, gameStore.peakReputation).length}</span>
               </div>
               <div className="snes-chip" title="Scene strength (city average) — how established your underground scene is. Grows as you throw DIY shows; higher means bigger built-in crowds and unlocks more venues/landmarks.">
-                <TrendingUp size={12} color="#3ad17e" />
-                <span style={{ color: '#b9b3d6' }}>Scene</span>
-                <span style={{ color: '#ffffff' }}>
+                <TrendingUp size={12} color="var(--snes-green)" />
+                <span style={{ color: 'var(--snes-ink-dim)' }}>Scene</span>
+                <span style={{ color: 'var(--snes-ink)' }}>
                   {Math.round(gameStore.districts.reduce((acc, d) => acc + d.sceneStrength, 0) / gameStore.districts.length)}%
                 </span>
               </div>
@@ -259,12 +259,12 @@ export const CityView: React.FC = () => {
           setSelectedTileData(null);
         }}>
           <div style={{
-            backgroundColor: '#171327',
-            borderTop: '3px solid #f72585',
-            border: '2px solid #0a0814',
+            backgroundColor: 'var(--snes-bg)',
+            borderTop: '3px solid var(--snes-magenta)',
+            border: '2px solid var(--snes-void)',
             borderTopWidth: '3px',
-            borderTopColor: '#f72585',
-            boxShadow: 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814',
+            borderTopColor: 'var(--snes-magenta)',
+            boxShadow: 'inset 2px 2px 0 0 var(--snes-edge-lt), inset -2px -2px 0 0 var(--snes-void)',
             borderRadius: '0',
             padding: '16px',
             paddingBottom: 'calc(16px + env(safe-area-inset-bottom))',
@@ -279,7 +279,7 @@ export const CityView: React.FC = () => {
             <div style={{
               width: '36px',
               height: '3px',
-              backgroundColor: '#3a2f5c',
+              backgroundColor: 'var(--snes-edge-lt)',
               borderRadius: '0',
               margin: '0 auto 12px',
             }} />
@@ -294,17 +294,17 @@ export const CityView: React.FC = () => {
               <div style={{ flex: 1 }}>
                 <h2 className="snes-pixel" style={{
                   fontSize: '12px',
-                  color: '#ffffff',
+                  color: 'var(--snes-ink)',
                   margin: '0 0 6px'
                 }}>{(selectedTileData.tile.data as VenueData).name}</h2>
                 <p style={{
                   fontSize: '12px',
-                  color: '#b9b3d6',
+                  color: 'var(--snes-ink-dim)',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '4px'
                 }}>
-                  <MapPin size={12} color="#f72585" />
+                  <MapPin size={12} color="var(--snes-magenta)" />
                   <span>{selectedTileData.tile.district?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Unknown District'}</span>
                 </p>
               </div>
@@ -314,9 +314,9 @@ export const CityView: React.FC = () => {
                   width: '32px',
                   height: '32px',
                   borderRadius: '0',
-                  backgroundColor: '#1f1a3a',
-                  border: '2px solid #0a0814',
-                  color: '#b9b3d6',
+                  backgroundColor: 'var(--snes-bg-3)',
+                  border: '2px solid var(--snes-void)',
+                  color: 'var(--snes-ink-dim)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -342,18 +342,18 @@ export const CityView: React.FC = () => {
               }}>
                 <div className="snes-pixel" style={{
                   fontSize: '8px',
-                  color: '#b9b3d6',
+                  color: 'var(--snes-ink-dim)',
                   marginBottom: '8px',
                   textTransform: 'uppercase'
                 }}>Capacity</div>
                 <div className="snes-pixel" style={{
                   fontSize: '18px',
-                  color: '#f72585',
+                  color: 'var(--snes-magenta)',
                   lineHeight: '1'
                 }}>{(selectedTileData.tile.data as VenueData).capacity}</div>
                 <div style={{
                   fontSize: '11px',
-                  color: '#b9b3d6',
+                  color: 'var(--snes-ink-dim)',
                   marginTop: '6px'
                 }}>people</div>
               </div>
@@ -363,13 +363,13 @@ export const CityView: React.FC = () => {
               }}>
                 <div className="snes-pixel" style={{
                   fontSize: '8px',
-                  color: '#b9b3d6',
+                  color: 'var(--snes-ink-dim)',
                   marginBottom: '8px',
                   textTransform: 'uppercase'
                 }}>Type</div>
                 <div className="snes-pixel" style={{
                   fontSize: '11px',
-                  color: '#3ad17e',
+                  color: 'var(--snes-green)',
                   textTransform: 'uppercase',
                   lineHeight: '1.4'
                 }}>{((selectedTileData.tile.data as VenueData).venueType || 'Venue').replace(/_/g, ' ')}</div>
@@ -382,7 +382,7 @@ export const CityView: React.FC = () => {
             }}>
               <h4 className="snes-pixel" style={{
                 fontSize: '9px',
-                color: '#ffffff',
+                color: 'var(--snes-ink)',
                 marginBottom: '8px',
                 textTransform: 'uppercase'
               }}>Venue Traits</h4>
@@ -396,15 +396,15 @@ export const CityView: React.FC = () => {
                   padding: '8px 12px',
                   fontSize: '11px'
                 }}>
-                  <span style={{ color: '#b9b3d6' }}>Acoustics: </span>
-                  <span style={{ color: '#f72585', fontWeight: '600' }}>Good</span>
+                  <span style={{ color: 'var(--snes-ink-dim)' }}>Acoustics: </span>
+                  <span style={{ color: 'var(--snes-magenta)', fontWeight: '600' }}>Good</span>
                 </div>
                 <div className="snes-panel-inset" style={{
                   padding: '8px 12px',
                   fontSize: '11px'
                 }}>
-                  <span style={{ color: '#b9b3d6' }}>Vibe: </span>
-                  <span style={{ color: '#f72585', fontWeight: '600' }}>Intimate</span>
+                  <span style={{ color: 'var(--snes-ink-dim)' }}>Vibe: </span>
+                  <span style={{ color: 'var(--snes-magenta)', fontWeight: '600' }}>Intimate</span>
                 </div>
               </div>
 
@@ -414,13 +414,13 @@ export const CityView: React.FC = () => {
               }}>
                 <h4 className="snes-pixel" style={{
                   fontSize: '9px',
-                  color: '#ffffff',
+                  color: 'var(--snes-ink)',
                   marginBottom: '8px',
                   textTransform: 'uppercase'
                 }}>Synergies</h4>
                 <p style={{
                   fontSize: '12px',
-                  color: '#b9b3d6',
+                  color: 'var(--snes-ink-dim)',
                   margin: '0 0 6px 0',
                   lineHeight: '1.5'
                 }}>
@@ -432,9 +432,9 @@ export const CityView: React.FC = () => {
                   <div className="snes-pixel" style={{
                     marginTop: '8px',
                     paddingTop: '8px',
-                    borderTop: '2px solid #2a2350',
+                    borderTop: '2px solid var(--snes-line)',
                     fontSize: '8px',
-                    color: '#3ad17e',
+                    color: 'var(--snes-green)',
                     textAlign: 'center'
                   }}>
                     🎸 Show in Progress!
@@ -448,7 +448,7 @@ export const CityView: React.FC = () => {
               display: 'flex',
               gap: '12px',
               paddingTop: '20px',
-              borderTop: '2px solid #2a2350'
+              borderTop: '2px solid var(--snes-line)'
             }}>
               {selectedTileData.venue ? (
                 // Always open the gear/upgrades shop — this modal is where you BUY
@@ -475,7 +475,7 @@ export const CityView: React.FC = () => {
                 }}>
                   <p style={{
                     fontSize: '13px',
-                    color: '#6f6796',
+                    color: 'var(--snes-ink-mute)',
                     margin: 0
                   }}>Not currently managed</p>
                 </div>
@@ -505,11 +505,11 @@ export const CityView: React.FC = () => {
           setSelectedTileData(null);
         }}>
           <div style={{
-            backgroundColor: '#171327',
-            border: '2px solid #0a0814',
+            backgroundColor: 'var(--snes-bg)',
+            border: '2px solid var(--snes-void)',
             borderTopWidth: '3px',
-            borderTopColor: '#4cc9f0',
-            boxShadow: 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814',
+            borderTopColor: 'var(--snes-cyan)',
+            boxShadow: 'inset 2px 2px 0 0 var(--snes-edge-lt), inset -2px -2px 0 0 var(--snes-void)',
             borderRadius: '0',
             padding: '16px',
             paddingBottom: 'calc(16px + env(safe-area-inset-bottom))',
@@ -524,7 +524,7 @@ export const CityView: React.FC = () => {
             <div style={{
               width: '36px',
               height: '3px',
-              backgroundColor: '#3a2f5c',
+              backgroundColor: 'var(--snes-edge-lt)',
               borderRadius: '0',
               margin: '0 auto 12px',
             }} />
@@ -539,17 +539,17 @@ export const CityView: React.FC = () => {
               <div style={{ flex: 1 }}>
                 <h2 className="snes-pixel" style={{
                   fontSize: '12px',
-                  color: '#ffffff',
+                  color: 'var(--snes-ink)',
                   margin: '0 0 6px'
                 }}>{(selectedTileData.tile.data as WorkplaceData).name}</h2>
                 <p style={{
                   fontSize: '12px',
-                  color: '#b9b3d6',
+                  color: 'var(--snes-ink-dim)',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '4px'
                 }}>
-                  <MapPin size={12} color="#4cc9f0" />
+                  <MapPin size={12} color="var(--snes-cyan)" />
                   <span>{selectedTileData.tile.district?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Unknown District'}</span>
                 </p>
               </div>
@@ -559,9 +559,9 @@ export const CityView: React.FC = () => {
                   width: '32px',
                   height: '32px',
                   borderRadius: '0',
-                  backgroundColor: '#1f1a3a',
-                  border: '2px solid #0a0814',
-                  color: '#b9b3d6',
+                  backgroundColor: 'var(--snes-bg-3)',
+                  border: '2px solid var(--snes-void)',
+                  color: 'var(--snes-ink-dim)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -581,7 +581,7 @@ export const CityView: React.FC = () => {
             }}>
               <div className="snes-pixel" style={{
                 fontSize: '9px',
-                color: '#4cc9f0',
+                color: 'var(--snes-cyan)',
                 textTransform: 'uppercase'
               }}>{(selectedTileData.tile.data as WorkplaceData).jobType}</div>
             </div>
@@ -599,18 +599,18 @@ export const CityView: React.FC = () => {
               }}>
                 <div className="snes-pixel" style={{
                   fontSize: '8px',
-                  color: '#b9b3d6',
+                  color: 'var(--snes-ink-dim)',
                   marginBottom: '6px',
                   textTransform: 'uppercase'
                 }}>Hourly Wage</div>
                 <div className="snes-pixel" style={{
                   fontSize: '16px',
-                  color: '#3ad17e',
+                  color: 'var(--snes-green)',
                   lineHeight: '1'
                 }}>${(selectedTileData.tile.data as WorkplaceData).wage}</div>
                 <div style={{
                   fontSize: '10px',
-                  color: '#b9b3d6',
+                  color: 'var(--snes-ink-dim)',
                   marginTop: '4px'
                 }}>per turn</div>
               </div>
@@ -620,18 +620,18 @@ export const CityView: React.FC = () => {
               }}>
                 <div className="snes-pixel" style={{
                   fontSize: '8px',
-                  color: '#b9b3d6',
+                  color: 'var(--snes-ink-dim)',
                   marginBottom: '6px',
                   textTransform: 'uppercase'
                 }}>Stress Level</div>
                 <div className="snes-pixel" style={{
                   fontSize: '16px',
-                  color: (selectedTileData.tile.data as WorkplaceData).stress > 30 ? '#ff5c57' : '#ffd23f',
+                  color: (selectedTileData.tile.data as WorkplaceData).stress > 30 ? 'var(--snes-red)' : 'var(--snes-gold)',
                   lineHeight: '1'
                 }}>{(selectedTileData.tile.data as WorkplaceData).stress}%</div>
                 <div style={{
                   fontSize: '10px',
-                  color: '#b9b3d6',
+                  color: 'var(--snes-ink-dim)',
                   marginTop: '4px'
                 }}>{(selectedTileData.tile.data as WorkplaceData).stress > 30 ? 'high' : 'moderate'}</div>
               </div>
@@ -641,7 +641,7 @@ export const CityView: React.FC = () => {
             <div style={{
               marginTop: '12px',
               paddingTop: '12px',
-              borderTop: '2px solid #2a2350'
+              borderTop: '2px solid var(--snes-line)'
             }}>
               {/* Job Modifiers */}
               <div style={{
@@ -649,7 +649,7 @@ export const CityView: React.FC = () => {
               }}>
                 <h4 className="snes-pixel" style={{
                   fontSize: '9px',
-                  color: '#ffffff',
+                  color: 'var(--snes-ink)',
                   marginBottom: '8px',
                   textTransform: 'uppercase'
                 }}>Modifiers</h4>
@@ -662,29 +662,29 @@ export const CityView: React.FC = () => {
                     padding: '8px 12px',
                     fontSize: '11px'
                   }}>
-                    <span style={{ color: '#b9b3d6' }}>Creativity: </span>
-                    <span style={{ color: '#3ad17e', fontWeight: '600' }}>+2</span>
+                    <span style={{ color: 'var(--snes-ink-dim)' }}>Creativity: </span>
+                    <span style={{ color: 'var(--snes-green)', fontWeight: '600' }}>+2</span>
                   </div>
                   <div className="snes-panel-inset" style={{
                     padding: '8px 12px',
                     fontSize: '11px'
                   }}>
-                    <span style={{ color: '#b9b3d6' }}>Network: </span>
-                    <span style={{ color: '#3ad17e', fontWeight: '600' }}>+1</span>
+                    <span style={{ color: 'var(--snes-ink-dim)' }}>Network: </span>
+                    <span style={{ color: 'var(--snes-green)', fontWeight: '600' }}>+1</span>
                   </div>
                   <div className="snes-panel-inset" style={{
                     padding: '8px 12px',
                     fontSize: '11px'
                   }}>
-                    <span style={{ color: '#b9b3d6' }}>Time: </span>
-                    <span style={{ color: '#ff5c57', fontWeight: '600' }}>-3</span>
+                    <span style={{ color: 'var(--snes-ink-dim)' }}>Time: </span>
+                    <span style={{ color: 'var(--snes-red)', fontWeight: '600' }}>-3</span>
                   </div>
                   <div className="snes-panel-inset" style={{
                     padding: '8px 12px',
                     fontSize: '11px'
                   }}>
-                    <span style={{ color: '#b9b3d6' }}>Energy: </span>
-                    <span style={{ color: '#ff5c57', fontWeight: '600' }}>-2</span>
+                    <span style={{ color: 'var(--snes-ink-dim)' }}>Energy: </span>
+                    <span style={{ color: 'var(--snes-red)', fontWeight: '600' }}>-2</span>
                   </div>
                 </div>
               </div>
@@ -696,13 +696,13 @@ export const CityView: React.FC = () => {
               }}>
                 <h4 className="snes-pixel" style={{
                   fontSize: '9px',
-                  color: '#ffffff',
+                  color: 'var(--snes-ink)',
                   marginBottom: '8px',
                   textTransform: 'uppercase'
                 }}>Synergies</h4>
                 <p style={{
                   fontSize: '12px',
-                  color: '#b9b3d6',
+                  color: 'var(--snes-ink-dim)',
                   margin: 0,
                   lineHeight: '1.5'
                 }}>
@@ -720,9 +720,9 @@ export const CityView: React.FC = () => {
         const jobs = dayJobSystem.getAvailableJobs().filter((j) => j.location?.shopId === selectedShop.id);
         const currentJob = dayJobSystem.getCurrentJob();
         const chip = (label: string, color: string) => (
-          <span className="snes-pixel" style={{ fontSize: '8px', color, backgroundColor: '#0f0b1e', border: '2px solid #0a0814', boxShadow: 'inset 1px 1px 0 0 #2a2350', borderRadius: '0', padding: '4px 7px', whiteSpace: 'nowrap' }}>{label}</span>
+          <span className="snes-pixel" style={{ fontSize: '8px', color, backgroundColor: 'var(--snes-bg-2)', border: '2px solid var(--snes-void)', boxShadow: 'inset 1px 1px 0 0 var(--snes-line)', borderRadius: '0', padding: '4px 7px', whiteSpace: 'nowrap' }}>{label}</span>
         );
-        const accent = selectedShop.category === 'civic' ? '#ffd23f' : '#4cc9f0';
+        const accent = selectedShop.category === 'civic' ? 'var(--snes-gold)' : 'var(--snes-cyan)';
         return (
           <SnesModal variant="sheet" accent={accent} onClose={() => setSelectedShop(null)} title={selectedShop.name}>
               <p style={{ fontSize: '12px', color: accent, margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -735,20 +735,20 @@ export const CityView: React.FC = () => {
               )}
               <div key={jobRefresh} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {jobs.length === 0 && (
-                  <div className="snes-panel-inset" style={{ padding: '16px', textAlign: 'center', fontSize: '13px', color: '#6f6796' }}>No openings here right now.</div>
+                  <div className="snes-panel-inset" style={{ padding: '16px', textAlign: 'center', fontSize: '13px', color: 'var(--snes-ink-mute)' }}>No openings here right now.</div>
                 )}
                 {jobs.map((job) => {
                   const isCurrent = currentJob?.id === job.id || (!!currentJob && currentJob.name === job.name);
                   return (
                     <div key={job.id} className="snes-panel-inset" style={{ padding: '12px' }}>
-                      <div className="snes-pixel" style={{ fontSize: '10px', color: '#ffffff', marginBottom: '6px', lineHeight: 1.4 }}>{job.name}</div>
-                      <div style={{ fontSize: '12px', color: '#b9b3d6', fontStyle: 'italic', marginBottom: '8px', lineHeight: 1.5 }}>{job.satiricalFlavor}</div>
+                      <div className="snes-pixel" style={{ fontSize: '10px', color: 'var(--snes-ink)', marginBottom: '6px', lineHeight: 1.4 }}>{job.name}</div>
+                      <div style={{ fontSize: '12px', color: 'var(--snes-ink-dim)', fontStyle: 'italic', marginBottom: '8px', lineHeight: 1.5 }}>{job.satiricalFlavor}</div>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '10px' }}>
-                        {chip(`+$${job.moneyPerTurn}/turn`, '#3ad17e')}
-                        {job.reputationChange !== 0 && chip(`${job.reputationChange > 0 ? '+' : ''}${job.reputationChange} rep`, job.reputationChange > 0 ? '#3ad17e' : '#ff5c57')}
-                        {job.fanChange !== 0 && chip(`${job.fanChange > 0 ? '+' : ''}${job.fanChange} fans`, job.fanChange > 0 ? '#3ad17e' : '#ff5c57')}
-                        {chip(`+${job.stressGain} stress`, '#ffd23f')}
-                        {!!job.connectionGain && chip(`+${job.connectionGain} conn`, '#4cc9f0')}
+                        {chip(`+$${job.moneyPerTurn}/turn`, 'var(--snes-green)')}
+                        {job.reputationChange !== 0 && chip(`${job.reputationChange > 0 ? '+' : ''}${job.reputationChange} rep`, job.reputationChange > 0 ? 'var(--snes-green)' : 'var(--snes-red)')}
+                        {job.fanChange !== 0 && chip(`${job.fanChange > 0 ? '+' : ''}${job.fanChange} fans`, job.fanChange > 0 ? 'var(--snes-green)' : 'var(--snes-red)')}
+                        {chip(`+${job.stressGain} stress`, 'var(--snes-gold)')}
+                        {!!job.connectionGain && chip(`+${job.connectionGain} conn`, 'var(--snes-cyan)')}
                       </div>
                       <button
                         disabled={isCurrent}
@@ -766,7 +766,7 @@ export const CityView: React.FC = () => {
 
       {/* Landmark info modal (Pillar B) */}
       {selectedLandmark && (() => {
-        const accent = selectedLandmark.alignment === 'diy' ? '#ffd23f' : selectedLandmark.alignment === 'corporate' ? '#ff5c57' : '#b9b3d6';
+        const accent = selectedLandmark.alignment === 'diy' ? 'var(--snes-gold)' : selectedLandmark.alignment === 'corporate' ? 'var(--snes-red)' : 'var(--snes-ink-dim)';
         const tag = selectedLandmark.alignment === 'diy' ? 'DIY Scene Anchor' : selectedLandmark.alignment === 'corporate' ? 'Sellout Monument' : 'Scene History';
         const fx: string[] = [];
         if (selectedLandmark.effect.creepMult != null) fx.push(`Slows gentrification here (×${selectedLandmark.effect.creepMult})`);
@@ -779,11 +779,11 @@ export const CityView: React.FC = () => {
               {fx.length > 0 ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   {fx.map((f, i) => (
-                    <div key={i} style={{ fontSize: '12px', color: '#ffffff', backgroundColor: '#0f0b1e', border: `2px solid ${accent}`, borderRadius: '0', padding: '8px 12px' }}>{f}</div>
+                    <div key={i} style={{ fontSize: '12px', color: 'var(--snes-ink)', backgroundColor: 'var(--snes-bg-2)', border: `2px solid ${accent}`, borderRadius: '0', padding: '8px 12px' }}>{f}</div>
                   ))}
                 </div>
               ) : (
-                <div className="snes-panel-inset" style={{ fontSize: '12px', color: '#6f6796', padding: '8px 12px' }}>A monument to how far you&apos;ve come. No mechanical effect.</div>
+                <div className="snes-panel-inset" style={{ fontSize: '12px', color: 'var(--snes-ink-mute)', padding: '8px 12px' }}>A monument to how far you&apos;ve come. No mechanical effect.</div>
               )}
           </SnesModal>
         );
