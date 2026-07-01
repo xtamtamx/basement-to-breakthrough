@@ -8,7 +8,7 @@ import { computeLineupChemistry } from '@game/mechanics/lineupChemistry';
 import { bandFactionBadge } from '@game/world/factionDisplay';
 import { factionSystem } from '@game/mechanics/FactionSystem';
 import { difficultySystem } from '@game/mechanics/DifficultySystem';
-import { bandBookingFee } from '@game/mechanics/bandEconomy';
+import { bandBookingFee, bandDeposit } from '@game/mechanics/bandEconomy';
 import { isBandUnlocked } from '@game/world/bandUnlocks';
 import { cityGenreFit, homeCityFit } from '@game/world/citySynergy';
 import { projectBaseAttendance } from '@game/mechanics/attendanceProjection';
@@ -220,15 +220,26 @@ export const ShowBuilderView: React.FC = () => {
   const atBookingCap = showsInPipeline >= bookingSlots;
   const nextSlotRep = nextBookingSlotAt(peakReputation);
 
-  // Gate booking on the TRUE outlay (rent + every band's fee), not just rent —
-  // otherwise a near-broke player books a bill they can't afford to resolve.
-  // Also gate on booking capacity so you can't over-book past your slots.
+  // Up-front outlay actually held at booking (matches gameStore.scheduleShow):
+  // venue rent + a slice of any BIG act's fee. Small local acts book on a
+  // handshake; the rest of every band's fee comes out of SHOW DAY (paid from the
+  // door). So you book on the deposit — but can't book a legend you can't at
+  // least half-afford. The right-rail Net still shows the true payoff so a losing
+  // bill is a visible, informed risk (the economy is allowed to bite).
+  const venueRentDeposit = selectedVenue ? Math.max(0, selectedVenue.rent) : 0;
+  const bandDepositTotal = selectedBands.reduce(
+    (sum, b) => sum + bandDeposit(b.popularity, isSigned(b.id)),
+    0,
+  );
+  const upFrontDue = venueRentDeposit + bandDepositTotal;
+
+  // Gate on the up-front deposit + booking capacity (can't over-book past slots).
   const canBook =
     selectedBands.length > 0 &&
     !!selectedVenue &&
     !!preview &&
     !atBookingCap &&
-    money >= preview.venueCost + preview.bandCost;
+    money >= upFrontDue;
 
   const handleBookShow = () => {
     if (!canBook) return;
@@ -408,6 +419,9 @@ export const ShowBuilderView: React.FC = () => {
                             {isSigned(band.id)
                               ? `★ SIGNED · $${bandFee(band)} (your cut)`
                               : `GUEST · $${bandFee(band)} guarantee`}
+                            {bandDeposit(band.popularity, isSigned(band.id)) > 0 && (
+                              <span style={{ color: '#c77dff' }}> · ${bandDeposit(band.popularity, isSigned(band.id))} deposit up front</span>
+                            )}
                           </div>
                         )}
                       </div>
@@ -890,6 +904,14 @@ export const ShowBuilderView: React.FC = () => {
               {preview.synergies.length > 0 && (
                 <div className="snes-pixel" style={{ fontSize: '9px', color: '#ffd23f', letterSpacing: 0, marginTop: '10px' }}>🔥 {preview.synergies.length} combo{preview.synergies.length > 1 ? 's' : ''} firing</div>
               )}
+              {/* Cash-flow timing: what leaves your balance NOW (rent + big-act
+                  deposits) vs. the rest, paid from the door on show day. */}
+              {upFrontDue > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: '#b9b3d6', marginTop: '10px' }}>
+                  <span>Due at booking{bandDepositTotal > 0 ? ' (deposit)' : ''}</span>
+                  <span className="snes-pixel" style={{ fontSize: '9px', color: '#ffd23f' }}>${upFrontDue}</span>
+                </div>
+              )}
               <div style={{ fontSize: '10px', color: '#6f6796', marginTop: '10px', lineHeight: 1.4 }}>
                 {leadTime === 1 ? 'Plays next turn' : `Plays in ${leadTime} turns`} · full breakdown on the left
               </div>
@@ -917,7 +939,7 @@ export const ShowBuilderView: React.FC = () => {
           {atBookingCap ? `${bookingSlots} slot${bookingSlots > 1 ? 's' : ''} full — let one play` :
            !selectedBands.length ? 'Pick a Band First' :
            !selectedVenue ? 'Pick a Venue' :
-           (preview && money < preview.venueCost + preview.bandCost) ? 'Not Enough Cash' :
+           (money < upFrontDue) ? `Can't cover the $${upFrontDue} deposit` :
            'Book This Show'}
         </button>
         </div>{/* end RIGHT pane */}

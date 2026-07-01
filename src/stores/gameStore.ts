@@ -24,6 +24,7 @@ import type { Synergy } from "@game/mechanics/SynergyManager";
 import { eventCardSystem, type EventCard } from "@game/mechanics/EventCardSystem";
 import { factionSystem } from "@game/mechanics/FactionSystem";
 import { showPromotionSystem } from "@game/mechanics/ShowPromotionSystem";
+import { bandDeposit } from "@game/mechanics/bandEconomy";
 import { VENUE_TRAITS } from "@game/data/venueTraits";
 import { SATIRICAL_VENUE_DESCRIPTIONS } from "@game/data/satiricalText";
 import { gameAudio } from "@utils/gameAudio";
@@ -1107,11 +1108,20 @@ export const useGameStore = create<GameStore>()(
       scheduleShow: (show, turnsInAdvance = 3) => {
         const turns = Math.max(1, Math.min(5, Math.round(turnsInAdvance)));
 
-        // Hold the venue rent as a deposit at booking so the player can't book
-        // more shows than they can afford against one balance (refunded when
-        // the show resolves; the full cost is charged at execution).
+        // Hold a deposit at booking so the player can't book more shows than they
+        // can afford against one balance (refunded when the show resolves; the full
+        // cost is charged at execution). The deposit = venue rent + a slice of any
+        // BIG act's fee (small local acts book on a handshake). Full band fees are
+        // still charged on show day — the deposit is a cash-flow commitment, not an
+        // extra charge (it's refunded at resolution, same as the rent hold).
         const venue = get().venues.find((v) => v.id === show.venueId);
-        const deposit = venue ? Math.max(0, venue.rent) : 0;
+        const rentDeposit = venue ? Math.max(0, venue.rent) : 0;
+        const bookingState = get();
+        const bandDepositSum = (show.lineup ?? [show.bandId]).reduce((sum, id) => {
+          const b = bookingState.allBands.find((x) => x.id === id);
+          return b ? sum + bandDeposit(b.popularity, bookingState.rosterBandIds.includes(b.id)) : sum;
+        }, 0);
+        const deposit = rentDeposit + bandDepositSum;
         // Store the amount ACTUALLY debited (after the MIN_MONEY clamp) as the
         // deposit, so the resolve-time refund can't over-credit a near-broke
         // player whose debit was clamped short of the full rent.
