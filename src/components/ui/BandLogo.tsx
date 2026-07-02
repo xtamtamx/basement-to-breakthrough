@@ -1,24 +1,24 @@
 import React, { useMemo } from 'react';
-import { Band, Genre } from '@game/types/core';
+import { Band } from '@game/types/core';
+import { logoStyleFor } from '@game/data/bandLogoStyles';
 
 /**
- * BandLogo — renders a band's name as a procedural LOGO, not just styled text.
+ * BandLogo — each band's wordmark as a nod to its source act's iconic logo,
+ * with FIDELITY tracking the DIY↔sellout meter:
  *
- * Every band gets a deterministic logo TREATMENT seeded off `band.id` and
- * flavored by genre — the knobs a real logo designer would turn:
- *   · casing   — ALL-CAPS (heavy/punk) / lowercase (emo/indie) / MiXeD (weird)
- *   · arch     — letters ride a curve (classic metal arch / punk sag)
- *   · slant    — the whole lockup leans like a hand-cut sticker
- *   · deco     — a marker underline / rough box / double rules (hero only)
- * plus the existing per-letter scrawl jitter. Same band = same logo, always.
+ *   pure-diy          THE logo: archetype font + full structure
+ *   diy-leaning       cut-&-paste version of the logo
+ *   balanced          hand-drawn version: same structure, marker hand
+ *   corporate-leaning uniform handwriting (every band the same neat script)
+ *   full-sellout      uniform ticket print (identical Helvetica caps)
  *
- * Per-skin rendering stays CSS-first ([data-skin] rules in skins.css):
- * Sharpie draws the treatments in marker; zine overrides with its ransom-note
- * cut-outs; corporate FLATTENS everything (transform:none, no deco) — selling
- * out literally prints every band's logo in the same Helvetica.
- *
- * hero splits into per-letter spans (arch/jitter); card/row/inline stay plain
- * text so line-clamp / ellipsis keep working (they still get casing + lean).
+ * Mechanics: the component renders TWO children — a plain `__flat` span and a
+ * per-letter `__fancy` span (arch/jitter/stretched ends). CSS under
+ * [data-skin] decides which one shows: DIY-side skins reveal the fancy lockup
+ * (hero only), corporate skins show the flat span and typeset it uniformly.
+ * Casing and fonts are pure CSS (per-archetype classes in skins.css), so the
+ * sellout tiers can homogenize everything without JS knowing the skin.
+ * Per-letter values are seeded off band.id — same band, same logo, always.
  */
 
 // FNV-1a 32-bit — deterministic per band.id.
@@ -41,88 +41,7 @@ function mulberry32(a: number) {
   };
 }
 
-const HEAVY = new Set<Genre>([Genre.METAL, Genre.DOOM, Genre.SLUDGE]);
-const ROWDY = new Set<Genre>([Genre.PUNK, Genre.HARDCORE, Genre.POWERVIOLENCE, Genre.GRUNGE]);
-const SOFT = new Set<Genre>([Genre.EMO, Genre.INDIE, Genre.ALTERNATIVE]);
-const WEIRD = new Set<Genre>([Genre.NOISE, Genre.EXPERIMENTAL, Genre.ELECTRONIC]);
-
-type Deco = 'none' | 'underline' | 'box' | 'rules';
-interface Treatment {
-  casing: 'upper' | 'lower' | 'title' | 'mixed';
-  /** Arch amplitude in px at hero size; sign = arch up (+) or sag down (−). */
-  arch: number;
-  /** Whole-lockup lean, degrees. */
-  slant: number;
-  deco: Deco;
-  /** Scrawl jitter multiplier. */
-  jitter: number;
-}
-
-/** The band's designer: rolls a stable logo treatment from id + genre. */
-function treatmentFor(band: Pick<Band, 'id' | 'genre'>): Treatment {
-  // Separate stream from the letter jitter so treatments don't shift it.
-  const rng = mulberry32(hashStr(band.id) ^ 0x9e3779b9);
-  const g = band.genre;
-  if (HEAVY.has(g)) {
-    return {
-      casing: 'upper',
-      arch: 3.5 + rng() * 3.5, // the classic metal arch
-      slant: 0,
-      deco: rng() < 0.35 ? 'rules' : 'none',
-      jitter: 1.1,
-    };
-  }
-  if (ROWDY.has(g)) {
-    const r = rng();
-    return {
-      casing: 'upper',
-      arch: rng() < 0.3 ? -(2 + rng() * 3) : 0, // some punk logos sag
-      slant: rng() < 0.45 ? (rng() * 2 - 1) * 5 : 0,
-      deco: r < 0.3 ? 'underline' : r < 0.5 ? 'box' : 'none',
-      jitter: 1.35,
-    };
-  }
-  if (SOFT.has(g)) {
-    return {
-      casing: rng() < 0.55 ? 'lower' : 'title',
-      arch: 0,
-      slant: rng() < 0.25 ? (rng() * 2 - 1) * 3 : 0,
-      deco: rng() < 0.2 ? 'underline' : 'none',
-      jitter: 0.6,
-    };
-  }
-  if (WEIRD.has(g)) {
-    return {
-      casing: rng() < 0.5 ? 'mixed' : 'lower',
-      arch: 0,
-      slant: rng() < 0.35 ? (rng() * 2 - 1) * 7 : 0,
-      deco: 'none',
-      jitter: 1.0,
-    };
-  }
-  return { casing: 'title', arch: 0, slant: 0, deco: 'none', jitter: 1.0 };
-}
-
-function applyCasing(name: string, casing: Treatment['casing'], seed: number): string {
-  switch (casing) {
-    case 'upper': return name.toUpperCase();
-    case 'lower': return name.toLowerCase();
-    case 'mixed': {
-      const rng = mulberry32(seed ^ 0x5f356495);
-      return [...name].map((ch) => (rng() < 0.5 ? ch.toUpperCase() : ch.toLowerCase())).join('');
-    }
-    default: return name;
-  }
-}
-
 export type BandLogoVariant = 'hero' | 'card' | 'row' | 'inline';
-
-const AMP: Record<BandLogoVariant, { rot: number; y: number }> = {
-  hero: { rot: 4, y: 2 },
-  card: { rot: 3, y: 1.2 },
-  row: { rot: 0, y: 0 },
-  inline: { rot: 0, y: 0 },
-};
 
 interface BandLogoProps {
   band: Pick<Band, 'id' | 'name' | 'genre'>;
@@ -131,77 +50,90 @@ interface BandLogoProps {
   style?: React.CSSProperties;
 }
 
+/** Jitter feel per archetype — scrawls wobble, print archetypes sit still. */
+const ARCHETYPE_JITTER: Record<string, number> = {
+  'hand-marker': 1.4, 'thrash-jagged': 1.6, 'ransom': 1.2,
+  'metal-cut': 0.5, 'horror-serif': 0.5, 'heavy-condensed': 0.6,
+  'collegiate': 0.3, 'geometric': 0.2, 'elegant-serif': 0.3,
+  'script': 0.4, 'typewriter': 0.5, 'rounded-pop': 0.8,
+  'grunge-serif': 0.3, 'italic-sans': 0.6,
+};
+
 export const BandLogo: React.FC<BandLogoProps> = ({
   band,
   variant = 'card',
   className,
   style,
 }) => {
-  // Only the hero (showcase) splits into per-letter spans — card/row/inline stay
-  // plain text so line-clamp / ellipsis keep working.
+  const logo = useMemo(() => logoStyleFor(band), [band]);
+  // Only the hero builds the per-letter lockup; card/row/inline stay flat so
+  // line-clamp/ellipsis keep working (they still carry the archetype class).
   const perLetter = variant === 'hero';
-  const treat = useMemo(() => treatmentFor(band), [band]);
-  const display = useMemo(
-    () => applyCasing(band.name, treat.casing, hashStr(band.id)),
-    [band.name, band.id, treat.casing],
-  );
 
   const letters = useMemo(() => {
     if (!perLetter) return null;
     const rng = mulberry32(hashStr(band.id));
-    const amp = AMP[variant];
-    const chars = [...display];
+    const jit = ARCHETYPE_JITTER[logo.archetype] ?? 0.8;
+    const chars = [...band.name];
     const n = Math.max(1, chars.length - 1);
+    // Indices of the first/last non-space glyphs for the stretch gesture.
+    const first = chars.findIndex((c) => c !== ' ');
+    let last = chars.length - 1;
+    while (last > 0 && chars[last] === ' ') last--;
+    const archAmp = (logo.arch ?? 0) * 6;
+    // 'mixed' casing is per-letter (ransom-note style) — CSS text-transform
+    // can't do it, so the fancy lockup bakes it in (flat spans stay as-typed).
+    const caseRng = mulberry32(hashStr(band.id) ^ 0x5f356495);
     return chars.map((ch, i) => {
       if (ch === ' ') return { ch, style: undefined as React.CSSProperties | undefined };
-      const rot = (rng() * 2 - 1) * amp.rot * treat.jitter;
-      const dy =
-        (rng() * 2 - 1) * amp.y * treat.jitter -
-        // Arch: middle letters rise (arch>0) or sink (arch<0) along a sine bow.
-        treat.arch * Math.sin((i / n) * Math.PI);
+      if (logo.casing === 'mixed') ch = caseRng() < 0.5 ? ch.toUpperCase() : ch.toLowerCase();
+      const rot = (rng() * 2 - 1) * 4 * jit;
+      const dy = (rng() * 2 - 1) * 1.6 * jit - archAmp * Math.sin((i / n) * Math.PI);
+      const stretch =
+        logo.stretchEnds && (i === first || i === last)
+          ? ` scale(1.25, 1.5) skewX(${i === first ? -8 : 8}deg)`
+          : '';
       return {
         ch,
         style: {
           display: 'inline-block',
-          transform: `rotate(${rot.toFixed(2)}deg) translateY(${dy.toFixed(2)}px)`,
+          transform: `rotate(${rot.toFixed(2)}deg) translateY(${dy.toFixed(2)}px)${stretch}`,
+          transformOrigin: 'bottom center',
         } as React.CSSProperties,
       };
     });
-  }, [perLetter, display, band.id, variant, treat]);
+  }, [perLetter, band.id, band.name, logo]);
 
   const cls =
-    `band-logo band-logo--${variant}` +
-    (treat.deco !== 'none' && perLetter ? ` band-logo--deco-${treat.deco}` : '') +
+    `band-logo band-logo--${variant} band-logo--a-${logo.archetype} band-logo--case-${logo.casing}` +
+    (logo.deco && logo.deco !== 'none' && perLetter ? ` band-logo--deco-${logo.deco}` : '') +
     (className ? ' ' + className : '');
 
-  // The lean lives on an inline transform; corporate skins flatten it with a
-  // `transform: none !important` rule (CSS !important beats inline styles).
+  // The lean rides an inline transform; sellout skins flatten it with
+  // `transform: none !important` (CSS !important beats inline styles).
   const lean =
-    treat.slant !== 0 && (perLetter || variant === 'card')
-      ? `skewX(${treat.slant.toFixed(2)}deg)`
+    logo.slant && (perLetter || variant === 'card')
+      ? `skewX(${logo.slant.toFixed(2)}deg)`
       : undefined;
-  const mergedStyle: React.CSSProperties = lean
-    ? { transform: lean, ...style }
-    : { ...style };
-
-  if (!perLetter || !letters) {
-    return (
-      <span className={cls} style={mergedStyle} data-genre={band.genre}>
-        {display}
-      </span>
-    );
-  }
+  const mergedStyle: React.CSSProperties = lean ? { transform: lean, ...style } : { ...style };
 
   return (
-    <span className={cls} style={mergedStyle} data-genre={band.genre}>
-      {letters.map((l, i) =>
-        l.ch === ' ' ? (
-          <span key={i}> </span>
-        ) : (
-          <span key={i} className="band-logo__ch" style={l.style}>
-            {l.ch}
-          </span>
-        )
+    <span className={cls} style={mergedStyle} aria-label={band.name} data-genre={band.genre}>
+      <span className="band-logo__flat" aria-hidden>
+        {band.name}
+      </span>
+      {perLetter && letters && (
+        <span className="band-logo__fancy" aria-hidden>
+          {letters.map((l, i) =>
+            l.ch === ' ' ? (
+              <span key={i}> </span>
+            ) : (
+              <span key={i} className="band-logo__ch" style={l.style}>
+                {l.ch}
+              </span>
+            )
+          )}
+        </span>
       )}
     </span>
   );

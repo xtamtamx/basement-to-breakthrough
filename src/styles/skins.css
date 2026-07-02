@@ -586,10 +586,15 @@
 [data-skin="full-sellout"] ::-webkit-scrollbar-thumb { background: var(--snes-line); border: 3px solid var(--snes-bg); box-shadow: none; }
 
 /* ============================================================= *
- * BAND LOGO — procedural, per-skin band-name treatment.
- * Base sizing is skin-agnostic; the FONT + decoration morph per skin via
- * --skin-logo-font and the [data-skin] overrides below. Component supplies
- * the DOM + a seeded per-letter jitter (BandLogo.tsx).
+ * BAND LOGO — each band's wordmark nods to its source act, and its FIDELITY
+ * tracks the DIY↔sellout meter (bandLogoStyles.ts has the data):
+ *   pure-diy          THE logos (archetype fonts + structure, full send)
+ *   diy-leaning       cut-&-paste versions (archetype fonts on pasted scraps)
+ *   balanced          hand-drawn versions (same structure, marker hand)
+ *   corporate-leaning uniform handwriting (same neat script for everyone)
+ *   full-sellout      uniform ticket print (identical Helvetica caps)
+ * The component renders a plain `__flat` span + a per-letter `__fancy` lockup;
+ * these rules decide which shows and how it's typeset per skin.
  * ============================================================= */
 .band-logo {
   font-family: var(--skin-logo-font, "Inter", system-ui, sans-serif);
@@ -610,55 +615,76 @@
 .band-logo--inline { font-size: inherit; }
 .band-logo__ch { display: inline-block; }
 
-/* Logo deco treatments (hero only) — the seeded "designer choices" drawn in
-   marker on the Sharpie skin. Zine's ransom-note and corporate's flat print
-   have their own languages, so they neutralize these below. */
-[data-skin="balanced"] .band-logo--deco-underline {
-  border-bottom: 3px solid currentColor;
-  padding-bottom: 3px;
-}
-[data-skin="balanced"] .band-logo--deco-box {
-  border: 3px solid currentColor;
-  border-radius: 7px 4px 8px 5px; /* hand-drawn wobble */
-  padding: 2px 8px;
-}
-[data-skin="balanced"] .band-logo--deco-rules {
-  border-top: 2px solid currentColor;
-  border-bottom: 2px solid currentColor;
-  padding: 3px 0;
-}
+/* Flat vs fancy: the constructed lockup only exists on the DIY side of the
+   meter; sellout tiers get the plain span they can homogenize. */
+.band-logo__fancy { display: none; }
+:is([data-skin="balanced"], [data-skin="diy-leaning"], [data-skin="pure-diy"]) .band-logo--hero .band-logo__fancy { display: inline; }
+:is([data-skin="balanced"], [data-skin="diy-leaning"], [data-skin="pure-diy"]) .band-logo--hero .band-logo__flat { display: none; }
 
-/* Sharpie: marker face; the seeded per-letter rotation supplies the scrawl. */
+/* --- CASING — per BAND (Glassjaw shouts, The Sleeping whispers), part of the
+   logo's structure at every DIY-side tier. 'mixed' is baked into the fancy
+   lockup by the component (per-letter — CSS can't). --- */
+:is([data-skin="balanced"], [data-skin="diy-leaning"], [data-skin="pure-diy"]) .band-logo--case-upper { text-transform: uppercase; }
+:is([data-skin="balanced"], [data-skin="diy-leaning"], [data-skin="pure-diy"]) .band-logo--case-lower { text-transform: lowercase; }
+:is([data-skin="balanced"], [data-skin="diy-leaning"], [data-skin="pure-diy"]) :is(.band-logo--case-title, .band-logo--case-mixed) { text-transform: none; }
+
+/* --- Archetype FONTS — only at the two DIY tiers ("the logos" / "cut-&-paste
+   versions"). Balanced stays in the marker hand: you DREW their logo. --- */
+:is([data-skin="diy-leaning"], [data-skin="pure-diy"]) .band-logo--a-metal-cut { font-family: "Bebas Neue", "Oswald", sans-serif; letter-spacing: 1.5px; font-weight: 400; }
+:is([data-skin="diy-leaning"], [data-skin="pure-diy"]) .band-logo--a-horror-serif { font-family: "Didot", "Bodoni 72", "Times New Roman", serif; font-weight: 800; letter-spacing: 0.5px; }
+:is([data-skin="diy-leaning"], [data-skin="pure-diy"]) .band-logo--a-thrash-jagged { font-family: "Bebas Neue", "Oswald", sans-serif; letter-spacing: 2px; font-weight: 400; }
+:is([data-skin="diy-leaning"], [data-skin="pure-diy"]) .band-logo--a-script { font-family: "Snell Roundhand", "Savoye LET", "Bradley Hand", cursive; font-weight: 700; }
+:is([data-skin="diy-leaning"], [data-skin="pure-diy"]) .band-logo--a-typewriter { font-family: "American Typewriter", "Courier New", monospace; font-weight: 600; letter-spacing: 0; }
+:is([data-skin="diy-leaning"], [data-skin="pure-diy"]) .band-logo--a-collegiate { font-family: "Copperplate", "Trebuchet MS", serif; letter-spacing: 2px; font-weight: 700; }
+:is([data-skin="diy-leaning"], [data-skin="pure-diy"]) .band-logo--a-heavy-condensed { font-family: "Oswald", "Arial Narrow", sans-serif; font-weight: 700; letter-spacing: 0.5px; }
+:is([data-skin="diy-leaning"], [data-skin="pure-diy"]) .band-logo--a-rounded-pop { font-family: "Arial Rounded MT Bold", "Avenir", sans-serif; font-weight: 800; }
+:is([data-skin="diy-leaning"], [data-skin="pure-diy"]) .band-logo--a-geometric { font-family: "Futura", "Avenir Next", sans-serif; font-weight: 600; letter-spacing: 3px; }
+:is([data-skin="diy-leaning"], [data-skin="pure-diy"]) .band-logo--a-grunge-serif { font-family: "Bodoni 72", "Didot", serif; font-weight: 600; letter-spacing: 4px; }
+:is([data-skin="diy-leaning"], [data-skin="pure-diy"]) .band-logo--a-italic-sans { font-family: "Helvetica Neue", Arial, sans-serif; font-style: italic; font-weight: 800; letter-spacing: -0.5px; }
+:is([data-skin="diy-leaning"], [data-skin="pure-diy"]) .band-logo--a-elegant-serif { font-family: "Didot", "Baskerville", serif; font-weight: 700; letter-spacing: 0.5px; }
+:is([data-skin="diy-leaning"], [data-skin="pure-diy"]) .band-logo--a-hand-marker { font-family: "Marker Felt", "Comic Sans MS", "Bradley Hand", cursive; letter-spacing: 0.3px; }
+:is([data-skin="diy-leaning"], [data-skin="pure-diy"]) .band-logo--a-ransom { font-family: var(--skin-zine-head, "Bebas Neue"), sans-serif; letter-spacing: 1px; font-weight: 400; }
+
+/* --- Deco (underline/box/rules) — logo furniture, drawn at every DIY tier
+   (marker-rough at balanced, straighter ink at the DIY tiers). --- */
+:is([data-skin="balanced"], [data-skin="diy-leaning"], [data-skin="pure-diy"]) .band-logo--deco-underline { border-bottom: 3px solid currentColor; padding-bottom: 3px; }
+:is([data-skin="balanced"], [data-skin="diy-leaning"], [data-skin="pure-diy"]) .band-logo--deco-box { border: 3px solid currentColor; padding: 2px 8px; }
+:is([data-skin="balanced"], [data-skin="diy-leaning"], [data-skin="pure-diy"]) .band-logo--deco-rules { border-top: 2px solid currentColor; border-bottom: 2px solid currentColor; padding: 3px 0; }
+[data-skin="balanced"] .band-logo--deco-box { border-radius: 7px 4px 8px 5px; } /* hand-drawn wobble */
+
+/* Sharpie: marker face; the seeded per-letter jitter supplies the scrawl. */
 [data-skin="balanced"] .band-logo { letter-spacing: 0.3px; }
 
-/* Zine: cut-&-paste ransom note — condensed caps, alternating cut-out swatches
-   on some letters (hero/card only), mixed weights. */
-[data-skin="pure-diy"] .band-logo,
-[data-skin="diy-leaning"] .band-logo {
-  text-transform: uppercase; letter-spacing: 1px; font-weight: 400;
-}
-[data-skin="pure-diy"] .band-logo--hero .band-logo__ch:nth-child(3n),
-[data-skin="pure-diy"] .band-logo--card .band-logo__ch:nth-child(3n),
-[data-skin="diy-leaning"] .band-logo--hero .band-logo__ch:nth-child(3n),
-[data-skin="diy-leaning"] .band-logo--card .band-logo__ch:nth-child(3n) {
+/* diy-leaning: CUT-&-PASTE versions — the archetype letterforms, but some
+   letters ride pasted scraps (hero lockup only). */
+[data-skin="diy-leaning"] .band-logo--hero .band-logo__ch:nth-child(3n) {
   background: var(--snes-magenta); color: var(--snes-edge-lt); padding: 0 2px;
 }
-[data-skin="pure-diy"] .band-logo--hero .band-logo__ch:nth-child(4n),
-[data-skin="pure-diy"] .band-logo--card .band-logo__ch:nth-child(4n),
-[data-skin="diy-leaning"] .band-logo--hero .band-logo__ch:nth-child(4n),
-[data-skin="diy-leaning"] .band-logo--card .band-logo__ch:nth-child(4n) {
+[data-skin="diy-leaning"] .band-logo--hero .band-logo__ch:nth-child(4n) {
   background: var(--snes-ink); color: var(--snes-edge-lt); padding: 0 2px;
 }
-[data-skin="pure-diy"] .band-logo__ch:nth-child(2n),
-[data-skin="diy-leaning"] .band-logo__ch:nth-child(2n) { font-family: var(--skin-zine-body); }
+/* pure-diy: THE logo — clean, except the ransom archetype, whose real logo IS
+   the collage. */
+[data-skin="pure-diy"] .band-logo--a-ransom .band-logo__ch:nth-child(3n) {
+  background: var(--snes-magenta); color: var(--snes-edge-lt); padding: 0 2px;
+}
+[data-skin="pure-diy"] .band-logo--a-ransom .band-logo__ch:nth-child(4n) {
+  background: var(--snes-ink); color: var(--snes-edge-lt); padding: 0 2px;
+}
+[data-skin="pure-diy"] .band-logo--a-ransom .band-logo__ch:nth-child(2n) { font-family: var(--skin-zine-body); }
 
-/* Corporate: uniform print — Helvetica caps, tight tracking, ZERO jitter.
-   `transform: none !important` also flattens the inline seeded lean (skewX):
-   selling out prints every band's logo the same way. */
-[data-skin="corporate-leaning"] .band-logo,
+/* corporate-leaning: UNIFORM HANDWRITING — the warm sellout. Every band's name
+   in the same neat script; structure, archetype, lean all flattened. */
+[data-skin="corporate-leaning"] .band-logo {
+  font-family: "Snell Roundhand", "Noteworthy", "Bradley Hand", cursive;
+  font-weight: 700; letter-spacing: 0.5px; text-transform: none;
+  transform: none !important;
+}
+
+/* full-sellout: UNIFORM TICKET PRINT — identical Helvetica caps, zero identity.
+   `transform: none !important` also flattens the inline seeded lean (skewX). */
 [data-skin="full-sellout"] .band-logo {
+  font-family: var(--skin-corp, "Helvetica Neue", Arial, sans-serif);
   text-transform: uppercase; letter-spacing: -0.2px; font-weight: 700;
   transform: none !important;
 }
-[data-skin="corporate-leaning"] .band-logo__ch,
-[data-skin="full-sellout"] .band-logo__ch { transform: none !important; }
