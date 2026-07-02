@@ -112,4 +112,35 @@ export const BandLogo: React.FC<BandLogoProps> = ({
   );
 };
 
+/**
+ * BandMonogram — a small square "patch" carrying the band's initial in the
+ * skin's logo font (marker scrawl / zine cut-out / corporate print). Replaces
+ * the old genre pictograms on band cards, which read goofy next to the logo
+ * system: the band's own mark IS its visual identity. Deterministic tilt is
+ * seeded off band.id (corporate skins flatten it via CSS, matching BandLogo).
+ */
+export const BandMonogram: React.FC<{
+  band: Pick<Band, 'id' | 'name'>;
+  size?: number;
+  className?: string;
+}> = ({ band, size = 36, className }) => {
+  const rot = useMemo(() => {
+    const rng = mulberry32(hashStr(band.id));
+    return (rng() * 2 - 1) * 4; // −4°..4°, stable per band
+  }, [band.id]);
+  // Skip a leading article so "The Constant Ache" reads C, not T.
+  const letter = (band.name.replace(/^the\s+/i, '').trim()[0] ?? '?').toUpperCase();
+  return (
+    <span
+      className={`band-monogram${className ? ' ' + className : ''}`}
+      style={{ width: size, height: size, fontSize: Math.round(size * 0.6) }}
+      aria-hidden
+    >
+      <span className="band-monogram__ch" style={{ transform: `rotate(${rot.toFixed(2)}deg)` }}>
+        {letter}
+      </span>
+    </span>
+  );
+};
+
 export default BandLogo;

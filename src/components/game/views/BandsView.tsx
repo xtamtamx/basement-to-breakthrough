@@ -10,8 +10,7 @@ import { bandFactionBadge } from '@game/world/factionDisplay';
 import { metaSnapshot, bandLockInfo, isBandHidden, type BandLockInfo } from '@game/world/bandUnlocks';
 import { SnesModal } from '@components/ui/SnesModal';
 import { PixelIcon } from '@components/ui/PixelIcon';
-import { genreIcon } from '@components/ui/genreIcon';
-import { BandLogo } from '@components/ui/BandLogo';
+import { BandLogo, BandMonogram } from '@components/ui/BandLogo';
 import { getCity } from '@/data/cities';
 import { TOURING_ENABLED } from '@/config/featureFlags';
 import { Lock, Home } from 'lucide-react';
@@ -226,9 +225,7 @@ export const BandsView: React.FC = () => {
                     display: 'flex', gap: '8px', alignItems: 'center', minWidth: 0,
                   }}
                 >
-                  <div className="snes-panel-inset" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '36px', height: '36px', color: C.ink }}>
-                    <PixelIcon name={genreIcon(band.genre)} size={20} />
-                  </div>
+                  <BandMonogram band={band} size={36} />
 
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
@@ -333,7 +330,7 @@ export const BandsView: React.FC = () => {
         const fb = bandFactionBadge(detailBand);
         return (
           <SnesModal onClose={() => setDetailId(null)} ariaLabel={detailBand.name} maxWidth={460}
-            headerRight={<span style={{ color: C.ink, display: 'inline-flex' }}><PixelIcon name={genreIcon(detailBand.genre)} size={22} /></span>}>
+            headerRight={<BandMonogram band={detailBand} size={32} />}>
             <BandLogo band={detailBand} variant="hero" style={{ display: 'block', color: C.ink, margin: '0 0 4px' }} />
             <div style={{ fontFamily: SANS, fontSize: '13px', color: C.dim, margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
               <span>{titleCase(detailBand.genre)}</span>

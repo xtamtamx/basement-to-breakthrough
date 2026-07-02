@@ -610,8 +610,45 @@
 .band-logo--inline { font-size: inherit; }
 .band-logo__ch { display: inline-block; }
 
+/* Band monogram — the band's initial as a small patch/sticker (replaces the
+   old genre pictograms). Font + chrome morph per skin like the logo. */
+.band-monogram {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--snes-bg-2);
+  border: 2px solid var(--snes-ink);
+  color: var(--snes-ink);
+  font-family: var(--skin-logo-font, "Inter", system-ui, sans-serif);
+  font-weight: 700;
+  line-height: 1;
+  user-select: none;
+}
+.band-monogram__ch { display: inline-block; }
+
 /* Sharpie: marker face; the seeded per-letter rotation supplies the scrawl. */
 [data-skin="balanced"] .band-logo { letter-spacing: 0.3px; }
+[data-skin="balanced"] .band-monogram { border-radius: 5px 7px 4px 6px; } /* wobbly patch */
+
+/* Zine: a cut-out letter square, hard shadow. */
+[data-skin="pure-diy"] .band-monogram,
+[data-skin="diy-leaning"] .band-monogram {
+  background: var(--snes-edge-lt);
+  border-radius: 0;
+  box-shadow: 1px 1px 0 rgba(0,0,0,0.35);
+}
+
+/* Corporate: flat printed initial — no tilt, hairline border. */
+[data-skin="corporate-leaning"] .band-monogram,
+[data-skin="full-sellout"] .band-monogram {
+  background: var(--snes-bg-2);
+  border: 1px solid var(--snes-line);
+  border-radius: 3px;
+}
+[data-skin="full-sellout"] .band-monogram { border-radius: 0; }
+[data-skin="corporate-leaning"] .band-monogram__ch,
+[data-skin="full-sellout"] .band-monogram__ch { transform: none !important; }
 
 /* Zine: cut-&-paste ransom note — condensed caps, alternating cut-out swatches
    on some letters (hero/card only), mixed weights. */
