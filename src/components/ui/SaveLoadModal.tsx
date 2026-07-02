@@ -155,7 +155,7 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ isOpen, onClose })
               color: activeTab === 'save' ? 'var(--snes-magenta)' : 'var(--snes-ink-mute)',
               border: 'none',
               borderBottom: activeTab === 'save' ? '2px solid var(--snes-magenta)' : '2px solid transparent',
-              fontSize: '9px',
+              fontSize: 'var(--t-sm)',
               textTransform: 'uppercase',
               letterSpacing: 0,
               cursor: 'pointer',
@@ -180,7 +180,7 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ isOpen, onClose })
               color: activeTab === 'load' ? 'var(--snes-magenta)' : 'var(--snes-ink-mute)',
               border: 'none',
               borderBottom: activeTab === 'load' ? '2px solid var(--snes-magenta)' : '2px solid transparent',
-              fontSize: '9px',
+              fontSize: 'var(--t-sm)',
               textTransform: 'uppercase',
               letterSpacing: 0,
               cursor: 'pointer',
@@ -204,7 +204,7 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ isOpen, onClose })
         }}>
           {/* Messages */}
           {error && (
-            <div style={{
+            <div className="snes-panel-inset" style={{
               backgroundColor: 'var(--snes-bg-2)',
               border: '2px solid var(--snes-red)',
               color: 'var(--snes-red)',
@@ -214,8 +214,7 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ isOpen, onClose })
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
-              fontSize: '13px',
-              boxShadow: 'inset 2px 2px 0 0 #000, inset -2px -2px 0 0 var(--snes-line)'
+              fontSize: '13px'
             }}>
               <AlertCircle size={16} />
               {error}
@@ -223,7 +222,7 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ isOpen, onClose })
           )}
 
           {success && (
-            <div style={{
+            <div className="snes-panel-inset" style={{
               backgroundColor: 'var(--snes-bg-2)',
               border: '2px solid var(--snes-green)',
               color: 'var(--snes-green)',
@@ -233,8 +232,7 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ isOpen, onClose })
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
-              fontSize: '13px',
-              boxShadow: 'inset 2px 2px 0 0 #000, inset -2px -2px 0 0 var(--snes-line)'
+              fontSize: '13px'
             }}>
               <CheckCircle size={16} />
               {success}
@@ -250,7 +248,7 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ isOpen, onClose })
                 marginBottom: '20px'
               }}>
                 <h3 className="snes-pixel" style={{
-                  fontSize: '10px',
+                  fontSize: 'var(--t-sm)',
                   color: 'var(--snes-ink)',
                   marginBottom: '14px',
                   textTransform: 'uppercase'
@@ -262,25 +260,25 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ isOpen, onClose })
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <Calendar size={16} color="var(--snes-ink-dim)" />
-                    <span className="snes-pixel" style={{ color: 'var(--snes-ink-dim)', fontSize: '8px' }}>
+                    <span className="snes-pixel" style={{ color: 'var(--snes-ink-dim)', fontSize: 'var(--t-sm)' }}>
                       Round {gameStore.currentRound}
                     </span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <DollarSign size={16} color="var(--snes-green)" />
-                    <span className="snes-pixel" style={{ color: 'var(--snes-green)', fontSize: '8px' }}>
+                    <span className="snes-pixel" style={{ color: 'var(--snes-green)', fontSize: 'var(--t-sm)' }}>
                       {formatMoney(gameStore.money)}
                     </span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <Star size={16} color="var(--snes-gold)" />
-                    <span className="snes-pixel" style={{ color: 'var(--snes-gold)', fontSize: '8px' }}>
+                    <span className="snes-pixel" style={{ color: 'var(--snes-gold)', fontSize: 'var(--t-sm)' }}>
                       {gameStore.reputation} Rep
                     </span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <Users size={16} color="var(--snes-purple)" />
-                    <span className="snes-pixel" style={{ color: 'var(--snes-purple)', fontSize: '8px' }}>
+                    <span className="snes-pixel" style={{ color: 'var(--snes-purple)', fontSize: 'var(--t-sm)' }}>
                       {gameStore.fans} Fans
                     </span>
                   </div>
@@ -292,12 +290,13 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ isOpen, onClose })
                 <label className="snes-pixel" style={{
                   display: 'block',
                   color: 'var(--snes-ink-dim)',
-                  fontSize: '8px',
+                  fontSize: 'var(--t-sm)',
                   marginBottom: '10px',
                   textTransform: 'uppercase'
                 }}>Save Name (optional)</label>
                 <input
                   type="text"
+                  className="snes-panel-inset"
                   value={saveName}
                   onChange={(e) => setSaveName(e.target.value)}
                   placeholder="Enter a name for this save..."
@@ -310,8 +309,7 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ isOpen, onClose })
                     borderRadius: 0,
                     color: 'var(--snes-ink)',
                     fontSize: '13px',
-                    outline: 'none',
-                    boxShadow: 'inset 2px 2px 0 0 #000, inset -2px -2px 0 0 var(--snes-line)'
+                    outline: 'none'
                   }}
                   onFocus={(e) => e.currentTarget.style.borderColor = 'var(--snes-magenta)'}
                   onBlur={(e) => e.currentTarget.style.borderColor = 'var(--snes-void)'}
@@ -338,7 +336,7 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ isOpen, onClose })
                 <div className="snes-pixel" style={{
                   textAlign: 'center',
                   color: 'var(--snes-ink-dim)',
-                  fontSize: '9px',
+                  fontSize: 'var(--t-sm)',
                   padding: '40px'
                 }}>Loading saves...</div>
               ) : saves.length === 0 ? (
@@ -347,7 +345,7 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ isOpen, onClose })
                   color: 'var(--snes-ink-dim)',
                   padding: '40px'
                 }}>
-                  <p className="snes-pixel" style={{ marginBottom: '12px', fontSize: '9px', color: 'var(--snes-ink)' }}>No saved games found</p>
+                  <p className="snes-pixel" style={{ marginBottom: '12px', fontSize: 'var(--t-sm)', color: 'var(--snes-ink)' }}>No saved games found</p>
                   <p style={{ fontSize: '13px', color: 'var(--snes-ink-mute)' }}>Save your game in the Save tab</p>
                 </div>
               ) : (
@@ -368,7 +366,7 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ isOpen, onClose })
                       }}>
                         <div>
                           <h4 className="snes-pixel" style={{
-                            fontSize: '10px',
+                            fontSize: 'var(--t-sm)',
                             color: 'var(--snes-ink)',
                             marginBottom: '8px'
                           }}>{save.name}</h4>
@@ -394,6 +392,7 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ isOpen, onClose })
                             Load
                           </button>
                           <button
+                            className="snes-panel-inset"
                             onClick={() => handleDelete(save.id)}
                             aria-label={`Delete save ${save.name}`}
                             style={{
@@ -408,8 +407,7 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ isOpen, onClose })
                               border: '2px solid var(--snes-red)',
                               borderRadius: 0,
                               cursor: 'pointer',
-                              transition: 'none',
-                              boxShadow: 'inset 2px 2px 0 0 #000, inset -2px -2px 0 0 var(--snes-line)'
+                              transition: 'none'
                             }}
                           >
                             <Trash2 size={16} />
@@ -423,20 +421,20 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({ isOpen, onClose })
                         fontSize: '12px'
                       }}>
                         <div>
-                          <span className="snes-pixel" style={{ color: 'var(--snes-ink-mute)', fontSize: '7px' }}>Round</span>
-                          <div className="snes-pixel" style={{ color: 'var(--snes-ink)', fontSize: '8px', marginTop: '4px' }}>{save.turnNumber}</div>
+                          <span className="snes-pixel" style={{ color: 'var(--snes-ink-mute)', fontSize: 'var(--t-xs)' }}>Round</span>
+                          <div className="snes-pixel" style={{ color: 'var(--snes-ink)', fontSize: 'var(--t-sm)', marginTop: '4px' }}>{save.turnNumber}</div>
                         </div>
                         <div>
-                          <span className="snes-pixel" style={{ color: 'var(--snes-ink-mute)', fontSize: '7px' }}>Money</span>
-                          <div className="snes-pixel" style={{ color: 'var(--snes-green)', fontSize: '8px', marginTop: '4px' }}>{formatMoney(save.money)}</div>
+                          <span className="snes-pixel" style={{ color: 'var(--snes-ink-mute)', fontSize: 'var(--t-xs)' }}>Money</span>
+                          <div className="snes-pixel" style={{ color: 'var(--snes-green)', fontSize: 'var(--t-sm)', marginTop: '4px' }}>{formatMoney(save.money)}</div>
                         </div>
                         <div>
-                          <span className="snes-pixel" style={{ color: 'var(--snes-ink-mute)', fontSize: '7px' }}>Rep</span>
-                          <div className="snes-pixel" style={{ color: 'var(--snes-gold)', fontSize: '8px', marginTop: '4px' }}>{save.reputation}</div>
+                          <span className="snes-pixel" style={{ color: 'var(--snes-ink-mute)', fontSize: 'var(--t-xs)' }}>Rep</span>
+                          <div className="snes-pixel" style={{ color: 'var(--snes-gold)', fontSize: 'var(--t-sm)', marginTop: '4px' }}>{save.reputation}</div>
                         </div>
                         <div>
-                          <span className="snes-pixel" style={{ color: 'var(--snes-ink-mute)', fontSize: '7px' }}>Fans</span>
-                          <div className="snes-pixel" style={{ color: 'var(--snes-purple)', fontSize: '8px', marginTop: '4px' }}>{save.fans}</div>
+                          <span className="snes-pixel" style={{ color: 'var(--snes-ink-mute)', fontSize: 'var(--t-xs)' }}>Fans</span>
+                          <div className="snes-pixel" style={{ color: 'var(--snes-purple)', fontSize: 'var(--t-sm)', marginTop: '4px' }}>{save.fans}</div>
                         </div>
                       </div>
                     </div>

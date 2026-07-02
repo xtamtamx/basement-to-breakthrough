@@ -176,7 +176,7 @@ export const PromotionView: React.FC<PromotionViewProps> = ({ onNavigate }) => {
             <section style={{ marginBottom: '16px' }}>
               <h3 className="snes-pixel" style={{
                 fontSize: '11px',
-                color: 'var(--snes-ink-dim)',
+                color: 'var(--skin-on-void-dim)',
                 textTransform: 'uppercase',
                 letterSpacing: 0,
                 margin: '0 0 8px 2px'
@@ -214,12 +214,14 @@ export const PromotionView: React.FC<PromotionViewProps> = ({ onNavigate }) => {
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', gap: '10px' }}>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <h4 className="snes-pixel" style={{
-                            fontSize: '10px',
+                          <h4 style={{
+                            fontFamily: SANS,
+                            fontWeight: 700,
+                            fontSize: '14px',
                             color: 'var(--snes-ink)',
                             margin: '0 0 4px',
                             letterSpacing: 0,
-                            lineHeight: 1.4
+                            lineHeight: 1.3
                           }}>
                             {bandNames}
                           </h4>
@@ -304,7 +306,7 @@ export const PromotionView: React.FC<PromotionViewProps> = ({ onNavigate }) => {
               <section>
                 <h3 className="snes-pixel" style={{
                   fontSize: '11px',
-                  color: 'var(--snes-ink-dim)',
+                  color: 'var(--skin-on-void-dim)',
                   textTransform: 'uppercase',
                   letterSpacing: 0,
                   margin: '0 0 8px 2px'
@@ -364,11 +366,13 @@ export const PromotionView: React.FC<PromotionViewProps> = ({ onNavigate }) => {
                         className="snes-panel"
                         style={{
                           padding: '12px',
-                          opacity: isDisabled ? 0.55 : 1,
                           transition: 'none'
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'start', gap: '12px' }}>
+                          {/* Dim only non-critical content when disabled — the
+                              requirement chips below stay at full contrast so the
+                              player can read WHY the action is unavailable. */}
                           <div style={{
                             flexShrink: 0,
                             width: '38px',
@@ -379,26 +383,29 @@ export const PromotionView: React.FC<PromotionViewProps> = ({ onNavigate }) => {
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            color: 'var(--snes-magenta)'
+                            color: 'var(--snes-magenta)',
+                            opacity: isDisabled ? 0.55 : 1
                           }}>
                             {React.cloneElement(getPromotionIcon(promotionType), { size: 20 })}
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <h4 style={{
-                              fontFamily: SANS,
-                              fontWeight: 700,
-                              fontSize: '14px',
-                              color: 'var(--snes-ink)',
-                              margin: '0 0 6px',
-                              letterSpacing: 0,
-                              lineHeight: 1.3
-                            }}>{activity.name}</h4>
-                            <p style={{
-                              fontSize: '12px',
-                              color: 'var(--snes-ink-dim)',
-                              margin: '0 0 8px',
-                              lineHeight: 1.4
-                            }}>{activity.description}</p>
+                            <div style={{ opacity: isDisabled ? 0.55 : 1 }}>
+                              <h4 style={{
+                                fontFamily: SANS,
+                                fontWeight: 700,
+                                fontSize: '14px',
+                                color: 'var(--snes-ink)',
+                                margin: '0 0 6px',
+                                letterSpacing: 0,
+                                lineHeight: 1.3
+                              }}>{activity.name}</h4>
+                              <p style={{
+                                fontSize: '12px',
+                                color: 'var(--snes-ink-dim)',
+                                margin: '0 0 8px',
+                                lineHeight: 1.4
+                              }}>{activity.description}</p>
+                            </div>
 
                             {/* Requirements */}
                             <div style={{

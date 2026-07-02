@@ -257,14 +257,30 @@
 /* Tint native form controls (volume slider, checkboxes, radios) to the brand. */
 input[type='range'], input[type='checkbox'], input[type='radio'], progress { accent-color: var(--snes-magenta); }
 
-/* Square pixel slider thumb — `appearance:none` sliders otherwise show a hidden /
-   native-gray thumb on iOS at key micro-decisions (e.g. ticket price). */
-.snes-slider { -webkit-appearance: none; appearance: none; height: 8px; background: var(--snes-bg-2);
+/* Square pixel slider — `appearance:none` sliders otherwise show a hidden /
+   native-gray thumb on iOS at key micro-decisions (e.g. ticket price).
+   The element box is a transparent 44px touch strip; the 12px visual track is
+   drawn on the track pseudo-elements. Call sites pass the dynamic fill gradient
+   via an inline `--snes-slider-fill` custom property (inherited by the pseudos).
+   Selector includes input[type=range] so it outranks the per-skin
+   `[data-skin] input[type="range"]` height/background/border rules in skins.css. */
+input[type='range'].snes-slider { -webkit-appearance: none; appearance: none;
+  min-height: 44px; margin: 0; padding: 0; background: transparent; border: none;
+  border-radius: 0; cursor: pointer; }
+input[type='range'].snes-slider::-webkit-slider-runnable-track { height: 12px; box-sizing: border-box;
+  background: var(--snes-slider-fill, var(--snes-bg-2));
   border: 2px solid var(--snes-void); border-radius: 0; }
-.snes-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 22px; height: 22px;
-  background: var(--snes-magenta); border: 2px solid var(--snes-void);
-  box-shadow: inset 2px 2px 0 0 rgba(255,255,255,.35); cursor: pointer; }
-.snes-slider::-moz-range-thumb { width: 22px; height: 22px; background: var(--snes-magenta);
+input[type='range'].snes-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none;
+  width: 22px; height: 22px;
+  background: var(--snes-magenta); border: 2px solid var(--snes-void); border-radius: 0;
+  box-shadow: inset 2px 2px 0 0 rgba(255,255,255,.35); cursor: pointer;
+  /* WebKit top-aligns appearance:none thumbs to the track — recenter:
+     (12px track − 26px thumb incl. borders) / 2 */
+  margin-top: calc((12px - 26px) / 2); }
+input[type='range'].snes-slider::-moz-range-track { height: 12px; box-sizing: border-box;
+  background: var(--snes-slider-fill, var(--snes-bg-2));
+  border: 2px solid var(--snes-void); border-radius: 0; }
+input[type='range'].snes-slider::-moz-range-thumb { width: 22px; height: 22px; background: var(--snes-magenta);
   border: 2px solid var(--snes-void); border-radius: 0; cursor: pointer; }
 
 /* Universal pixel "depress" on press — apply to any clickable that isn't a .snes-btn

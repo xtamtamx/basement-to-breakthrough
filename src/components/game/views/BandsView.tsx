@@ -147,9 +147,11 @@ export const BandsView: React.FC = () => {
       style={{
         padding: '7px 10px', minHeight: '44px',
         background: active ? activeColor : 'transparent',
-        color: active ? (activeColor === C.magenta ? C.ink : C.void) : C.mute,
+        // On-accent text: cream on magenta (shared convention), per-skin token on
+        // gold (golds are dark ochre on paper skins; fallback = base neon skin).
+        color: active ? (activeColor === C.gold ? 'var(--skin-on-gold, #3a2e00)' : '#f7efe0') : C.mute,
         border: active ? `2px solid ${activeColor}` : `2px solid transparent`,
-        fontSize: '9px', letterSpacing: 0, cursor: 'pointer', whiteSpace: 'nowrap',
+        fontSize: '11px', letterSpacing: 0, cursor: 'pointer', whiteSpace: 'nowrap',
       }}
     >
       {label}
@@ -170,7 +172,7 @@ export const BandsView: React.FC = () => {
           className="snes-chip btb-press"
           onClick={() => { setShowSlots(true); haptics.light(); }}
           title="Roster slots — tap for the breakdown"
-          style={{ flexShrink: 0, fontSize: '11px', cursor: 'pointer', color: rosterFull ? C.red : C.green, borderColor: C.void, display: 'inline-flex', alignItems: 'center', gap: '5px' }}
+          style={{ flexShrink: 0, minHeight: '44px', padding: '5px 12px', fontSize: '11px', cursor: 'pointer', color: rosterFull ? C.red : C.green, borderColor: C.void, display: 'inline-flex', alignItems: 'center', gap: '5px' }}
         >
           <PixelIcon name="note" size={12} />{rosterBandIds.length}/{maxRosterSize}{rosterFull ? ' · FULL' : ''}
         </button>
@@ -178,7 +180,7 @@ export const BandsView: React.FC = () => {
         {/* Filter segmented */}
         <div style={{ display: 'flex', gap: '3px', background: C.bg2, border: `2px solid ${C.void}`, boxShadow: `inset 1px 1px 0 0 ${C.edge}`, padding: '2px', flexShrink: 0 }}>
           {filterTabs.map((tab) => segBtn(filter === tab.id, () => setFilter(tab.id),
-            <>{tab.label} <span style={{ opacity: 0.75 }}>{tab.count}</span></>, tab.id))}
+            <>{tab.label} <span style={{ opacity: 0.75, fontSize: '10px' }}>{tab.count}</span></>, tab.id))}
         </div>
 
         <div style={{ flex: 1 }} />

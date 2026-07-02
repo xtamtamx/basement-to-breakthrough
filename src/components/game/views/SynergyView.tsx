@@ -46,13 +46,6 @@ export const SynergyView: React.FC = () => {
       default: return 'var(--snes-ink-dim)';
     }
   };
-  const getTierFill = (tier: string): string => {
-    switch (tier) {
-      case 'legendary': return 'rgba(199, 125, 255, 0.12)';
-      case 'rare': return 'rgba(76, 201, 240, 0.12)';
-      default: return 'rgba(185, 179, 214, 0.1)';
-    }
-  };
   const getTierIcon = (tier: string) =>
     tier === 'legendary' ? <Trophy size={16} /> : <Zap size={16} />;
 
@@ -78,7 +71,7 @@ export const SynergyView: React.FC = () => {
       overflow: 'hidden'
     }}>
       {/* Header */}
-      <div className="snes-bar snes-bar--top" style={{ padding: '10px 12px', flexShrink: 0 }}>
+      <div className="snes-bar snes-bar--top" style={{ padding: '10px 12px', paddingTop: 'calc(10px + env(safe-area-inset-top))', flexShrink: 0 }}>
         <h2 className="snes-pixel" style={{ fontSize: '12px', color: 'var(--snes-magenta)', margin: 0 }}>
           Synergy Discovery
         </h2>
@@ -106,21 +99,21 @@ export const SynergyView: React.FC = () => {
               <button
                 key={key}
                 onClick={() => setFilter(key)}
-                className="snes-pixel"
+                className={active ? 'snes-btn snes-pixel' : 'snes-pixel'}
                 style={{
                   padding: '10px 12px',
-                  backgroundColor: active ? 'var(--snes-magenta)' : 'var(--snes-bg-2)',
-                  color: active ? '#f7efe0' : 'var(--snes-ink-mute)',
-                  border: '2px solid var(--snes-void)',
-                  borderRadius: 0,
                   fontSize: '11px',
                   textTransform: 'uppercase',
                   cursor: 'pointer',
                   minHeight: '44px',
-                  boxShadow: active
-                    ? 'inset 2px 2px 0 0 rgba(255,255,255,0.45), inset -2px -2px 0 0 rgba(0,0,0,0.45)'
-                    : 'inset 2px 2px 0 0 var(--snes-edge-lt), inset -2px -2px 0 0 var(--snes-void)',
-                  transition: 'none'
+                  transition: 'none',
+                  ...(active ? {} : {
+                    backgroundColor: 'var(--snes-bg-2)',
+                    color: 'var(--snes-ink-dim)',
+                    border: '2px solid var(--snes-void)',
+                    borderRadius: 0,
+                    boxShadow: 'inset 2px 2px 0 0 var(--snes-edge-lt), inset -2px -2px 0 0 var(--snes-void)'
+                  })
                 }}
               >
                 {label}
@@ -131,7 +124,7 @@ export const SynergyView: React.FC = () => {
       </div>
 
       {/* Content */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '12px', paddingBottom: '80px' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '12px', paddingBottom: 'calc(88px + env(safe-area-inset-bottom))' }}>
         {filteredSynergies.length === 0 ? (
           <div className="snes-panel-inset" style={{ textAlign: 'center', padding: '40px 20px', margin: '8px 0' }}>
             <div style={{ marginBottom: '16px', color: 'var(--snes-magenta)' }}>
@@ -159,9 +152,9 @@ export const SynergyView: React.FC = () => {
                     alignItems: 'center',
                     gap: '8px',
                     textTransform: 'uppercase',
-                    color: getTierHex(tier)
+                    color: 'var(--skin-on-void, var(--snes-ink))'
                   }}>
-                    {React.cloneElement(getTierIcon(tier), { size: 14, color: getTierHex(tier) })}
+                    {React.cloneElement(getTierIcon(tier), { size: 14, color: 'var(--skin-on-void-dim, var(--snes-ink-dim))' })}
                     {tier.charAt(0).toUpperCase() + tier.slice(1)} Tier
                   </h3>
 
@@ -171,16 +164,14 @@ export const SynergyView: React.FC = () => {
                       return (
                         <div
                           key={synergy.id}
+                          className="snes-panel"
                           onClick={() => isDiscovered && setExpanded(expanded === synergy.id ? null : synergy.id)}
                           role={isDiscovered ? 'button' : undefined}
                           aria-expanded={isDiscovered ? expanded === synergy.id : undefined}
                           style={{
-                            backgroundColor: getTierFill(synergy.tier),
-                            border: `2px solid ${getTierHex(synergy.tier)}`,
-                            borderRadius: 0,
+                            borderColor: getTierHex(synergy.tier),
                             padding: '12px',
                             opacity: isDiscovered ? 1 : 0.6,
-                            boxShadow: 'inset 2px 2px 0 0 var(--snes-edge-lt), inset -2px -2px 0 0 var(--snes-void)',
                             cursor: isDiscovered ? 'pointer' : 'default',
                             transition: 'none'
                           }}

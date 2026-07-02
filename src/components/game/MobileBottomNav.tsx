@@ -1,8 +1,6 @@
 import React from 'react';
-import {
-  Building2, Users, Music, Megaphone, Briefcase, Zap, TrendingUp,
-  ChevronRight, Grid3X3, Map
-} from 'lucide-react';
+import { ChevronRight, X } from 'lucide-react';
+import { PixelIcon } from '@components/ui/PixelIcon';
 import { useGameStore } from '@stores/gameStore';
 import { showPromotionSystem } from '@game/mechanics/ShowPromotionSystem';
 import { progressionPathSystem } from '@game/mechanics/ProgressionPathSystem';
@@ -49,23 +47,23 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   const primaryViews = [
     {
       id: 'city' as ViewType,
-      icon: <Building2 size={20} />,
+      icon: <PixelIcon name="building" size={20} />,
       label: 'City'
     },
     {
       id: 'bands' as ViewType,
-      icon: <Users size={20} />,
+      icon: <PixelIcon name="person" size={20} />,
       label: 'Bands'
     },
     {
       id: 'shows' as ViewType,
-      icon: <Music size={20} />,
+      icon: <PixelIcon name="note" size={20} />,
       label: 'Shows',
       badge: scheduledShows.length > 0 ? scheduledShows.length : undefined
     },
     {
       id: 'promotion' as ViewType,
-      icon: <Megaphone size={20} />,
+      icon: <PixelIcon name="megaphone" size={20} />,
       label: 'Promo',
       badge: showPromotionSystem.getScheduledShows().length
     },
@@ -73,7 +71,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
     // tab (the unified "all available jobs" list) rather than hiding in More.
     {
       id: 'jobs' as ViewType,
-      icon: <Briefcase size={20} />,
+      icon: <PixelIcon name="briefcase" size={20} />,
       label: 'Jobs'
     }
   ];
@@ -82,17 +80,17 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
     // Touring is gated for the single-city demo (Strong Island only).
     ...(TOURING_ENABLED ? [{
       id: 'tour' as ViewType,
-      icon: <Map size={18} />,
+      icon: <PixelIcon name="pin" size={18} />,
       label: 'Tour'
     }] : []),
     {
       id: 'synergies' as ViewType,
-      icon: <Zap size={18} />,
+      icon: <PixelIcon name="energy" size={18} />,
       label: 'Synergies'
     },
     ...(progressionUnlocked ? [{
       id: 'progression' as ViewType,
-      icon: <TrendingUp size={18} />,
+      icon: <PixelIcon name="fire" size={18} />,
       label: 'Path',
       badge: !progressionPathSystem.getProgression().currentPath ? "!" : undefined
     }] : [])
@@ -147,7 +145,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
                 borderLeft: 'none',
                 borderRight: 'none',
                 borderBottom: 'none',
-                color: currentView === view.id ? 'var(--snes-magenta)' : 'var(--snes-ink-mute)',
+                color: currentView === view.id ? 'var(--snes-magenta)' : 'var(--snes-ink-dim)',
                 cursor: 'pointer',
                 transition: 'none',
                 position: 'relative'
@@ -177,7 +175,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
                 )}
               </div>
               <span className="mobile-bottom-nav__label snes-pixel" style={{
-                fontSize: '9px',
+                fontSize: '11px',
                 letterSpacing: '0'
               }}>{view.label}</span>
             </button>
@@ -187,7 +185,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           <button
             className="mobile-bottom-nav__btn btb-press"
             aria-label="More"
-            aria-haspopup="menu"
+            aria-haspopup="dialog"
             aria-expanded={showMoreMenu}
             onClick={() => {
               setShowMoreMenu(!showMoreMenu);
@@ -210,14 +208,14 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
               borderBottom: 'none',
               color: showMoreMenu || secondaryViews.some(v => v.id === currentView)
                 ? 'var(--snes-magenta)'
-                : 'var(--snes-ink-mute)',
+                : 'var(--snes-ink-dim)',
               cursor: 'pointer',
               transition: 'none'
             }}
           >
-            <Grid3X3 size={18} />
+            <PixelIcon name="grid" size={18} />
             <span className="mobile-bottom-nav__label snes-pixel" style={{
-              fontSize: '9px',
+              fontSize: '11px',
               letterSpacing: '0'
             }}>More</span>
             {/* Roll a dot up to the collapsed button when a hidden secondary view
@@ -252,6 +250,8 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         >
           <div
             className="mobile-bottom-nav__more-panel"
+            role="dialog"
+            aria-label="More"
             style={{
               position: 'fixed',
               bottom: '56px',
@@ -268,10 +268,32 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
             }}
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Pinned header: names the sheet + gives an explicit way out (the
+                More trigger sits under the scrim, so scrim-tap was the only exit). */}
+            <div style={{
+              position: 'sticky',
+              top: 0,
+              zIndex: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '4px 8px 0 16px',
+              backgroundColor: 'var(--snes-bg)'
+            }}>
+              <span className="snes-pixel" style={{ fontSize: '11px', color: 'var(--snes-ink)' }}>SCENE</span>
+              <button
+                type="button"
+                className="snes-close"
+                aria-label="Close"
+                onClick={() => setShowMoreMenu(false)}
+              >
+                <X size={18} />
+              </button>
+            </div>
             {/* Scene meters — moved off the city map. These are info panels, not
                 nav: tapping one expands it in place (mutually exclusive) without
                 closing the menu. Side by side to suit the wide-short screen. */}
-            <div style={{ display: 'flex', gap: '12px', padding: '16px 16px 0', alignItems: 'flex-start' }}>
+            <div style={{ display: 'flex', gap: '12px', padding: '8px 16px 0', alignItems: 'flex-start' }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <SceneIdentityMeter
                   inline
@@ -287,9 +309,13 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
                 />
               </div>
             </div>
+            {/* Flex, not a fixed 3-col grid: the demo often has just 1-2 secondary
+                views, so tiles center at a sane capped width instead of leaving
+                empty grid slots (3 tiles still fill the row on the touring build). */}
             <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
+              display: 'flex',
+              flexWrap: 'wrap',
+              justifyContent: 'center',
               gap: '16px',
               padding: '16px'
             }}>
@@ -301,6 +327,9 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
                     setShowMoreMenu(false);
                   }}
                   style={{
+                    flex: '1 1 0',
+                    minWidth: '120px',
+                    maxWidth: '240px',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
@@ -367,7 +396,9 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           height: '48px',
           // Amber when nothing's booked (pairs with the no-shows confirm), pink when ready.
           background: scheduledShows.length > 0 ? 'var(--snes-magenta)' : 'var(--snes-gold)',
-          color: '#1e1509',
+          // Glyph follows the skin's .snes-btn pairing: light on magenta (ready),
+          // dark on gold (nothing booked) — hardcoding dark failed contrast on magenta.
+          color: scheduledShows.length > 0 ? '#f7efe0' : '#1e1509',
           borderRadius: '0',
           border: '2px solid var(--snes-void)',
           boxShadow: 'inset 2px 2px 0 0 rgba(255,255,255,0.45), inset -2px -2px 0 0 rgba(0,0,0,0.45), 4px 4px 0 0 var(--snes-void)',
@@ -385,10 +416,11 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         {scheduledShows.length > 0 && (
           <span
             aria-hidden
+            className="snes-pixel"
             style={{
               position: 'absolute', top: '-6px', left: '-6px', minWidth: '18px', height: '18px',
               padding: '0 3px', background: 'var(--snes-green)', color: '#f7efe0', border: '2px solid var(--snes-void)',
-              fontFamily: '"Press Start 2P", monospace', fontSize: '8px',
+              fontSize: '9px',
               display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1,
             }}
           >
@@ -397,23 +429,21 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         )}
       </button>
 
-      {/* Turn Indicator */}
-      <div className="mobile-bottom-nav__turn-indicator" style={{
+      {/* Turn Indicator — a .snes-chip so it morphs per skin (no inline chrome). */}
+      <div className="mobile-bottom-nav__turn-indicator snes-chip" style={{
         position: 'fixed',
         // Clear the Dynamic Island / notch (on a SIDE in landscape) via the left inset.
         left: 'calc(12px + env(safe-area-inset-left))',
-        backgroundColor: 'var(--snes-bg-2)',
-        border: '2px solid var(--snes-void)',
-        boxShadow: 'inset 1px 1px 0 0 var(--snes-line)',
-        borderRadius: '0',
-        padding: '7px 10px',
         zIndex: 30,
         bottom: 'calc(3rem + env(safe-area-inset-bottom) + 0.5rem)'
       }}>
         <span className="snes-pixel" style={{
-          fontSize: '8px',
-          color: 'var(--snes-gold)'
-        }}>TURN {currentRound}{maxTurns ? `/${maxTurns}` : ''}</span>
+          fontSize: 'var(--t-sm)',
+          color: 'var(--snes-ink)'
+        }}>
+          <span style={{ color: 'var(--snes-ink-dim)' }}>TURN </span>
+          {currentRound}{maxTurns ? `/${maxTurns}` : ''}
+        </span>
       </div>
     </>
   );

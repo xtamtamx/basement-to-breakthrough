@@ -47,12 +47,15 @@ const GLYPHS: Record<string, string[]> = {
   flask:    ["...###...","...#.#...","...#.#...","..#...#..","..#...#..",".#.###.#.",".#######.",".#######.","..#####.."],
   play:     ["##.......","####.....","######...","########.","#########","########.","######...","####.....","##......."],
   gear:     ["...#.#...",".#######.","..#####..","##.###.##","#..###..#","##.###.##","..#####..",".#######.","...#.#..."],
+  save:     ["#########","#.##..#.#","#.##..#.#","#.####..#","#.......#","#..###..#","#..###..#","#..###..#","#########"],
+  person:   ["...###...","..#####..","..#####..","...###...",".........","..#####..",".#######.","#########","#########"],
+  grid:     ["##.##.##.","##.##.##.",".........","##.##.##.","##.##.##.",".........","##.##.##.","##.##.##.","........."],
 };
 
 // Forgiving concept aliases → canonical glyph, so callers can use intuitive names.
 const ALIASES: Record<string, string> = {
   star: 'fame', rep: 'fame', reputation: 'fame',
-  people: 'fans', fan: 'fans', heart: 'fans',
+  fan: 'fans', heart: 'fans',
   cash: 'money', dollar: 'money', coin: 'money',
   bolt: 'energy',
   caution: 'warning', alert: 'warning',
@@ -77,6 +80,9 @@ const ALIASES: Record<string, string> = {
   banner: 'faction', politics: 'faction',
   settings: 'gear', options: 'gear',
   continue: 'play', start: 'play',
+  people: 'person', roster: 'person', bands: 'person',
+  more: 'grid', menu: 'grid',
+  disk: 'save', floppy: 'save',
   horns: 'guitar', ghost: 'skull', dizzy: 'skull', dead: 'skull',
   // venue types → nearest glyph
   bar: 'home', club: 'home', basement: 'home',

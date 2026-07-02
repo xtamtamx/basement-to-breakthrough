@@ -116,10 +116,19 @@ export const SceneIdentityMeter: React.FC<{ open: boolean; onToggle: () => void;
           gap: '5px',
           marginTop: '6px',
           fontSize: '9px',
-          color: tier.color,
+          color: 'var(--snes-ink)',
         }}
       >
-        <span style={{ fontSize: '8px' }}>●</span>
+        <span
+          aria-hidden
+          style={{
+            width: '6px',
+            height: '6px',
+            flexShrink: 0,
+            background: tier.color,
+            boxShadow: 'inset 0 0 0 1px var(--snes-void)',
+          }}
+        />
         <span>{tier.label}</span>
       </div>
 
@@ -150,7 +159,7 @@ export const SceneIdentityMeter: React.FC<{ open: boolean; onToggle: () => void;
                     alignItems: 'center',
                     gap: '5px',
                     fontSize: '9px',
-                    color: current ? t.color : 'var(--snes-ink-mute)',
+                    color: current ? 'var(--snes-ink)' : 'var(--snes-ink-mute)',
                     opacity: current ? 1 : 0.7,
                   }}
                 >

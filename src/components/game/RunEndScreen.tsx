@@ -302,7 +302,7 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
                 }}
               >
                 <PixelIcon name="trophy" size={18} color="var(--snes-cyan)" />
-                <span style={{ fontSize: '12px', color: '#cdeffd', fontWeight: 700 }}>
+                <span style={{ fontSize: '12px', color: 'var(--snes-ink)', fontWeight: 700 }}>
                   Stakes cleared this mode:{' '}
                   <span style={{ color: 'var(--snes-cyan)' }}>{ceremony.stakesCleared}/{ceremony.stakeCount}</span>
                 </span>
@@ -348,7 +348,7 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
                 }}
               >
                 <PixelIcon name="fire" size={18} color="var(--snes-purple)" />
-                <span style={{ fontSize: '12px', color: '#e9d5ff', fontWeight: 700 }}>
+                <span style={{ fontSize: '12px', color: 'var(--snes-ink)', fontWeight: 700 }}>
                   New stake unlocked: <span style={{ color: 'var(--snes-purple)' }}>{ceremony.unlockedStakeName}</span> — play it for a tougher run.
                 </span>
               </div>
@@ -368,7 +368,7 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
                 }}
               >
                 <PixelIcon name="unlock" size={18} color="var(--snes-gold)" />
-                <span style={{ fontSize: '12px', color: '#fff3c4', fontWeight: 700 }}>
+                <span style={{ fontSize: '12px', color: 'var(--snes-ink)', fontWeight: 700 }}>
                   New mode unlocked: <span style={{ color: 'var(--snes-gold)' }}>{ceremony.unlockedModeName}</span>! Choose it from New Game.
                 </span>
               </div>
@@ -388,7 +388,7 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
                 }}
               >
                 <PixelIcon name="guitar" size={18} color="var(--snes-green)" />
-                <span style={{ fontSize: '12px', color: '#c8f5dd', fontWeight: 700 }}>
+                <span style={{ fontSize: '12px', color: 'var(--snes-ink)', fontWeight: 700 }}>
                   {ceremony.unlockedBandNames.length === 1
                     ? <>New band unlocked: <span style={{ color: 'var(--snes-green)' }}>{ceremony.unlockedBandNames[0]}</span> — sign them next run!</>
                     : <>{ceremony.unlockedBandNames.length} new bands unlocked: <span style={{ color: 'var(--snes-green)' }}>{ceremony.unlockedBandNames.join(', ')}</span>!</>}
@@ -400,7 +400,7 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
               style={{
                 marginTop: '10px',
                 paddingTop: '8px',
-                borderTop: '1px solid rgba(255,255,255,0.12)',
+                borderTop: '1px solid var(--snes-ink-mute)',
                 display: 'flex',
                 justifyContent: 'space-between',
                 fontSize: '11px',
@@ -457,23 +457,10 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
           {canClimb && (
             <button
               onClick={onClimb}
-              className="snes-pixel btb-press"
+              className="snes-btn"
               style={{
                 width: '100%',
-                padding: '14px',
-                backgroundColor: 'var(--snes-purple)',
-                color: '#f7efe0',
-                border: '2px solid var(--snes-void)',
-                borderRadius: 0,
-                boxShadow: 'inset 2px 2px 0 0 rgba(255,255,255,0.4), inset -2px -2px 0 0 rgba(0,0,0,0.4)',
-                fontSize: '11px',
-                letterSpacing: 0,
-                cursor: 'pointer',
                 minHeight: '48px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px',
               }}
             >
               <PixelIcon name="play" size={12} /> Climb · {ceremony?.unlockedStakeName}
@@ -482,18 +469,9 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
           <div style={{ display: 'flex', gap: '12px' }}>
           <button
             onClick={onMainMenu}
-            className="snes-pixel"
+            className="snes-btn snes-btn--ghost"
             style={{
               flex: 1,
-              padding: '12px',
-              backgroundColor: 'var(--snes-bg)',
-              color: 'var(--snes-ink)',
-              border: '2px solid var(--snes-void)',
-              borderRadius: 0,
-              boxShadow: 'inset 2px 2px 0 0 var(--snes-edge-lt), inset -2px -2px 0 0 var(--snes-void)',
-              fontSize: '10px',
-              letterSpacing: 0,
-              cursor: 'pointer',
               minHeight: '44px',
             }}
           >
@@ -501,18 +479,9 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
           </button>
           <button
             onClick={onPlayAgain}
-            className="snes-pixel"
+            className={isWin ? 'snes-btn snes-btn--gold' : 'snes-btn snes-btn--green'}
             style={{
               flex: 1,
-              padding: '12px',
-              backgroundColor: isWin ? 'var(--snes-gold)' : 'var(--snes-green)',
-              color: isWin ? '#1e1509' : '#f7efe0',
-              border: '2px solid var(--snes-void)',
-              borderRadius: 0,
-              boxShadow: 'inset 2px 2px 0 0 rgba(255,255,255,0.4), inset -2px -2px 0 0 rgba(0,0,0,0.4)',
-              fontSize: '10px',
-              letterSpacing: 0,
-              cursor: 'pointer',
               minHeight: '44px',
             }}
           >

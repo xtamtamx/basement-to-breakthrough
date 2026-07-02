@@ -48,6 +48,9 @@
      cards). Needs its own token: void is DARK here but LIGHT in corporate. */
   --skin-on-void: #f0e8d4;
   --skin-on-void-dim: #a89a7e;
+  /* Text sitting on a --snes-gold fill (active sort tabs, gold accents).
+     Paper-skin golds are dark ochre → cream text; corporate keeps white. */
+  --skin-on-gold: #f7efe0;
 }
 
 /* Marker font for all the chrome text (labels, numbers, headings). Prose that
@@ -225,6 +228,7 @@
   --skin-card-shadow: 3px 3px 0 rgba(0,0,0,0.42);
   --skin-on-void: #efece2;
   --skin-on-void-dim: #a09a8a;
+  --skin-on-gold: #f7efe0;
   /* subtle xerox streak grain, layered under the paper color per surface */
   --skin-grain: repeating-linear-gradient(0deg, rgba(0,0,0,0.045) 0 1px, transparent 1px 3px);
 }
@@ -437,6 +441,7 @@
   /* corporate void is LIGHT gray, so on-void text is navy ink */
   --skin-on-void: #11233f;
   --skin-on-void-dim: #5b6b80;
+  --skin-on-gold: #ffffff;
   --skin-barcode: repeating-linear-gradient(90deg, var(--snes-ink) 0 2px, transparent 2px 3px, var(--snes-ink) 3px 4px, transparent 4px 6px);
 }
 [data-skin="corporate-leaning"] .snes-title,

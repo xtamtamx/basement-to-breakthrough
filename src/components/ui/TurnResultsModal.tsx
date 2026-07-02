@@ -192,13 +192,23 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
           gap: '6px'
         }}>{anySoldOut ? <><PixelIcon name="soldout" size={14} />Sold-Out Night!</> : 'Post-Show Damage Report'}</span>
       }
+      footer={
+        <button
+          onClick={closeWithBurst}
+          className="snes-btn"
+          style={{
+            width: '100%',
+            minHeight: '44px',
+            fontSize: '11px',
+            cursor: 'pointer'
+          }}
+        >
+          Continue
+        </button>
+      }
     >
           {/* Content */}
-          <div style={{
-            flex: 1,
-            overflowY: 'auto',
-            padding: '24px'
-          }}>
+          <div style={{ padding: '8px' }}>
             {/* Turn Summary Message */}
             <div style={{
               backgroundColor: 'var(--snes-bg-2)',
@@ -227,13 +237,9 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
             </div>
 
             {/* Financial Summary */}
-            <div style={{
-              backgroundColor: 'var(--snes-bg-2)',
-              borderRadius: 0,
+            <div className="snes-panel-inset" style={{
               padding: '20px',
-              marginBottom: '20px',
-              border: '2px solid var(--snes-void)',
-              boxShadow: 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814'
+              marginBottom: '20px'
             }}>
               <h3 className="snes-pixel" style={{
                 fontSize: '10px',
@@ -351,13 +357,9 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
                   {showResults.map((result, index) => {
                     const details = getShowDetails(result.showId);
                     return (
-                    <div key={index} style={{
-                      backgroundColor: 'var(--snes-bg-2)',
-                      borderRadius: 0,
+                    <div key={index} className="snes-panel-inset" style={{
                       padding: '12px',
-                      fontSize: '14px',
-                      border: '2px solid var(--snes-void)',
-                      boxShadow: 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814'
+                      fontSize: '14px'
                     }}>
                       <div style={{
                         display: 'flex',
@@ -519,26 +521,6 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
                 </p>
               </div>
             )}
-          </div>
-
-          {/* Footer */}
-          <div style={{
-            padding: '16px 20px',
-            borderTop: '2px solid var(--snes-void)',
-            backgroundColor: 'var(--snes-bg-2)'
-          }}>
-            <button
-              onClick={closeWithBurst}
-              className="snes-btn"
-              style={{
-                width: '100%',
-                minHeight: '44px',
-                fontSize: '11px',
-                cursor: 'pointer'
-              }}
-            >
-              Continue
-            </button>
           </div>
     </SnesModal>
   );

@@ -5,9 +5,9 @@ import { isModeUnlocked, modeUnlockRequiresId, modeOrderIndex } from "@game/mech
 import { TOURING_ENABLED } from "@/config/featureFlags";
 import { BASE_ROSTER_SLOTS } from "@game/constants/runConstants";
 import { haptics } from "@utils/mobile";
-import { X, DollarSign, Clock, Users } from "lucide-react";
+import { DollarSign, Clock, Users } from "lucide-react";
 import { PixelIcon } from "@components/ui/PixelIcon";
-import { useEscapeToClose } from "@hooks/useEscapeToClose";
+import { SnesModal } from "@components/ui/SnesModal";
 
 interface RunModeSelectorProps {
   onSelect: (config: RunConfig, stakeTier: number) => void;
@@ -73,7 +73,6 @@ export const RunModeSelector: React.FC<RunModeSelectorProps> = ({ onSelect, onCl
   const nameById = Object.fromEntries(configs.map((c) => [c.id, c.name]));
   // Selected stake tier per mode (defaults to Open Mic so newcomers aren't walled).
   const [tiers, setTiers] = useState<Record<string, number>>({});
-  useEscapeToClose(onClose);
 
   const pick = (config: RunConfig, tier: number) => {
     haptics.success();
@@ -81,35 +80,12 @@ export const RunModeSelector: React.FC<RunModeSelectorProps> = ({ onSelect, onCl
   };
 
   return (
-    <div className="snes-modal" onClick={onClose}>
-      <div
-        className="snes-modal__sheet"
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Choose a run mode"
-        style={{ maxWidth: "480px" }}
-      >
-        {/* Header */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: "4px" }}>
-          <div>
-            <h2 className="snes-pixel" style={{ fontSize: "13px", color: "var(--snes-magenta)", margin: "0 0 4px", letterSpacing: 0 }}>
-              Pick Your Run
-            </h2>
-            <p style={{ fontSize: "11px", color: "var(--snes-ink-dim)", margin: 0 }}>
-              Win a run to unlock the next mode. Win a stake to unlock the next, harder one.
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            aria-label="Back"
-            style={{ width: 44, height: 44, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--snes-bg-3)", color: "var(--snes-ink-dim)", border: "2px solid var(--snes-void)", boxShadow: "inset 1px 1px 0 var(--snes-edge-lt)", cursor: "pointer", borderRadius: 0 }}
-          >
-            <X size={18} />
-          </button>
-        </div>
+    <SnesModal title="Pick Your Run" ariaLabel="Choose a run mode" maxWidth={480} onClose={onClose}>
+      <p style={{ fontSize: "11px", color: "var(--snes-ink-dim)", margin: 0 }}>
+        Win a run to unlock the next mode. Win a stake to unlock the next, harder one.
+      </p>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "12px" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "12px" }}>
           {configs.map((config) => {
             const accent = MODE_ACCENT[config.id] ?? "var(--snes-magenta)";
 
@@ -186,7 +162,7 @@ export const RunModeSelector: React.FC<RunModeSelectorProps> = ({ onSelect, onCl
                 {perks.length > 0 && (
                   <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "8px" }}>
                     {perks.map((p, i) => (
-                      <span key={i} className="snes-pixel" style={{ fontSize: "7px", letterSpacing: 0, color: p.good ? "var(--snes-green)" : "var(--snes-red)", backgroundColor: "var(--snes-bg-2)", border: `2px solid ${p.good ? "var(--snes-green)" : "var(--snes-red)"}`, padding: "3px 6px" }}>
+                      <span key={i} className="snes-chip" style={{ fontSize: "10px", color: p.good ? "var(--snes-green)" : "var(--snes-red)", borderColor: p.good ? "var(--snes-green)" : "var(--snes-red)" }}>
                         {p.good ? "▲" : "▼"} {p.label}
                       </span>
                     ))}
@@ -204,7 +180,7 @@ export const RunModeSelector: React.FC<RunModeSelectorProps> = ({ onSelect, onCl
                   <div className="snes-pixel" style={{ fontSize: "9px", color: "var(--snes-purple)", letterSpacing: 0, marginBottom: "6px", display: "flex", alignItems: "center", gap: "5px" }}>
                     <PixelIcon name="fire" size={11} color="var(--snes-purple)" /> STAKE
                   </div>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "5px", marginBottom: "6px" }}>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "6px" }}>
                     {STAKE_TIERS.map((s) => {
                       const unlocked = stakesManager.isUnlocked(config.id, s.tier);
                       const selected = s.tier === tier;
@@ -217,10 +193,10 @@ export const RunModeSelector: React.FC<RunModeSelectorProps> = ({ onSelect, onCl
                           aria-label={unlocked ? s.name : `${s.name}, locked. Win the previous stake to unlock.`}
                           className="snes-pixel"
                           style={{
-                            fontSize: "7px",
+                            fontSize: "11px",
                             letterSpacing: 0,
-                            padding: "4px 7px",
-                            minHeight: "28px",
+                            padding: "6px 10px",
+                            minHeight: "44px",
                             cursor: unlocked ? "pointer" : "not-allowed",
                             color: selected ? "#f7efe0" : unlocked ? "var(--snes-purple)" : "#4b4470",
                             backgroundColor: selected ? "var(--snes-purple)" : "var(--snes-bg-2)",
@@ -240,7 +216,7 @@ export const RunModeSelector: React.FC<RunModeSelectorProps> = ({ onSelect, onCl
                   {harder.length > 0 && (
                     <div style={{ display: "flex", flexWrap: "wrap", gap: "5px", marginBottom: "8px" }}>
                       {harder.map((h, i) => (
-                        <span key={i} className="snes-pixel" style={{ fontSize: "7px", letterSpacing: 0, color: "var(--snes-red)", backgroundColor: "var(--snes-bg-2)", border: "2px solid var(--snes-red)", padding: "3px 6px" }}>
+                        <span key={i} className="snes-chip" style={{ fontSize: "10px", color: "var(--snes-red)", borderColor: "var(--snes-red)" }}>
                           ▼ {h}
                         </span>
                       ))}
@@ -257,8 +233,7 @@ export const RunModeSelector: React.FC<RunModeSelectorProps> = ({ onSelect, onCl
               </div>
             );
           })}
-        </div>
       </div>
-    </div>
+    </SnesModal>
   );
 };

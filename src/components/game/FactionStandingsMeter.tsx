@@ -2,7 +2,7 @@ import React from 'react';
 import { useGameStore } from '@stores/gameStore';
 import { haptics } from '@utils/mobile';
 import { factionSystem } from '@game/mechanics/FactionSystem';
-import { FACTION_DISPLAY_COLOR } from '@game/world/factionDisplay';
+import { FACTION_DISPLAY_COLOR, FACTION_SHORT_NAME } from '@game/world/factionDisplay';
 
 /**
  * Read-only surface for the "Manage Politics" pillar: where the player stands
@@ -23,7 +23,7 @@ export const FactionStandingsMeter: React.FC<{ open: boolean; onToggle: () => vo
   const factions = factionSystem.getAllFactions();
   const rows = factions.map((f) => ({
     id: f.id,
-    name: f.name,
+    name: FACTION_SHORT_NAME[f.id] ?? f.name,
     color: FACTION_DISPLAY_COLOR[f.id] ?? 'var(--snes-ink-dim)',
     standing: Math.round(standings[f.id] ?? 0),
   }));
@@ -88,11 +88,11 @@ export const FactionStandingsMeter: React.FC<{ open: boolean; onToggle: () => vo
           {rows.map((r) => (
             <div key={r.id}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '3px' }}>
-                <span className="snes-pixel" style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '8px', letterSpacing: 0, color: r.color }}>
-                  <span style={{ width: '7px', height: '7px', background: r.color, borderRadius: '50%', boxShadow: '0 0 0 1px var(--snes-void)' }} />
+                <span className="snes-pixel" style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '11px', letterSpacing: 0, color: 'var(--snes-ink-dim)' }}>
+                  <span style={{ width: '7px', height: '7px', background: r.color, borderRadius: '50%', boxShadow: '0 0 0 1px var(--snes-void)', flexShrink: 0 }} />
                   {r.name}
                 </span>
-                <span className="snes-pixel" style={{ fontSize: '8px', letterSpacing: 0, color: standingColor(r.standing) }}>
+                <span className="snes-pixel" style={{ fontSize: '11px', letterSpacing: 0, color: standingColor(r.standing) }}>
                   {r.standing > 0 ? '+' : ''}{r.standing}
                 </span>
               </div>

@@ -366,8 +366,10 @@ export const ShowBuilderView: React.FC = () => {
             active
             trailing={<span className="snes-pixel" style={{
               marginLeft: 'auto',
-              fontSize: '9px',
-              color: selectedBandIds.length > 0 ? 'var(--snes-magenta)' : 'var(--snes-ink-mute)',
+              fontSize: '11px',
+              /* Lives inside the on-void StepHeader — ink-family tokens wash out
+                 on the wall; use the on-void pair like the title does. */
+              color: selectedBandIds.length > 0 ? 'var(--skin-on-void, var(--snes-ink))' : 'var(--skin-on-void-dim, var(--snes-ink-mute))',
               letterSpacing: 0
             }}>{selectedBandIds.length}/3</span>}
           />
@@ -526,7 +528,7 @@ export const ShowBuilderView: React.FC = () => {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div className="snes-pixel" style={{
-                        fontSize: '10px',
+                        fontSize: '12px',
                         color: 'var(--snes-ink)',
                         marginBottom: '6px',
                         letterSpacing: 0
@@ -560,7 +562,7 @@ export const ShowBuilderView: React.FC = () => {
                     </div>
                     <span className="snes-pixel" style={{
                       flexShrink: 0,
-                      fontSize: '10px',
+                      fontSize: '11px',
                       color: canAfford ? 'var(--snes-green)' : 'var(--snes-red)'
                     }}>
                       ${venue.rent}
@@ -608,6 +610,7 @@ export const ShowBuilderView: React.FC = () => {
             </div>
             <input
               type="range"
+              className="snes-slider"
               min="5"
               max="50"
               step="5"
@@ -615,15 +618,11 @@ export const ShowBuilderView: React.FC = () => {
               onChange={(e) => { setTicketPrice(Number(e.target.value)); haptics.light(); }}
               style={{
                 width: '100%',
-                height: '12px',
-                borderRadius: 0,
-                background: `linear-gradient(to right, var(--snes-magenta) 0%, var(--snes-magenta) ${(ticketPrice - 5) / 45 * 100}%, var(--snes-bg-3) ${(ticketPrice - 5) / 45 * 100}%, var(--snes-bg-3) 100%)`,
-                border: '2px solid var(--snes-void)',
                 outline: 'none',
-                cursor: 'pointer',
-                WebkitAppearance: 'none',
-                appearance: 'none'
-              }}
+                /* Dynamic fill painted on the .snes-slider track pseudo-elements
+                   (the element box is the 44px hit strip, not the visual track). */
+                '--snes-slider-fill': `linear-gradient(to right, var(--snes-magenta) 0%, var(--snes-magenta) ${(ticketPrice - 5) / 45 * 100}%, var(--snes-bg-3) ${(ticketPrice - 5) / 45 * 100}%, var(--snes-bg-3) 100%)`
+              } as React.CSSProperties}
             />
             {/* Live tradeoff readout — the price↔attendance relationship is the
                 key micro-decision; surface it right at the slider, not buried in
@@ -652,8 +651,10 @@ export const ShowBuilderView: React.FC = () => {
         {preview && (
           <section data-tut="combos" style={{ marginBottom: '16px' }}>
             <h3 className="snes-pixel" style={{
-              fontSize: '10px',
-              color: 'var(--snes-ink)',
+              fontSize: '11px',
+              /* Sits on the void wall (outside the panel below) — ink is
+                 near-invisible there in the paper skins; use the on-void token. */
+              color: 'var(--skin-on-void, var(--snes-ink))',
               margin: '0 0 8px',
               textTransform: 'uppercase',
               letterSpacing: 0,

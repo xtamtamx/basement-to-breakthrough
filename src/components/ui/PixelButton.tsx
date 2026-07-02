@@ -25,9 +25,7 @@ const styles = {
     border: 'none',
     cursor: 'pointer',
     transition: 'none',
-    fontFamily: "'Press Start 2P', ui-monospace, monospace",
     imageRendering: 'pixelated' as const,
-    WebkitFontSmoothing: 'none',
     lineHeight: 1.5,
     boxShadow: 'inset -2px -2px 0px 0px rgba(0,0,0,0.45), inset 2px 2px 0px 0px rgba(255,255,255,0.4)',
   },
@@ -35,12 +33,12 @@ const styles = {
     sm: {
       padding: '9px 12px',
       fontSize: '8px',
-      minHeight: '34px',
+      minHeight: '44px',
     },
     md: {
       padding: '11px 16px',
       fontSize: '9px',
-      minHeight: '42px',
+      minHeight: '44px',
     },
     lg: {
       padding: '15px 22px',
@@ -113,6 +111,7 @@ export const PixelButton: React.FC<PixelButtonProps> = ({
   onClick,
   disabled,
   style,
+  className,
   ...motionProps
 }) => {
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -145,6 +144,7 @@ export const PixelButton: React.FC<PixelButtonProps> = ({
 
   return (
     <motion.button
+      className={['snes-pixel', className].filter(Boolean).join(' ')}
       style={buttonStyle}
       onClick={handleClick}
       disabled={disabled || loading}

@@ -140,11 +140,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 >
                   <div style={{
                     position: 'absolute',
-                    top: '4px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
                     left: enabled ? '28px' : '4px',
                     width: '16px',
                     height: '16px',
-                    backgroundColor: '#f7efe0',
+                    backgroundColor: 'var(--snes-bg)',
                     borderRadius: 0,
                     border: '2px solid var(--snes-void)',
                     transition: 'none'
@@ -206,6 +207,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 </div>
                 <input
                   type="range"
+                  className="snes-slider"
                   min="0"
                   max="1"
                   step="0.05"
@@ -214,14 +216,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                   disabled={!enabled}
                   style={{
                     width: '100%',
-                    height: '8px',
-                    borderRadius: 0,
-                    background: `linear-gradient(to right, var(--snes-magenta) 0%, var(--snes-magenta) ${volume * 100}%, var(--snes-bg-3) ${volume * 100}%, var(--snes-bg-3) 100%)`,
-                    border: '2px solid var(--snes-void)',
                     outline: 'none',
                     opacity: enabled ? 1 : 0.5,
-                    cursor: enabled ? 'pointer' : 'default'
-                  }}
+                    cursor: enabled ? 'pointer' : 'default',
+                    /* Dynamic fill painted on the .snes-slider track pseudo-elements
+                       (the element box is the 44px hit strip, not the visual track). */
+                    '--snes-slider-fill': `linear-gradient(to right, var(--snes-magenta) 0%, var(--snes-magenta) ${volume * 100}%, var(--snes-bg-3) ${volume * 100}%, var(--snes-bg-3) 100%)`
+                  } as React.CSSProperties}
                 />
               </div>
             </div>

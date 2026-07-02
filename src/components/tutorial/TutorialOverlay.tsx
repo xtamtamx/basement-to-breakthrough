@@ -167,9 +167,8 @@ export const TutorialOverlay: React.FC = () => {
                 style={{
                   width: 8,
                   height: 8,
-                  border: '2px solid #0a0814',
-                  background: i < progress.current ? '#f72585' : '#0f0b1e',
-                  boxShadow: i < progress.current ? '0 0 6px rgba(247,37,133,0.7)' : 'inset 1px 1px 0 #2a2350',
+                  border: '2px solid var(--snes-ink)',
+                  background: i < progress.current ? 'var(--snes-magenta)' : 'transparent',
                 }}
               />
             ))}
@@ -183,11 +182,19 @@ export const TutorialOverlay: React.FC = () => {
             style={{
               background: 'none',
               border: 'none',
-              color: '#6f6796',
-              fontSize: '7px',
+              color: 'var(--snes-ink-mute)',
+              fontSize: '11px',
               letterSpacing: 0,
               cursor: 'pointer',
-              padding: '4px',
+              // >=44px hit box without growing the compact header row: pad out,
+              // then pull the box back in with a matching negative margin.
+              padding: '12px 10px',
+              minWidth: 44,
+              minHeight: 44,
+              margin: '-12px -10px -12px 0',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
             Skip ✕
@@ -195,10 +202,10 @@ export const TutorialOverlay: React.FC = () => {
         </div>
 
         {/* Content */}
-        <h3 className="snes-pixel" style={{ fontSize: '11px', color: '#ffffff', margin: '0 0 8px', letterSpacing: 0, lineHeight: 1.5 }}>
+        <h3 className="snes-pixel" style={{ fontSize: '11px', color: 'var(--snes-ink)', margin: '0 0 8px', letterSpacing: 0, lineHeight: 1.5 }}>
           {step.title}
         </h3>
-        <p style={{ fontSize: '12px', color: '#b9b3d6', margin: 0, lineHeight: 1.55 }}>{step.body}</p>
+        <p style={{ fontSize: '12px', color: 'var(--snes-ink-dim)', margin: 0, lineHeight: 1.55 }}>{step.body}</p>
 
         {/* Footer: button for 'button' gates, hint for tap/state gates */}
         {step.gate.kind === 'button' ? (
@@ -216,7 +223,7 @@ export const TutorialOverlay: React.FC = () => {
           step.hint && (
             <p
               className="snes-pixel"
-              style={{ fontSize: '8px', color: '#ffd23f', margin: '12px 0 0', letterSpacing: 0, lineHeight: 1.6, textAlign: 'center' }}
+              style={{ fontSize: '11px', color: 'var(--snes-gold)', margin: '12px 0 0', letterSpacing: 0, lineHeight: 1.6, textAlign: 'center' }}
             >
               {step.hint}
             </p>

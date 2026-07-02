@@ -76,6 +76,72 @@ export const EventCardModal: React.FC<EventCardModalProps> = ({ event, onClose }
     onClose();
   };
 
+  // Choices (or a single OK when the card has none) — rendered via SnesModal's
+  // pinned footer so the buttons never scroll below the fold on the short
+  // landscape screen (the card cannot be dismissed any other way). The strip
+  // keeps its own bg-2 + border-top so it still reads as part of the card.
+  const choicesStrip = (
+    <div
+      style={{
+        padding: '16px 20px',
+        borderTop: '2px solid var(--snes-void)',
+        backgroundColor: 'var(--snes-bg-2)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '10px',
+      }}
+    >
+      {event.choices && event.choices.length > 0 ? (
+        event.choices.map((choice) => (
+          <button
+            key={choice.id}
+            onClick={() => pick(choice.id)}
+            className="snes-btn"
+            style={{
+              width: '100%',
+              minHeight: '44px',
+              fontSize: '11px',
+              textAlign: 'left',
+              lineHeight: 1.5,
+              cursor: 'pointer',
+              whiteSpace: 'normal',
+            }}
+          >
+            {choice.text}
+            {(() => {
+              const outs = choiceOutcomes(choice);
+              if (outs.length > 0) {
+                return (
+                  <span style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '7px' }}>
+                    {outs.map(({ res, delta }) => (
+                      <span key={res} className="snes-pixel" style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontSize: '9px', letterSpacing: 0, color: isGood(res, delta) ? 'var(--snes-green)' : 'var(--snes-red)' }}>
+                        {delta > 0 ? '+' : ''}{delta}
+                        {RES_ICON[res] ? <PixelIcon name={RES_ICON[res]} size={12} /> : <span>{res}</span>}
+                      </span>
+                    ))}
+                  </span>
+                );
+              }
+              // Fallback: a gate-only cost with no resource effects to display.
+              if (choice.cost) {
+                return <span style={{ color: 'var(--snes-red)', marginLeft: '6px' }}>(−{choice.cost.amount} {choice.cost.type})</span>;
+              }
+              return null;
+            })()}
+          </button>
+        ))
+      ) : (
+        <button
+          onClick={() => pick(null)}
+          className="snes-btn snes-btn--green"
+          style={{ width: '100%', minHeight: '44px', fontSize: '11px', cursor: 'pointer' }}
+        >
+          OK
+        </button>
+      )}
+    </div>
+  );
+
   return (
     <SnesModal
       onClose={onClose}
@@ -84,6 +150,7 @@ export const EventCardModal: React.FC<EventCardModalProps> = ({ event, onClose }
       maxWidth={440}
       hideClose
       closeOnBackdrop={false}
+      footer={choicesStrip}
       className={`btb-pop ${event.type === 'crisis' ? 'btb-shake' : ''} ${event.type === 'legendary' ? 'btb-glow' : ''}`}
     >
       <div
@@ -132,8 +199,8 @@ export const EventCardModal: React.FC<EventCardModalProps> = ({ event, onClose }
           </div>
         </div>
 
-        {/* Content */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
+        {/* Content — scrolls via the SnesModal body; choices stay pinned below. */}
+        <div style={{ padding: '20px' }}>
           <p style={{ color: 'var(--snes-ink-dim)', fontSize: '13px', lineHeight: 1.6, margin: 0 }}>
             {event.description}
           </p>
@@ -141,67 +208,6 @@ export const EventCardModal: React.FC<EventCardModalProps> = ({ event, onClose }
             <p style={{ color: 'var(--snes-ink-dim)', fontSize: '12px', fontStyle: 'italic', lineHeight: 1.5, margin: '14px 0 0' }}>
               {event.flavorText}
             </p>
-          )}
-        </div>
-
-        {/* Choices (or a single OK when the card has none) */}
-        <div
-          style={{
-            padding: '16px 20px',
-            borderTop: '2px solid var(--snes-void)',
-            backgroundColor: 'var(--snes-bg-2)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '10px',
-          }}
-        >
-          {event.choices && event.choices.length > 0 ? (
-            event.choices.map((choice) => (
-              <button
-                key={choice.id}
-                onClick={() => pick(choice.id)}
-                className="snes-btn"
-                style={{
-                  width: '100%',
-                  minHeight: '44px',
-                  fontSize: '11px',
-                  textAlign: 'left',
-                  lineHeight: 1.5,
-                  cursor: 'pointer',
-                  whiteSpace: 'normal',
-                }}
-              >
-                {choice.text}
-                {(() => {
-                  const outs = choiceOutcomes(choice);
-                  if (outs.length > 0) {
-                    return (
-                      <span style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '7px' }}>
-                        {outs.map(({ res, delta }) => (
-                          <span key={res} className="snes-pixel" style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontSize: '9px', letterSpacing: 0, color: isGood(res, delta) ? 'var(--snes-green)' : 'var(--snes-red)' }}>
-                            {delta > 0 ? '+' : ''}{delta}
-                            {RES_ICON[res] ? <PixelIcon name={RES_ICON[res]} size={12} /> : <span>{res}</span>}
-                          </span>
-                        ))}
-                      </span>
-                    );
-                  }
-                  // Fallback: a gate-only cost with no resource effects to display.
-                  if (choice.cost) {
-                    return <span style={{ color: 'var(--snes-red)', marginLeft: '6px' }}>(−{choice.cost.amount} {choice.cost.type})</span>;
-                  }
-                  return null;
-                })()}
-              </button>
-            ))
-          ) : (
-            <button
-              onClick={() => pick(null)}
-              className="snes-btn snes-btn--green"
-              style={{ width: '100%', minHeight: '44px', fontSize: '10px', cursor: 'pointer' }}
-            >
-              OK
-            </button>
           )}
         </div>
       </div>

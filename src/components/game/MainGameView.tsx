@@ -32,7 +32,6 @@ import { saveGameManager } from "@game/persistence/SaveGameManager";
 import { synergyManager } from "@game/mechanics/SynergyManager";
 import { applyUiSkin } from "@game/world/uiSkin";
 import { PixelIcon } from "@components/ui/PixelIcon";
-import { Settings, Save, Target, Brain } from 'lucide-react';
 
 type ViewType = "city" | "bands" | "shows" | "promotion" | "synergies" | "jobs" | "progression" | "tour";
 
@@ -293,9 +292,9 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           {/* Resources */}
           <div data-tut="resources" style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-            <FlashChip icon={<PixelIcon name="money" size={12} />} color="#3ad17e" value={money} />
-            <FlashChip icon={<PixelIcon name="fame" size={12} />} color="#ffd23f" value={reputation} />
-            <FlashChip icon={<PixelIcon name="fans" size={12} />} color="#c77dff" value={fans} />
+            <FlashChip icon={<PixelIcon name="money" size={12} />} color="var(--snes-green)" value={money} />
+            <FlashChip icon={<PixelIcon name="fame" size={12} />} color="var(--snes-gold)" value={reputation} />
+            <FlashChip icon={<PixelIcon name="fans" size={12} />} color="var(--snes-purple)" value={fans} />
             {/* Always-on stress gauge — burnout is a loss condition, so the trend
                 must be visible, not a surprise that pops in only at 50. */}
             <span
@@ -309,7 +308,7 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
           </div>
 
           {/* Current city pin. Single-city demo: always Strong Island (scene flavor). */}
-          <div className="snes-pixel" style={{ flex: 1, minWidth: 0, textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', color: '#f72585', fontSize: '11px', letterSpacing: 0, padding: '0 6px' }}>
+          <div className="snes-pixel" style={{ flex: 1, minWidth: 0, textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', color: 'var(--snes-magenta)', fontSize: '11px', letterSpacing: 0, padding: '0 6px' }}>
             <PixelIcon name="pin" size={12} style={{ flexShrink: 0 }} />
             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{currentCityName}</span>
           </div>
@@ -326,7 +325,7 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
               className="snes-hud-btn"
               style={{ color: 'var(--snes-purple)' }}
             >
-              <Brain size={14} />
+              <PixelIcon name="instinct" size={14} />
               <span className="snes-pixel" style={{ fontSize: '11px', letterSpacing: 0 }}>{equippedInstincts}/{maxInstincts}</span>
             </button>
             {objectivesTotal > 0 && (
@@ -337,7 +336,7 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
                 className="snes-hud-btn"
                 style={{ color: objectivesDone > 0 ? 'var(--snes-green)' : 'var(--snes-purple)' }}
               >
-                <Target size={14} />
+                <PixelIcon name="target" size={14} />
                 <span className="snes-pixel" style={{ fontSize: '11px', letterSpacing: 0 }}>{objectivesDone}/{objectivesTotal}</span>
               </button>
             )}
@@ -347,7 +346,7 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
               className="snes-hud-btn"
               style={{ color: 'var(--snes-ink-dim)' }}
             >
-              <Save size={15} />
+              <PixelIcon name="save" size={15} />
             </button>
             <button
               onClick={() => setShowSettings(true)}
@@ -355,7 +354,7 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
               className="snes-hud-btn"
               style={{ color: 'var(--snes-ink-dim)' }}
             >
-              <Settings size={15} />
+              <PixelIcon name="gear" size={15} />
             </button>
           </div>
         </div>

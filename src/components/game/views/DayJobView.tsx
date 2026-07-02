@@ -256,7 +256,7 @@ export const DayJobView: React.FC = () => {
                 letterSpacing: 0,
                 cursor: 'pointer',
                 whiteSpace: 'nowrap',
-                minHeight: '40px',
+                minHeight: '44px',
                 transition: 'none'
               }}
             >
@@ -283,7 +283,7 @@ export const DayJobView: React.FC = () => {
                   letterSpacing: 0,
                   cursor: 'pointer',
                   whiteSpace: 'nowrap',
-                  minHeight: '40px',
+                  minHeight: '44px',
                   textTransform: 'capitalize',
                   transition: 'none'
                 }}

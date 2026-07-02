@@ -85,18 +85,36 @@ export const SynergyAcquireModal: React.FC<SynergyAcquireModalProps> = ({
       accent={accent}
       closeOnBackdrop={false}
       className={glow ? 'btb-glow' : undefined}
+      footer={
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button
+            onClick={handleDiscard}
+            className="snes-btn snes-btn--ghost"
+            style={{ flex: 1, minHeight: '44px', cursor: 'pointer' }}
+          >
+            Skip This One
+          </button>
+          <button
+            onClick={handleAcquire}
+            disabled={acquireDisabled}
+            className="snes-btn snes-btn--green"
+            style={{ flex: 1, minHeight: '44px', cursor: acquireDisabled ? 'not-allowed' : 'pointer' }}
+          >
+            {isFull ? 'Replace & Acquire' : 'Acquire'}
+          </button>
+        </div>
+      }
     >
       <div>
         {/* Header */}
         <div
           style={{
-            padding: '16px 20px',
-            borderBottom: '2px solid var(--snes-void)',
+            padding: '12px 16px',
+            border: '2px solid var(--snes-void)',
             backgroundColor: 'var(--snes-bg-2)',
             display: 'flex',
             alignItems: 'center',
             gap: '12px',
-            margin: '-16px -16px 0',
           }}
         >
           <span style={{ fontSize: '32px', lineHeight: 1, flexShrink: 0 }}>{synergy.icon}</span>
@@ -110,7 +128,7 @@ export const SynergyAcquireModal: React.FC<SynergyAcquireModalProps> = ({
             <span
               className="snes-pixel"
               style={{
-                fontSize: '8px',
+                fontSize: '9px',
                 color: accent,
                 letterSpacing: 0,
                 textTransform: 'uppercase',
@@ -124,7 +142,7 @@ export const SynergyAcquireModal: React.FC<SynergyAcquireModalProps> = ({
         </div>
 
         {/* Content */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
+        <div style={{ padding: '20px 0 0' }}>
           <p style={{ color: 'var(--snes-ink-dim)', fontSize: '13px', lineHeight: 1.6, margin: '0 0 16px 0' }}>
             {synergy.description}
           </p>
@@ -135,7 +153,7 @@ export const SynergyAcquireModal: React.FC<SynergyAcquireModalProps> = ({
               backgroundColor: 'var(--snes-bg-2)',
               border: '2px solid var(--snes-void)',
               borderRadius: 0,
-              boxShadow: 'inset 2px 2px 0 0 #000, inset -2px -2px 0 0 #2a2350',
+              boxShadow: 'inset 2px 2px 0 0 var(--snes-edge-lt), inset -2px -2px 0 0 var(--snes-void)',
               padding: '12px',
               marginBottom: '16px',
             }}
@@ -174,7 +192,7 @@ export const SynergyAcquireModal: React.FC<SynergyAcquireModalProps> = ({
             <span
               className="snes-pixel"
               style={{
-                fontSize: '8px',
+                fontSize: '9px',
                 letterSpacing: 0,
                 color: 'var(--snes-ink)',
                 background: 'var(--snes-bg-3)',
@@ -205,8 +223,8 @@ export const SynergyAcquireModal: React.FC<SynergyAcquireModalProps> = ({
               >
                 Slots full! Choose one to replace:
               </h3>
-              <p style={{ fontSize: '8px', color: 'var(--snes-ink-mute)', margin: '-4px 0 10px 0', lineHeight: 1.5 }}>
-                Tap one above to swap it out — or "Skip This One" to keep your current loadout.
+              <p style={{ fontSize: '11px', color: 'var(--snes-ink-mute)', margin: '-4px 0 10px 0', lineHeight: 1.5 }}>
+                Tap one below to swap it out — or "Skip This One" to keep your current loadout.
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {equipped.map((eq) => {
@@ -220,10 +238,12 @@ export const SynergyAcquireModal: React.FC<SynergyAcquireModalProps> = ({
                         textAlign: 'left',
                         padding: '8px 10px',
                         minHeight: '44px',
-                        background: selected ? 'var(--snes-bg-3)' : 'var(--snes-bg-3)',
+                        background: selected
+                          ? 'color-mix(in srgb, var(--snes-red) 18%, var(--snes-bg-3))'
+                          : 'var(--snes-bg-3)',
                         border: `2px solid ${selected ? 'var(--snes-red)' : 'var(--snes-void)'}`,
                         borderRadius: 0,
-                        boxShadow: selected ? 'none' : 'inset 1px 1px 0 0 #3a2f5c',
+                        boxShadow: selected ? 'none' : 'inset 1px 1px 0 0 var(--snes-edge-lt)',
                         cursor: 'pointer',
                         touchAction: 'manipulation',
                       }}
@@ -241,7 +261,7 @@ export const SynergyAcquireModal: React.FC<SynergyAcquireModalProps> = ({
                         {selected && (
                           <span
                             className="snes-pixel"
-                            style={{ fontSize: '7px', letterSpacing: 0, color: 'var(--snes-red)', flexShrink: 0 }}
+                            style={{ fontSize: '9px', letterSpacing: 0, color: 'var(--snes-red)', flexShrink: 0 }}
                           >
                             REPLACE
                           </span>
@@ -253,34 +273,6 @@ export const SynergyAcquireModal: React.FC<SynergyAcquireModalProps> = ({
               </div>
             </div>
           )}
-        </div>
-
-        {/* Actions */}
-        <div
-          style={{
-            padding: '16px 20px',
-            borderTop: '2px solid var(--snes-void)',
-            backgroundColor: 'var(--snes-bg-2)',
-            display: 'flex',
-            gap: '12px',
-            margin: '0 -16px -16px',
-          }}
-        >
-          <button
-            onClick={handleDiscard}
-            className="snes-btn snes-btn--ghost"
-            style={{ flex: 1, minHeight: '44px', fontSize: '10px', cursor: 'pointer' }}
-          >
-            Skip This One
-          </button>
-          <button
-            onClick={handleAcquire}
-            disabled={acquireDisabled}
-            className="snes-btn snes-btn--green"
-            style={{ flex: 1, minHeight: '44px', fontSize: '10px', cursor: acquireDisabled ? 'not-allowed' : 'pointer' }}
-          >
-            {isFull ? 'Replace & Acquire' : 'Acquire'}
-          </button>
         </div>
       </div>
     </SnesModal>

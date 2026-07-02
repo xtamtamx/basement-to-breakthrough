@@ -483,6 +483,13 @@ export class ProgressionPathSystem {
     return true;
   }
 
+  // Raw catalog lookup. Unlocked choices fail every getAvailableChoices() filter
+  // (already-unlocked + the tier advances after makeChoice), so rendering a run's
+  // choice history needs direct access to the module-private catalog.
+  getChoiceById(id: string): PathChoice | undefined {
+    return PATH_CHOICES[id];
+  }
+
   // Get available choices for current tier
   getAvailableChoices(): PathChoice[] {
     if (this.state.currentPath === ProgressionPath.NONE) {

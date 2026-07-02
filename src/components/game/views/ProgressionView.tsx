@@ -8,11 +8,16 @@ import { useGameStore } from '@stores/gameStore';
 import { captureRuntimeSnapshot } from '@game/persistence/runtimeSnapshot';
 import { haptics } from '@utils/mobile';
 import { gameAudio } from '@utils/gameAudio';
+import { SnesModal } from '@components/ui/SnesModal';
+import { PixelIcon } from '@components/ui/PixelIcon';
 
 export const ProgressionView: React.FC = () => {
   const { fans, reputation, showHistory } = useGameStore();
   const [selectedChoice, setSelectedChoice] = useState<PathChoice | null>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  // The permanent DIY/Corporate fork must never fire on a single stray tap —
+  // it goes through the same confirm-modal beat as the tier choices.
+  const [pendingPath, setPendingPath] = useState<ProgressionPath | null>(null);
 
   const isUnlocked = progressionPathSystem.isUnlocked({
     fans,
@@ -27,11 +32,13 @@ export const ProgressionView: React.FC = () => {
   const handlePathChoice = (path: ProgressionPath) => {
     if (progressionPathSystem.choosePath(path)) {
       haptics.success();
+      gameAudio.pathChoice(); // the path-lock moment gets the same decision sting as tier confirms
       // Persist the singleton change NOW — choosePath mutates an off-store
       // singleton; without re-snapshotting, a refresh reverts the path while any
       // granted resources stay spent (re-collectable = exploit).
       useGameStore.setState({ runtimeSnapshot: captureRuntimeSnapshot() });
     }
+    setPendingPath(null);
   };
 
   const handleChoiceClick = (choice: PathChoice) => {
@@ -116,7 +123,9 @@ export const ProgressionView: React.FC = () => {
             width: '100%',
             maxWidth: '500px'
           }}>
-            <div style={{ fontSize: '40px', marginBottom: '10px', lineHeight: 1 }}>🔒</div>
+            <div style={{ marginBottom: '10px', lineHeight: 1, color: 'var(--snes-gold)' }}>
+              <PixelIcon name="lock" size={40} />
+            </div>
             <h2 className="snes-pixel" style={{
               fontSize: '12px',
               color: 'var(--snes-gold)',
@@ -144,13 +153,13 @@ export const ProgressionView: React.FC = () => {
                       <h3 className="snes-pixel" style={{
                         color: done ? 'var(--snes-green)' : 'var(--snes-magenta)',
                         margin: 0,
-                        fontSize: '9px',
+                        fontSize: '11px',
                         letterSpacing: 0,
                         lineHeight: 1.4
                       }}>{req.name}</h3>
                       <span className="snes-pixel" style={{
                         color: done ? 'var(--snes-green)' : 'var(--snes-ink)',
-                        fontSize: '9px',
+                        fontSize: '11px',
                         letterSpacing: 0,
                         flexShrink: 0
                       }}>
@@ -167,7 +176,7 @@ export const ProgressionView: React.FC = () => {
                       backgroundColor: 'var(--snes-bg-2)',
                       height: '10px',
                       border: '2px solid var(--snes-void)',
-                      boxShadow: 'inset 1px 1px 0 0 #0a0814',
+                      boxShadow: 'inset 1px 1px 0 0 var(--snes-void)',
                       overflow: 'hidden'
                     }}>
                       <div
@@ -220,14 +229,13 @@ export const ProgressionView: React.FC = () => {
               className="snes-panel"
               style={{
                 border: '2px solid var(--snes-green)',
-                boxShadow: 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814, 0 0 0 1px #3ad17e',
                 padding: '18px',
-                cursor: 'pointer',
                 transition: 'none'
               }}
-              onClick={() => handlePathChoice(ProgressionPath.DIY_COLLECTIVE)}
             >
-              <div style={{ fontSize: '34px', marginBottom: '10px', lineHeight: 1 }}>✊</div>
+              <div style={{ marginBottom: '10px', lineHeight: 1, color: 'var(--snes-green)' }}>
+                <PixelIcon name="community" size={34} />
+              </div>
               <h2 className="snes-pixel" style={{
                 fontSize: '13px',
                 color: 'var(--snes-ink)',
@@ -246,7 +254,7 @@ export const ProgressionView: React.FC = () => {
                 <h3 className="snes-pixel" style={{
                   color: 'var(--snes-green)',
                   margin: '0 0 8px',
-                  fontSize: '9px',
+                  fontSize: '11px',
                   letterSpacing: 0
                 }}>Path Benefits</h3>
                 <ul style={{ margin: 0, paddingLeft: '18px' }}>
@@ -261,7 +269,7 @@ export const ProgressionView: React.FC = () => {
                 <h3 className="snes-pixel" style={{
                   color: 'var(--snes-red)',
                   margin: '0 0 8px',
-                  fontSize: '9px',
+                  fontSize: '11px',
                   letterSpacing: 0
                 }}>Path Challenges</h3>
                 <ul style={{ margin: 0, paddingLeft: '18px' }}>
@@ -279,20 +287,27 @@ export const ProgressionView: React.FC = () => {
                 textAlign: 'center',
                 fontSize: '12px'
               }}>"Keep it real, keep it community"</p>
+
+              <button
+                className="snes-btn"
+                style={{ width: '100%', minHeight: '44px', marginTop: '14px' }}
+                onClick={() => { haptics.light(); setPendingPath(ProgressionPath.DIY_COLLECTIVE); }}
+              >
+                Choose This Path
+              </button>
             </div>
 
             <div
               className="snes-panel"
               style={{
                 border: '2px solid var(--snes-magenta)',
-                boxShadow: 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814, 0 0 0 1px #f72585',
                 padding: '18px',
-                cursor: 'pointer',
                 transition: 'none'
               }}
-              onClick={() => handlePathChoice(ProgressionPath.CORPORATE)}
             >
-              <div style={{ fontSize: '34px', marginBottom: '10px', lineHeight: 1 }}>💰</div>
+              <div style={{ marginBottom: '10px', lineHeight: 1, color: 'var(--snes-magenta)' }}>
+                <PixelIcon name="corporate" size={34} />
+              </div>
               <h2 className="snes-pixel" style={{
                 fontSize: '13px',
                 color: 'var(--snes-ink)',
@@ -311,7 +326,7 @@ export const ProgressionView: React.FC = () => {
                 <h3 className="snes-pixel" style={{
                   color: 'var(--snes-green)',
                   margin: '0 0 8px',
-                  fontSize: '9px',
+                  fontSize: '11px',
                   letterSpacing: 0
                 }}>Path Benefits</h3>
                 <ul style={{ margin: 0, paddingLeft: '18px' }}>
@@ -326,7 +341,7 @@ export const ProgressionView: React.FC = () => {
                 <h3 className="snes-pixel" style={{
                   color: 'var(--snes-red)',
                   margin: '0 0 8px',
-                  fontSize: '9px',
+                  fontSize: '11px',
                   letterSpacing: 0
                 }}>Path Challenges</h3>
                 <ul style={{ margin: 0, paddingLeft: '18px' }}>
@@ -344,6 +359,14 @@ export const ProgressionView: React.FC = () => {
                 textAlign: 'center',
                 fontSize: '12px'
               }}>"Sell out to sell out shows"</p>
+
+              <button
+                className="snes-btn"
+                style={{ width: '100%', minHeight: '44px', marginTop: '14px' }}
+                onClick={() => { haptics.light(); setPendingPath(ProgressionPath.CORPORATE); }}
+              >
+                Choose This Path
+              </button>
             </div>
           </div>
 
@@ -351,13 +374,79 @@ export const ProgressionView: React.FC = () => {
             textAlign: 'center',
             color: 'var(--snes-gold)',
             borderColor: 'var(--snes-gold)',
-            boxShadow: 'inset 2px 2px 0 0 #0a0814, inset -2px -2px 0 0 #0a0814, 0 0 0 1px #ffd23f',
             fontWeight: 600,
             margin: 0,
             padding: '10px 12px',
             fontSize: '12px'
-          }}>⚠️ This choice is permanent and will define your entire journey</p>
+          }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <PixelIcon name="warning" size={12} />
+              This choice is permanent and will define your entire journey
+            </span>
+          </p>
         </div>
+
+        {/* Path confirmation — the permanent fork never commits on a single tap */}
+        {pendingPath !== null && (
+          <SnesModal
+            title="Confirm Path"
+            ariaLabel="Confirm path choice"
+            maxWidth={400}
+            accent={pendingPath === ProgressionPath.DIY_COLLECTIVE ? 'var(--snes-green)' : 'var(--snes-magenta)'}
+            onClose={() => setPendingPath(null)}
+            footer={
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  className="snes-btn snes-btn--ghost"
+                  style={{ flex: 1, minHeight: '44px' }}
+                  onClick={() => setPendingPath(null)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="snes-btn"
+                  style={{ flex: 1, minHeight: '44px' }}
+                  onClick={() => handlePathChoice(pendingPath)}
+                >
+                  Confirm Path
+                </button>
+              </div>
+            }
+          >
+            <h3 className="snes-pixel" style={{
+              color: pendingPath === ProgressionPath.DIY_COLLECTIVE ? 'var(--snes-green)' : 'var(--snes-magenta)',
+              margin: '0 0 12px',
+              fontSize: '11px',
+              letterSpacing: 0,
+              lineHeight: 1.4
+            }}>
+              {pendingPath === ProgressionPath.DIY_COLLECTIVE ? 'DIY Collective' : 'Corporate Circuit'}
+            </h3>
+            <p style={{
+              color: 'var(--snes-ink-dim)',
+              margin: '0 0 16px',
+              fontSize: '13px',
+              lineHeight: 1.5
+            }}>
+              {pendingPath === ProgressionPath.DIY_COLLECTIVE
+                ? 'For the scene, by the scene — lower costs and stronger community, but slimmer profits.'
+                : 'Music as a business — bigger profits and pro venues, at the cost of scene credibility.'}
+            </p>
+            <p className="snes-panel-inset" style={{
+              borderColor: 'var(--snes-gold)',
+              color: 'var(--snes-gold)',
+              padding: '10px',
+              fontWeight: 600,
+              fontSize: '12px',
+              margin: 0
+            }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <PixelIcon name="warning" size={12} />
+                This choice is PERMANENT and cannot be undone!
+              </span>
+            </p>
+          </SnesModal>
+        )}
       </div>
     );
   }
@@ -374,9 +463,13 @@ export const ProgressionView: React.FC = () => {
           fontSize: '12px',
           color: pathAccent,
           margin: 0,
-          letterSpacing: 0
+          letterSpacing: 0,
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '6px'
         }}>
-          {isDIY ? '✊ DIY Collective' : '💰 Corporate Circuit'}
+          <PixelIcon name={isDIY ? 'community' : 'corporate'} size={14} />
+          {isDIY ? 'DIY Collective' : 'Corporate Circuit'}
         </h2>
         <p style={{
           fontSize: '12px',
@@ -395,7 +488,7 @@ export const ProgressionView: React.FC = () => {
           <h3 className="snes-pixel" style={{
             color: 'var(--snes-ink-dim)',
             margin: '0 0 10px',
-            fontSize: '9px',
+            fontSize: '11px',
             letterSpacing: 0
           }}>Active Path Effects</h3>
           <div style={{
@@ -405,7 +498,7 @@ export const ProgressionView: React.FC = () => {
           }}>
             {currentEffects.modifiers.ticketPriceMultiplier !== 1 && (
               <span className="snes-chip snes-pixel" style={{
-                fontSize: '9px',
+                fontSize: '11px',
                 letterSpacing: 0,
                 color: 'var(--snes-ink)'
               }}>
@@ -414,7 +507,7 @@ export const ProgressionView: React.FC = () => {
             )}
             {currentEffects.modifiers.bandHappinessModifier !== 0 && (
               <span className="snes-chip snes-pixel" style={{
-                fontSize: '9px',
+                fontSize: '11px',
                 letterSpacing: 0,
                 color: 'var(--snes-ink)'
               }}>
@@ -423,7 +516,7 @@ export const ProgressionView: React.FC = () => {
             )}
             {currentEffects.modifiers.venueRentMultiplier !== 1 && (
               <span className="snes-chip snes-pixel" style={{
-                fontSize: '9px',
+                fontSize: '11px',
                 letterSpacing: 0,
                 color: 'var(--snes-ink)'
               }}>
@@ -437,9 +530,9 @@ export const ProgressionView: React.FC = () => {
         {availableChoices.length > 0 && (
           <div style={{ marginBottom: '20px' }}>
             <h2 className="snes-pixel" style={{
-              color: 'var(--snes-ink-dim)',
+              color: 'var(--skin-on-void-dim)',
               margin: '0 0 10px 2px',
-              fontSize: '9px',
+              fontSize: '11px',
               letterSpacing: 0
             }}>Available Choices</h2>
             <div style={{
@@ -453,9 +546,6 @@ export const ProgressionView: React.FC = () => {
                   className="snes-panel"
                   style={{
                     border: choice.permanent ? '2px solid var(--snes-gold)' : undefined,
-                    boxShadow: choice.permanent
-                      ? 'inset 2px 2px 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814, 0 0 0 1px #ffd23f'
-                      : undefined,
                     padding: '14px',
                     paddingTop: choice.permanent ? '30px' : '14px',
                     cursor: 'pointer',
@@ -480,7 +570,7 @@ export const ProgressionView: React.FC = () => {
                   <h3 className="snes-pixel" style={{
                     color: 'var(--snes-ink)',
                     margin: '0 0 8px',
-                    fontSize: '9px',
+                    fontSize: '12px',
                     letterSpacing: 0,
                     lineHeight: 1.4
                   }}>{choice.name}</h3>
@@ -506,9 +596,9 @@ export const ProgressionView: React.FC = () => {
         {progression.unlockedChoices.length > 0 && (
           <div>
             <h2 className="snes-pixel" style={{
-              color: 'var(--snes-ink-dim)',
+              color: 'var(--skin-on-void-dim)',
               margin: '0 0 10px 2px',
-              fontSize: '9px',
+              fontSize: '11px',
               letterSpacing: 0
             }}>Completed Choices</h2>
             <div style={{
@@ -517,7 +607,10 @@ export const ProgressionView: React.FC = () => {
               gap: '8px'
             }}>
               {progression.unlockedChoices.map(choiceId => {
-                const choice = availableChoices.find(c => c.id === choiceId);
+                // Raw catalog lookup — unlocked choices are filtered OUT of
+                // getAvailableChoices(), so searching availableChoices here
+                // rendered the run's whole history as nothing.
+                const choice = progressionPathSystem.getChoiceById(choiceId);
                 return choice ? (
                   <div key={choiceId} className="snes-panel" style={{
                     padding: '10px 14px',
@@ -553,110 +646,76 @@ export const ProgressionView: React.FC = () => {
 
       {/* Confirmation Modal */}
       {showConfirmation && selectedChoice && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(8, 6, 18, 0.86)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: '20px'
-          }}
-          onClick={() => setShowConfirmation(false)}
-        >
-          <div
-            className="snes-panel"
-            style={{
-              borderTop: '3px solid var(--snes-magenta)',
-              boxShadow: 'inset 2px 0 0 0 #3a2f5c, inset -2px -2px 0 0 #0a0814',
-              padding: '20px',
-              paddingBottom: 'calc(20px + env(safe-area-inset-bottom))',
-              maxWidth: '400px',
-              width: '100%'
-            }}
-            onClick={e => e.stopPropagation()}
-          >
-            <h2 className="snes-pixel" style={{
-              color: 'var(--snes-ink-dim)',
-              margin: '0 0 12px',
-              fontSize: '9px',
-              letterSpacing: 0
-            }}>Confirm Choice</h2>
-            <h3 className="snes-pixel" style={{
-              color: 'var(--snes-magenta)',
-              margin: '0 0 12px',
-              fontSize: '11px',
-              letterSpacing: 0,
-              lineHeight: 1.4
-            }}>{selectedChoice.name}</h3>
-            <p style={{
-              color: 'var(--snes-ink-dim)',
-              margin: '0 0 16px',
-              fontSize: '13px',
-              lineHeight: 1.5
-            }}>{selectedChoice.description}</p>
-
-            {selectedChoice.permanent && (
-              <p className="snes-panel-inset" style={{
-                borderColor: 'var(--snes-gold)',
-                boxShadow: 'inset 2px 2px 0 0 #0a0814, inset -2px -2px 0 0 #0a0814, 0 0 0 1px #ffd23f',
-                color: 'var(--snes-gold)',
-                padding: '10px',
-                fontWeight: 600,
-                fontSize: '12px',
-                margin: '0 0 12px'
-              }}>
-                ⚠️ This choice is PERMANENT and cannot be undone!
-              </p>
-            )}
-
-            {selectedChoice.conflicts && selectedChoice.conflicts.length > 0 && (
-              <p className="snes-panel-inset" style={{
-                borderColor: 'var(--snes-gold)',
-                boxShadow: 'inset 2px 2px 0 0 #0a0814, inset -2px -2px 0 0 #0a0814, 0 0 0 1px #ffd23f',
-                color: 'var(--snes-gold)',
-                padding: '10px',
-                fontWeight: 600,
-                fontSize: '12px',
-                margin: '0 0 12px'
-              }}>
-                ⚠️ This choice conflicts with other options
-              </p>
-            )}
-
-            <div style={{
-              display: 'flex',
-              gap: '10px',
-              marginTop: '16px'
-            }}>
+        <SnesModal
+          title="Confirm Choice"
+          ariaLabel="Confirm choice"
+          maxWidth={400}
+          onClose={() => setShowConfirmation(false)}
+          footer={
+            <div style={{ display: 'flex', gap: '10px' }}>
               <button
                 className="snes-btn snes-btn--ghost"
-                style={{
-                  flex: 1,
-                  minHeight: '44px'
-                }}
+                style={{ flex: 1, minHeight: '44px' }}
                 onClick={() => setShowConfirmation(false)}
               >
                 Cancel
               </button>
               <button
                 className="snes-btn"
-                style={{
-                  flex: 1,
-                  minHeight: '44px'
-                }}
+                style={{ flex: 1, minHeight: '44px' }}
                 onClick={confirmChoice}
               >
                 Confirm Choice
               </button>
             </div>
-          </div>
-        </div>
+          }
+        >
+          <h3 className="snes-pixel" style={{
+            color: 'var(--snes-magenta)',
+            margin: '0 0 12px',
+            fontSize: '11px',
+            letterSpacing: 0,
+            lineHeight: 1.4
+          }}>{selectedChoice.name}</h3>
+          <p style={{
+            color: 'var(--snes-ink-dim)',
+            margin: '0 0 16px',
+            fontSize: '13px',
+            lineHeight: 1.5
+          }}>{selectedChoice.description}</p>
+
+          {selectedChoice.permanent && (
+            <p className="snes-panel-inset" style={{
+              borderColor: 'var(--snes-gold)',
+              color: 'var(--snes-gold)',
+              padding: '10px',
+              fontWeight: 600,
+              fontSize: '12px',
+              margin: '0 0 12px'
+            }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <PixelIcon name="warning" size={12} />
+                This choice is PERMANENT and cannot be undone!
+              </span>
+            </p>
+          )}
+
+          {selectedChoice.conflicts && selectedChoice.conflicts.length > 0 && (
+            <p className="snes-panel-inset" style={{
+              borderColor: 'var(--snes-gold)',
+              color: 'var(--snes-gold)',
+              padding: '10px',
+              fontWeight: 600,
+              fontSize: '12px',
+              margin: '0 0 12px'
+            }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <PixelIcon name="warning" size={12} />
+                This choice conflicts with other options
+              </span>
+            </p>
+          )}
+        </SnesModal>
       )}
     </div>
   );

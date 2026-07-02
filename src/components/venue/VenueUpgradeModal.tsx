@@ -5,8 +5,8 @@ import { useGameStore } from '@stores/gameStore';
 import { formatMoney } from '@utils/formatters';
 import { haptics } from '@utils/mobile';
 import { Tab } from '@headlessui/react';
-import { X } from 'lucide-react';
 import { PixelIcon } from '@components/ui/PixelIcon';
+import { SnesModal } from '@components/ui/SnesModal';
 
 interface VenueUpgradeModalProps {
   venue: Venue;
@@ -19,7 +19,7 @@ const chip = (key: string, label: string, color: string) => (
   <span
     key={key}
     className="snes-pixel"
-    style={{ fontSize: '7px', letterSpacing: 0, color, backgroundColor: 'var(--snes-bg-2)', border: `2px solid ${color}`, padding: '3px 6px' }}
+    style={{ fontSize: '9px', letterSpacing: 0, color, backgroundColor: 'var(--snes-bg-2)', border: `2px solid ${color}`, padding: '3px 6px' }}
   >
     {label}
   </span>
@@ -119,7 +119,7 @@ export const VenueUpgradeModal: React.FC<VenueUpgradeModalProps> = ({
 
   const tabStyle = (active: boolean): React.CSSProperties => ({
     flex: 1,
-    minHeight: '40px',
+    minHeight: '44px',
     padding: '9px 6px',
     border: 'none',
     borderRadius: 0,
@@ -128,7 +128,7 @@ export const VenueUpgradeModal: React.FC<VenueUpgradeModalProps> = ({
     whiteSpace: 'nowrap',
     background: active ? 'var(--snes-magenta)' : 'transparent',
     color: active ? '#f7efe0' : 'var(--snes-ink-mute)',
-    fontSize: '8px',
+    fontSize: '11px',
     letterSpacing: 0,
   });
 
@@ -137,35 +137,21 @@ export const VenueUpgradeModal: React.FC<VenueUpgradeModalProps> = ({
   const actionStyle = (affordable: boolean): React.CSSProperties => ({
     flex: 1,
     minHeight: '44px',
-    fontSize: '8px',
+    fontSize: '11px',
     cursor: affordable ? 'pointer' : 'not-allowed',
   });
 
   return (
-    <div className="snes-modal" onClick={onClose}>
-      <div className="snes-modal__sheet" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
-        {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', gap: '12px' }}>
-          <div style={{ minWidth: 0 }}>
-            <h2 className="snes-pixel" style={{ fontSize: '12px', color: 'var(--snes-magenta)', margin: '0 0 4px', letterSpacing: 0, lineHeight: 1.4 }}>{venue.name}</h2>
-            <p style={{ fontSize: '11px', color: 'var(--snes-ink-dim)', margin: 0 }}>Build out the room — gear, capacity, vibe.</p>
-          </div>
-          <button
-            onClick={onClose}
-            aria-label="Close"
-            style={{ width: 32, height: 32, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--snes-bg-3)', color: 'var(--snes-ink-dim)', border: '2px solid var(--snes-void)', boxShadow: 'inset 1px 1px 0 var(--snes-edge-lt)', cursor: 'pointer', borderRadius: 0 }}
-          >
-            <X size={18} />
-          </button>
-        </div>
+    <SnesModal onClose={onClose} title={venue.name} ariaLabel={venue.name} maxWidth={500}>
+      <p style={{ fontSize: '11px', color: 'var(--snes-ink-dim)', margin: 0 }}>Build out the room — gear, capacity, vibe.</p>
 
-        {/* Venue stats */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', margin: '12px 0' }}>
-          <span className="snes-chip" style={{ fontSize: '8px', color: 'var(--snes-cyan)' }}>CAP {venue.capacity}</span>
-          <span className="snes-chip" style={{ fontSize: '8px', color: 'var(--snes-purple)' }}>ACU {venue.acoustics}%</span>
-          <span className="snes-chip" style={{ fontSize: '8px', color: 'var(--snes-green)' }}>ATM {venue.atmosphere}%</span>
-          <span className="snes-chip" style={{ fontSize: '8px', color: 'var(--snes-red)' }}>−{formatMoney(upkeepCost)}/turn</span>
-        </div>
+      {/* Venue stats */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', margin: '12px 0' }}>
+        <span className="snes-chip" style={{ color: 'var(--snes-cyan)' }}>CAP {venue.capacity}</span>
+        <span className="snes-chip" style={{ color: 'var(--snes-purple)' }}>ACU {venue.acoustics}%</span>
+        <span className="snes-chip" style={{ color: 'var(--snes-green)' }}>ATM {venue.atmosphere}%</span>
+        <span className="snes-chip" style={{ color: 'var(--snes-red)' }}>−{formatMoney(upkeepCost)}/turn</span>
+      </div>
 
         {!introSeen && (
           <div className="snes-panel-inset" style={{ padding: '12px', marginBottom: '14px', borderLeft: '4px solid var(--snes-gold)' }}>
@@ -178,7 +164,7 @@ export const VenueUpgradeModal: React.FC<VenueUpgradeModalProps> = ({
             <button
               onClick={dismissIntro}
               className="snes-btn snes-btn--gold snes-btn--sm snes-pixel"
-              style={{ marginTop: '10px', minHeight: '36px', fontSize: '8px', cursor: 'pointer', padding: '0 12px' }}
+              style={{ marginTop: '10px', minHeight: '36px', fontSize: '11px', cursor: 'pointer', padding: '0 12px' }}
             >
               Got it
             </button>
@@ -312,7 +298,7 @@ export const VenueUpgradeModal: React.FC<VenueUpgradeModalProps> = ({
                             </div>
                           </div>
                           <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                            <div className="snes-pixel" style={{ fontSize: '8px', color: condColor, letterSpacing: 0 }}>{Math.round(equipment.condition)}%</div>
+                            <div className="snes-pixel" style={{ fontSize: '11px', color: condColor, letterSpacing: 0 }}>{Math.round(equipment.condition)}%</div>
                             <div style={{ fontSize: '11px', color: 'var(--snes-ink-mute)', marginTop: '3px' }}>upkeep {formatMoney(equipment.maintenanceCost)}/t</div>
                           </div>
                         </div>
@@ -346,7 +332,6 @@ export const VenueUpgradeModal: React.FC<VenueUpgradeModalProps> = ({
             </Tab.Panel>
           </Tab.Panels>
         </Tab.Group>
-      </div>
-    </div>
+    </SnesModal>
   );
 };
