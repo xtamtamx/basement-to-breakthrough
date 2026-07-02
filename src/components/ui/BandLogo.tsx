@@ -2,18 +2,23 @@ import React, { useMemo } from 'react';
 import { Band, Genre } from '@game/types/core';
 
 /**
- * BandLogo — renders a band's name as a procedural "logo" that restyles per skin
- * (Sharpie marker scrawl / cut-&-paste zine ransom-note / uniform corporate print).
+ * BandLogo — renders a band's name as a procedural LOGO, not just styled text.
  *
- * CSS-first: the per-skin appearance is driven entirely by ancestor
- * `[data-skin="…"] .band-logo` rules in skins.css (the skin lives on <html>), so
- * this component only supplies the DOM + a deterministic per-letter jitter seeded
- * off `band.id` (same band always looks the same). Genre modulates the jitter
- * amplitude (punk/metal rowdier, emo/indie softer). Corporate skins neutralize the
- * jitter via CSS so the print reads uniform.
+ * Every band gets a deterministic logo TREATMENT seeded off `band.id` and
+ * flavored by genre — the knobs a real logo designer would turn:
+ *   · casing   — ALL-CAPS (heavy/punk) / lowercase (emo/indie) / MiXeD (weird)
+ *   · arch     — letters ride a curve (classic metal arch / punk sag)
+ *   · slant    — the whole lockup leans like a hand-cut sticker
+ *   · deco     — a marker underline / rough box / double rules (hero only)
+ * plus the existing per-letter scrawl jitter. Same band = same logo, always.
  *
- * hero/card variants split the name into <span> letters (so skins can transform
- * each glyph); row/inline stay plain text so single-line ellipsis still works.
+ * Per-skin rendering stays CSS-first ([data-skin] rules in skins.css):
+ * Sharpie draws the treatments in marker; zine overrides with its ransom-note
+ * cut-outs; corporate FLATTENS everything (transform:none, no deco) — selling
+ * out literally prints every band's logo in the same Helvetica.
+ *
+ * hero splits into per-letter spans (arch/jitter); card/row/inline stay plain
+ * text so line-clamp / ellipsis keep working (they still get casing + lean).
  */
 
 // FNV-1a 32-bit — deterministic per band.id.
@@ -36,11 +41,79 @@ function mulberry32(a: number) {
   };
 }
 
-const ROWDY = new Set<Genre>([
-  Genre.PUNK, Genre.HARDCORE, Genre.POWERVIOLENCE, Genre.METAL,
-  Genre.DOOM, Genre.SLUDGE, Genre.NOISE, Genre.GRUNGE,
-]);
+const HEAVY = new Set<Genre>([Genre.METAL, Genre.DOOM, Genre.SLUDGE]);
+const ROWDY = new Set<Genre>([Genre.PUNK, Genre.HARDCORE, Genre.POWERVIOLENCE, Genre.GRUNGE]);
 const SOFT = new Set<Genre>([Genre.EMO, Genre.INDIE, Genre.ALTERNATIVE]);
+const WEIRD = new Set<Genre>([Genre.NOISE, Genre.EXPERIMENTAL, Genre.ELECTRONIC]);
+
+type Deco = 'none' | 'underline' | 'box' | 'rules';
+interface Treatment {
+  casing: 'upper' | 'lower' | 'title' | 'mixed';
+  /** Arch amplitude in px at hero size; sign = arch up (+) or sag down (−). */
+  arch: number;
+  /** Whole-lockup lean, degrees. */
+  slant: number;
+  deco: Deco;
+  /** Scrawl jitter multiplier. */
+  jitter: number;
+}
+
+/** The band's designer: rolls a stable logo treatment from id + genre. */
+function treatmentFor(band: Pick<Band, 'id' | 'genre'>): Treatment {
+  // Separate stream from the letter jitter so treatments don't shift it.
+  const rng = mulberry32(hashStr(band.id) ^ 0x9e3779b9);
+  const g = band.genre;
+  if (HEAVY.has(g)) {
+    return {
+      casing: 'upper',
+      arch: 3.5 + rng() * 3.5, // the classic metal arch
+      slant: 0,
+      deco: rng() < 0.35 ? 'rules' : 'none',
+      jitter: 1.1,
+    };
+  }
+  if (ROWDY.has(g)) {
+    const r = rng();
+    return {
+      casing: 'upper',
+      arch: rng() < 0.3 ? -(2 + rng() * 3) : 0, // some punk logos sag
+      slant: rng() < 0.45 ? (rng() * 2 - 1) * 5 : 0,
+      deco: r < 0.3 ? 'underline' : r < 0.5 ? 'box' : 'none',
+      jitter: 1.35,
+    };
+  }
+  if (SOFT.has(g)) {
+    return {
+      casing: rng() < 0.55 ? 'lower' : 'title',
+      arch: 0,
+      slant: rng() < 0.25 ? (rng() * 2 - 1) * 3 : 0,
+      deco: rng() < 0.2 ? 'underline' : 'none',
+      jitter: 0.6,
+    };
+  }
+  if (WEIRD.has(g)) {
+    return {
+      casing: rng() < 0.5 ? 'mixed' : 'lower',
+      arch: 0,
+      slant: rng() < 0.35 ? (rng() * 2 - 1) * 7 : 0,
+      deco: 'none',
+      jitter: 1.0,
+    };
+  }
+  return { casing: 'title', arch: 0, slant: 0, deco: 'none', jitter: 1.0 };
+}
+
+function applyCasing(name: string, casing: Treatment['casing'], seed: number): string {
+  switch (casing) {
+    case 'upper': return name.toUpperCase();
+    case 'lower': return name.toLowerCase();
+    case 'mixed': {
+      const rng = mulberry32(seed ^ 0x5f356495);
+      return [...name].map((ch) => (rng() < 0.5 ? ch.toUpperCase() : ch.toLowerCase())).join('');
+    }
+    default: return name;
+  }
+}
 
 export type BandLogoVariant = 'hero' | 'card' | 'row' | 'inline';
 
@@ -67,16 +140,25 @@ export const BandLogo: React.FC<BandLogoProps> = ({
   // Only the hero (showcase) splits into per-letter spans — card/row/inline stay
   // plain text so line-clamp / ellipsis keep working.
   const perLetter = variant === 'hero';
+  const treat = useMemo(() => treatmentFor(band), [band]);
+  const display = useMemo(
+    () => applyCasing(band.name, treat.casing, hashStr(band.id)),
+    [band.name, band.id, treat.casing],
+  );
 
   const letters = useMemo(() => {
     if (!perLetter) return null;
     const rng = mulberry32(hashStr(band.id));
     const amp = AMP[variant];
-    const gAmp = ROWDY.has(band.genre) ? 1.3 : SOFT.has(band.genre) ? 0.7 : 1.0;
-    return [...band.name].map((ch) => {
+    const chars = [...display];
+    const n = Math.max(1, chars.length - 1);
+    return chars.map((ch, i) => {
       if (ch === ' ') return { ch, style: undefined as React.CSSProperties | undefined };
-      const rot = (rng() * 2 - 1) * amp.rot * gAmp;
-      const dy = (rng() * 2 - 1) * amp.y * gAmp;
+      const rot = (rng() * 2 - 1) * amp.rot * treat.jitter;
+      const dy =
+        (rng() * 2 - 1) * amp.y * treat.jitter -
+        // Arch: middle letters rise (arch>0) or sink (arch<0) along a sine bow.
+        treat.arch * Math.sin((i / n) * Math.PI);
       return {
         ch,
         style: {
@@ -85,20 +167,33 @@ export const BandLogo: React.FC<BandLogoProps> = ({
         } as React.CSSProperties,
       };
     });
-  }, [perLetter, band.id, band.name, band.genre, variant]);
+  }, [perLetter, display, band.id, variant, treat]);
 
-  const cls = `band-logo band-logo--${variant}${className ? ' ' + className : ''}`;
+  const cls =
+    `band-logo band-logo--${variant}` +
+    (treat.deco !== 'none' && perLetter ? ` band-logo--deco-${treat.deco}` : '') +
+    (className ? ' ' + className : '');
+
+  // The lean lives on an inline transform; corporate skins flatten it with a
+  // `transform: none !important` rule (CSS !important beats inline styles).
+  const lean =
+    treat.slant !== 0 && (perLetter || variant === 'card')
+      ? `skewX(${treat.slant.toFixed(2)}deg)`
+      : undefined;
+  const mergedStyle: React.CSSProperties = lean
+    ? { transform: lean, ...style }
+    : { ...style };
 
   if (!perLetter || !letters) {
     return (
-      <span className={cls} style={style} data-genre={band.genre}>
-        {band.name}
+      <span className={cls} style={mergedStyle} data-genre={band.genre}>
+        {display}
       </span>
     );
   }
 
   return (
-    <span className={cls} style={style} data-genre={band.genre}>
+    <span className={cls} style={mergedStyle} data-genre={band.genre}>
       {letters.map((l, i) =>
         l.ch === ' ' ? (
           <span key={i}> </span>
@@ -108,37 +203,6 @@ export const BandLogo: React.FC<BandLogoProps> = ({
           </span>
         )
       )}
-    </span>
-  );
-};
-
-/**
- * BandMonogram — a small square "patch" carrying the band's initial in the
- * skin's logo font (marker scrawl / zine cut-out / corporate print). Replaces
- * the old genre pictograms on band cards, which read goofy next to the logo
- * system: the band's own mark IS its visual identity. Deterministic tilt is
- * seeded off band.id (corporate skins flatten it via CSS, matching BandLogo).
- */
-export const BandMonogram: React.FC<{
-  band: Pick<Band, 'id' | 'name'>;
-  size?: number;
-  className?: string;
-}> = ({ band, size = 36, className }) => {
-  const rot = useMemo(() => {
-    const rng = mulberry32(hashStr(band.id));
-    return (rng() * 2 - 1) * 4; // −4°..4°, stable per band
-  }, [band.id]);
-  // Skip a leading article so "The Constant Ache" reads C, not T.
-  const letter = (band.name.replace(/^the\s+/i, '').trim()[0] ?? '?').toUpperCase();
-  return (
-    <span
-      className={`band-monogram${className ? ' ' + className : ''}`}
-      style={{ width: size, height: size, fontSize: Math.round(size * 0.6) }}
-      aria-hidden
-    >
-      <span className="band-monogram__ch" style={{ transform: `rotate(${rot.toFixed(2)}deg)` }}>
-        {letter}
-      </span>
     </span>
   );
 };

@@ -10,7 +10,7 @@ import { bandFactionBadge } from '@game/world/factionDisplay';
 import { metaSnapshot, bandLockInfo, isBandHidden, type BandLockInfo } from '@game/world/bandUnlocks';
 import { SnesModal } from '@components/ui/SnesModal';
 import { PixelIcon } from '@components/ui/PixelIcon';
-import { BandLogo, BandMonogram } from '@components/ui/BandLogo';
+import { BandLogo } from '@components/ui/BandLogo';
 import { getCity } from '@/data/cities';
 import { TOURING_ENABLED } from '@/config/featureFlags';
 import { Lock, Home } from 'lucide-react';
@@ -225,8 +225,6 @@ export const BandsView: React.FC = () => {
                     display: 'flex', gap: '8px', alignItems: 'center', minWidth: 0,
                   }}
                 >
-                  <BandMonogram band={band} size={36} />
-
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                       <BandLogo band={band} variant="card" style={{ color: C.ink }} />
@@ -329,8 +327,7 @@ export const BandsView: React.FC = () => {
         const lockedOut = !isInRoster && rosterFull;
         const fb = bandFactionBadge(detailBand);
         return (
-          <SnesModal onClose={() => setDetailId(null)} ariaLabel={detailBand.name} maxWidth={460}
-            headerRight={<BandMonogram band={detailBand} size={32} />}>
+          <SnesModal onClose={() => setDetailId(null)} ariaLabel={detailBand.name} maxWidth={460}>
             <BandLogo band={detailBand} variant="hero" style={{ display: 'block', color: C.ink, margin: '0 0 4px' }} />
             <div style={{ fontFamily: SANS, fontSize: '13px', color: C.dim, margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
               <span>{titleCase(detailBand.genre)}</span>
