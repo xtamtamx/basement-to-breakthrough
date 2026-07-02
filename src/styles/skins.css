@@ -613,13 +613,16 @@
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .band-logo--inline { font-size: inherit; }
-.band-logo__ch { display: inline-block; }
 
-/* Flat vs fancy: the constructed lockup only exists on the DIY side of the
-   meter; sellout tiers get the plain span they can homogenize. */
-.band-logo__fancy { display: none; }
-:is([data-skin="balanced"], [data-skin="diy-leaning"], [data-skin="pure-diy"]) .band-logo--hero .band-logo__fancy { display: inline; }
-:is([data-skin="balanced"], [data-skin="diy-leaning"], [data-skin="pure-diy"]) .band-logo--hero .band-logo__flat { display: none; }
+/* Flat vs LOCKUP: the composed logo (SVG) only exists on the DIY side of the
+   meter; the sellout tiers get the plain name they can homogenize. */
+.band-lockup { display: none; box-sizing: border-box; }
+:is([data-skin="balanced"], [data-skin="diy-leaning"], [data-skin="pure-diy"]) :is(.band-logo--hero, .band-logo--card) .band-lockup { display: block; width: 100%; height: auto; }
+:is([data-skin="balanced"], [data-skin="diy-leaning"], [data-skin="pure-diy"]) :is(.band-logo--hero, .band-logo--card) .band-logo__flat { display: none; }
+/* Container resets so the SVG lays out cleanly where the clamp styles lived. */
+:is([data-skin="balanced"], [data-skin="diy-leaning"], [data-skin="pure-diy"]) .band-logo--card { display: block; overflow: visible; }
+.band-logo--hero .band-lockup { max-height: 116px; }
+.band-logo--card .band-lockup { max-height: 46px; }
 
 /* --- CASING — per BAND (Glassjaw shouts, The Sleeping whispers), part of the
    logo's structure at every DIY-side tier. 'mixed' is baked into the fancy
@@ -645,56 +648,27 @@
 :is([data-skin="diy-leaning"], [data-skin="pure-diy"]) .band-logo--a-hand-marker { font-family: "Marker Felt", "Comic Sans MS", "Bradley Hand", cursive; letter-spacing: 0.3px; }
 :is([data-skin="diy-leaning"], [data-skin="pure-diy"]) .band-logo--a-ransom { font-family: var(--skin-zine-head, "Bebas Neue"), sans-serif; letter-spacing: 1px; font-weight: 400; }
 
-/* --- Deco (underline/box/rules) — logo furniture, drawn at every DIY tier
-   (marker-rough at balanced, straighter ink at the DIY tiers). --- */
-:is([data-skin="balanced"], [data-skin="diy-leaning"], [data-skin="pure-diy"]) .band-logo--deco-underline { border-bottom: 3px solid currentColor; padding-bottom: 3px; }
-:is([data-skin="balanced"], [data-skin="diy-leaning"], [data-skin="pure-diy"]) .band-logo--deco-box { border: 3px solid currentColor; padding: 2px 8px; }
-:is([data-skin="balanced"], [data-skin="diy-leaning"], [data-skin="pure-diy"]) .band-logo--deco-rules { border-top: 2px solid currentColor; border-bottom: 2px solid currentColor; padding: 3px 0; }
-[data-skin="balanced"] .band-logo--deco-box { border-radius: 7px 4px 8px 5px; } /* hand-drawn wobble */
-
-/* Sharpie: marker face; the seeded per-letter jitter supplies the scrawl. */
+/* Sharpie: marker face on the flat spans (rows/inline). */
 [data-skin="balanced"] .band-logo { letter-spacing: 0.3px; }
 
-/* --- Sigils: the source act's mark rides the wordmark at every DIY-side tier
-   (you even hand-draw their bat on your flyer); sellout tiers erase it. --- */
-.band-logo__sigil { margin-right: 0.28em; }
-/* !important: the component sets an inline display for baseline alignment. */
-[data-skin="corporate-leaning"] .band-logo__sigil,
-[data-skin="full-sellout"] .band-logo__sigil { display: none !important; }
+/* balanced: HAND-DRAWN copy of the logo — the same lockup composition, but
+   every text element redrawn in your marker hand (a direct rule on the SVG
+   <text> beats the component's per-line font attributes). */
+[data-skin="balanced"] .band-lockup text {
+  font-family: "Marker Felt", "Comic Sans MS", "Bradley Hand", cursive !important;
+  font-style: normal !important;
+}
+[data-skin="balanced"] .band-lockup { transform: rotate(-0.6deg); }
 
-/* --- Devices — print-grade wordmark treatments, ONLY at pure-diy ("the
-   actual logo"): 3D extrude / heavy outline / stripes through the letters. --- */
-[data-skin="pure-diy"] .band-logo--dev-extrude { text-shadow: 2.5px 2.5px 0 var(--snes-magenta); }
-[data-skin="pure-diy"] .band-logo--dev-outline { -webkit-text-stroke: 1px currentColor; letter-spacing: 1px; }
-[data-skin="pure-diy"] .band-logo--dev-stripes { text-decoration: line-through; text-decoration-thickness: 2px; }
-
-/* diy-leaning: CUT-&-PASTE versions — the archetype letterforms, but some
-   letters ride pasted scraps and the whole lockup goes photocopy-monochrome,
-   slightly askew like it was glued down in a hurry. */
-[data-skin="diy-leaning"] .band-logo--hero .band-logo__fancy {
-  display: inline-block;
-  transform: rotate(-1.2deg);
-  filter: grayscale(1) contrast(1.35);
+/* diy-leaning: XEROXED CUT/PASTE copy — the real letterforms, photocopied
+   monochrome onto a paper scrap and glued down slightly askew. */
+[data-skin="diy-leaning"] .band-lockup {
+  filter: grayscale(1) contrast(1.4);
+  transform: rotate(-1.4deg);
+  background: var(--snes-edge-lt);
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.35);
+  padding: 3px 6px;
 }
-[data-skin="diy-leaning"] .band-logo--hero .band-logo__sigil,
-[data-skin="diy-leaning"] .band-logo--card .band-logo__sigil {
-  filter: grayscale(1) contrast(1.35);
-}
-[data-skin="diy-leaning"] .band-logo--hero .band-logo__ch:nth-child(3n) {
-  background: var(--snes-magenta); color: var(--snes-edge-lt); padding: 0 2px;
-}
-[data-skin="diy-leaning"] .band-logo--hero .band-logo__ch:nth-child(4n) {
-  background: var(--snes-ink); color: var(--snes-edge-lt); padding: 0 2px;
-}
-/* pure-diy: THE logo — clean, except the ransom archetype, whose real logo IS
-   the collage. */
-[data-skin="pure-diy"] .band-logo--a-ransom .band-logo__ch:nth-child(3n) {
-  background: var(--snes-magenta); color: var(--snes-edge-lt); padding: 0 2px;
-}
-[data-skin="pure-diy"] .band-logo--a-ransom .band-logo__ch:nth-child(4n) {
-  background: var(--snes-ink); color: var(--snes-edge-lt); padding: 0 2px;
-}
-[data-skin="pure-diy"] .band-logo--a-ransom .band-logo__ch:nth-child(2n) { font-family: var(--skin-zine-body); }
 
 /* corporate-leaning: UNIFORM HANDWRITING — the warm sellout. Every band's name
    in the same neat script; structure, archetype, lean all flattened. */

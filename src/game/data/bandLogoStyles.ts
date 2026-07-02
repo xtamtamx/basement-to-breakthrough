@@ -170,3 +170,124 @@ export function fallbackLogoStyle(genre: Genre): BandLogoStyle {
 export function logoStyleFor(band: Pick<Band, 'id' | 'genre'>): BandLogoStyle {
   return BAND_LOGO_STYLES[band.id] ?? fallbackLogoStyle(band.genre);
 }
+
+/* ============================================================= *
+ * LOCKUPS — the composed logo itself: which words stack on which line at
+ * which scale, what stretches to fill the block, where the mark integrates.
+ * This is what makes it a LOGO instead of a typeset name.
+ * ============================================================= */
+
+export interface LockupLine {
+  text: string;
+  /** Font-size in viewBox units (block is 400 wide). */
+  size: number;
+  /** Justify the line to the full block width (the band-logo move). */
+  fill?: boolean;
+  /** Extra letter-spacing in viewBox units. */
+  tracking?: number;
+  /** Bow the line: + arches up, − sags. Rise in viewBox units. */
+  arc?: number;
+  /** Force the script face for this line regardless of archetype. */
+  script?: boolean;
+}
+
+export interface LockupRecipe {
+  lines: LockupLine[];
+  mark?: 'crown' | 'behind' | 'left' | 'seal' | 'tail' | 'none';
+  sigil?: string;
+  frame?: 'none' | 'box' | 'rules';
+}
+
+export const BAND_LOCKUPS: Record<string, LockupRecipe> = {
+  // Iron Chic — chunky org-punk block, outlined
+  'the-constant-ache': { lines: [{ text: 'THE', size: 20, tracking: 16 }, { text: 'CONSTANT', size: 56, fill: true }, { text: 'ACHE', size: 56, fill: true }] },
+  // Somerset Thrower — dusty serif record-sleeve type
+  'stain-my-memory': { lines: [{ text: 'STAIN MY', size: 34, tracking: 8 }, { text: 'MEMORY', size: 54, fill: true, tracking: 6 }] },
+  // Rule Them All — varsity seal: ringed crest + stacked athletics caps
+  'stuck-on-repeat': { mark: 'seal', sigil: 'crest', lines: [{ text: 'STUCK ON', size: 36, fill: true }, { text: 'REPEAT', size: 50, fill: true }] },
+  // Victory Garden — sprout crowning a marker scrawl
+  'tend-your-plot': { mark: 'crown', sigil: 'sprout', lines: [{ text: 'TEND YOUR', size: 32 }, { text: 'PLOT', size: 58, fill: true }] },
+  // Incendiary — broadsheet serif with the flame flanking
+  'cost-of-leaving': { mark: 'left', sigil: 'flame', frame: 'rules', lines: [{ text: 'COST OF', size: 30, tracking: 8 }, { text: 'LEAVING', size: 50, fill: true }] },
+  // Stand Still — forward-leaning italic block
+  'a-practice-in-patients': { lines: [{ text: 'A PRACTICE IN', size: 26, tracking: 6 }, { text: 'PATIENTS', size: 56, fill: true }] },
+  // Koyo — wistful serif with the autumn leaf crowning
+  'would-you-even-notice': { mark: 'crown', sigil: 'leaf', lines: [{ text: 'WOULD YOU', size: 30, tracking: 4 }, { text: 'EVEN NOTICE?', size: 42, fill: true }] },
+  // Bayside — THE bat over stacked gothic serif
+  'the-walking-worried': { mark: 'crown', sigil: 'bat', lines: [{ text: 'THE', size: 18, tracking: 14 }, { text: 'WALKING', size: 50, fill: true }, { text: 'WORRIED', size: 50, fill: true }] },
+  // Stray From the Path — boxed agitprop warning label
+  'liminal-criminals': { frame: 'box', lines: [{ text: 'LIMINAL', size: 52, fill: true }, { text: 'CRIMINALS', size: 52, fill: true }] },
+  // Mind Over Matter — lowercase scrawl, pill at the tail
+  'automedication': { mark: 'tail', sigil: 'pill', lines: [{ text: 'automedication', size: 40, fill: true }] },
+  // Silent Majority — plainspoken LIHC block
+  'life-of-a-speculator': { lines: [{ text: 'LIFE OF A', size: 26, tracking: 8 }, { text: 'SPECULATOR', size: 48, fill: true }] },
+  // Inside — typewriter 7-inch sleeve, record at the tail
+  'seven-miles-to-wall-drug': { mark: 'tail', sigil: 'vinyl', lines: [{ text: 'seven miles to', size: 26 }, { text: 'wall drug', size: 44, fill: true }] },
+  // Clockwise — typewriter with the clock flanking
+  'she-was-a-dead-end': { mark: 'left', sigil: 'clock', lines: [{ text: 'she was', size: 26 }, { text: 'a dead end', size: 42, fill: true }] },
+  // Backtrack — arched hoodie block
+  'darker-halftime': { lines: [{ text: 'DARKER', size: 54, fill: true, arc: 10 }, { text: 'HALFTIME', size: 40, fill: true }] },
+  // Crime in Stereo — gallery-minimal lowercase
+  'felony-in-mono-is-dead': { lines: [{ text: 'felony in mono', size: 34, fill: true, tracking: 4 }, { text: 'is dead', size: 24, tracking: 12 }] },
+  // BTMI! — bomb beside the scrawl
+  'get-warner': { mark: 'left', sigil: 'bomb', lines: [{ text: 'GET', size: 34 }, { text: 'WARNER', size: 56, fill: true }] },
+  // As Tall As Lions — floodlight rays crowning bookish serif
+  'into-the-floodlights': { mark: 'crown', sigil: 'rays', lines: [{ text: 'Into the', size: 24 }, { text: 'Floodlights', size: 46, fill: true }] },
+  // Envy on the Coast — swooping script, sparrow at the tail
+  'lucy-grave': { mark: 'tail', sigil: 'bird', lines: [{ text: 'Lucy Grave', size: 54, fill: true, arc: 8, script: true }] },
+  // Kill Your Idols — scrawl with the hardcore X
+  'this-is-just-the-ending': { mark: 'left', sigil: 'xmark', lines: [{ text: 'THIS IS JUST', size: 28 }, { text: 'THE ENDING', size: 44, fill: true }] },
+  // This Is Hell — stacked stamp with a small OF THE
+  'weight-of-the-word': { lines: [{ text: 'WEIGHT', size: 52, fill: true }, { text: 'OF THE', size: 18, tracking: 18 }, { text: 'WORD', size: 52, fill: true }] },
+  // The Sleeping — spacey lowercase, crescent flanking
+  'believe-what-we-sold-you': { mark: 'left', sigil: 'moon', lines: [{ text: 'believe what', size: 32, fill: true }, { text: 'we sold you', size: 32, fill: true }] },
+  // Sons of Abraham — sagging chaos line
+  'termites-in-his-teeth': { lines: [{ text: 'TERMITES', size: 50, fill: true, arc: -8 }, { text: 'IN HIS TEETH', size: 26, tracking: 8 }] },
+  // Patent Pending — party arch with the otter crowning
+  'save-each-otter': { mark: 'crown', sigil: 'otter', lines: [{ text: 'SAVE EACH', size: 30, arc: 8 }, { text: 'OTTER', size: 54, fill: true }] },
+  // Sainthood Reps — one understated wide line
+  'monocultured': { lines: [{ text: 'MONOCULTURED', size: 40, fill: true, tracking: 4 }] },
+  // Zebra — striped arena rules
+  'no-foolin-eyes': { frame: 'rules', lines: [{ text: "NO FOOLIN'", size: 38, fill: true }, { text: 'EYES', size: 52, fill: true, tracking: 20 }] },
+  // Stray Cats — cat head over rising diner script
+  'built-for-greased': { mark: 'crown', sigil: 'cathead', lines: [{ text: 'Built for', size: 30, arc: 6, script: true }, { text: 'Greased', size: 54, fill: true, arc: 8, script: true }] },
+  // Dream Theater — Majesty sigil beside playbill serif
+  'pictures-and-sentences': { mark: 'left', sigil: 'majesty', frame: 'rules', lines: [{ text: 'Pictures', size: 42, fill: true }, { text: 'and Sentences', size: 26 }] },
+  // Straylight Run — quiet pencil scrawl
+  'needles-in-the-spaces': { lines: [{ text: 'needles in', size: 34 }, { text: 'the spaces', size: 34 }] },
+  // From Autumn to Ashes — ornament crowning funeral serif
+  'too-bad-so-beautiful': { mark: 'crown', sigil: 'ornament', frame: 'rules', lines: [{ text: 'TOO BAD,', size: 32 }, { text: 'SO BEAUTIFUL', size: 42, fill: true }] },
+  // Latterman — posi scrawl, heart at the tail
+  'we-are-still-awake': { mark: 'tail', sigil: 'heart', lines: [{ text: 'WE ARE', size: 30 }, { text: 'STILL AWAKE', size: 44, fill: true }] },
+  // Vision of Disorder — boxed distressed stamp
+  'bliss-to-eviction': { frame: 'box', lines: [{ text: 'FROM BLISS', size: 36, fill: true }, { text: 'TO EVICTION', size: 36, fill: true }] },
+  // The Movielife — train beside forward italic
+  'forty-hour-delay': { mark: 'left', sigil: 'train', lines: [{ text: 'forty hour', size: 30 }, { text: 'delay', size: 56, fill: true }] },
+  // Glassjaw — huge ghosted star BEHIND wide-tracked caps
+  'worship-and-trouble': { mark: 'behind', sigil: 'star4', lines: [{ text: 'WORSHIP', size: 44, fill: true, tracking: 10 }, { text: 'AND TROUBLE', size: 20, tracking: 16 }] },
+  // Brand New — typeset restraint IS the logo
+  'your-favorite-weakness': { lines: [{ text: 'your favorite', size: 28 }, { text: 'weakness', size: 46, fill: true }] },
+  // Blue Öyster Cult — hook-and-cross beside occult serif
+  'tyranny-and-mutiny': { mark: 'left', sigil: 'hookcross', lines: [{ text: 'Tyranny', size: 42, fill: true }, { text: 'and Mutiny', size: 26 }] },
+  // Twisted Sister — extruded arena block
+  'stay-angry': { lines: [{ text: 'STAY', size: 56, fill: true }, { text: 'ANGRY', size: 56, fill: true }] },
+  // Taking Back Sunday — tally beside notebook typewriter
+  'tell-all-frenemies': { mark: 'left', sigil: 'tally', lines: [{ text: 'tell all your', size: 24 }, { text: 'frenemies', size: 42, fill: true }] },
+  // Billy Joel — piano keys crowning marquee serif
+  'an-affluent-man': { mark: 'crown', sigil: 'pianokeys', lines: [{ text: 'An', size: 20 }, { text: 'Affluent Man', size: 42, fill: true }] },
+};
+
+/** Fallback lockup for unmapped bands (touring roster): last word fills. */
+export function defaultLockup(name: string): LockupRecipe {
+  const words = name.split(' ');
+  if (words.length <= 2) {
+    return { lines: words.map((w) => ({ text: w, size: 48, fill: true })) };
+  }
+  const head = words.slice(0, -1).join(' ');
+  const tail = words[words.length - 1];
+  return { lines: [{ text: head, size: 28 }, { text: tail, size: 50, fill: true }] };
+}
+
+export function lockupFor(band: Pick<Band, 'id' | 'name'>): LockupRecipe {
+  return BAND_LOCKUPS[band.id] ?? defaultLockup(band.name);
+}

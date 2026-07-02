@@ -1,14 +1,11 @@
-import React from 'react';
-
 /**
- * LogoSigil — the iconic marks that ride next to band wordmarks (the bat, the
- * cat head, the varsity crest…), each a nod to the band's source act. Filled
- * silhouettes on a 24x24 grid, fill=currentColor so they tint per skin and
- * xerox/ink down with the logo at each fidelity tier. Authored flat-vector
- * (not pixel) on purpose: these are print-grade logo marks, unlike the
- * PixelIcon chrome glyphs.
+ * Logo sigil artwork — the iconic marks that live INSIDE band logo lockups
+ * (the bat, the cat head, the varsity crest…), each a nod to the band's
+ * source act. Filled silhouettes on a 24x24 grid, drawn flat-vector (not
+ * pixel): these are print-grade logo marks. Rendered with currentColor +
+ * fill-rule evenodd by BandLogoLockup.
  */
-const SIGIL_PATHS: Record<string, string> = {
+export const LOGO_SIGIL_PATHS: Record<string, string> = {
   bat:
     'M1,7.5 Q4.8,6.2 9,9 L10,5.2 L11.3,7.6 Q12,7.2 12.7,7.6 L14,5.2 L15,9 Q19.2,6.2 23,7.5 Q20.4,10.4 19.2,14.9 Q17.4,12 15.6,14.4 Q14.3,12.6 13.2,14.6 L12,19.3 L10.8,14.6 Q9.7,12.6 8.4,14.4 Q6.6,12 4.8,14.9 Q3.6,10.4 1,7.5 Z',
   star4:
@@ -58,29 +55,3 @@ const SIGIL_PATHS: Record<string, string> = {
   vinyl:
     'M 1.5 12 A 10.5 10.5 0 1 0 22.5 12 A 10.5 10.5 0 1 0 1.5 12 Z M 3.9 12 A 8.1 8.1 0 1 0 20.1 12 A 8.1 8.1 0 1 0 3.9 12 Z M 4.9 12 A 7.1 7.1 0 1 0 19.1 12 A 7.1 7.1 0 1 0 4.9 12 Z M 10.1 12 A 1.9 1.9 0 1 0 13.9 12 A 1.9 1.9 0 1 0 10.1 12 Z',
 };
-
-export type LogoSigilName = keyof typeof SIGIL_PATHS;
-
-export const LogoSigil: React.FC<{
-  name: string;
-  /** Defaults to 1em so it scales with the wordmark's font size. */
-  size?: number | string;
-  className?: string;
-}> = ({ name, size = '1em', className }) => {
-  const d = SIGIL_PATHS[name];
-  if (!d) return null;
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      className={className}
-      aria-hidden
-      style={{ display: 'inline-block', flexShrink: 0, verticalAlign: '-0.12em' }}
-    >
-      <path d={d} fill="currentColor" fillRule="evenodd" />
-    </svg>
-  );
-};
-
-export default LogoSigil;

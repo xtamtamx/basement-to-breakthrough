@@ -212,8 +212,10 @@
   overflow: hidden;
   animation: snes-sheet-in 0.22s cubic-bezier(0.2, 0.9, 0.3, 1) both;
 }
-/* Scrolling content region between the pinned header and footer. */
-.snes-modal__body { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+/* Scrolling content region between the pinned header and footer.
+   overflow-x hidden: rotated content (pasted band-logo lockups) extends the
+   scrollable bounds sideways — the body only ever scrolls vertically. */
+.snes-modal__body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; }
 /* Optional pinned footer (primary CTA row). */
 .snes-modal__footer { flex-shrink: 0; margin-top: var(--s3); }
 /* Bottom-sheet variant — slides up from the bottom edge, full-width. */
