@@ -651,13 +651,13 @@
 /* Sharpie: marker face on the flat spans (rows/inline). */
 [data-skin="balanced"] .band-logo { letter-spacing: 0.3px; }
 
-/* balanced: HAND-DRAWN copy of the logo — the same lockup composition, but
-   every text element redrawn in your marker hand (a direct rule on the SVG
-   <text> beats the component's per-line font attributes). */
-[data-skin="balanced"] .band-lockup text {
-  font-family: "Marker Felt", "Comic Sans MS", "Bradley Hand", cursive !important;
-  font-style: normal !important;
-}
+/* The lockup ships BOTH renderings; the skin picks one. Default = print
+   (pure-diy shows it clean; diy-leaning xeroxes it with the outer filter). */
+.band-lockup .lockup-hand { display: none; }
+/* balanced: the HAND-DRAWN copy — marker face, per-glyph wobble, turbulence-
+   roughened ink (treatment "D"), plus a slight paste-up tilt. */
+[data-skin="balanced"] .band-lockup .lockup-print { display: none; }
+[data-skin="balanced"] .band-lockup .lockup-hand { display: inline; }
 [data-skin="balanced"] .band-lockup { transform: rotate(-0.6deg); }
 
 /* diy-leaning: XEROXED CUT/PASTE copy — the real letterforms, photocopied

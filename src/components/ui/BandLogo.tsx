@@ -47,7 +47,7 @@ export const BandLogo: React.FC<BandLogoProps> = ({
       <span className="band-logo__flat" aria-hidden>
         {band.name}
       </span>
-      {composed && <BandLogoLockup recipe={recipe} style={logo} />}
+      {composed && <BandLogoLockup recipe={recipe} style={logo} seedKey={band.id} />}
     </span>
   );
 };
