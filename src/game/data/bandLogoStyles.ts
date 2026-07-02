@@ -46,6 +46,13 @@ export interface BandLogoStyle {
   slant?: number;
   /** Marker/ink decoration around the lockup (hero only). */
   deco?: 'none' | 'underline' | 'box' | 'rules';
+  /** The source act's iconic mark (LogoSigil name) — the bat, the star, the
+   *  cat head. Shown at the DIY-side tiers (you even hand-draw their sigil on
+   *  your flyer at balanced); the sellout tiers erase it. */
+  sigil?: string;
+  /** Print-grade wordmark device — only renders at pure-diy ("the actual
+   *  logo"): 3D extrude / thick outline / stripes through the letters. */
+  device?: 'extrude' | 'outline' | 'stripes';
 }
 
 /**
@@ -55,81 +62,81 @@ export interface BandLogoStyle {
  */
 export const BAND_LOGO_STYLES: Record<string, BandLogoStyle> = {
   // The Constant Ache → Iron Chic
-  'the-constant-ache': { archetype: 'heavy-condensed', casing: 'upper' },
+  'the-constant-ache': { archetype: 'heavy-condensed', casing: 'upper', device: 'outline' },
   // Stain My Memory → Somerset Thrower
   'stain-my-memory': { archetype: 'grunge-serif', casing: 'upper' },
   // Stuck On Repeat → Rule Them All
-  'stuck-on-repeat': { archetype: 'collegiate', casing: 'upper', arch: 0.25, deco: 'underline' },
+  'stuck-on-repeat': { archetype: 'collegiate', casing: 'upper', arch: 0.25, deco: 'underline', sigil: 'crest' },
   // Tend Your Plot → Victory Garden
-  'tend-your-plot': { archetype: 'hand-marker', casing: 'mixed', slant: -2 },
+  'tend-your-plot': { archetype: 'hand-marker', casing: 'mixed', slant: -2, sigil: 'sprout' },
   // Cost of Leaving → Incendiary
-  'cost-of-leaving': { archetype: 'grunge-serif', casing: 'upper', deco: 'rules' },
+  'cost-of-leaving': { archetype: 'grunge-serif', casing: 'upper', deco: 'rules', sigil: 'flame' },
   // A Practice in Patients → Stand Still
   'a-practice-in-patients': { archetype: 'italic-sans', casing: 'upper', slant: 6 },
   // Would You Even Notice? → Koyo
-  'would-you-even-notice': { archetype: 'grunge-serif', casing: 'upper' },
+  'would-you-even-notice': { archetype: 'grunge-serif', casing: 'upper', sigil: 'leaf' },
   // The Walking Worried → Bayside
-  'the-walking-worried': { archetype: 'horror-serif', casing: 'upper' },
+  'the-walking-worried': { archetype: 'horror-serif', casing: 'upper', sigil: 'bat' },
   // Liminal Criminals → Stray From the Path
-  'liminal-criminals': { archetype: 'heavy-condensed', casing: 'upper', deco: 'box' },
+  'liminal-criminals': { archetype: 'heavy-condensed', casing: 'upper', deco: 'box', device: 'outline' },
   // Automedication → Mind Over Matter
-  'automedication': { archetype: 'hand-marker', casing: 'lower' },
+  'automedication': { archetype: 'hand-marker', casing: 'lower', sigil: 'pill' },
   // Life of a Speculator → Silent Majority
   'life-of-a-speculator': { archetype: 'heavy-condensed', casing: 'upper' },
   // Seven Miles to Wall Drug → Inside
-  'seven-miles-to-wall-drug': { archetype: 'typewriter', casing: 'lower' },
+  'seven-miles-to-wall-drug': { archetype: 'typewriter', casing: 'lower', sigil: 'vinyl' },
   // She Was a Dead End → Clockwise
-  'she-was-a-dead-end': { archetype: 'typewriter', casing: 'lower', deco: 'underline' },
+  'she-was-a-dead-end': { archetype: 'typewriter', casing: 'lower', deco: 'underline', sigil: 'clock' },
   // Darker Halftime → Backtrack
-  'darker-halftime': { archetype: 'heavy-condensed', casing: 'upper', arch: 0.25 },
+  'darker-halftime': { archetype: 'heavy-condensed', casing: 'upper', arch: 0.25, device: 'outline' },
   // Felony in Mono Is Dead → Crime in Stereo
   'felony-in-mono-is-dead': { archetype: 'geometric', casing: 'lower' },
   // Get Warner → Bomb the Music Industry!
-  'get-warner': { archetype: 'hand-marker', casing: 'mixed', slant: -2 },
+  'get-warner': { archetype: 'hand-marker', casing: 'mixed', slant: -2, sigil: 'bomb' },
   // Into the Floodlights → As Tall As Lions
-  'into-the-floodlights': { archetype: 'elegant-serif', casing: 'title' },
+  'into-the-floodlights': { archetype: 'elegant-serif', casing: 'title', sigil: 'rays' },
   // Lucy Grave → Envy on the Coast
-  'lucy-grave': { archetype: 'script', casing: 'title', slant: 3 },
+  'lucy-grave': { archetype: 'script', casing: 'title', slant: 3, sigil: 'bird' },
   // This Is Just the Ending → Kill Your Idols
-  'this-is-just-the-ending': { archetype: 'hand-marker', casing: 'upper', slant: -3 },
+  'this-is-just-the-ending': { archetype: 'hand-marker', casing: 'upper', slant: -3, sigil: 'xmark' },
   // Weight of the Word → This Is Hell
-  'weight-of-the-word': { archetype: 'heavy-condensed', casing: 'upper' },
+  'weight-of-the-word': { archetype: 'heavy-condensed', casing: 'upper', device: 'outline' },
   // Believe What We Sold You → The Sleeping
-  'believe-what-we-sold-you': { archetype: 'geometric', casing: 'lower' },
+  'believe-what-we-sold-you': { archetype: 'geometric', casing: 'lower', sigil: 'moon' },
   // Termites in His Teeth → Sons of Abraham
   'termites-in-his-teeth': { archetype: 'thrash-jagged', casing: 'upper', slant: 3 },
   // Save Each Otter → Patent Pending
-  'save-each-otter': { archetype: 'rounded-pop', casing: 'title', arch: 0.15 },
+  'save-each-otter': { archetype: 'rounded-pop', casing: 'title', arch: 0.15, sigil: 'otter' },
   // Monocultured → Sainthood Reps
   'monocultured': { archetype: 'grunge-serif', casing: 'upper' },
   // No Foolin' Eyes → Zebra
-  'no-foolin-eyes': { archetype: 'geometric', casing: 'upper', deco: 'rules' },
+  'no-foolin-eyes': { archetype: 'geometric', casing: 'upper', deco: 'rules', device: 'stripes' },
   // Built for Greased → Stray Cats
-  'built-for-greased': { archetype: 'script', casing: 'title', slant: 6, deco: 'underline' },
+  'built-for-greased': { archetype: 'script', casing: 'title', slant: 6, deco: 'underline', sigil: 'cathead' },
   // Pictures and Sentences → Dream Theater
-  'pictures-and-sentences': { archetype: 'elegant-serif', casing: 'title', deco: 'rules' },
+  'pictures-and-sentences': { archetype: 'elegant-serif', casing: 'title', deco: 'rules', sigil: 'majesty' },
   // Needles in the Spaces → Straylight Run
   'needles-in-the-spaces': { archetype: 'hand-marker', casing: 'lower', slant: -2 },
   // Too Bad, So Beautiful → From Autumn to Ashes
-  'too-bad-so-beautiful': { archetype: 'horror-serif', casing: 'upper', deco: 'rules' },
+  'too-bad-so-beautiful': { archetype: 'horror-serif', casing: 'upper', deco: 'rules', sigil: 'ornament' },
   // We Are Still Awake → Latterman
-  'we-are-still-awake': { archetype: 'hand-marker', casing: 'mixed', slant: 2, deco: 'underline' },
+  'we-are-still-awake': { archetype: 'hand-marker', casing: 'mixed', slant: 2, deco: 'underline', sigil: 'heart' },
   // From Bliss to Eviction → Vision of Disorder
-  'bliss-to-eviction': { archetype: 'heavy-condensed', casing: 'upper', deco: 'box' },
+  'bliss-to-eviction': { archetype: 'heavy-condensed', casing: 'upper', deco: 'box', device: 'outline' },
   // Forty Hour Delay → The Movielife
-  'forty-hour-delay': { archetype: 'italic-sans', casing: 'lower' },
+  'forty-hour-delay': { archetype: 'italic-sans', casing: 'lower', sigil: 'train' },
   // Worship and Trouble → Glassjaw
-  'worship-and-trouble': { archetype: 'geometric', casing: 'upper' },
+  'worship-and-trouble': { archetype: 'geometric', casing: 'upper', sigil: 'star4' },
   // Your Favorite Weakness → Brand New
   'your-favorite-weakness': { archetype: 'typewriter', casing: 'lower' },
   // Tyranny and Mutiny → Blue Öyster Cult
-  'tyranny-and-mutiny': { archetype: 'horror-serif', casing: 'title', arch: 0.15 },
+  'tyranny-and-mutiny': { archetype: 'horror-serif', casing: 'title', arch: 0.15, sigil: 'hookcross' },
   // Stay Angry → Twisted Sister
-  'stay-angry': { archetype: 'heavy-condensed', casing: 'upper', slant: 5 },
+  'stay-angry': { archetype: 'heavy-condensed', casing: 'upper', slant: 5, device: 'extrude' },
   // Tell All Your Frenemies → Taking Back Sunday
-  'tell-all-frenemies': { archetype: 'typewriter', casing: 'lower', deco: 'underline' },
+  'tell-all-frenemies': { archetype: 'typewriter', casing: 'lower', deco: 'underline', sigil: 'tally' },
   // An Affluent Man → Billy Joel
-  'an-affluent-man': { archetype: 'elegant-serif', casing: 'title' },
+  'an-affluent-man': { archetype: 'elegant-serif', casing: 'title', sigil: 'pianokeys' },
 };
 
 /** Genre-family fallback so every band always has a coherent archetype. */

@@ -655,8 +655,31 @@
 /* Sharpie: marker face; the seeded per-letter jitter supplies the scrawl. */
 [data-skin="balanced"] .band-logo { letter-spacing: 0.3px; }
 
+/* --- Sigils: the source act's mark rides the wordmark at every DIY-side tier
+   (you even hand-draw their bat on your flyer); sellout tiers erase it. --- */
+.band-logo__sigil { margin-right: 0.28em; }
+/* !important: the component sets an inline display for baseline alignment. */
+[data-skin="corporate-leaning"] .band-logo__sigil,
+[data-skin="full-sellout"] .band-logo__sigil { display: none !important; }
+
+/* --- Devices — print-grade wordmark treatments, ONLY at pure-diy ("the
+   actual logo"): 3D extrude / heavy outline / stripes through the letters. --- */
+[data-skin="pure-diy"] .band-logo--dev-extrude { text-shadow: 2.5px 2.5px 0 var(--snes-magenta); }
+[data-skin="pure-diy"] .band-logo--dev-outline { -webkit-text-stroke: 1px currentColor; letter-spacing: 1px; }
+[data-skin="pure-diy"] .band-logo--dev-stripes { text-decoration: line-through; text-decoration-thickness: 2px; }
+
 /* diy-leaning: CUT-&-PASTE versions — the archetype letterforms, but some
-   letters ride pasted scraps (hero lockup only). */
+   letters ride pasted scraps and the whole lockup goes photocopy-monochrome,
+   slightly askew like it was glued down in a hurry. */
+[data-skin="diy-leaning"] .band-logo--hero .band-logo__fancy {
+  display: inline-block;
+  transform: rotate(-1.2deg);
+  filter: grayscale(1) contrast(1.35);
+}
+[data-skin="diy-leaning"] .band-logo--hero .band-logo__sigil,
+[data-skin="diy-leaning"] .band-logo--card .band-logo__sigil {
+  filter: grayscale(1) contrast(1.35);
+}
 [data-skin="diy-leaning"] .band-logo--hero .band-logo__ch:nth-child(3n) {
   background: var(--snes-magenta); color: var(--snes-edge-lt); padding: 0 2px;
 }

@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { Band } from '@game/types/core';
 import { logoStyleFor } from '@game/data/bandLogoStyles';
+import { LogoSigil } from './LogoSigil';
 
 /**
  * BandLogo — each band's wordmark as a nod to its source act's iconic logo,
@@ -107,7 +108,15 @@ export const BandLogo: React.FC<BandLogoProps> = ({
   const cls =
     `band-logo band-logo--${variant} band-logo--a-${logo.archetype} band-logo--case-${logo.casing}` +
     (logo.deco && logo.deco !== 'none' && perLetter ? ` band-logo--deco-${logo.deco}` : '') +
+    (logo.device ? ` band-logo--dev-${logo.device}` : '') +
     (className ? ' ' + className : '');
+
+  // The source act's mark rides with the wordmark on the DIY side of the meter
+  // (CSS hides it at the sellout tiers). Hero + card only — rows stay lean.
+  const sigil =
+    logo.sigil && (variant === 'hero' || variant === 'card') ? (
+      <LogoSigil name={logo.sigil} className="band-logo__sigil" size="0.95em" />
+    ) : null;
 
   // The lean rides an inline transform; sellout skins flatten it with
   // `transform: none !important` (CSS !important beats inline styles).
@@ -119,6 +128,7 @@ export const BandLogo: React.FC<BandLogoProps> = ({
 
   return (
     <span className={cls} style={mergedStyle} aria-label={band.name} data-genre={band.genre}>
+      {sigil}
       <span className="band-logo__flat" aria-hidden>
         {band.name}
       </span>
