@@ -111,8 +111,8 @@ export const BAND_LOGO_STYLES: Record<string, BandLogoStyle> = {
   'this-is-just-the-ending': { archetype: 'heavy-condensed', casing: 'upper', sigil: 'xmark' },
   // Weight of the Word → This Is Hell (hand-inked high-contrast stamp)
   'weight-of-the-word': { archetype: 'heavy-condensed', casing: 'upper' },
-  // Believe What We Sold You → The Sleeping (bold urgent heavy caps, slight lean)
-  'believe-what-we-sold-you': { archetype: 'heavy-condensed', casing: 'upper', slant: 2 },
+  // Believe What We Sold You → The Sleeping (bold urgent heavy caps + rabbit mark)
+  'believe-what-we-sold-you': { archetype: 'heavy-condensed', casing: 'upper', slant: 2, sigil: 'rabbit' },
   // Termites in His Teeth → Sons of Abraham (restrained serif over imagery)
   'termites-in-his-teeth': { archetype: 'grunge-serif', casing: 'upper', slant: 2 },
   // Save Each Otter → Patent Pending (full cartoon mascot, bouncy rounded-pop)
@@ -249,8 +249,8 @@ export const BAND_LOCKUPS: Record<string, LockupRecipe> = {
   'this-is-just-the-ending': { mark: 'left', sigil: 'xmark', lines: [{ text: 'THIS IS JUST', size: 28 }, { text: 'THE ENDING', size: 44, fill: true }] },
   // This Is Hell — stacked hand-inked stamp with a small OF THE
   'weight-of-the-word': { lines: [{ text: 'WEIGHT', size: 52, fill: true }, { text: 'OF THE', size: 18, tracking: 18 }, { text: 'WORD', size: 52, fill: true }] },
-  // The Sleeping — bold urgent stacked block, built to read big on a tee
-  'believe-what-we-sold-you': { lines: [{ text: 'BELIEVE WHAT', size: 30, fill: true }, { text: 'WE SOLD YOU', size: 34, fill: true }] },
+  // The Sleeping — rabbit crowning the bold urgent stacked block
+  'believe-what-we-sold-you': { mark: 'crown', sigil: 'rabbit', lines: [{ text: 'BELIEVE WHAT', size: 30, fill: true }, { text: 'WE SOLD YOU', size: 34, fill: true }] },
   // Sons of Abraham — restrained serif, a slight sag over imagery
   'termites-in-his-teeth': { lines: [{ text: 'TERMITES', size: 50, fill: true, arc: -6 }, { text: 'IN HIS TEETH', size: 26, tracking: 8 }] },
   // Patent Pending — party arch with the cartoon otter crowning
