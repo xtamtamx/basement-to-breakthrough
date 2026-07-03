@@ -84,7 +84,10 @@ export const BandLogoLockup: React.FC<Props> = ({ recipe, style, seedKey, classN
   const crownH = recipe.mark === 'crown' ? 46 : 0;
   const totalH = Math.max(64, textH + crownH + MARGIN * 1.2);
   const sealMode = recipe.mark === 'seal';
-  const blockX0 = sealMode ? 108 : MARGIN; // seal reserves the left column
+  const leftMode = recipe.mark === 'left';
+  // seal reserves a full left column; a left mark reserves a slimmer gutter so
+  // the wordmark clears it instead of colliding with the justified first line.
+  const blockX0 = sealMode ? 108 : leftMode ? 72 : MARGIN;
   const blockW = BLOCK_W - blockX0 - MARGIN;
   const cx = blockX0 + blockW / 2;
 
