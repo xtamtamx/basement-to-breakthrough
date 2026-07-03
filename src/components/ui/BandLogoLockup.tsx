@@ -118,7 +118,7 @@ export const BandLogoLockup: React.FC<Props> = ({ recipe, style, seedKey, classN
       };
       const deviceProps: React.SVGProps<SVGTextElement> =
         !hand && dev === 'outline' && l.fill
-          ? { stroke: 'currentColor', strokeWidth: 1.5, fill: 'none' as const }
+          ? { stroke: 'currentColor', strokeWidth: 2.8, paintOrder: 'stroke', fill: 'none' as const }
           : {};
       if (l.arc) {
         const pid = `${idRef.current}-${hand ? 'h' : 'p'}-arc${i}`;
@@ -186,7 +186,7 @@ export const BandLogoLockup: React.FC<Props> = ({ recipe, style, seedKey, classN
           />
         )}
         {sigilPath && recipe.mark === 'crown' && (
-          <path d={sigilPath} fill="currentColor" fillRule="evenodd" transform={`translate(${cx - 21}, 2) scale(1.75)`} />
+          <path d={sigilPath} fill="currentColor" fillRule="evenodd" transform={`translate(${cx - 24}, 1) scale(2)`} />
         )}
         {sigilPath && recipe.mark === 'left' && (
           <path d={sigilPath} fill="currentColor" fillRule="evenodd" transform={`translate(6, ${totalH / 2 - 26}) scale(2.2)`} />
