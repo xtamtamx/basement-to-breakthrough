@@ -14,7 +14,7 @@ export const initialBands: Band[] = [
   {
     id: "the-constant-ache",
     name: "Timecop",
-    bio: "Here's a band that writes songs about getting older, and sure enough, they keep getting older. The whole room sings the part with no words in it. Beloved, everyone says, but never famous. There's a difference. I looked it up.",
+    bio: "Melodic punks Timecop put out another record about aging and dying, this one with more whoa-ohs. Critics are calling it the best album nobody past the county line will ever hear.",
     genre: Genre.PUNK,
     subgenres: ["melodic-punk","anthemic"],
     traits: [
@@ -36,7 +36,7 @@ export const initialBands: Band[] = [
   {
     id: "stain-my-memory",
     name: "Cache Memory",
-    bio: "Four chords and a whole lot of hiss, and feelings they probably should've slept on. The kind of band a guy keeps to himself. Not out of shame — out of spite.",
+    bio: "Lo-fi emo newcomers Cache Memory record through what the band calls \"a wall of hiss\" and what everyone else also calls a wall of hiss. Their fans refuse to recommend them to a single other person. The strategy is working.",
     genre: Genre.EMO,
     subgenres: ["indie emo","lo-fi","fuzz pop"],
     traits: [
@@ -58,7 +58,7 @@ export const initialBands: Band[] = [
   {
     id: "stuck-on-repeat",
     name: "So It Starts",
-    bio: "Youth-crew lifers, never missed a hometown show in their lives. The set's one breakdown, and then they play it again, in case you missed it. You didn't.",
+    bio: "Youth-crew band So It Starts played the basement again this week. The set is one breakdown, performed until the fire marshal develops an opinion. The average member is 34; the \"youth\" is aspirational.",
     genre: Genre.HARDCORE,
     subgenres: ["Youth Crew","Modern Hardcore","Moshcore"],
     traits: [
@@ -80,7 +80,7 @@ export const initialBands: Band[] = [
   {
     id: "tend-your-plot",
     name: "Isolation 101",
-    bio: "Brought their own gear, their own principles, the whole business. Wouldn't be caught dead in a green room, which works out fine — there isn't one. Earnest. Heavy. Both, somehow.",
+    bio: "DIY hardcore act Isolation 101 announced they will never play a venue with a green room. The venues announced they will never ask.",
     genre: Genre.HARDCORE,
     subgenres: ["melodic hardcore","metallic hardcore","DIY hardcore"],
     traits: [
@@ -102,7 +102,7 @@ export const initialBands: Band[] = [
   {
     id: "cost-of-leaving",
     name: "Choosing Sides",
-    bio: "Heavy as a building coming down and about as neighborly. Every song's a guy yelling about something he happens to be right about, which is the worst kind of right there is. Carried the heavy end of the whole scene. Nobody asked. That's volunteers for you.",
+    bio: "Metallic hardcore band Choosing Sides released a new song yelling about something they happen to be completely right about, which is the worst kind of right there is. In an official statement, the band yelled.",
     genre: Genre.HARDCORE,
     subgenres: ["metallic-hardcore","political"],
     traits: [
@@ -124,7 +124,7 @@ export const initialBands: Band[] = [
   {
     id: "a-practice-in-patients",
     name: "No Autumn Here",
-    bio: "The buzz band. Everybody says so, so there it is. They wear their old heroes so loud you can read the names off the back of the shirt. And here's the thing — they mean it. Every word. Imagine.",
+    bio: "No Autumn Here, this season's buzz band, wears its influences so plainly you can read the tracklist off the back of the shirt. Reached for comment, the band was sincere about it, and would not stop.",
     genre: Genre.HARDCORE,
     subgenres: ["melodic hardcore","pop-punk crossover","Long Island hardcore"],
     traits: [
@@ -146,7 +146,7 @@ export const initialBands: Band[] = [
   {
     id: "would-you-even-notice",
     name: "Heaven So Heavy",
-    bio: "Started as a little something to do between tours, the way a man starts a garden. Now it's the scene's favorite and the old-timers all want on the record. Funny how the side thing eats the main thing. Happens more than you'd figure.",
+    bio: "Heaven So Heavy started as a side project between tours and is now more popular than every band its members quit to form it. Those bands were unavailable for comment, on account of no longer existing.",
     genre: Genre.EMO,
     subgenres: ["Melodic Hardcore","Emo Revival","Post-Hardcore"],
     traits: [
@@ -168,7 +168,7 @@ export const initialBands: Band[] = [
   {
     id: "the-walking-worried",
     name: "Foot Impersonations",
-    bio: "Drifted in from a borough over and the Island just kept them, like a stray. The little bird's on every jacket. Sad songs, the hollering kind. Had about the worst year a band can have, got back in the van, kept driving. What else is there to do.",
+    bio: "Emo act Foot Impersonations relocated from one borough over and were adopted by the Island, which has a strict no-returns policy. Their choruses are engineered for maximum public weeping; the little bird on the merch has never once cheered a soul, as designed.",
     genre: Genre.EMO,
     subgenres: ["emo","pop-punk","goth-punk"],
     traits: [
@@ -190,7 +190,7 @@ export const initialBands: Band[] = [
   {
     id: "liminal-criminals",
     name: "Amnesia Hero",
-    bio: "Half rapping, half a jackhammer, all soapbox. Never met a cop or a corporation they couldn't work into a chorus. He'll bring it up at the barbecue, too. Wonderful band. Pass the potato salad.",
+    bio: "Rap-metal band Amnesia Hero has now written a chorus about every corporation, every police officer, and, sources confirm, your barbecue. They will attend your barbecue. The paper trail is clear: you invited them.",
     genre: Genre.METAL,
     subgenres: ["metalcore","rap-metal","groove-metal"],
     traits: [
@@ -212,7 +212,7 @@ export const initialBands: Band[] = [
   {
     id: "automedication",
     name: "Hectic Thinking",
-    bio: "Been doing the heart-on-the-sleeve thing since before half the room could drive. Every kid tonight figures he invented sincerity. He didn't. These guys more or less did, and they'd never say so, which is how you can tell.",
+    bio: "Melodic hardcore veterans Hectic Thinking have been sincere since 1993. Every young band on tonight's bill is performing an impression of them — poorly, and directly to their faces.",
     genre: Genre.EMO,
     subgenres: ["emotive-hardcore","melodic-hardcore","post-hardcore"],
     traits: [
@@ -234,7 +234,7 @@ export const initialBands: Band[] = [
   {
     id: "life-of-a-speculator",
     name: "Bipolar Bear Club",
-    bio: "Every greybeard on the Island will tell you, without being asked, this is the band that made him pick up a guitar. Broke up too early, so there's a reunion every couple years — the last one, they promise. There's always another last one. Beautiful little racket.",
+    bio: "Beloved locals Bipolar Bear Club announced their final reunion show this week. It is their fourth final reunion show. It sold out, largely to people who attended the previous three finals and remain suspicious.",
     genre: Genre.PUNK,
     subgenres: ["melodic hardcore","emo","post-hardcore"],
     traits: [
@@ -256,7 +256,7 @@ export const initialBands: Band[] = [
   {
     id: "seven-miles-to-wall-drug",
     name: "Postcard Memories",
-    bio: "Used to be a hardcore band, then somebody found the sad chords and that was the end of that. Split up when the decade flipped. The little records go for real money now, so everyone recalls owning one. Nobody owned one.",
+    bio: "The 7-inches from defunct '90s emo band Postcard Memories now sell for hundreds of dollars each. The band pressed a few hundred. At last count, six thousand people own an original.",
     genre: Genre.EMO,
     subgenres: ["midwest emo","emocore","post-hardcore"],
     traits: [
@@ -278,7 +278,7 @@ export const initialBands: Band[] = [
   {
     id: "she-was-a-dead-end",
     name: "She Was",
-    bio: "Hardcore that'd be yelling at you and then start singing mid-yell, like it forgot which one it was. The famous guy you like started here and left, the way they do. The rest turned into half the other bands on this list. You've been thanking the wrong people for years.",
+    bio: "Long Island emocore act She Was launched the career of a frontman you love, who left immediately. The remaining members went on to form half the other bands on tonight's bill, a fact they raise constantly, and correctly, which is worse.",
     genre: Genre.EMO,
     subgenres: ["emocore","post-hardcore","melodic hardcore"],
     traits: [
@@ -300,7 +300,7 @@ export const initialBands: Band[] = [
   {
     id: "darker-halftime",
     name: "Paused Progress",
-    bio: "All breakdowns, no apologies, every song built to move the floor on the one beat that counts. Took a while off for the day job, like a person, then came back meaner. Nobody made them do that part.",
+    bio: "Hardcore band Paused Progress took several years off to work day jobs and returned meaner than when they left. Human resources is looking into it.",
     genre: Genre.HARDCORE,
     subgenres: ["tough-guy","moshcore","beatdown"],
     traits: [
@@ -322,7 +322,7 @@ export const initialBands: Band[] = [
   {
     id: "felony-in-mono-is-dead",
     name: "Amsterdamned!",
-    bio: "Art-school types who tore up the blueprint every record, on the theory that doing it twice was for cowards. Announced they were dead, right on the album cover. Then they weren't. Now they headline the twenty-years-later festival, same as every dead band does.",
+    bio: "Post-hardcore band Amsterdamned! announced their own death on an album cover in 2007. They have since headlined four reunion tours, making them the most commercially successful dead band in the tri-state area.",
     genre: Genre.EMO,
     subgenres: ["melodic-hardcore","post-hardcore","experimental"],
     traits: [
@@ -344,7 +344,7 @@ export const initialBands: Band[] = [
   {
     id: "get-warner",
     name: "Too Coooool for Music",
-    bio: "A ska-punk outfit with a lineup that turns over between songs, best anyone can count. Gave the records away for nothing and handed the guitars to the crowd. Wouldn't let a suit near the door money if his life depended on it. It did not.",
+    bio: "Ska-punk collective Too Coooool for Music gives its records away for free and hands its instruments to the audience mid-set. Analysts reviewed the business model and confirmed it is not one.",
     genre: Genre.PUNK,
     subgenres: ["ska-punk","diy-punk"],
     traits: [
@@ -366,7 +366,7 @@ export const initialBands: Band[] = [
   {
     id: "into-the-floodlights",
     name: "Dancing in the Rearview",
-    bio: "Warm, a little jazzy, and the critics near fainted. The rooms stayed half empty, which the critics leave out. Then they cut the lights and went home, right before the night it might've filled. Timing. Can't teach it.",
+    bio: "Indie band Dancing in the Rearview earned glowing reviews and reliably half-empty rooms, then broke up the week before the rooms would have filled. The critics were inconsolable. Both of them.",
     genre: Genre.INDIE,
     subgenres: ["indie-rock","atmospheric","jazz-tinged"],
     traits: [
@@ -388,7 +388,7 @@ export const initialBands: Band[] = [
   {
     id: "lucy-grave",
     name: "Temper Temper",
-    bio: "Swampy howl-rock and a singer who'd whisper at you sweet and then scream himself inside out. Two terrific records. Then he walked into the marsh and didn't come back. Now that's an exit. Most guys just stop returning calls.",
+    bio: "Post-hardcore band Temper Temper released two acclaimed albums before their frontman quit music with no warning. Sources say he wanted a dramatic exit. Sources say he got one.",
     genre: Genre.EMO,
     subgenres: ["post-hardcore","swamp-emo"],
     traits: [
@@ -410,7 +410,7 @@ export const initialBands: Band[] = [
   {
     id: "this-is-just-the-ending",
     name: "Small Man Big Mouth",
-    bio: "Songs about twenty seconds long, no solos, a singer who'd sooner insult you than thank you for coming. Broke up and reunited so many times nobody bothers with goodbye. Why would they. Back Tuesday.",
+    bio: "Hardcore band Small Man Big Mouth, whose songs average twenty seconds, has broken up and reunited so often the promoter now keeps them on a standing reservation. Nobody says goodbye anymore. There is no point.",
     genre: Genre.HARDCORE,
     subgenres: ["hardcore","powerviolence"],
     traits: [
@@ -432,7 +432,7 @@ export const initialBands: Band[] = [
   {
     id: "weight-of-the-word",
     name: "Heaven Sent, Hell Bound",
-    bio: "Meanest hardcore the basement could hold, and every record they slipped in a little more thrash, like fast and angry wasn't quite fast or angry enough. Is it a hardcore band that learned to shred or a thrash band with a grudge. They won't say. Neither will I. I don't know.",
+    bio: "Heaven Sent, Hell Bound remain unable to determine whether they are a hardcore band that learned to thrash or a thrash band holding a grudge. Their fans cannot determine it. This reporter cannot determine it. The band considers this a success.",
     genre: Genre.METAL,
     subgenres: ["metallic hardcore","thrash","crossover"],
     traits: [
@@ -454,7 +454,7 @@ export const initialBands: Band[] = [
   {
     id: "believe-what-we-sold-you",
     name: "Through Airwaves",
-    bio: "Big choruses, gang vocals, the whole deal. Then the rent and the gas money stopped adding up, the way they do, and the band clocked out. The fans passed a hat to bring them back. So now they tour like a ghost that never agreed to the haunting. You chipped in, by the way.",
+    bio: "Post-hardcore act Through Airwaves broke up when touring stopped covering the rent, then reunited after fans literally passed around a hat. They now tour as a ghost that never agreed to the haunting. You passed the hat.",
     genre: Genre.ALTERNATIVE,
     subgenres: ["post-hardcore","anthemic-alt-rock"],
     traits: [
@@ -476,7 +476,7 @@ export const initialBands: Band[] = [
   {
     id: "termites-in-his-teeth",
     name: "Termites in His Smile",
-    bio: "Late-nineties guys who made noise like a car wreck you'd want to see again. Barely lasted — the good ones never do. Check the credits on your heavy records; they're on all of them. So they never really left. Spooky, when you think about it. So don't.",
+    bio: "Metalcore band Termites in His Smile lasted roughly two years in the late '90s and appears in the liner notes of nearly every heavy record you own. Legally, they broke up. In practice, they are everywhere, like a rash.",
     genre: Genre.METAL,
     subgenres: ["metalcore","metallic hardcore"],
     traits: [
@@ -498,7 +498,7 @@ export const initialBands: Band[] = [
   {
     id: "save-each-otter",
     name: "67 Dollars and No Sense",
-    bio: "Nine grown men in one van, and the confetti cannon gets its own seat, which tells you everything. Matching costumes, hanging off the rafters, the works. A guy swears he's too old for this right up until he isn't.",
+    bio: "Novelty pop-punk act 67 Dollars and No Sense tours with nine members, matching costumes, and a confetti cannon that occupies its own seat. The confetti cannon is insured. Two of the members are not.",
     genre: Genre.PUNK,
     subgenres: ["pop-punk","party-punk"],
     traits: [
@@ -520,7 +520,7 @@ export const initialBands: Band[] = [
   {
     id: "monocultured",
     name: "Mount Condor",
-    bio: "Reverb to the ceiling, eyes on the floor, the whole gray grunge business played dead straight. Made one flawless record and vanished before anybody said thanks. Which, honestly, is the most them thing they ever did.",
+    bio: "Grunge revivalists Mount Condor released one flawless album and disbanded before anyone could thank them. For a band this gloomy, that qualifies as a happy ending.",
     genre: Genre.ALTERNATIVE,
     subgenres: ["alternative","emo","grunge"],
     traits: [
@@ -542,7 +542,7 @@ export const initialBands: Band[] = [
   {
     id: "no-foolin-eyes",
     name: "Who's Behind the Door?",
-    bio: "Came up from a swamp town down south and made the Island bars their entire life. A singer up front hitting notes the rest of us reach by falling down the stairs. You could hear exactly which arena gods they meant to be, everything cranked toward the radio. The debut went gold, eventually, the slow way. That's still a way.",
+    bio: "Hard rock band Who's Behind the Door? worked the bar circuit for years before their debut crawled to gold, powered by a singer who hits notes the rest of us reach only by falling. They set out to be arena gods and settled for the radio, which had also settled.",
     genre: Genre.ALTERNATIVE,
     subgenres: ["arena-rock","hard-rock"],
     traits: [
@@ -564,7 +564,7 @@ export const initialBands: Band[] = [
   {
     id: "built-for-greased",
     name: "Runaway Boys",
-    bio: "Three guys with pompadours dug up a sound everybody buried thirty years back, cuffed their jeans, and slapped that big upright bass like it owed them rent. Had to cross an ocean before the hometown would notice. That's a hometown for you.",
+    bio: "Rockabilly trio Runaway Boys revived a sound that had been dead thirty years, then had to cross an ocean before the hometown would concede it was breathing. The hometown has since apologized, at the reunion, where it apologizes for everything.",
     genre: Genre.ALTERNATIVE,
     subgenres: ["rockabilly-revival","retro"],
     traits: [
@@ -586,7 +586,7 @@ export const initialBands: Band[] = [
   {
     id: "pictures-and-sentences",
     name: "The Ytse Jam",
-    bio: "Every one of them can out-play your favorite guitar hero, and they'll prove it, over one song longer than the whole opening act. Conservatory dropouts. Treat a rest like a personal insult. Each record's one big song with a plot, and not the guy at the merch table can tell you what it's about.",
+    bio: "Prog-metal band The Ytse Jam performed one song this week that outlasted the opening act's entire set. Asked what it was about, the guitarist began to explain. As of press time, he has not stopped.",
     genre: Genre.METAL,
     subgenres: ["progressive-metal","technical"],
     traits: [
@@ -608,7 +608,7 @@ export const initialBands: Band[] = [
   {
     id: "needles-in-the-spaces",
     name: "Existentialism on Prom Night",
-    bio: "A guy quits a band loud enough to strip paint, sits down at a piano, brings his sister up to sing. And wouldn't you know it, the quiet stuff cuts deeper than the hollering ever did. Every song's the last dance at a prom that's already over. Sway anyway.",
+    bio: "Existentialism on Prom Night formed when a man quit a very loud band, sat down at a piano, and recruited his sister to sing. Experts agree the quiet material is more devastating, a result the band describes as intended.",
     genre: Genre.EMO,
     subgenres: ["emo","piano-emo","indie"],
     traits: [
@@ -630,7 +630,7 @@ export const initialBands: Band[] = [
   {
     id: "too-bad-so-beautiful",
     name: "A Lie Will Always Defeat the Truth",
-    bio: "Metalcore where the guy on drums was also the one doing the pretty singing, trading off so fast you'd swear it was one throat. It wasn't. He won't explain it. They quit, naturally, then turned up grinning at the reunion a decade on, like the breakup was a long soundcheck.",
+    bio: "Metalcore band A Lie Will Always Defeat the Truth employed a drummer who also sang the pretty parts, alternating so quickly medical staff assumed two men. It was one man. He has declined, repeatedly, to explain how.",
     genre: Genre.METAL,
     subgenres: ["metalcore","post-hardcore"],
     traits: [
@@ -652,7 +652,7 @@ export const initialBands: Band[] = [
   {
     id: "we-are-still-awake",
     name: "Rebellion vs. the Alarm Clock",
-    bio: "Posi-punk so earnest the group singalongs were basically therapy nobody signed up for. A room full of kids yelling that it gets better, until you about believed them. Broke up before they could disappoint a soul. Smart. Then went and started half the bands you like now.",
+    bio: "Posi-punk band Rebellion vs. the Alarm Clock broke up before they could let anyone down, a level of planning rare in the genre and in men generally. They then formed half the bands you love, letting everyone down retroactively.",
     genre: Genre.PUNK,
     subgenres: ["posi-punk","melodic-hardcore"],
     traits: [
@@ -674,7 +674,7 @@ export const initialBands: Band[] = [
   {
     id: "bliss-to-eviction",
     name: "Formula for Failure",
-    bio: "Left hardcore for metal right as the metal money dried up. Beautiful read of the room. Too heavy for one crowd, too weepy for the other, dropped by everybody. Broke up, had the big cry, came back angrier. They'll do it again — around here a last show is a crop you replant.",
+    bio: "Hardcore band Formula for Failure switched to metal the exact week metal stopped selling, a decision they alone continue to defend. They have since staged so many farewell shows the county now classifies a \"final show\" as a renewable resource.",
     genre: Genre.HARDCORE,
     subgenres: ["metalcore","hardcore"],
     traits: [
@@ -696,7 +696,7 @@ export const initialBands: Band[] = [
   {
     id: "forty-hour-delay",
     name: "One Way Ticket",
-    bio: "Blew themselves up the second they got good, walked off the tour with the best record just out. Named the band after going home and then never quite went. Twenty years on, the reunion, playing to every kid who started a band because they quit. Funny how that pays you back.",
+    bio: "Pop-punk band One Way Ticket broke up the instant they got good, abandoning a tour with their best record still warm. They reunited twenty years later to play for the kids who started bands because they quit, thereby damaging a second generation on schedule.",
     genre: Genre.EMO,
     subgenres: ["pop-punk","emo"],
     traits: [
@@ -718,7 +718,7 @@ export const initialBands: Band[] = [
   {
     id: "worship-and-trouble",
     name: "Star Above My Bed",
-    bio: "The singer sang himself so raw the tour would just fold out from under him, and everybody forgave it, every time. Surfaces with a record about once a decade, starts a riot, disappears. Half your favorite heavy bands are a wetter tracing of this one. They won't tell you. I will.",
+    bio: "Post-hardcore act Star Above My Bed releases an album roughly once a decade and cancels roughly one tour per album, owing to a singer who performs himself into a doctor's office. Half your favorite heavy bands are a damp tracing of this one — a claim those bands deny and this reporter confirms.",
     genre: Genre.HARDCORE,
     subgenres: ["post-hardcore","metalcore"],
     traits: [
@@ -740,7 +740,7 @@ export const initialBands: Band[] = [
   {
     id: "your-favorite-weakness",
     name: "Semester Abroad",
-    bio: "Started out snot-nosed pop-punk, then turned so far inward the records ought to come with a confession booth. The singer would rather you'd never heard them at all — pulled half the catalog to prove it. A man of his word. Rarer than you'd hope.",
+    bio: "Semester Abroad began as pop-punk and turned so far inward the records should ship with a chaplain. The frontman would prefer you had never heard them and personally pulled half the catalog — the most effort a man has ever spent to dodge a compliment.",
     genre: Genre.EMO,
     subgenres: ["emo","indie"],
     traits: [
@@ -762,7 +762,7 @@ export const initialBands: Band[] = [
   {
     id: "tyranny-and-mutiny",
     name: "Turkish Taffy",
-    bio: "Nice suburban boys who read too many books and somehow got a doom singalong about making peace with the Reaper onto daytime radio. Put an umlaut in the name nobody can pronounce, themselves included. The producer's still in the booth asking for more cowbell, and they keep giving it to him. That's a marriage.",
+    bio: "Hard rock band Turkish Taffy scored a hit with a cheerful singalong about making peace with death and installed an umlaut in their name no one can pronounce, the band included. Their producer has requested additional cowbell daily since 1976. They keep obliging. That is a marriage.",
     genre: Genre.METAL,
     subgenres: ["hard-rock","occult-metal"],
     traits: [
@@ -784,7 +784,7 @@ export const initialBands: Band[] = [
   {
     id: "stay-angry",
     name: "Bad Boys of Rock N Roll",
-    bio: "Came up through the bars in lipstick and warpaint, loud enough to spook the parents and the bouncers at once. Relax, it was a look. Got into the big rooms on exactly one song — a guy hollering the word \"no,\" a whole arena hollering it back. Turns out you only need the one.",
+    bio: "Glam-metal band Bad Boys of Rock N Roll reached arenas on one anthem about refusing to do a thing they never actually specify. Each night a full arena refuses along with them, at a two-drink minimum, which rather undercuts the rebellion.",
     genre: Genre.METAL,
     subgenres: ["glam metal","heavy metal","anthem rock"],
     traits: [
@@ -806,7 +806,7 @@ export const initialBands: Band[] = [
   {
     id: "tell-all-frenemies",
     name: "Timberwolves at NJ",
-    bio: "Two singers who couldn't be in the same room and couldn't quit each other either. Twenty years of final breakups and teary reunions. Played every veterans' hall on the Island twice. The drama isn't a side effect. It's the act.",
+    bio: "Emo band Timberwolves at NJ features two singers who cannot occupy the same room and cannot stay out of the same band. In twenty years they have staged more tearful reunions than most people have had relationships. The drama is not a side effect; the drama is the headliner.",
     genre: Genre.EMO,
     subgenres: ["emo","post-hardcore"],
     traits: [
@@ -828,7 +828,7 @@ export const initialBands: Band[] = [
   {
     id: "an-affluent-man",
     name: "An Affluent Man",
-    bio: "The piano kid from down the road who got so big he could buy the nice end of the Island twice and still spot your whole block the rent. Everybody says he sold out, then everybody sings every word. The one who actually made it, and the scene's never forgiven him. Not forgiving guys for leaving — that's the scene's whole hobby.",
+    bio: "Local piano prodigy An Affluent Man grew so successful he could buy the nicer half of the Island and still float your rent from petty cash. The scene maintains he sold out, then sings every word. He is the one who actually made it, which the scene will forgive right after it forgives him for leaving — so, never.",
     genre: Genre.ALTERNATIVE,
     subgenres: ["piano-pop", "soft-rock"],
     traits: [
