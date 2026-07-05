@@ -1,5 +1,6 @@
 import React from 'react';
 import { LOGO_SIGIL_PATHS } from './logoSigilPaths';
+import { BESPOKE_LOGOS } from '@game/data/bespokeLogos';
 import type { BandLogoStyle, LockupRecipe } from '@game/data/bandLogoStyles';
 
 /**
@@ -16,6 +17,10 @@ import type { BandLogoStyle, LockupRecipe } from '@game/data/bandLogoStyles';
  *                   (seeded off band.id) and turbulence-roughened ink edges,
  *                   so it reads drawn, not typeset (treatment "D").
  * The sellout tiers hide the whole lockup and typeset the plain name.
+ *
+ * Bands with a BESPOKE_LOGOS entry swap the print group for their authored
+ * full-color merch SVG — the xerox tier's grayscale filter then literally
+ * photocopies it, and the hand tier still marker-copies the type recipe.
  */
 
 const BLOCK_W = 400; // viewBox width; lines with fill=true justify to ~360
@@ -70,6 +75,10 @@ let uid = 0;
 
 export const BandLogoLockup: React.FC<Props> = ({ recipe, style, seedKey, className }) => {
   const idRef = React.useRef(`blk${++uid}`);
+  // Bespoke full-color merch logo (screen-print SVG) replaces the composed
+  // print lockup when authored for this band; the hand-drawn copy still comes
+  // from the recipe (you hand-copy their logo onto the flyer, simplified).
+  const bespoke = seedKey ? BESPOKE_LOGOS[seedKey] : undefined;
   const font = ARCHETYPE_FONT[style?.archetype ?? 'hand-marker'];
   const italic = style?.archetype === 'italic-sans';
   const casing = style?.casing ?? 'title';
@@ -217,9 +226,10 @@ export const BandLogoLockup: React.FC<Props> = ({ recipe, style, seedKey, classN
     );
   };
 
+  const svgH = bespoke ? bespoke.h : totalH;
   return (
     <svg
-      viewBox={`0 0 ${BLOCK_W} ${totalH}`}
+      viewBox={`0 0 ${BLOCK_W} ${svgH}`}
       className={`band-lockup${className ? ' ' + className : ''}`}
       aria-hidden
       preserveAspectRatio="xMidYMid meet"
@@ -232,8 +242,17 @@ export const BandLogoLockup: React.FC<Props> = ({ recipe, style, seedKey, classN
           <feDisplacementMap in="SourceGraphic" in2="n" scale="4.5" />
         </filter>
       </defs>
-      <g className="lockup-print">{composition(false)}</g>
-      <g className="lockup-hand" filter={`url(#${idRef.current}-rough)`}>
+      {bespoke ? (
+        // Authored in-repo SVG data (bespokeLogos.ts), not user input.
+        <g className="lockup-print" dangerouslySetInnerHTML={{ __html: bespoke.svg }} />
+      ) : (
+        <g className="lockup-print">{composition(false)}</g>
+      )}
+      <g
+        className="lockup-hand"
+        filter={`url(#${idRef.current}-rough)`}
+        transform={bespoke ? `translate(0 ${((bespoke.h - totalH) / 2).toFixed(1)})` : undefined}
+      >
         {composition(true)}
       </g>
     </svg>
