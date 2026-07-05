@@ -209,82 +209,81 @@ export interface LockupRecipe {
 }
 
 export const BAND_LOCKUPS: Record<string, LockupRecipe> = {
-  // Iron Chic "Timecop" (Demo '08) — chunky org-punk block
-  'the-constant-ache': { lines: [{ text: 'TIMECOP', size: 64, fill: true }] },
-  // Somerset Thrower "Cache Memory" (Demo '13) — quiet hazy lowercase
-  'stain-my-memory': { lines: [{ text: 'cache', size: 34, tracking: 4 }, { text: 'memory', size: 52, fill: true }] },
-  // Rule Them All "So It Starts…" — stark stacked LIHC block bracketed by rules
-  'stuck-on-repeat': { frame: 'rules', lines: [{ text: 'SO IT', size: 40, fill: true }, { text: 'STARTS', size: 52, fill: true }] },
-  // Victory Garden "Isolation 101" — sprout crowning a utilitarian stencil block
-  'tend-your-plot': { mark: 'crown', sigil: 'sprout', lines: [{ text: 'ISOLATION', size: 38, fill: true }, { text: '101', size: 56, fill: true, tracking: 12 }] },
-  // Incendiary "Choosing Sides" (Demo '07) — heavy spiked serif, ember flanking
-  'cost-of-leaving': { mark: 'left', sigil: 'flame', lines: [{ text: 'CHOOSING', size: 32, tracking: 4 }, { text: 'SIDES', size: 52, fill: true }] },
-  // Stand Still "There's No Autumn Here" — forward-leaning athletic italic block
-  'a-practice-in-patients': { lines: [{ text: 'no autumn', size: 34 }, { text: 'here', size: 58, fill: true }] },
-  // Koyo "Heaven So Heavy" — slick lowercase corporate wordmark, autumn leaf crowning
-  'would-you-even-notice': { mark: 'crown', sigil: 'leaf', lines: [{ text: 'heaven', size: 32 }, { text: 'so heavy', size: 48, fill: true }] },
-  // Bayside "Foot Impressions" — THE bird is the hero, quiet wordmark stacks beneath
-  'the-walking-worried': { mark: 'crown', sigil: 'bird', lines: [{ text: 'FOOT', size: 30, tracking: 8 }, { text: 'IMPERSONATIONS', size: 34, fill: true }] },
-  // Stray From the Path "Amnesia Hero" — tall condensed gothic masthead
-  'liminal-criminals': { frame: 'rules', lines: [{ text: 'AMNESIA', size: 48, fill: true }, { text: 'HERO', size: 52, fill: true, tracking: 14 }] },
-  // Mind Over Matter "Hectic Thinking" (1993 EP) — bold lowercase slab in a ruled nameplate
-  'automedication': { frame: 'rules', lines: [{ text: 'hectic thinking', size: 40, fill: true }] },
-  // Silent Majority "Polar Bear Club" (twisted — it's a real band) — scratchy scrawl boxed
-  'life-of-a-speculator': { frame: 'box', lines: [{ text: 'BIPOLAR', size: 28, tracking: 6 }, { text: 'BEAR CLUB', size: 44, fill: true }] },
-  // Inside "Postcard Memories" — plain sans engraved into a beveled plaque
-  'seven-miles-to-wall-drug': { frame: 'box', lines: [{ text: 'POSTCARD', size: 30, tracking: 4 }, { text: 'MEMORIES', size: 38, fill: true }] },
-  // Clockwise "She Was" — quiet typewriter, tiny clock as a wink at the tail
-  'she-was-a-dead-end': { mark: 'tail', sigil: 'clock', lines: [{ text: 'she', size: 30 }, { text: 'was', size: 56, fill: true }] },
-  // Backtrack "Paused Progress" (Demo '08) — arched block with a hard offset shadow
-  'darker-halftime': { lines: [{ text: 'PAUSED', size: 52, fill: true, arc: 10 }, { text: 'PROGRESS', size: 40, fill: true }] },
-  // Crime in Stereo "Amsterdamned!" — clean modern-hardcore block
-  'felony-in-mono-is-dead': { lines: [{ text: 'AMSTERDAMNED!', size: 40, fill: true }] },
-  // BTMI! "I'm Too Coooool for Music" — spray-stencil scrawl, aerosol bomb beside it
-  'get-warner': { mark: 'left', sigil: 'bomb', lines: [{ text: 'TOO COOOOOL', size: 26 }, { text: 'FOR MUSIC', size: 46, fill: true }] },
-  // As Tall As Lions "Dancing in the Rearview" — airy bookish serif, faint light-glow behind
-  'into-the-floodlights': { mark: 'behind', sigil: 'rays', lines: [{ text: 'Dancing in the', size: 24 }, { text: 'Rearview', size: 48, fill: true }] },
-  // Envy on the Coast "Temper Temper" — surreal serif, dreamlike moon ghosted behind
-  'lucy-grave': { mark: 'behind', sigil: 'moon', lines: [{ text: 'Temper', size: 46, fill: true }, { text: 'Temper', size: 46, fill: true }] },
-  // Kill Your Idols "Small Man Big Mouth" — blunt block caps with the hardcore X
-  'this-is-just-the-ending': { mark: 'left', sigil: 'xmark', lines: [{ text: 'SMALL MAN', size: 30 }, { text: 'BIG MOUTH', size: 44, fill: true }] },
-  // This Is Hell "Heaven Sent, Hell Bound" — stacked hand-inked stamp
-  'weight-of-the-word': { lines: [{ text: 'HEAVEN SENT,', size: 30, fill: true }, { text: 'HELL BOUND', size: 40, fill: true }] },
-  // The Sleeping "Through Airwaves" (2003 demo) — rabbit crowning the bold block
-  'believe-what-we-sold-you': { mark: 'crown', sigil: 'rabbit', lines: [{ text: 'THROUGH', size: 32, tracking: 4 }, { text: 'AIRWAVES', size: 44, fill: true }] },
-  // Sons of Abraham "Termites In His Smile" — restrained serif, a slight sag
-  'termites-in-his-teeth': { lines: [{ text: 'TERMITES', size: 48, fill: true, arc: -6 }, { text: 'IN HIS SMILE', size: 26, tracking: 8 }] },
-  // Patent Pending "67 Dollars And No Sense" — party arch with the cartoon otter crowning
-  'save-each-otter': { mark: 'crown', sigil: 'otter', lines: [{ text: '67 Dollars', size: 30, arc: 8 }, { text: '& No Sense', size: 44, fill: true }] },
-  // Sainthood Reps "Mount Condor" (2010 split) — one deliberately plain wide line
-  'monocultured': { lines: [{ text: 'Mount Condor', size: 44, fill: true, tracking: 2 }] },
-  // Zebra "Who's Behind the Door?" — striped arena rules, wide-tracked and glossy
-  'no-foolin-eyes': { frame: 'rules', lines: [{ text: "WHO'S BEHIND", size: 30, fill: true }, { text: 'THE DOOR?', size: 44, fill: true, tracking: 6 }] },
-  // Stray Cats "Runaway Boys" (debut single) — greaser cat head over rockabilly script
-  'built-for-greased': { mark: 'crown', sigil: 'cathead', lines: [{ text: 'Runaway', size: 34, arc: 6, script: true }, { text: 'Boys', size: 56, fill: true, arc: 8, script: true }] },
-  // Dream Theater "The Ytse Jam" (Majesty demos) — heraldic crest crowning refined serif
-  'pictures-and-sentences': { mark: 'crown', sigil: 'majesty', lines: [{ text: 'The', size: 20 }, { text: 'Ytse Jam', size: 48, fill: true }] },
-  // Straylight Run "Existentialism on Prom Night" — quiet fragile pencil scrawl
-  'needles-in-the-spaces': { lines: [{ text: 'existentialism', size: 24 }, { text: 'on prom night', size: 34, fill: true }] },
-  // From Autumn to Ashes "A Lie Will Always Defeat the Truth" (2000 demo) — jagged funeral serif
-  'too-bad-so-beautiful': { mark: 'crown', sigil: 'ornament', lines: [{ text: 'A LIE WILL', size: 24 }, { text: 'ALWAYS DEFEAT', size: 26, fill: true }, { text: 'THE TRUTH', size: 34, fill: true }] },
-  // Latterman "Rebellion Vs. The Alarm Clock" — earnest posi scrawl, heart at the tail
-  'we-are-still-awake': { mark: 'tail', sigil: 'heart', lines: [{ text: 'Rebellion vs.', size: 24 }, { text: 'the Alarm Clock', size: 30, fill: true }] },
-  // Vision of Disorder "Formula For Failure" — boxed, dripping distressed tag
-  'bliss-to-eviction': { frame: 'box', lines: [{ text: 'FORMULA', size: 36, fill: true }, { text: 'FOR FAILURE', size: 36, fill: true }] },
-  // The Movielife "One Way Ticket" — clean forward lowercase, no mark
-  'forty-hour-delay': { lines: [{ text: 'one way', size: 30 }, { text: 'ticket', size: 56, fill: true }] },
-  // Glassjaw "Star Above My Bed" — brutal Helvetica-bold billboard block, ruled masthead
-  'worship-and-trouble': { frame: 'rules', lines: [{ text: 'STAR ABOVE', size: 34, fill: true }, { text: 'MY BED', size: 46, fill: true, tracking: 8 }] },
-  // Brand New "Jude Law and a Semester Abroad" (trimmed off the celeb name) — typeset restraint
-  'your-favorite-weakness': { lines: [{ text: 'semester', size: 30 }, { text: 'abroad', size: 50, fill: true }] },
-  // Blue Öyster Cult "Bonomo's Turkish Taffy" (1968 demo, trimmed the brand) — occult hook glyph
-  'tyranny-and-mutiny': { mark: 'left', sigil: 'hookcross', lines: [{ text: 'Turkish', size: 42, fill: true }, { text: 'Taffy', size: 34 }] },
-  // Twisted Sister "Bad Boys (Of Rock N' Roll)" — extruded glam arena block
-  'stay-angry': { lines: [{ text: 'BAD BOYS', size: 46, fill: true }, { text: 'OF ROCK N ROLL', size: 24, fill: true }] },
-  // Taking Back Sunday "Timberwolves at New Jersey" — road-worn slab in a highway-sign box
-  'tell-all-frenemies': { frame: 'box', lines: [{ text: 'TIMBERWOLVES', size: 32, fill: true }, { text: 'AT NJ', size: 46, fill: true, tracking: 14 }] },
-  // Billy Joel — kept the capstone as the Piano-Man persona riff (the Hassles/Attila
-  // deep cuts wouldn't read as Billy Joel): a single flowing signature autograph
+  // Iron Chic — chunky org-punk block, warm and earnest
+  'the-constant-ache': { lines: [{ text: 'THE', size: 20, tracking: 16 }, { text: 'CONSTANT', size: 56, fill: true }, { text: 'ACHE', size: 56, fill: true }] },
+  // Somerset Thrower — quiet lowercase floating soft over a hazy field
+  'stain-my-memory': { lines: [{ text: 'stain my', size: 30, tracking: 4 }, { text: 'memory', size: 48, fill: true }] },
+  // Rule Them All — stark stacked LIHC block bracketed by rules
+  'stuck-on-repeat': { frame: 'rules', lines: [{ text: 'BLUEPRINT FOR', size: 32, fill: true }, { text: 'NOTHING', size: 50, fill: true }] },
+  // Victory Garden — sprout crowning a utilitarian stencil block
+  'tend-your-plot': { mark: 'crown', sigil: 'sprout', lines: [{ text: 'ISOLATION', size: 38, fill: true }, { text: '201', size: 56, fill: true, tracking: 12 }] },
+  // Incendiary — heavy spiked serif, the ember flanking it
+  'cost-of-leaving': { mark: 'left', sigil: 'flame', lines: [{ text: 'COST OF', size: 30, tracking: 8 }, { text: 'LEAVING', size: 50, fill: true }] },
+  // Stand Still — forward-leaning athletic italic block
+  'a-practice-in-patients': { lines: [{ text: 'A PRACTICE IN', size: 26, tracking: 6 }, { text: 'PATIENTS', size: 56, fill: true }] },
+  // Koyo — slick lowercase corporate wordmark, autumn leaf crowning ("kōyō")
+  'would-you-even-notice': { mark: 'crown', sigil: 'leaf', lines: [{ text: 'would you', size: 30 }, { text: 'even notice?', size: 44, fill: true }] },
+  // Bayside — THE bird is the hero, the quiet wordmark stacks beneath
+  'the-walking-worried': { mark: 'crown', sigil: 'bird', lines: [{ text: 'THE', size: 18, tracking: 14 }, { text: 'WALKING', size: 50, fill: true }, { text: 'WORRIED', size: 50, fill: true }] },
+  // Stray From the Path — tall condensed gothic, full-width masthead
+  'liminal-criminals': { frame: 'rules', lines: [{ text: 'LIMINAL', size: 52, fill: true }, { text: 'CRIMINALS', size: 52, fill: true }] },
+  // Mind Over Matter — bold lowercase slab sandwiched in a ruled nameplate
+  'automedication': { frame: 'rules', lines: [{ text: 'automedication', size: 40, fill: true }] },
+  // Silent Majority — scratchy scrawl jammed inside a hand-drawn box
+  'life-of-a-speculator': { frame: 'box', lines: [{ text: 'LIFE OF A', size: 26, tracking: 8 }, { text: 'SPECULATOR', size: 46, fill: true }] },
+  // Inside — plain sans engraved into a beveled nameplate/plaque
+  'seven-miles-to-wall-drug': { frame: 'box', lines: [{ text: 'SEVEN MILES', size: 26, tracking: 4 }, { text: 'TO WALL DRUG', size: 34, fill: true }] },
+  // Clockwise — quiet typewriter, tiny clock as a wink at the tail
+  'she-was-a-dead-end': { mark: 'tail', sigil: 'clock', lines: [{ text: 'she was', size: 26 }, { text: 'a dead end', size: 42, fill: true }] },
+  // Backtrack — arched hoodie block with a hard offset shadow
+  'darker-halftime': { lines: [{ text: 'LOST', size: 56, fill: true, arc: 10 }, { text: 'IN LINE', size: 44, fill: true }] },
+  // Crime in Stereo — THE stacked-justified block (each line to equal width)
+  'felony-in-mono-is-dead': { lines: [{ text: 'FELONY IN', size: 40, fill: true }, { text: 'MONO IS', size: 40, fill: true }, { text: 'DEAD', size: 40, fill: true }] },
+  // BTMI! — spray-stencil scrawl, aerosol bomb beside it
+  'get-warner': { mark: 'left', sigil: 'bomb', lines: [{ text: 'GET', size: 34 }, { text: 'WARNER', size: 56, fill: true }] },
+  // As Tall As Lions — airy bookish serif, a faint light-glow behind
+  'into-the-floodlights': { mark: 'behind', sigil: 'rays', lines: [{ text: 'Into the', size: 24 }, { text: 'Floodlights', size: 46, fill: true }] },
+  // Envy on the Coast — surreal serif, a dreamlike moon ghosted behind
+  'lucy-grave': { mark: 'behind', sigil: 'moon', lines: [{ text: 'Lucy Grave', size: 52, fill: true }] },
+  // Kill Your Idols — blunt block caps with the hardcore X
+  'this-is-just-the-ending': { mark: 'left', sigil: 'xmark', lines: [{ text: 'THIS IS JUST', size: 28 }, { text: 'THE ENDING', size: 44, fill: true }] },
+  // This Is Hell — stacked hand-inked stamp with a small OF THE
+  'weight-of-the-word': { lines: [{ text: 'WEIGHT', size: 52, fill: true }, { text: 'OF THE', size: 18, tracking: 18 }, { text: 'WORD', size: 52, fill: true }] },
+  // The Sleeping — rabbit crowning the bold urgent stacked block
+  'believe-what-we-sold-you': { mark: 'crown', sigil: 'rabbit', lines: [{ text: 'BELIEVE WHAT', size: 30, fill: true }, { text: 'WE SOLD YOU', size: 34, fill: true }] },
+  // Sons of Abraham — restrained serif, a slight sag over imagery
+  'termites-in-his-teeth': { lines: [{ text: 'TERMITES', size: 50, fill: true, arc: -6 }, { text: 'IN HIS TEETH', size: 26, tracking: 8 }] },
+  // Patent Pending — party arch with the cartoon otter crowning
+  'save-each-otter': { mark: 'crown', sigil: 'otter', lines: [{ text: 'SAVE EACH', size: 30, arc: 8 }, { text: 'OTTER', size: 54, fill: true }] },
+  // Sainthood Reps — one deliberately plain, quiet wide line
+  'monocultured': { lines: [{ text: 'Monocultured', size: 40, fill: true, tracking: 2 }] },
+  // Zebra — striped arena rules, wide-tracked and glossy
+  'no-foolin-eyes': { frame: 'rules', lines: [{ text: "NO FOOLIN'", size: 38, fill: true }, { text: 'EYES', size: 52, fill: true, tracking: 20 }] },
+  // Stray Cats — greaser cat head over rising rockabilly diner script
+  'built-for-greased': { mark: 'crown', sigil: 'cathead', lines: [{ text: 'Built for', size: 30, arc: 6, script: true }, { text: 'Greased', size: 54, fill: true, arc: 8, script: true }] },
+  // Dream Theater — heraldic crest crowning refined playbill serif
+  'pictures-and-sentences': { mark: 'crown', sigil: 'majesty', lines: [{ text: 'Pictures', size: 44, fill: true }, { text: 'and Sentences', size: 26 }] },
+  // Straylight Run — quiet fragile pencil scrawl, lots of air
+  'needles-in-the-spaces': { lines: [{ text: 'needles in', size: 34 }, { text: 'the spaces', size: 34 }] },
+  // From Autumn to Ashes — jagged funeral serif, ornament crowning
+  'too-bad-so-beautiful': { mark: 'crown', sigil: 'ornament', lines: [{ text: 'TOO BAD,', size: 32 }, { text: 'SO BEAUTIFUL', size: 42, fill: true }] },
+  // Latterman — earnest posi scrawl, tiny doodle heart at the tail
+  'we-are-still-awake': { mark: 'tail', sigil: 'heart', lines: [{ text: 'WE ARE', size: 30 }, { text: 'STILL AWAKE', size: 44, fill: true }] },
+  // Vision of Disorder — boxed, dripping distressed graffiti tag
+  'bliss-to-eviction': { frame: 'box', lines: [{ text: 'FROM BLISS', size: 36, fill: true }, { text: 'TO EVICTION', size: 36, fill: true }] },
+  // The Movielife — clean forward lowercase, type over imagery, no mark
+  'forty-hour-delay': { lines: [{ text: 'forty hour', size: 30 }, { text: 'delay', size: 56, fill: true }] },
+  // Glassjaw — brutal Helvetica-bold billboard block, ruled masthead
+  'worship-and-trouble': { frame: 'rules', lines: [{ text: 'WORSHIP', size: 46, fill: true }, { text: 'AND TROUBLE', size: 30, fill: true }] },
+  // Brand New — typeset restraint IS the logo
+  'your-favorite-weakness': { lines: [{ text: 'your favorite', size: 28 }, { text: 'weakness', size: 46, fill: true }] },
+  // Blue Öyster Cult — occult hook-and-cross glyph beside vintage serif
+  'tyranny-and-mutiny': { mark: 'left', sigil: 'hookcross', lines: [{ text: 'Tyranny', size: 42, fill: true }, { text: 'and Mutiny', size: 26 }] },
+  // Twisted Sister — extruded glam arena block
+  'stay-angry': { lines: [{ text: 'STAY', size: 56, fill: true }, { text: 'ANGRY', size: 56, fill: true }] },
+  // Taking Back Sunday — road-worn slab caps inside a highway-sign box
+  'tell-all-frenemies': { frame: 'box', lines: [{ text: 'WHERE YOU', size: 34, fill: true }, { text: 'USED TO BE', size: 40, fill: true }] },
+  // Billy Joel — a single flowing handwritten-signature autograph
   'an-affluent-man': { lines: [{ text: 'An Affluent Man', size: 44, fill: true, script: true }] },
 };
 
