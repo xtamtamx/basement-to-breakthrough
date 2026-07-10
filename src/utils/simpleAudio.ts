@@ -18,6 +18,23 @@ class SimpleAudioManager {
 
   private async init() {
     try {
+      // Respect the player's saved sound settings at BOOT (parity with gameAudio's
+      // init): without this, a saved mute/volume only took effect once Settings
+      // mounted useAudio, so every launch played full-volume stingers until the
+      // player reopened Settings. 'audioDisabled' is the AudioErrorBoundary's hard
+      // kill (skip building a context at all); 'audioEnabled'/'audioVolume' are the
+      // Settings toggles.
+      if (safeStorage.getItem("audioDisabled") === "true") {
+        this.enabled = false;
+        return;
+      }
+      if (safeStorage.getItem("audioEnabled") === "false") this.enabled = false;
+      const savedVolume = safeStorage.getItem("audioVolume");
+      if (savedVolume != null) {
+        const v = parseFloat(savedVolume);
+        if (!Number.isNaN(v)) this.volume = Math.max(0, Math.min(1, v));
+      }
+
       const AudioContextClass =
         window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
       if (AudioContextClass) {
@@ -213,6 +230,10 @@ class SimpleAudioManager {
   isEnabled() {
     return this.enabled;
   }
+
+  getVolume() {
+    return this.volume;
+  }
 }
 
 // Singleton instance
@@ -221,7 +242,7 @@ export const audio = new SimpleAudioManager();
 // React hook for audio settings
 export const useAudio = () => {
   const [enabled, setEnabled] = useState(audio.isEnabled());
-  const [volume, setVolume] = useState(0.7);
+  const [volume, setVolume] = useState(audio.getVolume());
 
   useEffect(() => {
     const savedEnabled = safeStorage.getItem("audioEnabled");

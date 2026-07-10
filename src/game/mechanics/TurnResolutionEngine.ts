@@ -11,7 +11,7 @@
  */
 
 import { useGameStore } from '@stores/gameStore';
-import { synergyManager, SynergyTriggerResult } from './SynergyManager';
+import { synergyManager, Synergy, SynergyTriggerResult } from './SynergyManager';
 import { synergyEngine } from './SynergyEngine';
 import { eventCardSystem } from './EventCardSystem';
 import { dayJobSystem } from './DayJobSystem';
@@ -52,13 +52,14 @@ import {
   BREAKTHROUGH_FANS_THRESHOLD,
   BURNOUT_STRESS_CAP,
   EVICTION_TURNS_BROKE,
-  LIVING_COSTS_PER_TURN,
+  sceneOverheadPerTurn,
   SHOW_STRESS_BASE,
+  SHOW_STRESS_PER_EXTRA_ACT,
   STRESS_RECOVERY_PER_TURN,
   ESCALATION_RECOVERY_PENALTY,
   COMBO_MULT_CAP,
-  SYNERGY_REWARD_TURNS,
-  EVENT_CARD_TURNS,
+  synergyRewardTurns,
+  eventCardTurns,
   RunEndState,
 } from '../constants/runConstants';
 import {
@@ -143,6 +144,11 @@ export interface TurnResult {
   turn: number;
   isEscalation: boolean;
   warnings: string[];
+  /** Venues newly opened by this turn's peak-reputation climb ("name (N cap)") —
+   *  the basement-to-festival ascent beat, for the results modal to announce. */
+  venueUnlocks?: string[];
+  /** Optional run challenges completed THIS turn (mid-run payoff beat). */
+  objectivesCompleted?: { id: string; name: string }[];
   runEnd: RunEndState | null;
   ceremony: RunCeremony | null;
   synergyEffects: SynergyTriggerResult[];
@@ -196,6 +202,9 @@ export class TurnResolutionEngine {
       incidents: 0,
       maxVenueCapacity: 0,
     };
+    // Resolved, non-cancelled shows with 2+ acts — feeds RunStats.billsCreated
+    // (Festival's 'bills' win condition and the run score's bill count).
+    let billsThisTurn = 0;
 
     showsToExecute.forEach((scheduledShow) => {
       // Refund the booking deposit now that the show resolves — the full cost
@@ -252,6 +261,10 @@ export class TurnResolutionEngine {
 
       // Tally objective progress for this (non-cancelled) show.
       objDelta.shows += 1;
+      const actCount = scheduledShow.lineup
+        ? scheduledShow.lineup.length
+        : 1 + (scheduledShow.bill?.openers.length ?? 0);
+      if (actCount >= 2) billsThisTurn += 1;
       objDelta.turnIncome += result.revenue;
       objDelta.combosFired += result.venueSynergies?.length ?? 0;
       if (result.incidentOccurred) objDelta.incidents += 1;
@@ -282,7 +295,13 @@ export class TurnResolutionEngine {
       metaProgress: metaProgressValue(metaProgressionManager.getProgression()),
     });
 
-    let totalUpkeep = LIVING_COSTS_PER_TURN;
+    // Scene overhead: grows with the scene you carry (fans + rep) and is scaled
+    // by the run's rent multiplier (stakes + Hardcore) — so "count the door"
+    // stays live money pressure mid-run and Eviction has teeth at higher stakes.
+    let totalUpkeep = Math.round(
+      sceneOverheadPerTurn(store.fans, store.reputation) *
+        runManager.getRunModifiers().venueRentMultiplier,
+    );
     let passiveMoney = landmarkPassiveMoney(landmarks); // sellout monuments pay out
     let passiveFans = 0;
     useGameStore.getState().venues.forEach((venue) => {
@@ -350,7 +369,13 @@ export class TurnResolutionEngine {
     if (activeRun) {
       runManager.syncTurn(turn);
       runManager.updateRunStats({
-        totalShows: activeRun.stats.totalShows + showResults.length,
+        // Only resolved shows count — a police-cancelled show is a disaster,
+        // not a show played (it must not advance Festival's calendar).
+        totalShows: activeRun.stats.totalShows + objDelta.shows,
+        billsCreated: activeRun.stats.billsCreated + billsThisTurn,
+        // "Perfect" = sold out (>=90% capacity) — feeds the score's per-perfect
+        // bonus and the FEAT.soldOut band unlock, which were dead counters.
+        perfectShows: activeRun.stats.perfectShows + objDelta.selloutShows,
         totalRevenue:
           activeRun.stats.totalRevenue +
           showResults.reduce((sum, r) => sum + r.revenue, 0),
@@ -366,10 +391,22 @@ export class TurnResolutionEngine {
 
     // One-way venue scene-growth ladder: bank the high-water reputation so
     // newly-opened venues stay open (and appear on the map next turn) even if
-    // reputation later dips.
+    // reputation later dips. Diff pre/post peak so newly-crossed venue gates
+    // get ANNOUNCED (the climb is the core fantasy — it must not be silent).
+    const prevPeak = postTurnStore.peakReputation ?? 0;
     useGameStore.setState((s) => ({
       peakReputation: Math.max(s.peakReputation, s.reputation),
     }));
+    const newPeak = Math.max(prevPeak, postTurnStore.reputation);
+    const venueUnlocks =
+      newPeak > prevPeak
+        ? postTurnStore.venues
+            .filter((v) => {
+              const gate = v.unlockReputation ?? 0;
+              return gate > prevPeak && gate <= newPeak;
+            })
+            .map((v) => `${v.name} (${v.capacity} cap)`)
+        : [];
 
     const warnings: string[] = [];
     if (isEscalation) {
@@ -398,14 +435,21 @@ export class TurnResolutionEngine {
     }
 
     // Fold this turn into the optional-objective stats (meta-fame challenges).
-    // Live objectives may complete here; avoidance ones resolve in concludeRun.
+    // Live objectives may complete here (surfaced on the TurnResult so the
+    // payoff isn't silent until the end screen); avoidance ones resolve in
+    // concludeRun.
+    let objectivesCompleted: { id: string; name: string }[] = [];
     {
-      const { updated } = objectiveManager.recordTurn(postTurnStore.runObjectives, {
+      const { updated, newlyCompleted } = objectiveManager.recordTurn(postTurnStore.runObjectives, {
         ...objDelta,
         usedDayJob: !!jobResult,
         turn,
       });
       useGameStore.setState({ runObjectives: updated });
+      objectivesCompleted = newlyCompleted.map((id) => ({
+        id,
+        name: objectiveManager.getDefinition(id)?.title ?? id,
+      }));
     }
 
     // 6. Endgame check, then turn increment
@@ -418,17 +462,32 @@ export class TurnResolutionEngine {
       store.nextRound();
     }
 
-    // Milestone reward: offer a new equipped synergy ("instinct") on reward turns,
-    // as long as the run continues and the pool isn't exhausted. The UI shows the
-    // SynergyAcquireModal; the offer is transient (re-derives next milestone).
-    if (!runEnd && SYNERGY_REWARD_TURNS.includes(turn)) {
-      const offer = synergyManager.getRandomAvailableSynergy();
-      if (offer) useGameStore.setState({ pendingSynergyOffer: offer });
+    // Milestone reward: offer new equipped synergies ("instincts") on reward
+    // turns — a DRAFT of 2-3 distinct candidates so the player can steer a build
+    // (pendingSynergyOffer mirrors offers[0] for the current take-or-skip modal).
+    // Reward turns are derived from the run's turn budget so the drip spans the
+    // whole run in every mode. Transient (re-derives next milestone).
+    const offerTurns = synergyRewardTurns(maxTurns);
+    if (!runEnd && offerTurns.includes(turn)) {
+      const offers: Synergy[] = [];
+      // getRandomAvailableSynergy excludes equipped but can repeat across calls;
+      // bounded redraws collect distinct candidates (pool may be nearly empty).
+      for (let draws = 0; draws < 12 && offers.length < 3; draws++) {
+        const o = synergyManager.getRandomAvailableSynergy();
+        if (!o) break;
+        if (!offers.some((x) => x.id === o.id)) offers.push(o);
+      }
+      if (offers.length > 0) {
+        useGameStore.setState({
+          pendingSynergyOffer: offers[0],
+          pendingSynergyOffers: offers,
+        });
+      }
     }
 
     // Event card: on event turns (offset from synergy turns so they never share a
     // turn), draw a band-drama / scene crisis that pauses for the player's choice.
-    if (!runEnd && EVENT_CARD_TURNS.includes(turn) && !SYNERGY_REWARD_TURNS.includes(turn)) {
+    if (!runEnd && eventCardTurns(maxTurns).includes(turn) && !offerTurns.includes(turn)) {
       const card = eventCardSystem.drawEventCard({
         turn,
         reputation: postTurnStore.reputation,
@@ -467,6 +526,9 @@ export class TurnResolutionEngine {
       turn,
       isEscalation,
       warnings,
+      venueUnlocks: venueUnlocks.length > 0 ? venueUnlocks : undefined,
+      objectivesCompleted:
+        objectivesCompleted.length > 0 ? objectivesCompleted : undefined,
       runEnd,
       ceremony,
       synergyEffects: [...turnStartEffects, ...showEndEffects, ...turnEndEffects],
@@ -897,7 +959,7 @@ export class TurnResolutionEngine {
       synergyResults,
     );
     const revenueMultiplier = 1 + moneyBonus / 100;
-    const finalRevenue = Math.floor(
+    let finalRevenue = Math.floor(
       totalRevenue * revenueMultiplier * runMods.moneyMultiplier * (sig?.revenueMult ?? 1) * factionMoneyMult,
     );
 
@@ -933,13 +995,14 @@ export class TurnResolutionEngine {
       totalCosts = Math.floor(totalCosts * (1 - costReduction / 100));
     }
 
-    // Calculate reputation and fan gains with equipment bonus. (Balance pass:
-    // gains were ~1 order of magnitude below the win thresholds, making every
-    // mode unwinnable; raised the per-show yield so a competent run can climb.)
+    // Calculate reputation and fan gains with equipment bonus. (Pacing pass:
+    // attendance/5 + /2 hit the win bars by turn ~10 of 50 — the whole back half
+    // of every run was dead air. Trimmed so a competent Classic run needs most
+    // of its clock; the difficulty ramp + late-run rep decay do the rest.)
     let reputationGain = Math.floor(
-      (finalAttendance / 5) * equipmentReputationMultiplier,
+      (finalAttendance / 11) * equipmentReputationMultiplier,
     );
-    let fanGain = Math.floor(finalAttendance / 2);
+    let fanGain = Math.floor(finalAttendance / 5);
 
     const fansBonus = synergyManager.calculateEffectTotal(
       'FANS_PERCENT',
@@ -955,15 +1018,26 @@ export class TurnResolutionEngine {
     );
     // Flat reputation from band+venue combos (e.g. True DIY +10).
     reputationGain += comboRep;
+    // Soft cap: rep gains diminish as reputation climbs (the scene's harder to
+    // impress once you're known). This spreads the rep→venue→attendance ladder
+    // across the WHOLE run instead of rep hitting 100 by turn ~5, and makes the
+    // final push to the win bar a real climb against late-run decay.
+    if (reputationGain > 0) {
+      const damping = Math.max(0.25, 1 - store.reputation / 125);
+      reputationGain = Math.max(1, Math.floor(reputationGain * damping));
+    }
 
-    // Playing a show is tiring — base stress scaled by the run's modifier.
-    // This is what makes Burnout reachable through normal play.
+    // Playing a show is tiring — base stress plus a slice per extra act (a
+    // bigger bill is a longer night), scaled by the run's modifier. This is
+    // what makes Burnout reachable through normal play and "book big vs
+    // breathe" a real choice.
     // Backline / green-room gear shaves a slice off show stress (treated as a
     // percentage, capped at 60% so it can never fully negate burnout).
-    const stressGain = Math.max(
+    let stressGain = Math.max(
       0,
       Math.round(
-        SHOW_STRESS_BASE *
+        (SHOW_STRESS_BASE +
+          SHOW_STRESS_PER_EXTRA_ACT * Math.max(0, allShowBands.length - 1)) *
           runMods.stressMultiplier *
           metaBonuses.stressReductionMultiplier *
           (1 - Math.min(0.6, equipmentStressReduction / 100)),
@@ -987,13 +1061,54 @@ export class TurnResolutionEngine {
 
     const incidents: Incident[] = [];
     if (Math.random() < incidentChance) {
-      incidents.push({
-        type: IncidentType.NOISE_COMPLAINT,
-        severity: 3,
-        description: 'Neighbors complained about the noise',
-        consequences: [{ type: ConsequenceType.REPUTATION_LOSS, value: 5 }],
-      });
-      reputationGain -= 5;
+      // Varied show-time incident table. Severity weights tilt heavier under
+      // escalation and in bigger rooms, so rising incident FREQUENCY (stakes,
+      // endgame) also raises what's at stake — the old roll was always the same
+      // -5 rep noise complaint. Each outcome is bounded and named so failure
+      // teaches. (Distinct from DifficultySystem's between-turn passive events,
+      // which shut venues/bands down for the NEXT turn.)
+      const heavy = isEscalation || venue.capacity >= 150;
+      const wNoise = heavy ? 25 : 45;
+      const wPa = heavy ? 30 : 25;
+      const wCops = heavy ? 25 : 15;
+      const wFight = heavy ? 20 : 15;
+      const roll = Math.random() * (wNoise + wPa + wCops + wFight);
+      if (roll < wNoise) {
+        incidents.push({
+          type: IncidentType.NOISE_COMPLAINT,
+          severity: 3,
+          description: 'Neighbors complained about the noise',
+          consequences: [{ type: ConsequenceType.REPUTATION_LOSS, value: 5 }],
+        });
+        reputationGain -= 5;
+      } else if (roll < wNoise + wPa) {
+        // Repair bill scales with the room (a bigger PA costs more to revive).
+        const repair = 40 + Math.round(venue.capacity / 4);
+        incidents.push({
+          type: IncidentType.EQUIPMENT_FAILURE,
+          severity: 5,
+          description: `The PA finally gave out mid-set — $${repair} in emergency repairs`,
+          consequences: [{ type: ConsequenceType.MONEY_LOSS, value: repair }],
+        });
+        totalCosts += repair;
+      } else if (roll < wNoise + wPa + wCops) {
+        const lostRevenue = Math.floor(finalRevenue * 0.3);
+        incidents.push({
+          type: IncidentType.COPS_CALLED,
+          severity: 6,
+          description: 'Cops posted up out front — a third of the door walked',
+          consequences: [{ type: ConsequenceType.MONEY_LOSS, value: lostRevenue }],
+        });
+        finalRevenue -= lostRevenue;
+      } else {
+        incidents.push({
+          type: IncidentType.FIGHT,
+          severity: 4,
+          description: 'A scuffle broke out by the merch table — you spent the set breaking it up',
+          consequences: [{ type: ConsequenceType.SCENE_DRAMA, value: 5 }],
+        });
+        stressGain += 5;
+      }
     }
 
     // Relationship-gated band drama: a bill with a HOSTILE pair (rival factions

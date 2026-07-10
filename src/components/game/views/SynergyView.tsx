@@ -1,5 +1,10 @@
-import React, { useState } from 'react';
-import { COMBO_CATALOG } from '@game/mechanics/SynergyEngine';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  COMBO_CATALOG,
+  loadDiscoveredCombos,
+  persistDiscoveredCombos,
+} from '@game/mechanics/SynergyEngine';
+import { synergyManager, EquippedSynergy } from '@game/mechanics/SynergyManager';
 import { useGameStore } from '@stores/gameStore';
 import { Zap, Lock, Trophy } from 'lucide-react';
 import { PixelIcon } from '@components/ui/PixelIcon';
@@ -18,19 +23,61 @@ interface ComboViewModel {
   recipe: string;
 }
 
+/** Condition pill for an equipped instinct: LIVE / dormant-with-reason /
+ *  expired / per-show. Stat gates go through synergyManager.checkCondition —
+ *  the SAME switch triggerSynergies pays from, so this can't lie. */
+const conditionPill = (
+  eq: EquippedSynergy,
+  stats: { currentTurn: number; reputation: number; fans: number; stress: number },
+): { label: string; color: string } => {
+  const c = eq.synergy.condition;
+  if (!c) return { label: 'ALWAYS ON', color: 'var(--snes-green)' };
+  // Booking gates have no answer outside a show — say what bill lights them up.
+  if (c.type === 'VENUE_TYPE' || c.type === 'GENRE_MATCH') {
+    return { label: c.description, color: 'var(--snes-cyan)' };
+  }
+  if (c.type === 'TURN_RANGE') {
+    const [, end] = (c.value as string).split('-').map(Number);
+    if (stats.currentTurn > end) return { label: `Ended turn ${end}`, color: 'var(--snes-red)' };
+  }
+  return synergyManager.checkCondition(c, stats)
+    ? { label: 'LIVE', color: 'var(--snes-green)' }
+    : { label: c.description, color: 'var(--snes-gold)' };
+};
+
 export const SynergyView: React.FC = () => {
   const [filter, setFilter] = useState<'all' | 'discovered'>('all');
   const [expanded, setExpanded] = useState<string | null>(null); // tap-to-reveal recipe
-  // The single canonical discovery namespace (persisted + idempotent). Combos
-  // are recorded here by TurnResolutionEngine.executeShow as they fire.
-  const discoveredIds = useGameStore((s) => s.discoveredSynergies);
+  // Run-scoped discovery namespace (recorded by TurnResolutionEngine.executeShow
+  // as combos fire). The codex renders the UNION with the cross-run set below —
+  // but the store copy must stay per-run (it feeds in-run balance gates).
+  const runDiscovered = useGameStore((s) => s.discoveredSynergies);
+  // Fold the live run's finds into the persistent codex (idempotent) so the
+  // compendium survives "Play Again" instead of zeroing every run.
+  useEffect(() => {
+    persistDiscoveredCombos(runDiscovered);
+  }, [runDiscovered]);
+  const discoveredIds = useMemo(
+    () => new Set([...loadDiscoveredCombos(), ...runDiscovered]),
+    [runDiscovered],
+  );
+
+  // Equipped instincts — the build being piloted. Singleton read is fine here:
+  // the view remounts on navigation and instincts only change via modals.
+  const equipped = synergyManager.getEquippedSynergies();
+  const maxSlots = synergyManager.getMaxSlots();
+  const currentTurn = useGameStore((s) => s.currentRound);
+  const reputation = useGameStore((s) => s.reputation);
+  const fans = useGameStore((s) => s.fans);
+  const stress = useGameStore((s) => s.stress);
+  const pillStats = { currentTurn, reputation, fans, stress };
 
   const allSynergies: ComboViewModel[] = COMBO_CATALOG.map((c) => ({
     id: c.id,
     name: c.name,
     description: c.description,
     tier: c.tier,
-    discovered: discoveredIds.includes(c.id),
+    discovered: discoveredIds.has(c.id),
     multiplier: c.multiplier,
     reputationBonus: c.reputationBonus,
     recipe: c.recipe,
@@ -84,6 +131,64 @@ export const SynergyView: React.FC = () => {
             <Zap size={12} color="var(--snes-magenta)" />
             <span style={{ color: 'var(--snes-magenta)' }}>{discoveredSynergies.length} Found</span>
           </span>
+        </div>
+      </div>
+
+      {/* Equipped instincts — the build you're piloting, pinned above the codex
+          as a horizontally scrolling strip (landscape wide-short layout). */}
+      <div style={{ padding: '10px 12px 8px', backgroundColor: 'var(--snes-bg)', borderBottom: '2px solid var(--snes-line)', flexShrink: 0 }}>
+        <h3 className="snes-pixel" style={{ fontSize: '10px', color: 'var(--snes-purple)', margin: '0 0 8px 0', textTransform: 'uppercase' }}>
+          Your Instincts · {equipped.length}/{maxSlots}
+        </h3>
+        <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '2px' }}>
+          {equipped.map((eq) => {
+            const pill = conditionPill(eq, pillStats);
+            return (
+              <div
+                key={eq.synergy.id}
+                className="snes-panel"
+                style={{ minWidth: '200px', maxWidth: '240px', flexShrink: 0, padding: '8px 10px', borderColor: pill.color }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                  <PixelIcon name={eq.synergy.icon} size={14} style={{ flexShrink: 0, color: 'var(--snes-gold)' }} />
+                  <span className="snes-pixel" style={{ fontSize: '9px', color: 'var(--snes-ink)', lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {eq.synergy.name}
+                  </span>
+                </div>
+                <div style={{ fontSize: '11px', color: 'var(--snes-ink-dim)', lineHeight: 1.4, marginBottom: '6px' }}>
+                  {eq.synergy.effects.map((e) => e.description).join(' · ')}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
+                  <span className="snes-pixel" style={{ fontSize: '8px', color: pill.color, lineHeight: 1.4, textTransform: 'uppercase' }}>
+                    {pill.label}
+                  </span>
+                  {eq.synergy.trigger !== 'PASSIVE' && (
+                    <span style={{ fontSize: '10px', color: 'var(--snes-ink-mute)', flexShrink: 0 }} title="Times this instinct kicked in this run">
+                      ×{eq.timesTriggered}
+                    </span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+          {Array.from({ length: Math.max(0, maxSlots - equipped.length) }).map((_, i) => (
+            <div
+              key={`empty-${i}`}
+              className="snes-pixel"
+              style={{
+                minWidth: '110px',
+                flexShrink: 0,
+                border: '2px dashed var(--snes-line)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--snes-ink-mute)',
+                fontSize: '9px',
+              }}
+            >
+              OPEN SLOT
+            </div>
+          ))}
         </div>
       </div>
 

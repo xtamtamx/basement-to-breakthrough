@@ -1,9 +1,16 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { PixelButton } from '@components/ui/PixelButton';
 import { PixelIcon } from '@components/ui/PixelIcon';
 import { haptics } from '@utils/mobile';
 import { getTitleTier } from '@game/world/titleStage';
 import { gameAudio } from '@utils/gameAudio';
+import { initialBands } from '@/data/initialBands';
+import { isBandUnlocked, isBandHidden } from '@game/world/bandUnlocks';
+import { COMBO_CATALOG } from '@game/mechanics/SynergyEngine';
+import { metaProgressionManager } from '@game/mechanics/MetaProgressionManager';
+import { stakesManager } from '@game/mechanics/StakesManager';
+import { ACTIVE_MODES } from '@game/mechanics/modeUnlocks';
+import { useGameStore } from '@stores/gameStore';
 
 // The title theme bed per career tier, and its BPM (mirrors gameAudio's MUSIC_TRACKS)
 // for the drummer's self-clock when audio is suspended (iOS pre-gesture).
@@ -112,6 +119,30 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
   const [started, setStarted] = useState(false);
   const tier = getTitleTier();
   const titleTrack = TITLE_TRACK[tier.id] ?? 'chill';
+
+  // Quiet collection ledger — the between-runs scoreboard (bands / combos /
+  // stakes), so the drip you're building is visible right where the next-run
+  // decision happens. ("Combos" = the discovery codex; never call these
+  // instincts — instincts are the equipped perks.)
+  const ledger = useMemo(() => {
+    const roster = initialBands.filter((b) => !isBandHidden(b.id));
+    const bandsFound = roster.filter((b) => isBandUnlocked(b.id)).length;
+    // Combos: the codex's persisted meta keys, plus the live save's discoveries
+    // (covers saves from before the meta persistence landed).
+    const discovered = new Set(useGameStore.getState().discoveredSynergies);
+    const combosFound = COMBO_CATALOG.filter(
+      (c) => discovered.has(c.id) || metaProgressionManager.hasUnlock(`synergy_${c.id}`),
+    ).length;
+    // getUnlockedTier == stakes cleared for that mode (winning tier N opens N+1).
+    const stakesCleared = ACTIVE_MODES.reduce((n, m) => n + stakesManager.getUnlockedTier(m), 0);
+    return {
+      bandsFound,
+      bandsTotal: roster.length,
+      combosFound,
+      combosTotal: COMBO_CATALOG.length,
+      stakesCleared,
+    };
+  }, []);
 
   const start = () => {
     if (started) return;
@@ -328,6 +359,9 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
         <div className="hero-col">
           <Ticket />
           <p className="tagline"><span className="venue">{tier.venue}</span> — {tier.blurb}</p>
+          <p className="ledger">
+            Bands {ledger.bandsFound}/{ledger.bandsTotal} · Combos {ledger.combosFound}/{ledger.combosTotal} · Stakes cleared {ledger.stakesCleared}
+          </p>
         </div>
         <div className="menu-col">
           <div className="menu-buttons">
@@ -631,6 +665,11 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
           opacity: 0; transition: opacity .6s ease .7s; }
         [data-revealed="true"] .tagline { opacity: .96; }
         .venue { color: var(--accent); }
+        /* quiet collection ledger: ticket-stub ephemera under the tagline, not a HUD */
+        .ledger { margin: clamp(4px,1vh,8px) 0 0; font-family: 'Bebas Neue','Oswald',sans-serif;
+          font-size: clamp(10px,1.2vw,14px); letter-spacing: 2px; color: #bfae94; text-transform: uppercase;
+          text-shadow: 1px 1px 2px #000; opacity: 0; transition: opacity .6s ease .85s; }
+        [data-revealed="true"] .ledger { opacity: .8; }
 
         .menu-col { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 13px; }
         .menu-buttons { display: flex; flex-direction: column; gap: 13px; }
@@ -662,7 +701,7 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
         }
 
         @media (prefers-reduced-motion: reduce) {
-          .wall,.floor,.floor-line,.stage-wash,.lights-row,.stage,.fan,.banner,.tagline,.menu-buttons>*,.menu-footer { transition: none !important; opacity: 1 !important; transform: none !important; }
+          .wall,.floor,.floor-line,.stage-wash,.lights-row,.stage,.fan,.banner,.tagline,.ledger,.menu-buttons>*,.menu-footer { transition: none !important; opacity: 1 !important; transform: none !important; }
           .bandmate,.fan,.dusk-stars span,.bulb::after,.light-shaft,.bar-glow::after,.drum-sticks,.drum-body,.drum-fx,.touch-hint { animation: none !important; }
           .lights-row { transform: none !important; }
           .fan { transform: translateX(-50%) !important; }

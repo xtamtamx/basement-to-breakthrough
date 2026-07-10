@@ -112,10 +112,15 @@ export class SynergyEngine {
       return null;
     });
 
-    // Hometown Heroes - Local bands get a boost
+    // Hometown Heroes - a band that's bigger at home than anywhere else. Keyed
+    // off the Hometown Heroes trait: the demo roster never sets `hometown`, so
+    // the trait IS the "playing at home" signal (the whole roster is local).
+    // The hometown-field branch stays for post-launch multi-city rosters.
     this.registerSynergy('hometown-heroes', (bands, venue) => {
       const band = bands[0];
-      if (band.hometown && band.hometown.includes(venue.location.name)) {
+      const localLegend = band.traits.some(t => t.id === 'hometown-heroes');
+      const homeField = !!band.hometown && band.hometown.includes(venue.location.name);
+      if (localLegend || homeField) {
         return {
           id: 'hometown-heroes',
           name: 'Hometown Heroes',
@@ -216,14 +221,18 @@ export class SynergyEngine {
       return null;
     });
 
-    // Real Artist Spotlight - Real artists get special bonus
-    this.registerSynergy('real-artist', (bands) => {
+    // Authentic Experience - the real thing, up close, no age gate. The
+    // isRealArtist branch is post-launch scaffolding (v1 ships all-fictional);
+    // until then an all-ages room with a true-believer headliner earns the
+    // same crowd trust, so the codex entry is actually reachable in the demo.
+    this.registerSynergy('real-artist', (bands, venue) => {
       const hasRealArtist = bands.some(b => b.isRealArtist);
-      if (hasRealArtist) {
+      const allAgesAuthentic = venue.allowsAllAges && bands[0].authenticity > 85;
+      if (hasRealArtist || allAgesAuthentic) {
         return {
           id: 'real-artist',
           name: 'Authentic Experience',
-          description: 'Featuring real underground artists',
+          description: 'The real thing, up close — no barrier, no age gate',
           multiplier: 1.15,
           reputationBonus: 7,
         };
@@ -270,10 +279,17 @@ export class SynergyEngine {
       return null;
     });
 
-    // Scene Savior - a high-energy band reviving a dying neighborhood.
+    // Scene Savior - a high-energy band reviving a dormant corner of town. The
+    // sceneStrength branch only moves post-launch (demo districts are frozen at
+    // 50-80), so the demo's "dormant corner" is the Underground/Warehouse room
+    // nobody's booked back to life yet.
     this.registerSynergy('underground-rescue', (bands, venue) => {
       const band = bands[0];
-      if (band.energy > 80 && venue.location.sceneStrength < 40) {
+      const dormantCorner =
+        venue.location.sceneStrength < 40 ||
+        venue.type === VenueType.UNDERGROUND ||
+        venue.type === VenueType.WAREHOUSE;
+      if (band.energy > 80 && dormantCorner) {
         return {
           id: 'underground-rescue',
           name: 'Scene Savior',
@@ -354,6 +370,35 @@ export class SynergyEngine {
 
 export const synergyEngine = new SynergyEngine();
 
+// ============= Cross-run combo codex persistence =============
+// The discovery compendium is META progression: store.discoveredSynergies is
+// deliberately run-scoped (it feeds in-run balance gates — landmark
+// discoveredCount, event-card totalCards — and MUST reset each run), so the
+// codex keeps its own storage key and SynergyView renders the UNION of the two.
+// Never seed the store from this set.
+const COMBO_CODEX_KEY = 'btb-combo-codex-v1';
+
+export function loadDiscoveredCombos(): string[] {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(COMBO_CODEX_KEY) ?? '[]');
+    return Array.isArray(parsed) ? parsed.filter((x): x is string => typeof x === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+/** Fold newly discovered combo ids into the persistent codex (idempotent).
+ *  Called by startNewRun (before the store wipe) and by SynergyView on view. */
+export function persistDiscoveredCombos(ids: string[]): void {
+  if (ids.length === 0) return;
+  try {
+    const merged = Array.from(new Set([...loadDiscoveredCombos(), ...ids]));
+    localStorage.setItem(COMBO_CODEX_KEY, JSON.stringify(merged));
+  } catch {
+    /* storage unavailable — the codex just stays run-scoped */
+  }
+}
+
 /** Static metadata for every band+venue combo, so the Synergy Discovery codex
  *  has a real denominator and can render locked ("???") entries. Tier is derived
  *  from each combo's attendance multiplier (>=1.4 legendary, >=1.25 rare, else common). */
@@ -375,12 +420,12 @@ export const COMBO_CATALOG: {
   { id: 'genre-match', name: 'Perfect Fit', description: "A band that matches the venue's specialty thrives.", tier: 'rare', multiplier: 1.3, reputationBonus: 5, recipe: 'A band on its home turf — punk→club/DIY, metal→warehouse, hardcore→basement.' },
   { id: 'underground-network', name: 'Scene Unity', description: 'A bill of underground bands supporting each other.', tier: 'rare', multiplier: 1.25, reputationBonus: 6, recipe: '2+ bands, all underground (authenticity 70+, popularity under 30).' },
   { id: 'basement-magic', name: 'Basement Magic', description: 'Nothing says real like a low ceiling and one working outlet.', tier: 'rare', multiplier: 1.25, reputationBonus: 6, recipe: 'Your headliner at 80+ authenticity in a Basement or House show.' },
-  { id: 'hometown-heroes', name: 'Hometown Heroes', description: 'Local support packs the room.', tier: 'common', multiplier: 1.2, reputationBonus: 3, recipe: 'A band playing a venue in its own hometown.' },
-  { id: 'real-artist', name: 'Authentic Experience', description: 'Featuring a real underground artist.', tier: 'common', multiplier: 1.15, reputationBonus: 7, recipe: 'Any real artist on the bill.' },
+  { id: 'hometown-heroes', name: 'Hometown Heroes', description: 'Local support packs the room.', tier: 'common', multiplier: 1.2, reputationBonus: 3, recipe: 'A headliner with the Hometown Heroes trait — bigger at home than anywhere else.' },
+  { id: 'real-artist', name: 'Authentic Experience', description: 'The real thing, up close — no barrier, no age gate.', tier: 'common', multiplier: 1.15, reputationBonus: 7, recipe: 'An all-ages room with a headliner at 85+ authenticity.' },
   { id: 'bar-boost', name: 'Thirsty Crowd', description: 'An older crowd at a bar venue drinks the place dry.', tier: 'common', multiplier: 1.15, reputationBonus: 0, recipe: 'A draw (popularity 40+, not youth-crew) at a venue with a bar — pays in cash.' },
   { id: 'basement-democracy', name: 'Basement Democracy', description: 'A deep bill of true believers crammed into one tiny basement.', tier: 'rare', multiplier: 1.2, reputationBonus: 8, recipe: '3+ bands, all 75+ authenticity, in a Basement/House under 75 capacity.' },
   { id: 'vinyl-revival', name: 'Skipped Record Store', description: 'A live recording rig in a dive where physical media still moves.', tier: 'common', multiplier: 1.15, reputationBonus: 4, recipe: 'Owned recording gear at a Dive Bar or Punk Club, headliner 60+ authenticity.' },
-  { id: 'underground-rescue', name: 'Scene Savior', description: 'A high-energy band rebuilding a forgotten corner of the city.', tier: 'rare', multiplier: 1.25, reputationBonus: 12, recipe: 'A high-energy band (85+) in a low-scene-strength neighborhood.' },
+  { id: 'underground-rescue', name: 'Scene Savior', description: 'A high-energy band rebuilding a forgotten corner of the city.', tier: 'rare', multiplier: 1.25, reputationBonus: 12, recipe: 'A high-energy headliner (80+) in an Underground room, Warehouse, or fading neighborhood.' },
   { id: 'diy-purist', name: 'DIY Purist', description: 'A deep, ultra-authentic, low-popularity bill in a raw DIY room.', tier: 'rare', multiplier: 1.28, reputationBonus: 9, recipe: '2+ bands, all 85+ authenticity and under 50 popularity, in a raw room.' },
   { id: 'genre-riot', name: 'Genre Riot', description: 'Three-plus bands of one genre crammed into a small room.', tier: 'common', multiplier: 1.22, reputationBonus: 7, recipe: '3+ bands of the SAME genre, in a room under 150 capacity.' },
   { id: 'sweat-equity', name: 'Sweat Equity', description: 'A high-energy headliner in a tiny room with no security.', tier: 'rare', multiplier: 1.3, reputationBonus: 10, recipe: 'A high-energy headliner (85+) in a tiny room (<60) with no security.' },

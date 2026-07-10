@@ -132,6 +132,11 @@ export interface EventChoice {
   text: string;
   effects: EventEffect[];
   cost?: { type: 'money' | 'reputation' | 'stress'; amount: number };
+  /** DIY↔sellout axis shift (diyPoints): positive = DIY, negative = sellout.
+   *  Consumed generically by gameStore.applyEventCardChoice and previewed as a
+   *  pill on the choice button — keep magnitudes modest (marquee forks ±20/30,
+   *  minor forks ±8–15) so the skin-morph arc plays out over a full run. */
+  diyDelta?: number;
 }
 
 export interface ActiveEvent {
@@ -184,7 +189,7 @@ class EventCardSystem {
         },
         {
           id: 'select_best',
-          text: 'Only submit the band that showers most frequently',
+          text: 'Only submit the one band with a press photo the festival can use',
           effects: [{
             type: 'modify_stat',
             target: 'random_band',
@@ -210,6 +215,7 @@ class EventCardSystem {
         {
           id: 'sell_out',
           text: 'Sign that 360 deal and start practicing your radio voice',
+          diyDelta: -30,
           effects: [
             {
               type: 'modify_stat',
@@ -228,6 +234,7 @@ class EventCardSystem {
         {
           id: 'stay_true',
           text: 'Tell him the bathroom is actually the merch table',
+          diyDelta: 20,
           effects: [
             {
               type: 'modify_stat',
@@ -319,6 +326,7 @@ class EventCardSystem {
         {
           id: 'compete',
           text: 'Dust off that Wonderwall cover for the finals',
+          diyDelta: -8,
           effects: [
             {
               type: 'modify_stat',
@@ -331,6 +339,7 @@ class EventCardSystem {
         {
           id: 'boycott',
           text: 'Start rival event at the abandoned Arby\'s',
+          diyDelta: 10,
           effects: [{
             type: 'modify_stat',
             target: 'all_bands',
@@ -416,15 +425,18 @@ class EventCardSystem {
     this.addEventCard({
       id: 'perfect_storm',
       name: 'Every Band\'s Van Breaks Down at Same Gas Station, Accidentally Creates Festival',
-      description: 'What started as 17 separate radiator failures has transformed a Shell station into "GasStock 2024." Attendant quoted as saying he "just wanted to close at 10" while reluctantly becoming the event\'s de facto stage manager. Local news already calling it "Woodstock for people with AAA memberships."',
+      description: 'What started as 17 separate radiator failures has transformed a Shell station into "GasStock." Attendant quoted as saying he "just wanted to close at 10" while reluctantly becoming the event\'s de facto stage manager. Local news already calling it "Woodstock for people with AAA memberships."',
       icon: 'energy',
       type: 'legendary',
       rarity: 'legendary',
       duration: 'turn',
       requirements: [
         {
+          // Fed the EQUIPPED-instinct count (hard-capped at 5), so the old
+          // `> 5` was unsatisfiable. 4+ instincts = a committed build (base is
+          // 3 slots, so 4+ means earned slot mods) — the payoff stays earned.
           type: 'active_synergies',
-          value: 5,
+          value: 3,
           operator: 'greater_than'
         },
         {
@@ -437,20 +449,22 @@ class EventCardSystem {
         {
           type: 'modify_stat',
           target: 'all_bands',
-          value: { 
-            popularity: 50,
-            energy: 100,
-            authenticity: 100,
-            technicalSkill: 30
+          value: {
+            popularity: 30,
+            energy: 50,
+            authenticity: 40,
+            technicalSkill: 20
           },
           description: 'All bands reach peak performance'
         },
         {
+          // Legendary-sized without trivializing the late-run economy
+          // (losing-OK: turns 32-35 should still be a game).
           type: 'resource_change',
           target: 'player',
           value: {
-            money: 1000,
-            reputation: 50
+            money: 400,
+            reputation: 25
           },
           description: 'Massive rewards'
         }
@@ -500,7 +514,7 @@ class EventCardSystem {
         },
         {
           id: 'hose',
-          text: 'Hand them a garden hose and a smile',
+          text: 'Drive to three delis at 11PM, return defeated with rice milk',
           effects: [{ type: 'resource_change', target: 'player', value: { reputation: -8, fans: 5 }, description: '-8 rep, +5 fans' }],
         },
       ],
@@ -547,11 +561,13 @@ class EventCardSystem {
         {
           id: 'sell_out',
           text: 'Ride the clout wave, post the GRWM',
+          diyDelta: -30,
           effects: [{ type: 'modify_stat', target: 'all_bands', value: { popularity: 25 }, description: 'Bands go viral' }],
         },
         {
           id: 'stay_true',
           text: 'Gatekeep, aggressively',
+          diyDelta: 20,
           effects: [{ type: 'modify_stat', target: 'all_bands', value: { authenticity: 15 }, description: 'Cred up' }],
         },
       ],
@@ -594,6 +610,7 @@ class EventCardSystem {
         {
           id: 'donate_door',
           text: 'Donate the whole door',
+          diyDelta: 10,
           effects: [
             { type: 'resource_change', target: 'player', value: { money: -60, reputation: 25 }, description: '-$60, +25 rep' },
             { type: 'trigger_synergy', target: 'all_bands', value: 'underground-network', description: 'Scene unity' },
@@ -602,6 +619,7 @@ class EventCardSystem {
         {
           id: 'keep_door',
           text: 'Quietly keep the door (rent is rent)',
+          diyDelta: -10,
           effects: [{ type: 'resource_change', target: 'player', value: { money: 60, reputation: -8 }, description: '+$60, -8 rep' }],
         },
       ],
@@ -610,7 +628,7 @@ class EventCardSystem {
 
     this.addEventCard({
       id: 'local_promoter_spotify',
-      name: "Local Promoter Has Never Heard of Spotify (It's 2024)",
+      name: 'Local Promoter Has Never Heard of Spotify',
       description: 'An aging scenester insists all bookings go through a LiveJournal link he has not updated since 2009. Does not understand "streaming." Has a Rolodex.',
       icon: 'rolodex',
       type: 'opportunity',
@@ -723,6 +741,7 @@ class EventCardSystem {
         {
           id: 'fight_it',
           text: 'Organize a scene defense; publicize the landlord greed',
+          diyDelta: 12,
           effects: [
             { type: 'resource_change', target: 'player', value: { money: -100, reputation: 35, connections: -1 }, description: '-$100, +35 rep, -1 connection (burned bridge)' },
             { type: 'trigger_synergy', target: 'all_bands', value: 'underground-network', description: 'The scene unifies' },
@@ -736,6 +755,7 @@ class EventCardSystem {
         {
           id: 'fold',
           text: 'Accept defeat; start scouting new rooms',
+          diyDelta: -10,
           effects: [{ type: 'resource_change', target: 'player', value: { reputation: -20, stress: 15 }, description: '-20 rep, +15 stress' }],
         },
       ],
@@ -756,6 +776,7 @@ class EventCardSystem {
         {
           id: 'say_yes',
           text: 'Say yes; brief the band and pray they kill it',
+          diyDelta: -8,
           effects: [
             { type: 'modify_stat', target: 'all_bands', value: { popularity: 20, energy: 18, stress: 12 }, description: 'Fame + adrenaline + nerves' },
             { type: 'resource_change', target: 'player', value: { reputation: 25, fans: 60 }, description: '+25 rep, +60 fans' },
@@ -764,6 +785,7 @@ class EventCardSystem {
         {
           id: 'decline',
           text: 'Decline (building your own festival sounds better)',
+          diyDelta: 8,
           effects: [{ type: 'resource_change', target: 'player', value: { reputation: 5 }, description: '+5 rep for staying true' }],
         },
       ],
@@ -844,6 +866,7 @@ class EventCardSystem {
         {
           id: 'lean_in',
           text: 'Lean all the way in (pin the clip, sell the shirt)',
+          diyDelta: -12,
           effects: [
             { type: 'resource_change', target: 'player', value: { fans: 200, money: 150 }, description: 'Numbers go up' },
             { type: 'modify_stat', target: 'all_bands', value: { popularity: 20, authenticity: -20 }, description: 'Famous for the wrong eight seconds' },
@@ -852,6 +875,7 @@ class EventCardSystem {
         {
           id: 'log_off',
           text: 'Post "we are a band, please listen to the band" and log off',
+          diyDelta: 10,
           effects: [
             { type: 'modify_stat', target: 'all_bands', value: { authenticity: 20 }, description: 'The real ones respected it' },
             { type: 'trigger_synergy', target: 'all_bands', value: 'diy-authentic', description: 'Triggers DIY synergies' },
@@ -994,6 +1018,7 @@ class EventCardSystem {
         {
           id: 'lean_in',
           text: 'Lean into it: no bar, all heart',
+          diyDelta: 10,
           effects: [
             { type: 'modify_stat', target: 'all_bands', value: { authenticity: 15 }, description: 'The kids are the scene' },
             { type: 'resource_change', target: 'player', value: { money: -40 }, description: 'No bar tab to lean on' },
@@ -1002,6 +1027,7 @@ class EventCardSystem {
         {
           id: 'serve_the_back',
           text: 'Quietly serve the 21+ in the back (rent is rent)',
+          diyDelta: -12,
           effects: [
             { type: 'resource_change', target: 'player', value: { money: 70, reputation: -8 }, description: 'The front row noticed' },
           ],
@@ -1088,6 +1114,7 @@ class EventCardSystem {
         {
           id: 'take_the_check',
           text: 'Take the check, hang the banner',
+          diyDelta: -15,
           effects: [
             { type: 'resource_change', target: 'player', value: { money: 160 }, description: '+$160' },
             { type: 'faction_change', target: 'player', value: { 'new-wave': 16, 'diy-purists': -18 }, description: 'New Wave nods, the Purists spit' },
@@ -1096,6 +1123,7 @@ class EventCardSystem {
         {
           id: 'tear_it_down',
           text: 'Tear it down on principle',
+          diyDelta: 12,
           effects: [
             { type: 'resource_change', target: 'player', value: { money: -40, reputation: 6 }, description: '-$40, +6 rep' },
             { type: 'faction_change', target: 'player', value: { 'diy-purists': 18, 'new-wave': -10 }, description: 'The Purists salute, the New Wave shrugs' },
@@ -1176,8 +1204,23 @@ class EventCardSystem {
     return this.eventCards.get(id);
   }
 
+  /** Clear per-run state: drawn-card history + lingering active events. Also
+   *  fires automatically from drawEventCard when the turn counter goes
+   *  backwards (a new run started), so the app-lifetime singleton never bleeds
+   *  one run's draws into the next. */
+  reset() {
+    this.activeEvents = [];
+    this.eventHistory = [];
+  }
+
   // Draw a random event card based on current game state
   drawEventCard(gameState: EventGameState): EventCard | null {
+    // Event turns only move forward within a run ([8,16,24,32]); the turn
+    // counter regressing means a new run began since the last draw.
+    const turn = gameState.turn ?? 0;
+    const last = this.eventHistory[this.eventHistory.length - 1];
+    if (last && last.turn >= turn) this.reset();
+
     const availableCards = Array.from(this.eventCards.values()).filter(card => {
       // Check requirements
       if (card.requirements) {
@@ -1202,7 +1245,13 @@ class EventCardSystem {
     });
     
     if (availableCards.length === 0) return null;
-    
+
+    // Per-run dedup: never redraw a card already resolved this run (4 draws
+    // from a 30+ deck — the fallback only matters if the deck ever shrinks).
+    const seen = new Set(this.eventHistory.map((h) => h.cardId));
+    const freshCards = availableCards.filter((card) => !seen.has(card.id));
+    const pool = freshCards.length > 0 ? freshCards : availableCards;
+
     // Weight by rarity
     const weights = {
       common: 4,
@@ -1210,8 +1259,8 @@ class EventCardSystem {
       rare: 2,
       legendary: 1
     };
-    
-    const weightedCards = availableCards.flatMap(card => 
+
+    const weightedCards = pool.flatMap(card =>
       Array(weights[card.rarity]).fill(card)
     );
     
@@ -1226,7 +1275,11 @@ class EventCardSystem {
   // Apply event choice
   applyEventChoice(card: EventCard, choiceId: string | null, gameState: EventGameState): EventApplyResult {
     const choice = choiceId ? card.choices?.find(c => c.id === choiceId) : null;
-    const effects = choice ? choice.effects : card.effects;
+    // Base card effects always land; a choice ADDS its effects on top. (The old
+    // `choice ? choice.effects : card.effects` silently discarded base effects on
+    // cards that have both, turning e.g. music_festival_announced's promised
+    // all-band boost into a trap that never fired.)
+    const effects = choice ? [...card.effects, ...choice.effects] : card.effects;
     
     const results: EventApplyResult = {
       appliedEffects: effects,

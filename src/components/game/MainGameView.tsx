@@ -31,6 +31,11 @@ import { GameErrorBoundary } from "@components/ErrorBoundary";
 import { saveGameManager } from "@game/persistence/SaveGameManager";
 import { synergyManager } from "@game/mechanics/SynergyManager";
 import { applyUiSkin } from "@game/world/uiSkin";
+import {
+  getSceneIdentityTier,
+  SCENE_IDENTITY_TIERS,
+  type SceneIdentityKey,
+} from "@game/mechanics/sceneIdentity";
 import { PixelIcon } from "@components/ui/PixelIcon";
 
 type ViewType = "city" | "bands" | "shows" | "promotion" | "synergies" | "jobs" | "progression" | "tour";
@@ -88,6 +93,9 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
   const [ceremony, setCeremony] = useState<RunCeremony | null>(null);
   const [showPlayAgainPicker, setShowPlayAgainPicker] = useState(false);
   const [turnResults, setTurnResults] = useState<TurnResult>(EMPTY_TURN_RESULT);
+  // Per-faction standing deltas from the turn just resolved — diffed around
+  // executeFullTurn so the results modal can attribute the meter's drift.
+  const [factionShifts, setFactionShifts] = useState<{ id: string; delta: number }[]>([]);
   const [announcement, setAnnouncement] = useState(''); // screen-reader aria-live
   // Re-entrancy guard: blocks a same-tick double-tap (and taps while the
   // results modal is up) from resolving the same turn twice.
@@ -121,6 +129,41 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
   // set the skin on <html> so it cascades everywhere (incl. portaled modals).
   const diyPoints = useGameStore((s) => s.diyPoints);
   useEffect(() => { applyUiSkin(diyPoints); }, [diyPoints]);
+
+  // One-line in-fiction acknowledgment when the DIY↔sellout identity TIER shifts —
+  // without it the skin morph reads as a mute palette swap. Primed silently on
+  // mount, on a new run, and while the save/load modal is open (resets and loads
+  // must never read as "the scene noticed you changed").
+  const [identityNotice, setIdentityNotice] = useState<{ line: string; flavor: string; color: string } | null>(null);
+  const identityTierRef = useRef<SceneIdentityKey | null>(null);
+  const suppressIdentityToastRef = useRef(false);
+  useEffect(() => {
+    const tier = getSceneIdentityTier(diyPoints);
+    if (identityTierRef.current === null || suppressIdentityToastRef.current || showSaveLoad) {
+      identityTierRef.current = tier.key;
+      return;
+    }
+    if (identityTierRef.current === tier.key) return;
+    // SCENE_IDENTITY_TIERS is ordered DIY-first, so a smaller index = more DIY.
+    const idx = (k: SceneIdentityKey) => SCENE_IDENTITY_TIERS.findIndex((t) => t.key === k);
+    const towardDiy = idx(tier.key) < idx(identityTierRef.current);
+    identityTierRef.current = tier.key;
+    setIdentityNotice({
+      line: towardDiy
+        ? `The scene's pulling you back in — word is you're a ${tier.label} now.`
+        : `The scene clocked the change — word is you're a ${tier.label} now.`,
+      flavor: tier.flavor,
+      color: tier.color,
+    });
+    haptics.light();
+  }, [diyPoints, showSaveLoad]);
+  // Auto-dismiss; re-arms if another tier change lands while one is showing.
+  useEffect(() => {
+    if (!identityNotice) return;
+    const t = setTimeout(() => setIdentityNotice(null), 6000);
+    return () => clearTimeout(t);
+  }, [identityNotice]);
+
   const currentCityName = useGameStore(
     (s) => s.cities.find((c) => c.id === s.currentCityId)?.name ?? "",
   );
@@ -187,7 +230,22 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
     }
     resolvingRef.current = true;
     try {
+      // Diff faction standings around the resolution so the results modal can show
+      // WHO shifted and by how much (the engine moves them per-show with hidden
+      // ally/enemy cascades — totals-only drift teaches nothing).
+      const preStandings = { ...useGameStore.getState().factionStandings };
       const results = await turnResolutionEngine.executeFullTurn();
+      const postStandings = useGameStore.getState().factionStandings ?? {};
+      const factionIds = new Set([...Object.keys(preStandings), ...Object.keys(postStandings)]);
+      setFactionShifts(
+        [...factionIds]
+          .map((id) => ({
+            id,
+            delta: Math.round(((postStandings[id] ?? 0) - (preStandings[id] ?? 0)) * 10) / 10,
+          }))
+          // Sub-half-point cascade dust isn't a story worth a chip.
+          .filter((s) => Math.abs(s.delta) >= 0.5),
+      );
       setTurnResults(results);
       setShowTurnResults(true);
       // Announce the new state to screen readers (the visual HUD/modal say nothing
@@ -230,11 +288,18 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
 
   // Same path as the main menu's start — config resources + meta bonuses.
   const startRunWithMode = async (configId: string, stakeTier = 0) => {
+    // A new run resets diyPoints — suppress BEFORE the await (the store reset
+    // re-renders mid-flight) so the reset never reads as an identity change.
+    suppressIdentityToastRef.current = true;
     await startNewRun(configId, stakeTier);
+    identityTierRef.current = getSceneIdentityTier(useGameStore.getState().diyPoints).key;
+    suppressIdentityToastRef.current = false;
+    setIdentityNotice(null);
     setShowPlayAgainPicker(false);
     setRunEnd(null);
     setCeremony(null);
     setTurnResults(EMPTY_TURN_RESULT);
+    setFactionShifts([]);
     setCurrentView("city");
     haptics.success();
   };
@@ -394,12 +459,48 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
         onNextTurn={handleNextTurn}
       />
 
+      {/* Scene-voice toast: acknowledges a DIY↔sellout identity-tier crossing
+          (the moment the whole UI skin morphs). Self-dismisses; never blocks taps. */}
+      {identityNotice && (
+        <div
+          className="btb-pop"
+          role="status"
+          style={{
+            position: 'fixed',
+            top: 'calc(env(safe-area-inset-top) + 48px)',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 8000,
+            maxWidth: 'min(440px, 90vw)',
+            pointerEvents: 'none',
+            backgroundColor: 'var(--snes-bg-2)',
+            border: '2px solid var(--snes-void)',
+            borderLeft: `4px solid ${identityNotice.color}`,
+            padding: '8px 12px',
+            boxShadow: '0 4px 0 rgba(0, 0, 0, 0.4)',
+          }}
+        >
+          <div className="snes-pixel" style={{ fontSize: '10px', color: identityNotice.color, letterSpacing: 0, lineHeight: 1.6 }}>
+            {identityNotice.line}
+          </div>
+          <div style={{ color: 'var(--snes-ink-dim)', fontSize: '11px', fontStyle: 'italic', marginTop: '2px', lineHeight: 1.5 }}>
+            {identityNotice.flavor}
+          </div>
+        </div>
+      )}
+
       {/* Modals */}
       <TurnResultsModal
         isOpen={showTurnResults}
         onClose={handleTurnResultsClose}
         showResults={turnResults.showResults}
         totalUpkeep={turnResults.totalUpkeep}
+        turn={turnResults.turn}
+        isEscalation={turnResults.isEscalation}
+        warnings={turnResults.warnings}
+        venueUnlocks={turnResults.venueUnlocks}
+        objectivesCompleted={turnResults.objectivesCompleted}
+        factionShifts={factionShifts}
         dayJobResult={turnResults.dayJobResult}
         difficultyEvent={turnResults.difficultyEvent}
         synergyEffects={turnResults.synergyEffects}

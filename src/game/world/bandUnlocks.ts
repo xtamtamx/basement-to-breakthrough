@@ -71,31 +71,38 @@ type Cond =
 interface BandUnlockRule { id: string; cond: Cond }
 
 /**
- * The 20 locked bands, lowest-pop first. Cumulative + run-count gates front-load the
+ * The 29 locked bands, lowest-pop first. Cumulative + run-count gates front-load the
  * early drip; mode/stake/feat gates reward playing differently. The home-town
  * legends sit at the end behind the hardest asks.
+ *
+ * TUNING TARGET: runs 1-3 each pop ~1-2 bands, then a steady 1-2/run through
+ * ~run 8; feats + the $ capstone land after. Gates are CUMULATIVE lifetime
+ * totals (wins AND losses fold in) — re-check against balanceSim per-run
+ * averages whenever the show economy moves.
  */
 const BAND_UNLOCKS: BandUnlockRule[] = [
-  // The 90s/2000s legacy locals — steady early drip (cumulative + runs)
-  { id: "automedication", cond: { kind: "shows", value: 10 } },
+  // The 90s/2000s legacy locals — steady early drip (cumulative + runs).
+  // Scaled to the 2026-07 pacing economy: a winning base run banks ~30 shows,
+  // ~1.2k fans, ~$80k gross (losses and early runs land well under that).
+  { id: "automedication", cond: { kind: "shows", value: 20 } },
   { id: "life-of-a-speculator", cond: { kind: "runs", value: 2 } },
-  { id: "seven-miles-to-wall-drug", cond: { kind: "fans", value: 600 } },
-  { id: "she-was-a-dead-end", cond: { kind: "revenue", value: 4000 } },
-  { id: "get-warner", cond: { kind: "shows", value: 25 } },
+  { id: "seven-miles-to-wall-drug", cond: { kind: "fans", value: 3000 } },
+  { id: "she-was-a-dead-end", cond: { kind: "revenue", value: 150000 } },
+  { id: "get-warner", cond: { kind: "shows", value: 60 } },
   { id: "into-the-floodlights", cond: { kind: "runs", value: 3 } },
-  { id: "lucy-grave", cond: { kind: "fans", value: 2000 } },
-  { id: "this-is-just-the-ending", cond: { kind: "shows", value: 50 } },
-  { id: "weight-of-the-word", cond: { kind: "revenue", value: 10000 } },
+  { id: "lucy-grave", cond: { kind: "fans", value: 4500 } },
+  { id: "this-is-just-the-ending", cond: { kind: "shows", value: 120 } },
+  { id: "weight-of-the-word", cond: { kind: "revenue", value: 300000 } },
   { id: "believe-what-we-sold-you", cond: { kind: "runs", value: 5 } },
-  { id: "termites-in-his-teeth", cond: { kind: "fans", value: 3500 } },
+  { id: "termites-in-his-teeth", cond: { kind: "fans", value: 7000 } },
   // Not currently touring (on hiatus / reunion-cycle) → unlockable, not starters.
-  { id: "felony-in-mono-is-dead", cond: { kind: "shows", value: 15 } },
+  { id: "felony-in-mono-is-dead", cond: { kind: "shows", value: 40 } },
   { id: "darker-halftime", cond: { kind: "runs", value: 4 } },
-  { id: "save-each-otter", cond: { kind: "fans", value: 1200 } },
-  { id: "monocultured", cond: { kind: "shows", value: 75 } },
+  { id: "save-each-otter", cond: { kind: "fans", value: 1500 } },
+  { id: "monocultured", cond: { kind: "shows", value: 180 } },
   { id: "no-foolin-eyes", cond: { kind: "runs", value: 8 } },
-  { id: "built-for-greased", cond: { kind: "fans", value: 6000 } },
-  { id: "pictures-and-sentences", cond: { kind: "revenue", value: 25000 } },
+  { id: "built-for-greased", cond: { kind: "fans", value: 10000 } },
+  { id: "pictures-and-sentences", cond: { kind: "revenue", value: 450000 } },
   // The bigger legends — play differently (variety + skill)
   { id: "needles-in-the-spaces", cond: { kind: "feat", flag: FEAT.winDiy, label: "Win a DIY-aligned run" } },
   { id: "too-bad-so-beautiful", cond: { kind: "feat", flag: FEAT.flawless, label: "Win with zero disasters" } },
@@ -107,8 +114,9 @@ const BAND_UNLOCKS: BandUnlockRule[] = [
   { id: "tyranny-and-mutiny", cond: { kind: "stakeTier", value: 3 } },      // win Sellout Pressure
   { id: "stay-angry", cond: { kind: "feat", flag: FEAT.winSellout, label: "Win a sellout-aligned run" } },
   { id: "tell-all-frenemies", cond: { kind: "feat", flag: FEAT.winNoFuture, label: "Win a No Future run" } },
-  // The hometown piano kid who got impossibly huge — the capstone.
-  { id: "an-affluent-man", cond: { kind: "revenue", value: 100000 } },
+  // The hometown piano kid who got impossibly huge — the capstone (~run 8+
+  // at the current ~$80k-gross-per-winning-run economy).
+  { id: "an-affluent-man", cond: { kind: "revenue", value: 600000 } },
 ];
 
 const RULE_BY_ID = new Map(BAND_UNLOCKS.map((r) => [r.id, r]));

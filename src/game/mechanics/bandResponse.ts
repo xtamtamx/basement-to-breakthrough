@@ -7,7 +7,10 @@
  *    the cred — but distrusts a sellout and charges a premium to slum it.
  *  - A commercial (low-authenticity) act wants a name behind it: a small, cred-only
  *    promoter pays up, while reach (high rep) or a fellow careerist earns a discount.
- *  - Middle-of-the-road acts don't care who you are.
+ *  - Middle-of-the-road acts don't care who you are — but a corporate promoter's
+ *    sponsors do, kicking back part of the fee. Selling out has to actually PAY,
+ *    or "stay true" is strictly correct and the dilemma has no teeth: DIY buys
+ *    cred discounts from purists, corporate buys cash at cred's price.
  *
  * Choices have consequences — but nobody flatly refuses (yet), so the scene stays
  * playable. Pure: no mutation, safe from render, the preview, AND the resolver, so
@@ -55,20 +58,33 @@ export function bandResponse(band: Band, diyPoints: number, reputation: number):
   }
 
   // Commercial act: wants a name/stage. A small cred-only promoter pays up;
-  // reach (rep) or a fellow careerist gets a break.
+  // reach (rep) gets a break, and a fellow careerist gets the sweetheart deal.
   if (auth <= COMMERCIAL_AUTHENTICITY) {
     const diyLeaning = tier === 'DIY_LEANING' || tier === 'PURE_DIY';
-    const selloutLeaning = tier === 'CORPORATE_LEANING' || tier === 'FULL_SELLOUT';
     if (reputation < 30 && diyLeaning) {
       return { costMult: 1.3, note: '+30% · wants a bigger name', tone: 'bad' };
     }
-    if (reputation >= 60 || selloutLeaning) {
+    if (tier === 'FULL_SELLOUT') {
+      return { costMult: 0.7, note: '−30% · the label loves your brand', tone: 'good' };
+    }
+    if (tier === 'CORPORATE_LEANING') {
+      return { costMult: 0.8, note: '−20% · fellow careerist rates', tone: 'good' };
+    }
+    if (reputation >= 60) {
       return { costMult: 0.85, note: '−15% · likes your reach', tone: 'good' };
     }
     return NEUTRAL;
   }
 
-  // Middle-of-the-road: doesn't care who you are.
+  // Middle-of-the-road: the BAND doesn't care who you are — but corporate money
+  // does. Sponsor kickbacks eat part of any non-purist fee, so the sellout road
+  // genuinely pays (while purists upstairs are charging that same promoter +25/50%).
+  if (tier === 'FULL_SELLOUT') {
+    return { costMult: 0.85, note: '−15% · sponsors eat part of the fee', tone: 'good' };
+  }
+  if (tier === 'CORPORATE_LEANING') {
+    return { costMult: 0.9, note: '−10% · sponsor kickback', tone: 'good' };
+  }
   return NEUTRAL;
 }
 

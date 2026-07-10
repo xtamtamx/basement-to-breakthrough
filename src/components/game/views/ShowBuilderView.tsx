@@ -16,6 +16,7 @@ import { projectBaseAttendance } from '@game/mechanics/attendanceProjection';
 import { isVenueUnlocked } from '@game/world/venueProgression';
 import { bookingCapacity, nextBookingSlotAt } from '@game/world/bookingCapacity';
 import { resolveVenueCost } from '@game/mechanics/showCosts';
+import { VENUE_BLURBS } from '@game/data/venueTraits';
 import { runManager } from '@game/mechanics/RunManager';
 import { metaProgressionManager } from '@game/mechanics/MetaProgressionManager';
 import { tutorialManager } from '@game/tutorial/TutorialManager';
@@ -92,6 +93,14 @@ export const ShowBuilderView: React.FC = () => {
   const [ticketPrice, setTicketPrice] = useState(15);
   const [leadTime, setLeadTime] = useState(3); // turns out to book — promo builds over the wait
   const [expandedCombo, setExpandedCombo] = useState<string | null>(null); // tap-to-reveal explainer
+  // Transient "BOOKED" stamp + Upcoming-Shows row flash right after booking —
+  // the most-repeated deliberate action used to end on a blank form.
+  const [justBooked, setJustBooked] = useState<{ id: string; playsIn: number; combos: number } | null>(null);
+  useEffect(() => {
+    if (!justBooked) return;
+    const t = setTimeout(() => setJustBooked(null), 1500);
+    return () => clearTimeout(t);
+  }, [justBooked]);
 
   const isSigned = (id: string) => rosterBandIds.includes(id);
   // You can book any UNLOCKED band: signed acts cost only your cut, unsigned acts
@@ -107,6 +116,16 @@ export const ShowBuilderView: React.FC = () => {
     difficultySystem.getScaledBandCost(
       bandBookingFee(b.popularity, isSigned(b.id)) * bandResponseMult(b, diyPoints, reputation),
     );
+
+  // Environmental rent context — the SAME multipliers the resolver charges
+  // (difficulty × district × gentrification × run × meta × city signature),
+  // shared by the venue cards and the Net preview so no surface shows base rent.
+  const venueCostCtx = {
+    districts,
+    currentCityId,
+    runVenueRentMult: runManager.getRunModifiers().venueRentMultiplier,
+    metaVenueDiscountMult: metaProgressionManager.getRunStartBonuses().venueDiscountMultiplier,
+  };
 
   const handleBandToggle = (bandId: string) => {
     if (difficultySystem.isBandUnavailable(bandId)) {
@@ -186,17 +205,12 @@ export const ShowBuilderView: React.FC = () => {
     // Revenue includes bar sales where the venue has a bar (matches the engine),
     // times the faction money modifier.
     const grossRevenue = Math.floor((finalAttendance * ticketPrice + (selectedVenue.hasBar ? finalAttendance * 5 : 0)) * factionMoneyMult);
-    // Costs: the real venue rent (SAME formula the resolver charges — difficulty +
-    // district + gentrification + run + meta + city-signature, via resolveVenueCost)
-    // PLUS the per-band fee for every act. The preview used to apply only difficulty
-    // scaling, so a priced room could resolve at ~1.8× and a "break-even" bill quietly
-    // lost money — the most misleading number in the game.
-    const venueCost = resolveVenueCost(selectedVenue, {
-      districts,
-      currentCityId,
-      runVenueRentMult: runManager.getRunModifiers().venueRentMultiplier,
-      metaVenueDiscountMult: metaProgressionManager.getRunStartBonuses().venueDiscountMultiplier,
-    });
+    // Costs: the real venue rent (SAME formula the resolver charges, via the
+    // shared venueCostCtx) PLUS the per-band fee for every act. The preview used
+    // to apply only difficulty scaling, so a priced room could resolve at ~1.8×
+    // and a "break-even" bill quietly lost money — the most misleading number in
+    // the game.
+    const venueCost = resolveVenueCost(selectedVenue, venueCostCtx);
     const bandCost = selectedBands.reduce((sum, b) => sum + bandFee(b), 0);
     const netRevenue = grossRevenue - venueCost - bandCost;
 
@@ -286,11 +300,15 @@ export const ShowBuilderView: React.FC = () => {
     const duringTutorialBuild =
       tutorialManager.isActive() &&
       tutorialManager.getCurrentStep()?.id === 'build-show';
-    scheduleShow(show, duringTutorialBuild ? 1 : leadTime);
+    const playsIn = duringTutorialBuild ? 1 : leadTime;
+    scheduleShow(show, playsIn);
     haptics.success();
     audio.play('cardDrop'); // satisfying "thunk" as the show lands on the calendar
-    // A bill with combos stacked on it lands with a flourish, not just a thunk.
-    if ((preview?.synergies.length ?? 0) > 0) audio.soldOut();
+    // Visual payoff: a transient BOOKED stamp by the button + a brief flash on
+    // the new Upcoming Shows row. No extra fanfare here — the synergy ding
+    // already fired when the combo lit up, and soldOut() stays reserved for an
+    // actual sold-out night (the results-modal escalation ladder).
+    setJustBooked({ id: show.id, playsIn, combos: preview?.synergies.length ?? 0 });
 
     // Reset selections
     setSelectedBandIds([]);
@@ -344,9 +362,10 @@ export const ShowBuilderView: React.FC = () => {
               const inTurns = (s.scheduledTurn ?? currentRound) - currentRound;
               const headliner = allBands.find((b) => b.id === (s.lineup?.[0] ?? s.bandId));
               const venue = allVenues.find((v) => v.id === s.venueId);
+              const isFresh = justBooked?.id === s.id; // just landed — flash it gold
               return (
-                <div key={s.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', padding: '3px 0' }}>
-                  <span style={{ fontSize: '11px', color: 'var(--snes-ink-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
+                <div key={s.id} className={isFresh ? 'btb-glow' : undefined} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', padding: '3px 0' }}>
+                  <span style={{ fontSize: '11px', color: isFresh ? 'var(--snes-gold)' : 'var(--snes-ink-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
                     {headliner ? <BandLogo band={headliner} variant="inline" /> : '???'} · {venue?.name ?? '???'}
                   </span>
                   <span className="snes-pixel" style={{ flexShrink: 0, fontSize: '9px', letterSpacing: 0, color: inTurns <= 1 ? 'var(--snes-red)' : 'var(--snes-green)' }}>
@@ -502,6 +521,14 @@ export const ShowBuilderView: React.FC = () => {
             {venues.map(venue => {
               const isSelected = selectedVenue?.id === venue.id;
               const isRaided = difficultySystem.isVenueRaided(venue.id);
+              // What a night HERE actually costs — the resolver's full formula,
+              // so comparing rooms uses real prices and gentrification's rent
+              // creep is visible turn over turn (base rent never moves).
+              const effectiveRent = resolveVenueCost(venue, venueCostCtx);
+              // The affordability gate stays on BASE rent: that's the deposit
+              // actually held at booking (gameStore.scheduleShow) — the rest is
+              // settled show-day from the door, and a losing night is an
+              // allowed, informed risk.
               const canAfford = money >= venue.rent;
               const isBlocked = !canAfford || isRaided;
 
@@ -547,6 +574,41 @@ export const ShowBuilderView: React.FC = () => {
                           <Users size={12} color="var(--snes-purple)" /> {venue.capacity}
                         </span>
                       </div>
+                      {/* One line of room character — the ladder finally speaks. */}
+                      {VENUE_BLURBS[venue.id] && (
+                        <div style={{
+                          fontSize: '11px',
+                          color: 'var(--snes-ink-dim)',
+                          fontStyle: 'italic',
+                          marginTop: '6px',
+                          lineHeight: 1.5
+                        }}>
+                          {VENUE_BLURBS[venue.id]}
+                        </div>
+                      )}
+                      {/* Character chips (flavor, not stats — tap-and-hold/hover
+                          for the story). Old saves may carry trait-less venues. */}
+                      {(venue.traits?.length ?? 0) > 0 && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '6px' }}>
+                          {venue.traits.map((t) => (
+                            <span
+                              key={t.id}
+                              className="snes-pixel"
+                              title={t.description}
+                              style={{
+                                fontSize: '9px',
+                                letterSpacing: 0,
+                                color: 'var(--snes-cyan)',
+                                backgroundColor: 'var(--snes-bg)',
+                                border: '1px solid var(--snes-line)',
+                                padding: '2px 5px'
+                              }}
+                            >
+                              {t.name}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                       {isRaided && (
                         <div style={{
                           fontSize: '11px',
@@ -565,7 +627,7 @@ export const ShowBuilderView: React.FC = () => {
                       fontSize: '11px',
                       color: canAfford ? 'var(--snes-green)' : 'var(--snes-red)'
                     }}>
-                      ${venue.rent}
+                      ${effectiveRent}
                     </span>
                   </div>
                   {!canAfford && (
@@ -578,7 +640,7 @@ export const ShowBuilderView: React.FC = () => {
                       gap: '4px'
                     }}>
                       <AlertCircle size={12} />
-                      Not enough cash for rent
+                      Can't front the ${venue.rent} rent deposit
                     </div>
                   )}
                 </button>
@@ -958,6 +1020,31 @@ export const ShowBuilderView: React.FC = () => {
               Pick a lineup and a venue to see the night ahead.
             </div>
           )}
+
+        {/* Transient booking stamp — pops off the Book button so the action
+            visibly LANDS (the form reset used to be the only feedback). */}
+        {justBooked && (
+          <div className="snes-pixel btb-pop" role="status" style={{
+            padding: '10px 12px',
+            border: '2px solid var(--snes-gold)',
+            backgroundColor: 'var(--snes-bg)',
+            color: 'var(--snes-gold)',
+            fontSize: '10px',
+            letterSpacing: 0,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            flexWrap: 'wrap'
+          }}>
+            <Check size={14} />
+            BOOKED — {justBooked.playsIn === 1 ? 'plays next turn' : `plays in ${justBooked.playsIn} turns`}
+            {justBooked.combos > 0 && (
+              <span style={{ color: 'var(--snes-green)' }}>
+                · {justBooked.combos} combo{justBooked.combos > 1 ? 's' : ''} locked in
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Book Show Button */}
         <button

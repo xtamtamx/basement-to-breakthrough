@@ -71,7 +71,10 @@ export const RunModeSelector: React.FC<RunModeSelectorProps> = ({ onSelect, onCl
     .filter((c) => TOURING_ENABLED || c.id !== "hardcore")
     .sort((a, b) => modeOrderIndex(a.id) - modeOrderIndex(b.id));
   const nameById = Object.fromEntries(configs.map((c) => [c.id, c.name]));
-  // Selected stake tier per mode (defaults to Open Mic so newcomers aren't walled).
+  // Selected stake tier per mode. Defaults to each mode's FRONTIER (highest
+  // unlocked = the next un-won climb; 0 for newcomers, so nobody is walled) —
+  // the selector re-mounts every run, and always dropping back to Open Mic made
+  // players re-pick their stake or silently burn a run at the wrong tier.
   const [tiers, setTiers] = useState<Record<string, number>>({});
 
   const pick = (config: RunConfig, tier: number) => {
@@ -123,7 +126,7 @@ export const RunModeSelector: React.FC<RunModeSelectorProps> = ({ onSelect, onCl
 
             const slots = rosterSlotsFor(config);
             const perks = perkChips(config);
-            const tier = tiers[config.id] ?? 0;
+            const tier = tiers[config.id] ?? stakesManager.getUnlockedTier(config.id);
             const stake = STAKE_TIERS[tier];
             const effTurns = Math.max(5, Math.round(config.maxTurns * stake.turnMult));
             const harder = stakeChips(tier);

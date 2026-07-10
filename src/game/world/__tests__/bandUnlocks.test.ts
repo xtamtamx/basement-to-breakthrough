@@ -49,20 +49,20 @@ describe('bandUnlocks (Long Island roster — modern starters / legacy unlocks)'
     expect(isBandUnlocked('the-constant-ache')).toBe(true);     // active starter (Iron Chic)
     expect(STARTER_BAND_IDS.has('cost-of-leaving')).toBe(true); // active starter (Incendiary)
     expect(isBandUnlocked('save-each-otter')).toBe(false);      // Patent Pending — not touring, now locked
-    expect(isBandUnlocked('automedication')).toBe(false);       // legacy, locked: book 10 shows
-    expect(isBandUnlocked('an-affluent-man')).toBe(false);      // capstone, locked: $100k all-time
+    expect(isBandUnlocked('automedication')).toBe(false);       // legacy, locked: book 20 shows
+    expect(isBandUnlocked('an-affluent-man')).toBe(false);      // capstone, locked: $600k all-time
   });
 
   it('hints by gate kind; only cumulative gates show numeric progress', () => {
     h.stats.totalShows = 4;
-    expect(bandLockInfo('automedication')).toMatchObject({ hint: 'Book 10 shows all-time', progress: { current: 4, target: 10 } });
+    expect(bandLockInfo('automedication')).toMatchObject({ hint: 'Book 20 shows all-time', progress: { current: 4, target: 20 } });
     expect(bandLockInfo('bliss-to-eviction')).toMatchObject({ hint: 'Win a Festival run', progress: null });
     expect(bandLockInfo('your-favorite-weakness')).toMatchObject({ hint: 'Win a Pay to Play run', progress: null });
-    expect(bandLockInfo('an-affluent-man')).toMatchObject({ hint: 'Earn $100,000 all-time', progress: { current: 0, target: 100000 } });
+    expect(bandLockInfo('an-affluent-man')).toMatchObject({ hint: 'Earn $600,000 all-time', progress: { current: 0, target: 600000 } });
   });
 
   it('unlocks a cumulative gate, a mode win, and a stake clear', () => {
-    h.stats.totalShows = 10;  // automedication
+    h.stats.totalShows = 20;  // automedication
     h.beaten.add('festival'); // bliss-to-eviction
     h.stakeTier = 2;          // your-favorite-weakness (Pay to Play)
     const fresh = recordBandUnlocks(names).map((b) => b.id);
@@ -79,17 +79,17 @@ describe('bandUnlocks (Long Island roster — modern starters / legacy unlocks)'
     ]));
   });
 
-  it('the Billy Joel capstone needs $100k all-time', () => {
-    h.stats.totalRevenue = 99999;
+  it('the Billy Joel capstone needs $600k all-time', () => {
+    h.stats.totalRevenue = 599999;
     expect(recordBandUnlocks(names).map((b) => b.id)).not.toContain('an-affluent-man');
-    h.stats.totalRevenue = 100000;
+    h.stats.totalRevenue = 600000;
     expect(recordBandUnlocks(names).map((b) => b.id)).toContain('an-affluent-man');
   });
 
   it('a loss records no feats; unlock is idempotent', () => {
     recordRunFeats({ isWin: false, pathAlignment: 'PURE_DIY', stakeTier: 3, disasters: 0, perfectShows: 5 });
     expect(recordBandUnlocks(names)).toEqual([]);
-    h.stats.totalShows = 10;
+    h.stats.totalShows = 20;
     expect(recordBandUnlocks(names).map((b) => b.id)).toContain('automedication');
     expect(recordBandUnlocks(names)).toEqual([]); // no re-fire
   });

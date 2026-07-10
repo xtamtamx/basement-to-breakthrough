@@ -1,9 +1,11 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Band } from '@game/types';
 import { haptics } from '@utils/mobile';
 import { audio } from '@utils/simpleAudio';
+import { safeStorage } from '@utils/safeStorage';
 import { useGameStore } from '@stores/gameStore';
 import { runManager } from '@game/mechanics/RunManager';
+import { bandRelationships } from '@game/mechanics/BandRelationships';
 import { nextBookingManagerCost } from '@game/constants/runConstants';
 import { UserPlus, Check, Briefcase } from 'lucide-react';
 import { bandFactionBadge } from '@game/world/factionDisplay';
@@ -31,6 +33,11 @@ const SANS = "'Inter', system-ui, -apple-system, sans-serif";
 
 const titleCase = (s: string) => s.charAt(0) + s.slice(1).toLowerCase();
 const fmtN = (n: number) => (n >= 1000 ? `${+(n / 1000).toFixed(1)}k` : `${n}`);
+
+// Unlocked band ids the player has already SEEN here — anything unlocked since
+// the last visit gets a NEW badge, so the run-end "sign them next run!" beat has
+// a landing spot in the grid.
+const SEEN_KEY = 'btb-bands-seen-v1';
 
 const SORTS: { id: Sort; label: string }[] = [
   { id: 'popularity', label: 'Top' },
@@ -65,6 +72,29 @@ export const BandsView: React.FC = () => {
     return m;
   }, [allBands]);
   const isUnlocked = (id: string) => lockByBand.get(id)?.unlocked ?? true;
+
+  // NEW badges: bands unlocked since the last visit (first visit ever baselines
+  // silently — badging the whole starter roster would be noise, not signal).
+  const newIds = useMemo(() => {
+    try {
+      const raw = safeStorage.getItem(SEEN_KEY);
+      if (!raw) return new Set<string>();
+      const seen = new Set<string>(JSON.parse(raw) as string[]);
+      return new Set(allBands.filter((b) => isUnlocked(b.id) && !seen.has(b.id)).map((b) => b.id));
+    } catch {
+      return new Set<string>();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allBands, lockByBand]);
+  // Persist the full unlocked set once per mount, so badges clear on the NEXT
+  // visit (they stay visible for this whole one — the player gets to find them).
+  useEffect(() => {
+    safeStorage.setItem(
+      SEEN_KEY,
+      JSON.stringify(allBands.filter((b) => isUnlocked(b.id)).map((b) => b.id)),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const slotBreakdown: { label: string; value: number }[] = [
     { label: 'Base', value: rosterSlotSources.base },
@@ -102,6 +132,9 @@ export const BandsView: React.FC = () => {
     });
     const byName = (a: Band, b: Band) => a.name.localeCompare(b.name);
     return [...base].sort((a, b) => {
+      // Fresh unlocks float to the top regardless of sort — go find and sign them.
+      const fresh = (newIds.has(b.id) ? 1 : 0) - (newIds.has(a.id) ? 1 : 0);
+      if (fresh !== 0) return fresh;
       switch (sort) {
         case 'name': return byName(a, b);
         case 'authenticity': return b.authenticity - a.authenticity || byName(a, b);
@@ -110,7 +143,7 @@ export const BandsView: React.FC = () => {
       }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allBands, filter, sort, rosterSet, lockByBand]);
+  }, [allBands, filter, sort, rosterSet, lockByBand, newIds]);
 
   // Locked teasers — shown only in "All", closest-to-unlocking first (motivating).
   const lockedTeasers = useMemo(() => {
@@ -228,6 +261,9 @@ export const BandsView: React.FC = () => {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                       <BandLogo band={band} variant="card" style={{ color: C.ink }} />
+                      {newIds.has(band.id) && (
+                        <span className="snes-pixel" style={{ flexShrink: 0, padding: '1px 4px', background: C.bg2, border: `2px solid ${C.gold}`, color: C.gold, fontSize: '9px', letterSpacing: 0 }}>NEW</span>
+                      )}
                       {band.isRealArtist && (
                         <span className="snes-pixel" style={{ flexShrink: 0, padding: '1px 4px', background: C.bg2, border: `2px solid ${C.magenta}`, color: C.magenta, fontSize: '9px', letterSpacing: 0 }}>REAL</span>
                       )}
@@ -297,7 +333,9 @@ export const BandsView: React.FC = () => {
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <h3 style={{ fontFamily: SANS, fontWeight: 800, fontSize: '14px', color: C.mute, margin: 0, lineHeight: 1.2, letterSpacing: '2px' }}>???</h3>
+                      {/* The parody NAME is the tease — it's what makes you want the
+                          unlock. Logo, stats, and bio stay hidden until it's earned. */}
+                      <h3 style={{ fontFamily: SANS, fontWeight: 800, fontSize: '14px', color: C.dim, margin: 0, lineHeight: 1.2, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{band.name}</h3>
                       <span className="snes-pixel" style={{ flexShrink: 0, fontSize: '9px', color: C.mute, letterSpacing: 0 }}>{titleCase(band.genre)}</span>
                     </div>
                     <div style={{ fontFamily: SANS, fontSize: '11px', color: C.dim, margin: '3px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -326,6 +364,13 @@ export const BandsView: React.FC = () => {
         const isInRoster = rosterSet.has(detailBand.id);
         const lockedOut = !isInRoster && rosterFull;
         const fb = bandFactionBadge(detailBand);
+        // LIVE friendships/beefs from co-billed shows (BandRelationships drift) —
+        // no authored band sets the static field, so this run's drama is the data.
+        // |r| >= 30 keeps it to relationships the player actually built.
+        const liveRels = bandRelationships
+          .getBandRelationships(detailBand.id)
+          .filter((r) => Math.abs(r.relationship) >= 30)
+          .sort((a, b) => Math.abs(b.relationship) - Math.abs(a.relationship));
         return (
           <SnesModal onClose={() => setDetailId(null)} ariaLabel={detailBand.name} maxWidth={460}>
             <BandLogo band={detailBand} variant="hero" style={{ display: 'block', color: C.ink, margin: '0 0 4px' }} />
@@ -355,7 +400,7 @@ export const BandsView: React.FC = () => {
 
             {detailBand.bio && <p style={{ fontFamily: SANS, fontSize: '13.5px', color: C.dim, margin: '0 0 14px', lineHeight: 1.55 }}>{detailBand.bio}</p>}
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px', marginBottom: detailBand.relationships?.length ? '14px' : '4px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px', marginBottom: liveRels.length ? '14px' : '4px' }}>
               {STAT_ROWS(detailBand).map(([label, val, color]) => (
                 <div key={label}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
@@ -367,14 +412,18 @@ export const BandsView: React.FC = () => {
               ))}
             </div>
 
-            {detailBand.relationships && detailBand.relationships.length > 0 && (
+            {liveRels.length > 0 && (
               <div style={{ marginBottom: '14px' }}>
                 <h4 className="snes-pixel" style={{ fontSize: '9px', color: C.dim, margin: '0 0 8px', letterSpacing: 0 }}>Relationships</h4>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                  {detailBand.relationships.map((rel) => {
+                  {liveRels.map((rel) => {
                     const friendly = rel.relationship >= 0;
                     return (
-                      <span key={rel.bandId} style={{ fontFamily: SANS, fontSize: '12px', fontWeight: 600, padding: '5px 10px', background: C.bg2, border: `2px solid ${friendly ? C.green : C.red}`, color: friendly ? C.green : C.red, display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                      <span
+                        key={rel.bandId}
+                        title={friendly ? 'Tight from shared bills — chemistry bonus together' : 'Beef from shared bills — chemistry penalty together'}
+                        style={{ fontFamily: SANS, fontSize: '12px', fontWeight: 600, padding: '5px 10px', background: C.bg2, border: `2px solid ${friendly ? C.green : C.red}`, color: friendly ? C.green : C.red, display: 'inline-flex', alignItems: 'center', gap: '5px' }}
+                      >
                         <PixelIcon name={friendly ? 'fans' : 'warning'} size={12} /> {allBands.find((b) => b.id === rel.bandId)?.name ?? '???'}
                       </span>
                     );

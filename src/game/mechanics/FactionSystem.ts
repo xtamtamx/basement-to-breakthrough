@@ -11,7 +11,10 @@ class FactionSystem {
   }
 
   private initializeFactions() {
-    // Define the 5 core factions
+    // Define the 5 core factions. Names/blurbs come from the authored satirical
+    // identities (satiricalText) so each reads as a scene micro-community with a
+    // voice, not a stat meter — compact chip labels live in factionDisplay's
+    // FACTION_SHORT_NAME, mottos in FACTION_IDENTITY.
     const factionData: Faction[] = [
       {
         id: 'diy-purists',
@@ -39,8 +42,8 @@ class FactionSystem {
       },
       {
         id: 'metal-elite',
-        name: 'Metal Elite',
-        description: 'Technical prowess above all. Shredding is a way of life.',
+        name: SATIRICAL_FACTION_DESCRIPTIONS.METAL_ELITISTS.name,
+        description: SATIRICAL_FACTION_DESCRIPTIONS.METAL_ELITISTS.description,
         values: {
           authenticity: 60,
           technicalSkill: 100,
@@ -63,8 +66,8 @@ class FactionSystem {
       },
       {
         id: 'indie-crowd',
-        name: 'Indie Crowd',
-        description: 'Art for art\'s sake. Aesthetic and emotion over everything.',
+        name: SATIRICAL_FACTION_DESCRIPTIONS.INDIE_CROWD.name,
+        description: SATIRICAL_FACTION_DESCRIPTIONS.INDIE_CROWD.description,
         values: {
           authenticity: 70,
           technicalSkill: 50,
@@ -87,8 +90,8 @@ class FactionSystem {
       },
       {
         id: 'old-guard',
-        name: 'Old Guard',
-        description: 'Keepers of the flame. Respect the history or get out.',
+        name: SATIRICAL_FACTION_DESCRIPTIONS.OLD_GUARD.name,
+        description: SATIRICAL_FACTION_DESCRIPTIONS.OLD_GUARD.description,
         values: {
           authenticity: 80,
           technicalSkill: 70,
@@ -111,8 +114,9 @@ class FactionSystem {
       },
       {
         id: 'new-wave',
-        name: 'New Wave',
-        description: 'Breaking boundaries and mixing genres. The future is now.',
+        // NEW_BLOOD is the authored identity for the genre-blind newcomer wave.
+        name: SATIRICAL_FACTION_DESCRIPTIONS.NEW_BLOOD.name,
+        description: SATIRICAL_FACTION_DESCRIPTIONS.NEW_BLOOD.description,
         values: {
           authenticity: 50,
           technicalSkill: 60,
@@ -443,7 +447,9 @@ class FactionSystem {
       id: `${faction.id}-positive-${Date.now()}`,
       type: FactionEventType.ALLIANCE,
       title: `${faction.name} Support`,
-      description: `The ${faction.name} appreciate your dedication to their values.`,
+      // Authored faction names carry their own article ("The Trve Kvlt
+      // Brotherhood") — never prefix another "The".
+      description: `${faction.name} appreciate your dedication to their values.`,
       factionId: faction.id,
       choices: [
         {
@@ -468,7 +474,7 @@ class FactionSystem {
       id: `${faction.id}-negative-${Date.now()}`,
       type: FactionEventType.DRAMA,
       title: `${faction.name} Displeasure`,
-      description: `The ${faction.name} are unhappy with your recent actions.`,
+      description: `${faction.name} are unhappy with your recent actions.`,
       factionId: faction.id,
       choices: [
         {

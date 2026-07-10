@@ -16,12 +16,33 @@ export const HARD_CAP_EFFECTIVE_SYNERGIES = 5;
 // equipped instincts / scene-fit / hype / bill / gentrification multipliers.
 export const COMBO_MULT_CAP = 1.3;
 
-// Turns on which the player is offered a new equipped synergy ("instinct").
-export const SYNERGY_REWARD_TURNS = [5, 12, 20, 28];
+// Discovery drip — instinct offers and event cards are scheduled as FRACTIONS of
+// the active run's turn budget (mode + stake dependent), so the drip spans the
+// whole run in every mode instead of stopping at a hardcoded turn 32 (which left
+// Speed with 2 offers and long Classic runs with a dead back half).
+const SYNERGY_OFFER_FRACS = [0.15, 0.32, 0.5, 0.68, 0.85];
+const EVENT_CARD_FRACS = [0.24, 0.42, 0.6, 0.78, 0.93];
 
-// Turns on which an EVENT CARD is drawn (a band-drama / scene crisis with a
-// choice). Offset from the synergy turns so the two never collide on one turn.
-export const EVENT_CARD_TURNS = [8, 16, 24, 32];
+const fracsToTurns = (fracs: number[], maxTurns: number, avoid: number[] = []): number[] => {
+  const out: number[] = [];
+  for (const f of fracs) {
+    let t = Math.max(2, Math.round(maxTurns * f));
+    // Nudge forward past duplicates/collisions (the engine relies on an event
+    // card never sharing a turn with an instinct offer).
+    while (out.includes(t) || avoid.includes(t)) t += 1;
+    if (t < maxTurns) out.push(t);
+  }
+  return out;
+};
+
+/** Turns on which the player is offered a new equipped synergy ("instinct"). */
+export const synergyRewardTurns = (maxTurns: number): number[] =>
+  fracsToTurns(SYNERGY_OFFER_FRACS, maxTurns);
+
+/** Turns on which an EVENT CARD is drawn (a band-drama / scene crisis with a
+ * choice). Offset from the synergy turns so the two never collide on one turn. */
+export const eventCardTurns = (maxTurns: number): number[] =>
+  fracsToTurns(EVENT_CARD_FRACS, maxTurns, synergyRewardTurns(maxTurns));
 
 // Roster Slots (band-slot cap) — how many acts you can have
 // signed at once. Modifiers (per-mode deltas, the Scene Expansion meta upgrade,
@@ -50,20 +71,36 @@ export const BURNOUT_STRESS_CAP = 100;
 export const EVICTION_TURNS_BROKE = 3;
 
 // Turn Economy
-// Flat per-turn burn ("rent, ramen, and regret"). Venue rent is paid per
+// Base per-turn burn ("rent, ramen, and regret"). Venue rent is paid per
 // show at booking/resolution time — NOT per turn for every city venue.
 export const LIVING_COSTS_PER_TURN = 14;
+
+// Scene overhead: the per-turn burn grows with the scene you're carrying (van
+// upkeep, storage unit, flyer stock, a phone that never stops ringing). A flat
+// $14 is noise once shows gross $1k+, so the overhead scales with fans + rep —
+// this is what keeps "count the door" economics alive mid-run and makes
+// Eviction a real loss vector at higher stakes (it's multiplied by the run's
+// rent multiplier at charge time).
+// The fans term is capped (a bigger following stops adding van miles at some
+// point) so long high-fan runs bleed steadily, not lethally.
+export const sceneOverheadPerTurn = (fans: number, reputation: number): number =>
+  LIVING_COSTS_PER_TURN + Math.min(60, Math.floor(fans / 10)) + Math.floor(reputation / 2);
 
 // Base stress each show adds before the run's stressMultiplier. Touring is
 // tiring — this is what makes the Burnout loss reachable through play (not
 // just day jobs) and gives Speed mode's stress modifier teeth.
 export const SHOW_STRESS_BASE = 4;
 
+// Extra stress per act beyond the headliner — a bigger bill is a longer night
+// (more load-ins, more egos). Makes "book big vs breathe" a real choice instead
+// of stress being a flat metronome.
+export const SHOW_STRESS_PER_EXTRA_ACT = 1;
+
 // Stress shed each turn from simply resting (the scene breathes between shows).
 // Kept strictly BELOW SHOW_STRESS_BASE so single-show play still trends stress
 // upward — otherwise stress pinned at 0, making Burnout unreachable and every
-// "when calm" instinct a free always-on bonus. Net ~+2/turn before day jobs/escalation.
-export const STRESS_RECOVERY_PER_TURN = 2;
+// "when calm" instinct a free always-on bonus. A no-show turn genuinely recovers.
+export const STRESS_RECOVERY_PER_TURN = 3;
 
 // Run End Reasons
 export type RunEndReason =

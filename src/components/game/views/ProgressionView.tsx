@@ -11,6 +11,20 @@ import { gameAudio } from '@utils/gameAudio';
 import { SnesModal } from '@components/ui/SnesModal';
 import { PixelIcon } from '@components/ui/PixelIcon';
 
+// Only LIVE numbers ever render in the confirm modal: the one-shot effects
+// makeChoice actually applies. The catalog's modifiers/unlocks/restrictions are
+// NOT wired into the engine and must stay invisible until they are.
+const immediateEffectChips = (choice: PathChoice): Array<{ label: string; good: boolean }> => {
+  const im = choice.effects.immediate;
+  if (!im) return [];
+  const chips: Array<{ label: string; good: boolean }> = [];
+  if (im.money) chips.push({ label: `${im.money > 0 ? '+' : '−'}$${Math.abs(im.money)}`, good: im.money > 0 });
+  if (im.reputation) chips.push({ label: `${im.reputation > 0 ? '+' : ''}${im.reputation} Rep`, good: im.reputation > 0 });
+  if (im.fans) chips.push({ label: `${im.fans > 0 ? '+' : ''}${im.fans} Fans`, good: im.fans > 0 });
+  if (im.stress) chips.push({ label: `${im.stress > 0 ? '+' : ''}${im.stress} Stress`, good: im.stress < 0 });
+  return chips;
+};
+
 export const ProgressionView: React.FC = () => {
   const { fans, reputation, showHistory } = useGameStore();
   const [selectedChoice, setSelectedChoice] = useState<PathChoice | null>(null);
@@ -27,7 +41,6 @@ export const ProgressionView: React.FC = () => {
 
   const progression = progressionPathSystem.getProgression();
   const availableChoices = progressionPathSystem.getAvailableChoices();
-  const currentEffects = progressionPathSystem.getCurrentEffects();
 
   const handlePathChoice = (path: ProgressionPath) => {
     if (progressionPathSystem.choosePath(path)) {
@@ -258,9 +271,9 @@ export const ProgressionView: React.FC = () => {
                   letterSpacing: 0
                 }}>Path Benefits</h3>
                 <ul style={{ margin: 0, paddingLeft: '18px' }}>
-                  <li style={{ color: 'var(--snes-ink)', marginBottom: '3px', fontSize: '12px' }}>Lower costs, stronger community</li>
-                  <li style={{ color: 'var(--snes-ink)', marginBottom: '3px', fontSize: '12px' }}>Higher authenticity & reputation</li>
-                  <li style={{ color: 'var(--snes-ink)', marginBottom: '3px', fontSize: '12px' }}>Unlock co-op venues & mutual aid</li>
+                  <li style={{ color: 'var(--snes-ink)', marginBottom: '3px', fontSize: '12px' }}>Purist bands cut your booking fees</li>
+                  <li style={{ color: 'var(--snes-ink)', marginBottom: '3px', fontSize: '12px' }}>Every choice deepens your cred</li>
+                  <li style={{ color: 'var(--snes-ink)', marginBottom: '3px', fontSize: '12px' }}>The city grows DIY around you</li>
                   <li style={{ color: 'var(--snes-ink)', marginBottom: '3px', fontSize: '12px' }}>All-ages shows & safer spaces</li>
                 </ul>
               </div>
@@ -273,8 +286,8 @@ export const ProgressionView: React.FC = () => {
                   letterSpacing: 0
                 }}>Path Challenges</h3>
                 <ul style={{ margin: 0, paddingLeft: '18px' }}>
-                  <li style={{ color: 'var(--snes-ink-dim)', marginBottom: '3px', fontSize: '12px' }}>Lower profits & growth caps</li>
-                  <li style={{ color: 'var(--snes-ink-dim)', marginBottom: '3px', fontSize: '12px' }}>Limited venue options</li>
+                  <li style={{ color: 'var(--snes-ink-dim)', marginBottom: '3px', fontSize: '12px' }}>Commercial acts charge no-name rates</li>
+                  <li style={{ color: 'var(--snes-ink-dim)', marginBottom: '3px', fontSize: '12px' }}>Sponsor money never touches your hands</li>
                   <li style={{ color: 'var(--snes-ink-dim)', marginBottom: '3px', fontSize: '12px' }}>Consensus decision-making</li>
                   <li style={{ color: 'var(--snes-ink-dim)', marginBottom: '3px', fontSize: '12px' }}>Constant struggle against gentrification</li>
                 </ul>
@@ -330,9 +343,9 @@ export const ProgressionView: React.FC = () => {
                   letterSpacing: 0
                 }}>Path Benefits</h3>
                 <ul style={{ margin: 0, paddingLeft: '18px' }}>
-                  <li style={{ color: 'var(--snes-ink)', marginBottom: '3px', fontSize: '12px' }}>Higher profits & faster growth</li>
-                  <li style={{ color: 'var(--snes-ink)', marginBottom: '3px', fontSize: '12px' }}>Professional venues & equipment</li>
-                  <li style={{ color: 'var(--snes-ink)', marginBottom: '3px', fontSize: '12px' }}>Sponsorship opportunities</li>
+                  <li style={{ color: 'var(--snes-ink)', marginBottom: '3px', fontSize: '12px' }}>Sponsor kickbacks trim booking fees</li>
+                  <li style={{ color: 'var(--snes-ink)', marginBottom: '3px', fontSize: '12px' }}>Commercial acts give you careerist rates</li>
+                  <li style={{ color: 'var(--snes-ink)', marginBottom: '3px', fontSize: '12px' }}>Sponsorship cash injections</li>
                   <li style={{ color: 'var(--snes-ink)', marginBottom: '3px', fontSize: '12px' }}>Data-driven booking</li>
                 </ul>
               </div>
@@ -345,8 +358,8 @@ export const ProgressionView: React.FC = () => {
                   letterSpacing: 0
                 }}>Path Challenges</h3>
                 <ul style={{ margin: 0, paddingLeft: '18px' }}>
+                  <li style={{ color: 'var(--snes-ink-dim)', marginBottom: '3px', fontSize: '12px' }}>Purist bands charge you to slum it</li>
                   <li style={{ color: 'var(--snes-ink-dim)', marginBottom: '3px', fontSize: '12px' }}>Loss of scene credibility</li>
-                  <li style={{ color: 'var(--snes-ink-dim)', marginBottom: '3px', fontSize: '12px' }}>Unhappy bands & fans</li>
                   <li style={{ color: 'var(--snes-ink-dim)', marginBottom: '3px', fontSize: '12px' }}>Soulless optimization</li>
                   <li style={{ color: 'var(--snes-ink-dim)', marginBottom: '3px', fontSize: '12px' }}>Becoming what you once hated</li>
                 </ul>
@@ -429,8 +442,8 @@ export const ProgressionView: React.FC = () => {
               lineHeight: 1.5
             }}>
               {pendingPath === ProgressionPath.DIY_COLLECTIVE
-                ? 'For the scene, by the scene — lower costs and stronger community, but slimmer profits.'
-                : 'Music as a business — bigger profits and pro venues, at the cost of scene credibility.'}
+                ? 'For the scene, by the scene — purist bands play for less, but sponsor money will never touch your hands.'
+                : 'Music as a business — sponsors and commercial acts cut you deals, while the purists charge you extra to slum it.'}
             </p>
             <p className="snes-panel-inset" style={{
               borderColor: 'var(--snes-gold)',
@@ -480,50 +493,29 @@ export const ProgressionView: React.FC = () => {
 
       {/* Content */}
       <div style={contentStyle}>
-        {/* Active Effects Summary */}
+        {/* How the path actually lands — one-shot payouts + the Scene Identity
+            axis. No multiplier chips: nothing ongoing is wired into the engine,
+            and this panel must never advertise a number that isn't live. */}
         <div className="snes-panel" style={{
           padding: '12px',
           marginBottom: '16px'
         }}>
           <h3 className="snes-pixel" style={{
             color: 'var(--snes-ink-dim)',
-            margin: '0 0 10px',
+            margin: '0 0 8px',
             fontSize: '11px',
             letterSpacing: 0
-          }}>Active Path Effects</h3>
-          <div style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '6px'
+          }}>How Your Path Works</h3>
+          <p style={{
+            color: 'var(--snes-ink-dim)',
+            margin: 0,
+            fontSize: '12px',
+            lineHeight: 1.5
           }}>
-            {currentEffects.modifiers.ticketPriceMultiplier !== 1 && (
-              <span className="snes-chip snes-pixel" style={{
-                fontSize: '11px',
-                letterSpacing: 0,
-                color: 'var(--snes-ink)'
-              }}>
-                Ticket Prices: {(currentEffects.modifiers.ticketPriceMultiplier * 100).toFixed(0)}%
-              </span>
-            )}
-            {currentEffects.modifiers.bandHappinessModifier !== 0 && (
-              <span className="snes-chip snes-pixel" style={{
-                fontSize: '11px',
-                letterSpacing: 0,
-                color: 'var(--snes-ink)'
-              }}>
-                Band Happiness: {currentEffects.modifiers.bandHappinessModifier > 0 ? '+' : ''}{(currentEffects.modifiers.bandHappinessModifier * 100).toFixed(0)}%
-              </span>
-            )}
-            {currentEffects.modifiers.venueRentMultiplier !== 1 && (
-              <span className="snes-chip snes-pixel" style={{
-                fontSize: '11px',
-                letterSpacing: 0,
-                color: 'var(--snes-ink)'
-              }}>
-                Venue Costs: {(currentEffects.modifiers.venueRentMultiplier * 100).toFixed(0)}%
-              </span>
-            )}
-          </div>
+            Every choice pays out once — then pushes your Scene Identity toward{' '}
+            <span style={{ color: pathAccent, fontWeight: 600 }}>{isDIY ? 'DIY' : 'sellout'}</span>.
+            Band fees, the city, and how the scene treats you all follow where you lean.
+          </p>
         </div>
 
         {/* Available Choices */}
@@ -679,10 +671,26 @@ export const ProgressionView: React.FC = () => {
           }}>{selectedChoice.name}</h3>
           <p style={{
             color: 'var(--snes-ink-dim)',
-            margin: '0 0 16px',
+            margin: '0 0 12px',
             fontSize: '13px',
             lineHeight: 1.5
           }}>{selectedChoice.description}</p>
+
+          {/* The REAL payload — one-shot effects + the identity push, nothing else. */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', margin: '0 0 16px' }}>
+            {immediateEffectChips(selectedChoice).map(chip => (
+              <span key={chip.label} className="snes-chip snes-pixel" style={{
+                fontSize: '11px',
+                letterSpacing: 0,
+                color: chip.good ? 'var(--snes-green)' : 'var(--snes-red)'
+              }}>{chip.label}</span>
+            ))}
+            <span className="snes-chip snes-pixel" style={{
+              fontSize: '11px',
+              letterSpacing: 0,
+              color: pathAccent
+            }}>Identity → {isDIY ? 'DIY' : 'Sellout'}</span>
+          </div>
 
           {selectedChoice.permanent && (
             <p className="snes-panel-inset" style={{

@@ -1,5 +1,11 @@
 /**
- * SynergyAcquireModal - Modal for acquiring or replacing synergies
+ * SynergyAcquireModal - Modal for acquiring or replacing synergies.
+ *
+ * Milestone offers arrive as a DRAFT: when the store holds 2+
+ * pendingSynergyOffers the modal renders the candidates side-by-side
+ * (landscape-friendly) and the player picks ONE — steering a build instead of
+ * flipping a coin. A single offer (or the legacy prop-only path) keeps the
+ * original take-or-skip layout.
  */
 
 import React, { useState, useEffect } from 'react';
@@ -44,10 +50,19 @@ export const SynergyAcquireModal: React.FC<SynergyAcquireModalProps> = ({
   const currentTurn = useGameStore(state => state.currentRound);
   const [selectedReplaceSlot, setSelectedReplaceSlot] = useState<number | null>(null);
 
+  // Draft candidates from the store; the prop stays as the single-offer
+  // fallback (it mirrors offers[0] on milestone turns anyway).
+  const pendingOffers = useGameStore(state => state.pendingSynergyOffers);
+  const offers = pendingOffers.length > 1 ? pendingOffers : [synergy];
+  const isDraft = offers.length > 1;
+  // In a draft nothing is pre-picked — choosing IS the moment.
+  const [pickedId, setPickedId] = useState<string | null>(isDraft ? null : synergy.id);
+  const picked = offers.find((o) => o.id === pickedId) ?? null;
+
   const isFull = synergyManager.isFull();
   const equipped = synergyManager.getEquippedSynergies();
-  const accent = RARITY_COLOR[synergy.rarity];
-  const glow = RARITY_GLOW[synergy.rarity];
+  const accent = picked ? RARITY_COLOR[picked.rarity] : 'var(--snes-magenta)';
+  const glow = picked ? RARITY_GLOW[picked.rarity] : '';
 
   // A milestone instinct offer is a celebration — ring it in on open.
   useEffect(() => {
@@ -56,16 +71,17 @@ export const SynergyAcquireModal: React.FC<SynergyAcquireModalProps> = ({
   }, []);
 
   const handleAcquire = () => {
+    if (!picked) return; // Draft: must pick a card first
     if (isFull && selectedReplaceSlot === null) {
       return; // Must select a slot to replace
     }
 
     if (isFull && selectedReplaceSlot !== null) {
       // Set as pending and replace
-      synergyManager.acquireSynergy(synergy, currentTurn);
+      synergyManager.acquireSynergy(picked, currentTurn);
       synergyManager.replaceSynergy(selectedReplaceSlot, currentTurn);
     } else {
-      synergyManager.acquireSynergy(synergy, currentTurn);
+      synergyManager.acquireSynergy(picked, currentTurn);
     }
 
     onAcquired();
@@ -73,40 +89,117 @@ export const SynergyAcquireModal: React.FC<SynergyAcquireModalProps> = ({
 
   const handleDiscard = () => {
     synergyManager.cancelPendingSynergy();
+    // Skip consolation: the band takes the night off. Tiny by design — walking
+    // away should sting a little, not read as a trap choice.
+    useGameStore.getState().addStress(-5);
     onClose();
   };
 
-  const acquireDisabled = isFull && selectedReplaceSlot === null;
+  const acquireDisabled = picked === null || (isFull && selectedReplaceSlot === null);
 
   return (
     <SnesModal
       onClose={handleDiscard}
-      ariaLabel={`New synergy offered: ${synergy.name}`}
-      maxWidth={440}
+      ariaLabel={
+        isDraft
+          ? `New instinct draft: pick one of ${offers.length}`
+          : `New synergy offered: ${synergy.name}`
+      }
+      maxWidth={isDraft ? 700 : 440}
       accent={accent}
       closeOnBackdrop={false}
       className={glow ? 'btb-glow' : undefined}
       footer={
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <button
-            onClick={handleDiscard}
-            className="snes-btn snes-btn--ghost"
-            style={{ flex: 1, minHeight: '44px', cursor: 'pointer' }}
-          >
-            Skip This One
-          </button>
-          <button
-            onClick={handleAcquire}
-            disabled={acquireDisabled}
-            className="snes-btn snes-btn--green"
-            style={{ flex: 1, minHeight: '44px', cursor: acquireDisabled ? 'not-allowed' : 'pointer' }}
-          >
-            {isFull ? 'Replace & Acquire' : 'Acquire'}
-          </button>
+        <div>
+          <p style={{ margin: '0 0 8px 0', fontSize: '11px', color: 'var(--snes-ink-mute)', textAlign: 'center', lineHeight: 1.4 }}>
+            Skipping means a night off — the band sheds 5 stress.
+          </p>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button
+              onClick={handleDiscard}
+              className="snes-btn snes-btn--ghost"
+              style={{ flex: 1, minHeight: '44px', cursor: 'pointer' }}
+            >
+              Skip This One
+            </button>
+            <button
+              onClick={handleAcquire}
+              disabled={acquireDisabled}
+              className="snes-btn snes-btn--green"
+              style={{ flex: 1, minHeight: '44px', cursor: acquireDisabled ? 'not-allowed' : 'pointer' }}
+            >
+              {isDraft && !picked ? 'Pick One' : isFull ? 'Replace & Acquire' : 'Acquire'}
+            </button>
+          </div>
         </div>
       }
     >
       <div>
+        {isDraft && (
+          <>
+            <p className="snes-pixel" style={{ fontSize: '10px', color: 'var(--snes-gold)', margin: '0 0 12px 0', lineHeight: 1.5 }}>
+              Milestone! Pick ONE instinct:
+            </p>
+            {/* Candidates side-by-side — landscape-friendly draft row. */}
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'stretch' }}>
+              {offers.map((offer) => {
+                const cardAccent = RARITY_COLOR[offer.rarity];
+                const selected = pickedId === offer.id;
+                return (
+                  <button
+                    key={offer.id}
+                    onClick={() => setPickedId(offer.id)}
+                    aria-pressed={selected}
+                    style={{
+                      flex: 1,
+                      minWidth: 0,
+                      textAlign: 'left',
+                      padding: '10px',
+                      background: selected
+                        ? 'color-mix(in srgb, var(--snes-green) 14%, var(--snes-bg-2))'
+                        : 'var(--snes-bg-2)',
+                      border: `2px solid ${selected ? cardAccent : 'var(--snes-void)'}`,
+                      borderRadius: 0,
+                      boxShadow: selected
+                        ? offer.rarity === 'LEGENDARY' ? RARITY_GLOW.LEGENDARY : 'none'
+                        : 'inset 1px 1px 0 0 var(--snes-edge-lt)',
+                      cursor: 'pointer',
+                      touchAction: 'manipulation',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                      <PixelIcon name={offer.icon} size={20} style={{ flexShrink: 0, color: 'var(--snes-gold)' }} />
+                      <span className="snes-pixel" style={{ fontSize: '10px', color: 'var(--snes-ink)', lineHeight: 1.3 }}>
+                        {offer.name}
+                      </span>
+                    </div>
+                    <span
+                      className="snes-pixel"
+                      style={{ fontSize: '8px', color: cardAccent, letterSpacing: 0, textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}
+                    >
+                      {offer.rarity}
+                    </span>
+                    <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      {offer.effects.map((effect, i) => (
+                        <li key={i} style={{ fontSize: '11px', color: 'var(--snes-green)', lineHeight: 1.4 }}>
+                          ▸ {effect.description}
+                        </li>
+                      ))}
+                    </ul>
+                    {offer.condition && (
+                      <div style={{ marginTop: '6px', fontSize: '10px', color: 'var(--snes-gold)', lineHeight: 1.4 }}>
+                        Needs: {offer.condition.description}
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        )}
+
+        {!isDraft && (
+        <>
         {/* Header */}
         <div
           style={{
@@ -206,9 +299,13 @@ export const SynergyAcquireModal: React.FC<SynergyAcquireModalProps> = ({
               {synergy.trigger.replace('_', ' ')}
             </span>
           </div>
+        </div>
+        </>
+        )}
 
-          {/* Replacement Selection (if full) */}
-          {isFull && (
+        {/* Replacement Selection (if full) — in a draft this appears once a
+            card is picked, so the swap decision reads against a known incoming. */}
+        {isFull && picked && (
             <div
               style={{
                 marginTop: '16px',
@@ -274,7 +371,6 @@ export const SynergyAcquireModal: React.FC<SynergyAcquireModalProps> = ({
               </div>
             </div>
           )}
-        </div>
       </div>
     </SnesModal>
   );

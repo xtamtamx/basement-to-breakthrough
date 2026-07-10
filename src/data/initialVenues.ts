@@ -1,10 +1,15 @@
 import { Venue, VenueType } from "@game/types";
+import { VENUE_TRAITS } from "../game/data/venueTraits";
 import { DISTRICTS } from "./districts";
 
 // Strong Island (home) venue LADDER. The whole list loads, but each venue is
 // gated by `unlockReputation` (peak rep), so the town opens with two grimy DIY
 // rooms and grows — dives → the Looney Burro → a theater → the sellout
 // amphitheater — as the scene's rep climbs. Real Long Island spots, parodied.
+//
+// Traits are CHARACTER chips (venueTraits.ts) picked to match each room's
+// hand-tuned stats; their modifier blocks are display-only lore, so assigning
+// them moves no numbers. One-line blurbs live in VENUE_BLURBS (same module).
 export const initialVenues: Venue[] = [
   // ── Tier 0: the DIY bottom (open from turn 1) ──────────────────────────────
   {
@@ -16,7 +21,7 @@ export const initialVenues: Venue[] = [
     authenticity: 100,
     atmosphere: 85,
     modifiers: [],
-    traits: [],
+    traits: [VENUE_TRAITS.GRIMY_FLOORS, VENUE_TRAITS.INTIMATE_SETTING],
     location: DISTRICTS.EASTSIDE,
     rent: 0,
     equipment: [],
@@ -36,7 +41,7 @@ export const initialVenues: Venue[] = [
     authenticity: 92,
     atmosphere: 70,
     modifiers: [],
-    traits: [],
+    traits: [VENUE_TRAITS.ARTIST_FRIENDLY, VENUE_TRAITS.BLOWN_SPEAKERS],
     location: DISTRICTS.INDUSTRIAL,
     rent: 40,
     equipment: [],
@@ -57,7 +62,7 @@ export const initialVenues: Venue[] = [
     authenticity: 95,
     atmosphere: 80,
     modifiers: [],
-    traits: [],
+    traits: [VENUE_TRAITS.BOOKING_COLLECTIVE, VENUE_TRAITS.POLICE_MAGNET],
     location: DISTRICTS.UNIVERSITY,
     rent: 60,
     equipment: [],
@@ -79,7 +84,7 @@ export const initialVenues: Venue[] = [
     authenticity: 78,
     atmosphere: 85,
     modifiers: [],
-    traits: [],
+    traits: [VENUE_TRAITS.SCENE_HANGOUT],
     location: DISTRICTS.DOWNTOWN,
     rent: 160,
     equipment: [],
@@ -99,7 +104,7 @@ export const initialVenues: Venue[] = [
     authenticity: 72,
     atmosphere: 80,
     modifiers: [],
-    traits: [],
+    traits: [VENUE_TRAITS.LEGENDARY_GRAFFITI],
     location: DISTRICTS.INDUSTRIAL,
     rent: 200,
     equipment: [],
@@ -120,7 +125,7 @@ export const initialVenues: Venue[] = [
     authenticity: 68,
     atmosphere: 88,
     modifiers: [],
-    traits: [],
+    traits: [VENUE_TRAITS.SMOKE_MACHINE],
     location: DISTRICTS.DOWNTOWN,
     rent: 370,
     equipment: [],
@@ -142,7 +147,7 @@ export const initialVenues: Venue[] = [
     authenticity: 65,
     atmosphere: 82,
     modifiers: [],
-    traits: [],
+    traits: [VENUE_TRAITS.PROFESSIONAL_PA, VENUE_TRAITS.RIOT_HISTORY],
     location: DISTRICTS.DOWNTOWN,
     rent: 380,
     equipment: [],
@@ -163,7 +168,7 @@ export const initialVenues: Venue[] = [
     authenticity: 75,
     atmosphere: 90,
     modifiers: [],
-    traits: [],
+    traits: [VENUE_TRAITS.CURSED_STAGE],
     location: DISTRICTS.INDUSTRIAL,
     rent: 600,
     equipment: [],
@@ -178,14 +183,14 @@ export const initialVenues: Venue[] = [
   // ── Tier 3: the legendary theater (~55 rep) ────────────────────────────────
   {
     id: "my-fathers-place",
-    name: "My Father's Place",
+    name: "My Stepdad's Place",
     type: VenueType.THEATER,
     capacity: 500,
     acoustics: 90,
     authenticity: 45,
     atmosphere: 70,
     modifiers: [],
-    traits: [],
+    traits: [VENUE_TRAITS.HALLOWED_GROUND, VENUE_TRAITS.CUSTOM_ACOUSTICS],
     location: DISTRICTS.DOWNTOWN,
     rent: 800,
     equipment: [],
@@ -208,7 +213,7 @@ export const initialVenues: Venue[] = [
     authenticity: 10,
     atmosphere: 60,
     modifiers: [],
-    traits: [],
+    traits: [VENUE_TRAITS.RECORDING_CAPABILITY],
     location: DISTRICTS.UNIVERSITY,
     rent: 2000,
     equipment: [],

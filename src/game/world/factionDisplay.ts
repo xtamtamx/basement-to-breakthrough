@@ -1,5 +1,6 @@
 import { Band } from '@game/types';
 import { factionSystem } from '@game/mechanics/FactionSystem';
+import { SATIRICAL_FACTION_DESCRIPTIONS } from '@game/data/satiricalText';
 
 /**
  * Shared faction display helpers. The authored faction iconColors include
@@ -15,14 +16,39 @@ export const FACTION_DISPLAY_COLOR: Record<string, string> = {
   'new-wave': '#3ad7dd',
 };
 
-// Compact labels for chips/cards — the authored diy-purists name ("The DIY
-// Purists Collective") is too long to sit in a badge.
+// Compact labels for chips/cards — the authored names ("The Trve Kvlt
+// Brotherhood") are too long to sit in a badge.
 export const FACTION_SHORT_NAME: Record<string, string> = {
   'diy-purists': 'DIY Purists',
   'metal-elite': 'Metal Elite',
   'indie-crowd': 'Indie Crowd',
   'old-guard': 'Old Guard',
   'new-wave': 'New Wave',
+};
+
+/** A faction's full authored voice, for expanded surfaces (the Scene Politics
+ *  ladder, codex rows): who they are, what they chant, and the one-line deep
+ *  cut. Sourced straight from satiricalText so the copy lives in one place —
+ *  factions should read as scene micro-communities, not meters. */
+export interface FactionIdentity {
+  name: string;
+  motto: string;
+  blurb: string;
+}
+
+const identity = (d: { name: string; motto: string; description: string }): FactionIdentity => ({
+  name: d.name,
+  motto: d.motto,
+  blurb: d.description,
+});
+
+export const FACTION_IDENTITY: Record<string, FactionIdentity> = {
+  'diy-purists': identity(SATIRICAL_FACTION_DESCRIPTIONS.DIY_PURISTS),
+  'metal-elite': identity(SATIRICAL_FACTION_DESCRIPTIONS.METAL_ELITISTS),
+  'indie-crowd': identity(SATIRICAL_FACTION_DESCRIPTIONS.INDIE_CROWD),
+  'old-guard': identity(SATIRICAL_FACTION_DESCRIPTIONS.OLD_GUARD),
+  // NEW_BLOOD is the authored identity for the genre-blind newcomer wave.
+  'new-wave': identity(SATIRICAL_FACTION_DESCRIPTIONS.NEW_BLOOD),
 };
 
 export interface FactionBadge {

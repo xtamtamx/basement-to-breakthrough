@@ -29,6 +29,9 @@ export interface PathChoice {
   };
   conflicts?: string[]; // IDs of choices this conflicts with
   permanent?: boolean;
+  // LIVE effects: `immediate` one-shots + the Scene Identity nudge in makeChoice.
+  // `modifiers`/`unlocks`/`restrictions` are authored design intent the engine
+  // does NOT consume yet — never surface their numbers in UI until wired.
   effects: {
     immediate?: {
       money?: number;
@@ -537,13 +540,21 @@ export class ProgressionPathSystem {
     if (!available.find(c => c.id === choiceId)) return false;
 
     // Apply immediate effects
+    const store = useGameStore.getState();
     if (choice.effects.immediate) {
-      const store = useGameStore.getState();
       if (choice.effects.immediate.money) store.addMoney(choice.effects.immediate.money);
       if (choice.effects.immediate.reputation) store.addReputation(choice.effects.immediate.reputation);
       if (choice.effects.immediate.fans) store.addFans(choice.effects.immediate.fans);
       if (choice.effects.immediate.stress) store.addStress(choice.effects.immediate.stress);
     }
+
+    // Committing to a tier choice IS an ideological act: move the run's live
+    // DIY↔sellout axis (same one events/travel feed) so band fees, the city,
+    // and the skin actually respond to the path — no choice is a no-op.
+    store.makePathChoice(
+      choice.id,
+      choice.path === ProgressionPath.DIY_COLLECTIVE ? 12 : -12,
+    );
 
     // Record the choice
     this.state.unlockedChoices.push(choiceId);
@@ -564,85 +575,9 @@ export class ProgressionPathSystem {
     return true;
   }
 
-  // Get all active effects from chosen path
-  getCurrentEffects() {
-    const modifiers = {
-      ticketPriceMultiplier: 1.0,
-      bandHappinessModifier: 0,
-      venueRentMultiplier: 1.0,
-      fanGrowthRate: 1.0,
-      reputationGrowthRate: 1.0
-    };
-
-    const unlocks = {
-      venueTypes: [] as string[],
-      equipment: [] as string[],
-      features: [] as string[]
-    };
-
-    const restrictions = {
-      maxTicketPrice: undefined as number | undefined,
-      bannedVenueTypes: [] as string[],
-      maxVenueCapacity: undefined as number | undefined
-    };
-
-    // Aggregate all effects from unlocked choices
-    for (const choiceId of this.state.unlockedChoices) {
-      const choice = PATH_CHOICES[choiceId];
-      if (!choice) continue;
-
-      // Apply modifiers
-      if (choice.effects.modifiers) {
-        if (choice.effects.modifiers.ticketPriceMultiplier !== undefined) {
-          modifiers.ticketPriceMultiplier *= choice.effects.modifiers.ticketPriceMultiplier;
-        }
-        if (choice.effects.modifiers.bandHappinessModifier !== undefined) {
-          modifiers.bandHappinessModifier += choice.effects.modifiers.bandHappinessModifier;
-        }
-        if (choice.effects.modifiers.venueRentMultiplier !== undefined) {
-          modifiers.venueRentMultiplier *= choice.effects.modifiers.venueRentMultiplier;
-        }
-        if (choice.effects.modifiers.fanGrowthRate !== undefined) {
-          modifiers.fanGrowthRate *= choice.effects.modifiers.fanGrowthRate;
-        }
-        if (choice.effects.modifiers.reputationGrowthRate !== undefined) {
-          modifiers.reputationGrowthRate *= choice.effects.modifiers.reputationGrowthRate;
-        }
-      }
-
-      // Apply unlocks
-      if (choice.effects.unlocks) {
-        if (choice.effects.unlocks.venueTypes) {
-          unlocks.venueTypes.push(...choice.effects.unlocks.venueTypes);
-        }
-        if (choice.effects.unlocks.equipment) {
-          unlocks.equipment.push(...choice.effects.unlocks.equipment);
-        }
-        if (choice.effects.unlocks.features) {
-          unlocks.features.push(...choice.effects.unlocks.features);
-        }
-      }
-
-      // Apply restrictions
-      if (choice.effects.restrictions) {
-        if (choice.effects.restrictions.maxTicketPrice !== undefined) {
-          if (restrictions.maxTicketPrice === undefined || choice.effects.restrictions.maxTicketPrice < restrictions.maxTicketPrice) {
-            restrictions.maxTicketPrice = choice.effects.restrictions.maxTicketPrice;
-          }
-        }
-        if (choice.effects.restrictions.bannedVenueTypes) {
-          restrictions.bannedVenueTypes.push(...choice.effects.restrictions.bannedVenueTypes);
-        }
-        if (choice.effects.restrictions.maxVenueCapacity !== undefined) {
-          if (restrictions.maxVenueCapacity === undefined || choice.effects.restrictions.maxVenueCapacity < restrictions.maxVenueCapacity) {
-            restrictions.maxVenueCapacity = choice.effects.restrictions.maxVenueCapacity;
-          }
-        }
-      }
-    }
-
-    return { modifiers, unlocks, restrictions };
-  }
+  // (getCurrentEffects — the ticket/rent/growth multiplier aggregate — was
+  // deleted: nothing in the engine ever consumed it, and its sole caller was a
+  // ProgressionView panel that advertised the dead numbers as live buffs.)
 
   // Get current progression state
   getProgression(): ProgressionState {

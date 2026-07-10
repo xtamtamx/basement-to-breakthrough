@@ -63,9 +63,10 @@ interface RunOutcome {
 let showSeq = 0;
 
 // A new run now seeds only ONE signed act; signing the (free) available bands
-// is the player's job. A competent player grabs a few to have bill options —
-// signing up to 3 reproduces the roster depth the economy was tuned around.
-function signRoster(target = 3): void {
+// is the player's job. A competent player fills the roster for bill options AND
+// substitution depth (band drama benches an act for a turn — depth keeps the
+// calendar moving).
+function signRoster(target = 4): void {
   const s = useGameStore.getState();
   if (s.rosterBandIds.length >= target) return;
   for (const b of s.allBands) {
@@ -87,13 +88,20 @@ function bookBestShow(): void {
     (sh) => sh.status === 'SCHEDULED' && (sh.scheduledTurn ?? s.currentRound) > s.currentRound,
   ).length;
   if (inPipeline >= bookingCapacity(s.peakReputation)) return;
+  // Stress-aware pacing: show stress now scales with the bill, so a competent
+  // player breathes near burnout and trims the bill when strained ("book big
+  // vs breathe" is a real decision the sim must model, not ignore).
+  if (s.stress >= 70) return;
   const roster = s.allBands.filter(
     (b) =>
       s.rosterBandIds.includes(b.id) && !difficultySystem.isBandUnavailable(b.id),
   );
   if (roster.length === 0) return;
-  // More bands when flush, fewer when tight (each band costs a fee).
-  const bandCount = s.money > 400 ? 3 : s.money > 200 ? 2 : 1;
+  // More bands when flush, fewer when tight (each band costs a fee) or strained.
+  const bandCount = Math.min(
+    s.money > 400 ? 3 : s.money > 200 ? 2 : 1,
+    s.stress > 50 ? 2 : 3,
+  );
   const bands = [...roster]
     .sort((a, b) => b.popularity - a.popularity)
     .slice(0, bandCount);
@@ -140,7 +148,8 @@ function manageDayJob(): void {
         a.moneyPerTurn / (1 + Math.abs(a.reputationChange)),
     )[0];
     if (best) dayJobSystem.setJob(best);
-  } else if (s.money > 250 && current) {
+  } else if ((s.money > 250 || s.stress > 85) && current) {
+    // Quit once flush — or when the job itself is burning you out.
     dayJobSystem.setJob(null);
   }
 }
@@ -173,8 +182,8 @@ function maybeTravel(turn: number): boolean {
   return true;
 }
 
-async function playOneRun(mode: string): Promise<RunOutcome> {
-  await startNewRun(mode);
+async function playOneRun(mode: string, stakeTier = 0): Promise<RunOutcome> {
+  await startNewRun(mode, stakeTier);
   dayJobSystem.setJob(null); // clean slate each run
   const cap = (runManager.getCurrentRun()?.config.maxTurns ?? 35) + 20;
   let peakAttendance = 0;
@@ -236,6 +245,38 @@ function avg(ns: number[]): number {
   return ns.length ? Math.round((ns.reduce((a, b) => a + b, 0) / ns.length) * 10) / 10 : 0;
 }
 
+function median(ns: number[]): number {
+  if (!ns.length) return 0;
+  const sorted = [...ns].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+}
+
+async function simBatch(mode: string, stakeTier: number, N: number, report: string[]): Promise<void> {
+  const outcomes: RunOutcome[] = [];
+  for (let i = 0; i < N; i++) outcomes.push(await playOneRun(mode, stakeTier));
+
+  const dist: Record<string, number> = {};
+  outcomes.forEach((o) => (dist[o.reason] = (dist[o.reason] || 0) + 1));
+  const wins = outcomes.filter((o) => o.reason === 'BREAKTHROUGH_WIN');
+  const winTurns = wins.map((o) => o.endTurn);
+
+  report.push(
+    '\n--- ' + mode.toUpperCase() + (stakeTier > 0 ? ' @ stake T' + stakeTier : '') + ' ---',
+    'win rate: ' + Math.round((wins.length / N) * 100) + '%   outcomes: ' + JSON.stringify(dist),
+    'end turn:  avg ' + avg(outcomes.map((o) => o.endTurn)) + '  median(win) ' + median(winTurns),
+    'rep:       avg ' + avg(outcomes.map((o) => o.rep)) + '  (max ' + Math.max(...outcomes.map((o) => o.rep)) + ')',
+    'fans:      avg ' + avg(outcomes.map((o) => o.fans)) + '  (max ' + Math.max(...outcomes.map((o) => o.fans)) + ')',
+    'money:     avg ' + avg(outcomes.map((o) => o.money)),
+    'stress:    avg ' + avg(outcomes.map((o) => o.stress)),
+    'shows:     avg ' + avg(outcomes.map((o) => o.shows)),
+    'peak att:  avg ' + avg(outcomes.map((o) => o.peakAttendance)),
+    'revenue:   avg ' + avg(outcomes.map((o) => o.totalRevenue)),
+    'cities:    avg ' + avg(outcomes.map((o) => o.cities)) + '  (max ' + Math.max(...outcomes.map((o) => o.cities)) + ')',
+    'travels:   avg ' + avg(outcomes.map((o) => o.travels)),
+  );
+}
+
 describe('balance simulation', () => {
   it('plays full runs across modes and reports aggregates', async () => {
     const modes = ['classic', 'speed', 'hardcore', 'festival'].filter(
@@ -244,29 +285,15 @@ describe('balance simulation', () => {
     const N = 12;
     const report: string[] = ['', '===== BALANCE SIM (' + N + ' runs/mode) ====='];
 
-    for (const mode of modes) {
-      const outcomes: RunOutcome[] = [];
-      for (let i = 0; i < N; i++) outcomes.push(await playOneRun(mode));
-
-      const dist: Record<string, number> = {};
-      outcomes.forEach((o) => (dist[o.reason] = (dist[o.reason] || 0) + 1));
-      const wins = outcomes.filter((o) => o.reason === 'BREAKTHROUGH_WIN').length;
-
-      report.push(
-        '\n--- ' + mode.toUpperCase() + ' ---',
-        'win rate: ' + Math.round((wins / N) * 100) + '%   outcomes: ' + JSON.stringify(dist),
-        'end turn:  avg ' + avg(outcomes.map((o) => o.endTurn)),
-        'rep:       avg ' + avg(outcomes.map((o) => o.rep)) + '  (max ' + Math.max(...outcomes.map((o) => o.rep)) + ')',
-        'fans:      avg ' + avg(outcomes.map((o) => o.fans)) + '  (max ' + Math.max(...outcomes.map((o) => o.fans)) + ')',
-        'money:     avg ' + avg(outcomes.map((o) => o.money)),
-        'stress:    avg ' + avg(outcomes.map((o) => o.stress)),
-        'shows:     avg ' + avg(outcomes.map((o) => o.shows)),
-        'peak att:  avg ' + avg(outcomes.map((o) => o.peakAttendance)),
-        'revenue:   avg ' + avg(outcomes.map((o) => o.totalRevenue)),
-        'cities:    avg ' + avg(outcomes.map((o) => o.cities)) + '  (max ' + Math.max(...outcomes.map((o) => o.cities)) + ')',
-        'travels:   avg ' + avg(outcomes.map((o) => o.travels)),
-      );
-    }
+    for (const mode of modes) await simBatch(mode, 0, N, report);
     console.log(report.join('\n'));
-  }, 120000);
+  }, 240000);
+
+  it('sweeps the stake ladder (graded risk: T1 > T2 > No Future)', async () => {
+    const N = 12;
+    const report: string[] = ['', '===== STAKE SWEEP (' + N + ' runs/tier, classic) ====='];
+
+    for (const tier of [1, 2, 3]) await simBatch('classic', tier, N, report);
+    console.log(report.join('\n'));
+  }, 240000);
 });

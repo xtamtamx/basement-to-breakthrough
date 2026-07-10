@@ -4,6 +4,7 @@ import { COMBO_MULT_CAP } from '@game/constants/runConstants';
 import { cityGenreFit, homeCityFit } from '@game/world/citySynergy';
 import { computeLineupChemistry } from './lineupChemistry';
 import { factionSystem } from './FactionSystem';
+import { difficultySystem } from './DifficultySystem';
 
 /**
  * The SINGLE source of truth for a bill's PROJECTED (pre-promotion) attendance —
@@ -14,9 +15,13 @@ import { factionSystem } from './FactionSystem';
  * the Promote screen's expected-attendance so the two can never disagree (the
  * old promo formula omitted bill/scene-fit/chemistry and "lied" vs the preview).
  *
- * The engine layers run-modifiers (difficulty / gentrification / city-signature)
- * on top at resolution; this is the bill's intrinsic draw. Capped at the room's
- * effective capacity (after any active-event capacity penalty).
+ * ALSO folds in the DETERMINISTIC difficulty modifiers the resolver applies
+ * (scene-expectations decay, plus ticket-price resistance when a ticketPrice is
+ * passed) — every multiplier known at booking is included, so rising pressure
+ * reads as pressure in the preview, not as RNG at resolution. The engine layers
+ * the remaining run-modifiers (gentrification / city-signature) on top at
+ * resolution. Capped at the room's effective capacity (after any active-event
+ * capacity penalty).
  */
 export function projectBaseAttendance(opts: {
   bands: Band[];
@@ -25,8 +30,12 @@ export function projectBaseAttendance(opts: {
   currentCityId: string;
   factionStandings: Record<string, number>;
   eventCapacityPenalty?: number;
+  /** When set, the price-resistance penalty (>$10 shrinks the crowd) is
+   *  projected too — the price is fully known at booking, so omitting it made
+   *  the ticket slider's preview monotonically (and falsely) rise with price. */
+  ticketPrice?: number;
 }): number {
-  const { bands, venue, cityPrimaryGenre, currentCityId, factionStandings, eventCapacityPenalty } = opts;
+  const { bands, venue, cityPrimaryGenre, currentCityId, factionStandings, eventCapacityPenalty, ticketPrice } = opts;
   if (!bands.length) return 0;
   const headliner = bands[0];
   const totalMultiplier = Math.min(
@@ -42,8 +51,15 @@ export function projectBaseAttendance(opts: {
   const factionAttMult = Math.max(0.92, Math.min(1.08, 1 + (fMods.fanBonus - 1) * 0.4));
   const effectiveCapacity = Math.max(1, venue.capacity - (eventCapacityPenalty ?? 0));
   const base = Math.floor(effectiveCapacity * (avgPopularity / 100) * (venue.atmosphere / 100));
+  // Deterministic difficulty term (same helper the resolver uses): scene
+  // expectations always; price resistance only when the caller knows the price
+  // (a ticketPrice of 0 applies no price penalty — see getShowDifficultyModifiers).
+  const difficultyMult = difficultySystem.getShowDifficultyModifiers(
+    base,
+    ticketPrice ?? 0,
+  ).attendanceMultiplier;
   const projected = Math.floor(
-    base * billMultiplier * totalMultiplier * sceneFit.multiplier * homeFit.multiplier * lineupChem.mult * factionAttMult,
+    base * billMultiplier * totalMultiplier * sceneFit.multiplier * homeFit.multiplier * lineupChem.mult * factionAttMult * difficultyMult,
   );
   return Math.min(projected, effectiveCapacity);
 }

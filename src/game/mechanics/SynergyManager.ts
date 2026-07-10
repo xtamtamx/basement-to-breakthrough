@@ -13,6 +13,7 @@ import {
   BASE_MAX_SYNERGIES,
   HARD_CAP_EFFECTIVE_SYNERGIES,
 } from '../constants/runConstants';
+import { Genre, VenueType } from '@game/types';
 
 // ============= Types =============
 
@@ -421,6 +422,61 @@ export const STARTER_SYNERGIES: Synergy[] = [
     condition: { type: 'MIN_REPUTATION', value: 50, description: 'Reputation 50+' },
     icon: 'elder',
   },
+
+  // --- 2026-07 booking-pattern pass: instincts that key off HOW you book
+  // (venue type / genre), so a run can BE "the basement run" or "the emo run".
+  // All trigger SHOW_START: that's the only trigger fed venueType/bandGenre
+  // context (per-show, in executeShow) — a SHOW_END booking gate never fires. ---
+  {
+    id: 'low_ceilings',
+    name: 'Low Ceilings',
+    description: 'The room fits forty people and that is exactly the appeal',
+    rarity: 'COMMON',
+    trigger: 'SHOW_START',
+    effects: [{ type: 'ATTENDANCE_PERCENT', value: 15, description: '+15% attendance at basements & house shows' }],
+    condition: { type: 'VENUE_TYPE', value: [VenueType.BASEMENT, VenueType.HOUSE_SHOW], description: 'Basement or house show' },
+    icon: 'home',
+  },
+  {
+    id: 'bar_tab_diplomacy',
+    name: 'Bar Tab Diplomacy',
+    description: "The house pours what the door won't cover",
+    rarity: 'COMMON',
+    trigger: 'SHOW_START',
+    effects: [{ type: 'MONEY_PERCENT', value: 15, description: '+15% money from dive bar shows' }],
+    condition: { type: 'VENUE_TYPE', value: [VenueType.DIVE_BAR], description: 'Dive bar' },
+    icon: 'handshake',
+  },
+  {
+    id: 'pit_logic',
+    name: 'Pit Logic',
+    description: 'Two-steppers travel in packs — book one and the pit books itself',
+    rarity: 'UNCOMMON',
+    trigger: 'SHOW_START',
+    effects: [{ type: 'ATTENDANCE_PERCENT', value: 20, description: '+20% attendance for hardcore/punk headliners' }],
+    condition: { type: 'GENRE_MATCH', value: [Genre.HARDCORE, Genre.PUNK, Genre.POWERVIOLENCE], description: 'Hardcore, punk, or powerviolence headliner' },
+    icon: 'fans',
+  },
+  {
+    id: 'scream_the_bridge',
+    name: 'Scream the Bridge',
+    description: 'Emo kids never show up alone — someone has to hold the jackets',
+    rarity: 'UNCOMMON',
+    trigger: 'SHOW_START',
+    effects: [{ type: 'FANS_PERCENT', value: 18, description: '+18% fans from emo/indie shows' }],
+    condition: { type: 'GENRE_MATCH', value: [Genre.EMO, Genre.INDIE], description: 'Emo or indie headliner' },
+    icon: 'note',
+  },
+  {
+    id: 'amp_worship',
+    name: 'Amp Worship',
+    description: 'Stack the cabs high enough and the faithful will find you',
+    rarity: 'UNCOMMON',
+    trigger: 'SHOW_START',
+    effects: [{ type: 'REPUTATION_PERCENT', value: 20, description: '+20% rep from metal-family shows' }],
+    condition: { type: 'GENRE_MATCH', value: [Genre.METAL, Genre.DOOM, Genre.SLUDGE], description: 'Metal, doom, or sludge headliner' },
+    icon: 'plug',
+  },
 ];
 
 // ============= SynergyManager Class =============
@@ -544,6 +600,44 @@ class SynergyManager {
     // For now, the oldest synergies stay - UI should warn player
   }
 
+  /** The one switch for every condition gate — shared by triggerSynergies AND
+   *  the SynergyView "LIVE / dormant" pill, so the UI can never disagree with
+   *  what a trigger will actually pay (preview == resolution). VENUE_TYPE takes
+   *  a single type or a list (booking-pattern instincts span sibling rooms). */
+  checkCondition(
+    condition: SynergyCondition,
+    context: {
+      currentTurn: number;
+      reputation: number;
+      fans: number;
+      stress: number;
+      venueType?: string;
+      bandGenre?: string;
+    },
+  ): boolean {
+    switch (condition.type) {
+      case 'MIN_REPUTATION':
+        return context.reputation >= (condition.value as number);
+      case 'MIN_FANS':
+        return context.fans >= (condition.value as number);
+      case 'MAX_STRESS':
+        return context.stress < (condition.value as number);
+      case 'VENUE_TYPE': {
+        const wanted = condition.value;
+        return Array.isArray(wanted)
+          ? wanted.includes(context.venueType ?? '')
+          : context.venueType === wanted;
+      }
+      case 'GENRE_MATCH':
+        return (condition.value as string[]).includes(context.bandGenre ?? '');
+      case 'TURN_RANGE': {
+        // Value is "start-end" string
+        const [start, end] = (condition.value as string).split('-').map(Number);
+        return context.currentTurn >= start && context.currentTurn <= end;
+      }
+    }
+  }
+
   // Trigger synergies for a specific trigger point
   triggerSynergies(
     trigger: SynergyTrigger,
@@ -578,30 +672,7 @@ class SynergyManager {
 
       if (synergy.condition) {
         conditionDescription = synergy.condition.description;
-
-        switch (synergy.condition.type) {
-          case 'MIN_REPUTATION':
-            conditionMet = context.reputation >= (synergy.condition.value as number);
-            break;
-          case 'MIN_FANS':
-            conditionMet = context.fans >= (synergy.condition.value as number);
-            break;
-          case 'MAX_STRESS':
-            conditionMet = context.stress < (synergy.condition.value as number);
-            break;
-          case 'VENUE_TYPE':
-            conditionMet = context.venueType === synergy.condition.value;
-            break;
-          case 'GENRE_MATCH':
-            conditionMet = (synergy.condition.value as string[]).includes(context.bandGenre || '');
-            break;
-          case 'TURN_RANGE': {
-            // Value is "start-end" string
-            const [start, end] = (synergy.condition.value as string).split('-').map(Number);
-            conditionMet = context.currentTurn >= start && context.currentTurn <= end;
-            break;
-          }
-        }
+        conditionMet = this.checkCondition(synergy.condition, context);
       }
 
       if (conditionMet) {

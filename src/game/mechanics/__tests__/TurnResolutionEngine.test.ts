@@ -257,13 +257,14 @@ describe('TurnResolutionEngine', () => {
       expect(state.setPhase).not.toHaveBeenCalledWith(GamePhase.GAME_OVER);
     });
 
-    it('charges flat living costs instead of per-venue rent', async () => {
+    it('charges scene overhead (scaled by fans + rep) instead of per-venue rent', async () => {
       const result = await turnResolutionEngine.executeFullTurn();
 
-      // LIVING_COSTS_PER_TURN (14) + mocked upkeep (0); venue rent is paid
-      // per show, never per turn for unbooked city venues
-      expect(result.totalUpkeep).toBe(14);
-      expect(state.addMoney).toHaveBeenCalledWith(-14);
+      // sceneOverheadPerTurn(fans=100, rep=50) = 14 + 10 + 25 = 49, times the
+      // mocked run rent multiplier (1) + mocked equipment upkeep (0); venue
+      // rent is paid per show, never per turn for unbooked city venues
+      expect(result.totalUpkeep).toBe(49);
+      expect(state.addMoney).toHaveBeenCalledWith(-49);
     });
 
     it('passes through day job results', async () => {

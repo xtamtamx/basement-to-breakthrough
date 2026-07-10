@@ -477,19 +477,74 @@ export const SATIRICAL_UI_LABELS = {
   CANCEL_SHOW: "Disappoint Dozens"
 };
 
-export const SATIRICAL_TURN_RESULTS = {
-  GREAT_NIGHT: "Miracle on Dive Street: Show Actually Goes Well",
-  DECENT_NIGHT: "Acceptable Mediocrity Achieved, Bar Set Successfully Low",
-  BAD_NIGHT: "Everything That Could Go Wrong Did, Plus Some Creative New Problems",
-  BROKE_EVEN: "IRS Auditors En Route to Investigate 'Profit' Claims",
-  LOST_MONEY: "Another Day, Another Dollar (Lost)",
-  REPUTATION_UP: "Three People Said Nice Things, Scene Buzz Achieved",
-  REPUTATION_DOWN: "That One Guy with a Blog Wrote Mean Things Again",
-  LEGENDARY_NIGHT: "Show Enters Local Folklore, Will Be Misremembered Fondly Forever",
-  SOLD_OUT: "Sold Out: The Show, Not Your Principles (This Time)",
-  EMPTY_ROOM: "Band Plays to Sound Person and a Mop, Sound Person Unmoved",
-  SCENE_DRAMA: "Two Subgenres Beefed in the Comments, Engagement Through the Roof",
-  GEAR_SURVIVED: "All Equipment Survived the Night, Suspicious and Unprecedented"
+/**
+ * Turn-results zine headlines — a POOL per outcome tier so the game's most-seen
+ * screen doesn't repeat the same joke 15 times over a 40-turn run. Consumed via
+ * `pickTurnHeadline` (seeded by turn number: render-stable, non-repeating within
+ * a pool-length window).
+ */
+export const TURN_HEADLINE_POOLS = {
+  GREAT_NIGHT: [
+    "Miracle on Dive Street: Show Actually Goes Well",
+    "Show Enters Local Folklore, Will Be Misremembered Fondly Forever",
+    "Sold Out: The Show, Not Your Principles (This Time)",
+    "Door Kid Recounts the Cash Box Twice, Confirms It's Real",
+    "Sound Person Seen Smiling; Witnesses Being Interviewed",
+    "College Radio Called — They Want to 'Do a Thing'",
+    "Promoter Pays Every Band on Time, Scene Suspects a Setup",
+  ],
+  DECENT_NIGHT: [
+    "Acceptable Mediocrity Achieved, Bar Set Successfully Low",
+    "All Equipment Survived the Night, Suspicious and Unprecedented",
+    "Crowd Politely Nods Along, Which Around Here Counts as Rapture",
+    "Show Ends on Time; Historians Skeptical",
+    "Nobody Got Hurt and the PA Held: A Win Is Declared",
+    "Headliner Thanks the Openers Like They Mean It, Room Unsettled",
+  ],
+  BROKE_EVEN: [
+    "IRS Auditors En Route to Investigate 'Profit' Claims",
+    "Two Subgenres Beefed in the Comments, Engagement Through the Roof",
+    "Door Money Covers the Pizza; the Pizza Was the Budget",
+    "Break-Even Night Declared 'Basically a Profit' by Local Optimist",
+    "Nobody Made Money, Everyone Made 'Connections'",
+    "Books Balance for Once; Calculator Checked for Tampering",
+  ],
+  BAD_NIGHT: [
+    "Everything That Could Go Wrong Did, Plus Some Creative New Problems",
+    "Another Day, Another Dollar (Lost)",
+    "Band Plays to Sound Person and a Mop, Sound Person Unmoved",
+    "Tonight's Turnout Best Described as 'Intimate' by the Charitable",
+    "The Door Made $12; the Door Guy Cost $40",
+    "Wallet Lighter, Legend Grows: A DIY Tradition Continues",
+  ],
+  NO_SHOWS: [
+    "No Shows Booked: Scene Holds Its Breath in Collective Indifference",
+    "Quiet Week: Local Promoter 'Regrouping,' Which Means Napping",
+    "Dark Night at Every Venue; Neighbors Report Suspicious Peace",
+    "Nothing Booked, Rent Still Due — the Scene's Oldest Equation",
+  ],
+  REPUTATION_UP: [
+    "Three People Said Nice Things, Scene Buzz Achieved",
+    "Local Zine Grants Coveted 'Not Bad' Review",
+    "Your Flyers Are Getting Stolen Now — That's Prestige",
+    "Group Chat Mentions You Without Being Prompted",
+  ],
+  REPUTATION_DOWN: [
+    "That One Guy with a Blog Wrote Mean Things Again",
+    "Scene Elder Sighs Audibly When Your Name Comes Up",
+    "Someone Made a Meme; It Is, Unfortunately, Accurate",
+    "Your Last Show Described as 'a Choice' by Three Separate People",
+  ],
+};
+
+export type TurnHeadlineTier = keyof typeof TURN_HEADLINE_POOLS;
+
+/** Deterministic headline pick — seeded by turn so it's stable across re-renders
+ *  (the results modal recomputes its message every render while open) but rotates
+ *  turn to turn. */
+export const pickTurnHeadline = (tier: TurnHeadlineTier, turn: number): string => {
+  const pool = TURN_HEADLINE_POOLS[tier];
+  return pool[Math.abs(turn) % pool.length];
 };
 
 export const SATIRICAL_EQUIPMENT = {
@@ -595,12 +650,11 @@ export const RANDOM_SCENE_FACTS = [
   "Research: Crowd size inversely correlated with how much the band needed the money"
 ];
 
-export const getRandomSatiricalText = (category: keyof typeof SATIRICAL_TEXT_POOLS): string => {
-  const pool = SATIRICAL_TEXT_POOLS[category];
-  return pool[Math.floor(Math.random() * pool.length)];
-};
-
-const SATIRICAL_TEXT_POOLS = {
-  loadingTips: SATIRICAL_LOADING_TIPS,
-  sceneFacts: RANDOM_SCENE_FACTS
+/** One rotating scene-texture line per turn (the results-modal footer): alternates
+ *  the tips and facts pools and walks each in order, so it's deterministic per turn
+ *  (stable across re-renders) and never repeats within a full run. */
+export const getTurnSceneLine = (turn: number): string => {
+  const t = Math.abs(turn);
+  const pool = t % 2 === 0 ? RANDOM_SCENE_FACTS : SATIRICAL_LOADING_TIPS;
+  return pool[Math.floor(t / 2) % pool.length];
 };

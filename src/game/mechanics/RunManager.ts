@@ -26,7 +26,9 @@ export interface RunConfig {
 }
 
 export interface WinCondition {
-  type: 'reputation' | 'money' | 'fans' | 'shows' | 'custom';
+  /** 'shows' counts every resolved (non-cancelled) show; 'bills' counts only
+   *  resolved multi-band shows (2+ acts) — Festival's identity condition. */
+  type: 'reputation' | 'money' | 'fans' | 'shows' | 'bills' | 'custom';
   target: number;
   description: string;
 }
@@ -111,7 +113,7 @@ class RunManager {
       maxTurns: 50,
       winConditions: [
         { type: 'reputation', target: 80, description: 'Reach 80 reputation' },
-        { type: 'fans', target: 525, description: 'Build a 525-strong following' }
+        { type: 'fans', target: 1000, description: 'Build a 1,000-strong following' }
       ],
       modifiers: []
     });
@@ -127,7 +129,7 @@ class RunManager {
       maxTurns: 20,
       winConditions: [
         { type: 'reputation', target: 82, description: 'Reach 82 reputation in 20 turns' },
-        { type: 'fans', target: 250, description: 'Pull 250 fans in 20 turns' }
+        { type: 'fans', target: 400, description: 'Pull 400 fans in 20 turns' }
       ],
       modifiers: [
         {
@@ -182,8 +184,8 @@ class RunManager {
       startingConnections: 15,
       maxTurns: 40,
       winConditions: [
-        { type: 'shows', target: 18, description: 'Run 18 multi-band shows' },
-        { type: 'fans', target: 650, description: 'Attract 650 total fans' }
+        { type: 'bills', target: 18, description: 'Run 18 multi-band shows' },
+        { type: 'fans', target: 800, description: 'Attract 800 total fans' }
       ],
       modifiers: [
         {
@@ -193,6 +195,9 @@ class RunManager {
           effects: {
             fansMultiplier: 1.6,
             reputationMultiplier: 1.15,
+            // A seasoned organizer runs a tight night — big bills tire the
+            // promoter less (the mode's identity is stacking acts).
+            stressMultiplier: 0.85,
             rosterSlotDelta: 1
           }
         }
@@ -297,6 +302,10 @@ class RunManager {
           return (gameState.fans ?? run.stats.totalFans) >= condition.target;
         case 'shows':
           return run.stats.totalShows >= condition.target;
+        case 'bills':
+          // Only real multi-band, non-cancelled shows count (the engine
+          // increments billsCreated for resolved shows with 2+ acts).
+          return run.stats.billsCreated >= condition.target;
         default:
           return false;
       }

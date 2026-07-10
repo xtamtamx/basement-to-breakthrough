@@ -133,13 +133,13 @@ class MetaProgressionManager {
       content: {
         bandTemplates: [
           {
-            name: 'The Refused',
+            name: 'The Declined',
             genre: 'HARDCORE',
             baseStats: { popularity: 40, energy: 95, authenticity: 100, technicalSkill: 85 },
             traits: ['legendary', 'influential', 'intense']
           },
           {
-            name: 'Minor Threat',
+            name: 'Mild Threat',
             genre: 'HARDCORE',
             baseStats: { popularity: 35, energy: 90, authenticity: 100, technicalSkill: 80 },
             traits: ['straight_edge', 'influential', 'DIY']
@@ -159,14 +159,14 @@ class MetaProgressionManager {
       content: {
         venueTemplates: [
           {
-            name: 'CBGB',
+            name: 'The Bowery Bunker',
             type: 'LEGENDARY_CLUB',
             capacity: 350,
             authenticity: 100,
             reputation: 50
           },
           {
-            name: 'The Smell',
+            name: 'The Whiff',
             type: 'DIY_VENUE',
             capacity: 150,
             authenticity: 95,
@@ -187,7 +187,7 @@ class MetaProgressionManager {
       content: {
         equipment: [
           {
-            name: 'Vintage Neve Console',
+            name: 'Vintage Nerve Console',
             type: 'MIXING_BOARD',
             quality: 5,
             effects: { acousticsBonus: 50, reputationMultiplier: 1.5 }

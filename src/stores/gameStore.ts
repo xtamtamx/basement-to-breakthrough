@@ -9,10 +9,7 @@ import {
   District,
   Venue,
   Walker,
-  VenueType,
   Band,
-  Genre,
-  TraitType,
   Show,
   ShowResult,
   RunObjectives,
@@ -25,8 +22,6 @@ import { eventCardSystem, type EventCard } from "@game/mechanics/EventCardSystem
 import { factionSystem } from "@game/mechanics/FactionSystem";
 import { showPromotionSystem } from "@game/mechanics/ShowPromotionSystem";
 import { bandDeposit } from "@game/mechanics/bandEconomy";
-import { VENUE_TRAITS } from "@game/data/venueTraits";
-import { SATIRICAL_VENUE_DESCRIPTIONS } from "@game/data/satiricalText";
 import { gameAudio } from "@utils/gameAudio";
 import { clamp, CONSTRAINTS } from "@utils/validation";
 import { performanceMetrics } from "@utils/performanceMetrics";
@@ -157,6 +152,11 @@ interface GameStore {
   // synergyManager singleton; NOT persisted (re-derives at the next milestone).
   pendingSynergyOffer: Synergy | null;
 
+  // Transient: the full milestone DRAFT — 2-3 candidate instincts to pick
+  // between (Balatro-style choice under slot pressure). pendingSynergyOffer
+  // mirrors offers[0] for back-compat until the draft modal ships; NOT persisted.
+  pendingSynergyOffers: Synergy[];
+
   // Transient: a drawn event card awaiting the player's choice (band-drama /
   // scene crisis). Mirrors pendingSynergyOffer; NOT persisted.
   pendingEventCard: EventCard | null;
@@ -232,467 +232,12 @@ interface GameStore {
   makePathChoice: (choiceId: string, diyPointsChange: number) => void;
   updatePathAlignment: () => void;
 
-  // Lazy loading actions
-  loadAllBands: () => void;
-  loadAllVenues: () => void;
 }
 
 // Initial districts for the city — single source of truth in data/districts.ts
 const initialDistricts: District[] = ALL_DISTRICTS;
 
-// Initial venues for the city
-const initialVenues: Venue[] = [
-  {
-    id: "v1",
-    name: SATIRICAL_VENUE_DESCRIPTIONS.BASEMENT.name,
-    type: VenueType.BASEMENT,
-    capacity: 30,
-    acoustics: 45,
-    authenticity: 100,
-    atmosphere: 85,
-    modifiers: [],
-    traits: [VENUE_TRAITS.GRIMY_FLOORS, VENUE_TRAITS.INTIMATE_SETTING].filter(
-      Boolean,
-    ),
-    location: initialDistricts[0], // Eastside
-    rent: 0,
-    equipment: [],
-    allowsAllAges: true,
-    hasBar: false,
-    hasSecurity: false,
-    hasStage: false,
-    isPermanent: true,
-    bookingDifficulty: 2,
-    gridPosition: { x: 1, y: 1 },
-    upgrades: [],
-  },
-  {
-    id: "v2",
-    name: "The Broken Bottle",
-    type: VenueType.DIVE_BAR,
-    capacity: 80,
-    acoustics: 60,
-    authenticity: 75,
-    atmosphere: 70,
-    modifiers: [],
-    traits: [VENUE_TRAITS.GRIMY_FLOORS, VENUE_TRAITS.SCENE_HANGOUT].filter(
-      Boolean,
-    ),
-    location: initialDistricts[1], // Downtown
-    rent: 150,
-    equipment: [],
-    allowsAllAges: false,
-    hasBar: true,
-    hasSecurity: true,
-    hasStage: true,
-    isPermanent: true,
-    bookingDifficulty: 4,
-    gridPosition: { x: 5, y: 2 },
-    upgrades: [],
-  },
-  {
-    id: "v3",
-    name: "Warehouse 23",
-    type: VenueType.WAREHOUSE,
-    capacity: 150,
-    acoustics: 50,
-    authenticity: 90,
-    atmosphere: 95,
-    modifiers: [],
-    traits: [VENUE_TRAITS.CUSTOM_ACOUSTICS, VENUE_TRAITS.POLICE_MAGNET].filter(
-      Boolean,
-    ),
-    location: initialDistricts[2], // Industrial
-    rent: 300,
-    equipment: [],
-    allowsAllAges: true,
-    hasBar: false,
-    hasSecurity: false,
-    hasStage: false,
-    isPermanent: false,
-    bookingDifficulty: 6,
-    gridPosition: { x: 2, y: 6 },
-    upgrades: [],
-  },
-  {
-    id: "v4",
-    name: "Sarah's Garage",
-    type: VenueType.GARAGE,
-    capacity: 45,
-    acoustics: 40,
-    authenticity: 95,
-    atmosphere: 80,
-    modifiers: [],
-    traits: [VENUE_TRAITS.BLOWN_SPEAKERS, VENUE_TRAITS.INTIMATE_SETTING].filter(
-      Boolean,
-    ),
-    location: initialDistricts[0], // Eastside
-    rent: 25,
-    equipment: [],
-    allowsAllAges: true,
-    hasBar: false,
-    hasSecurity: false,
-    hasStage: false,
-    isPermanent: true,
-    bookingDifficulty: 2,
-    gridPosition: { x: 3, y: 2 },
-    upgrades: [],
-  },
-  {
-    id: "v5",
-    name: "DIY Space 101",
-    type: VenueType.DIY_SPACE,
-    capacity: 100,
-    acoustics: 55,
-    authenticity: 85,
-    atmosphere: 90,
-    modifiers: [],
-    traits: [
-      VENUE_TRAITS.ARTIST_FRIENDLY,
-      VENUE_TRAITS.BOOKING_COLLECTIVE,
-    ].filter(Boolean),
-    location: initialDistricts[3], // University
-    rent: 75,
-    equipment: [],
-    allowsAllAges: true,
-    hasBar: false,
-    hasSecurity: false,
-    hasStage: true,
-    isPermanent: true,
-    bookingDifficulty: 3,
-    gridPosition: { x: 6, y: 6 },
-    upgrades: [],
-  },
-  {
-    id: "v6",
-    name: "The Pit",
-    type: VenueType.UNDERGROUND,
-    capacity: 120,
-    acoustics: 65,
-    authenticity: 100,
-    atmosphere: 100,
-    modifiers: [],
-    traits: [VENUE_TRAITS.LEGENDARY_GRAFFITI, VENUE_TRAITS.CURSED_STAGE].filter(
-      Boolean,
-    ),
-    location: initialDistricts[2], // Industrial
-    rent: 200,
-    equipment: [],
-    allowsAllAges: false,
-    hasBar: true,
-    hasSecurity: false,
-    hasStage: true,
-    isPermanent: false,
-    bookingDifficulty: 5,
-    gridPosition: { x: 1, y: 5 },
-    upgrades: [],
-  },
-];
 
-// Initial bands for the game
-const initialBands: Band[] = [
-  {
-    id: "b1",
-    name: "Hüsker Don’t",
-    isRealArtist: false,
-    genre: Genre.PUNK,
-    subgenres: ["hardcore punk", "noise"],
-    popularity: 15,
-    authenticity: 95,
-    energy: 85,
-    technicalSkill: 60,
-    traits: [
-      {
-        id: "t1",
-        name: "DIY Ethics",
-        description: "True to the scene",
-        type: TraitType.PERSONALITY,
-        modifier: { authenticity: 10 },
-      },
-      {
-        id: "t2",
-        name: "Chaotic Live Shows",
-        description: "Unpredictable energy",
-        type: TraitType.PERFORMANCE,
-        modifier: { popularity: 5 },
-      },
-    ],
-    technicalRequirements: [],
-    hometown: "Portland, OR",
-    formedYear: 2021,
-  },
-  {
-    id: "b2",
-    name: "Panthera",
-    isRealArtist: true,
-    artistId: "real-1",
-    genre: Genre.METAL,
-    subgenres: ["doom", "sludge"],
-    popularity: 45,
-    authenticity: 75,
-    energy: 70,
-    technicalSkill: 85,
-    traits: [
-      {
-        id: "t3",
-        name: "Technical Masters",
-        description: "Incredible musicianship",
-        type: TraitType.TECHNICAL,
-        modifier: { popularity: 10 },
-      },
-      {
-        id: "t4",
-        name: "Scene Veterans",
-        description: "10+ years in the game",
-        type: TraitType.SOCIAL,
-        modifier: {},
-      },
-    ],
-    technicalRequirements: [],
-    bio: "Crushing riffs and existential dread since 2013.",
-    hometown: "Seattle, WA",
-  },
-  {
-    id: "b3",
-    name: "Bikini Bill",
-    isRealArtist: false,
-    genre: Genre.PUNK,
-    subgenres: ["riot grrrl", "feminist punk"],
-    popularity: 35,
-    authenticity: 90,
-    energy: 95,
-    technicalSkill: 50,
-    traits: [
-      {
-        id: "t5",
-        name: "Political Message",
-        description: "Strong social commentary",
-        type: TraitType.PERSONALITY,
-        modifier: { authenticity: 15 },
-      },
-      {
-        id: "t6",
-        name: "All Ages Champion",
-        description: "Supports young fans",
-        type: TraitType.SOCIAL,
-        modifier: {},
-      },
-    ],
-    technicalRequirements: [],
-    hometown: "Olympia, WA",
-    formedYear: 2022,
-  },
-  {
-    id: "b4",
-    name: "Mayheck",
-    isRealArtist: false,
-    genre: Genre.METAL,
-    subgenres: ["black metal", "atmospheric"],
-    popularity: 25,
-    authenticity: 85,
-    energy: 60,
-    technicalSkill: 90,
-    traits: [
-      {
-        id: "t7",
-        name: "Corpse Paint",
-        description: "Traditional black metal aesthetic",
-        type: TraitType.PERFORMANCE,
-        modifier: { popularity: 10 },
-      },
-      {
-        id: "t8",
-        name: "Underground Legends",
-        description: "Never sold out",
-        type: TraitType.SOCIAL,
-        modifier: { authenticity: 20 },
-      },
-    ],
-    technicalRequirements: [],
-    hometown: "Oslo, Norway",
-    formedYear: 2019,
-  },
-  {
-    id: "b5",
-    name: "Guerilla Biscuits",
-    isRealArtist: false,
-    genre: Genre.PUNK,
-    subgenres: ["hardcore", "youth crew"],
-    popularity: 55,
-    authenticity: 70,
-    energy: 100,
-    technicalSkill: 65,
-    traits: [
-      {
-        id: "t9",
-        name: "Circle Pit Masters",
-        description: "Gets the crowd moving",
-        type: TraitType.PERFORMANCE,
-        modifier: { popularity: 15 },
-      },
-      {
-        id: "t10",
-        name: "Straight Edge",
-        description: "No drugs or alcohol",
-        type: TraitType.PERSONALITY,
-        modifier: {},
-      },
-    ],
-    technicalRequirements: [],
-    hometown: "Boston, MA",
-    formedYear: 2020,
-  },
-  {
-    id: "b6",
-    name: "Pg. 98",
-    isRealArtist: false,
-    genre: Genre.METAL,
-    subgenres: ["death metal", "technical"],
-    popularity: 40,
-    authenticity: 80,
-    energy: 75,
-    technicalSkill: 95,
-    traits: [
-      {
-        id: "t11",
-        name: "Blast Beat Specialists",
-        description: "Lightning fast drumming",
-        type: TraitType.TECHNICAL,
-        modifier: {},
-      },
-      {
-        id: "t12",
-        name: "Gear Nerds",
-        description: "Obsessed with equipment",
-        type: TraitType.PERSONALITY,
-        modifier: {},
-      },
-    ],
-    technicalRequirements: [],
-    hometown: "Tampa, FL",
-    formedYear: 2018,
-  },
-  {
-    id: "b7",
-    name: "Sum 42",
-    isRealArtist: false,
-    genre: Genre.PUNK,
-    subgenres: ["pop punk", "skate punk"],
-    popularity: 65,
-    authenticity: 60,
-    energy: 85,
-    technicalSkill: 70,
-    traits: [
-      {
-        id: "t13",
-        name: "Catchy Hooks",
-        description: "Memorable choruses",
-        type: TraitType.PERFORMANCE,
-        modifier: { popularity: 15 },
-      },
-      {
-        id: "t14",
-        name: "Skater Friendly",
-        description: "Popular with the skate scene",
-        type: TraitType.SOCIAL,
-        modifier: {},
-      },
-    ],
-    technicalRequirements: [],
-    hometown: "San Diego, CA",
-    formedYear: 2021,
-  },
-  {
-    id: "b8",
-    name: "Amoebix",
-    isRealArtist: false,
-    genre: Genre.PUNK,
-    subgenres: ["crust punk", "d-beat"],
-    popularity: 30,
-    authenticity: 95,
-    energy: 90,
-    technicalSkill: 55,
-    traits: [
-      {
-        id: "t15",
-        name: "Anti-Establishment",
-        description: "No compromise politics",
-        type: TraitType.PERSONALITY,
-        modifier: { authenticity: 20 },
-      },
-      {
-        id: "t16",
-        name: "DIY or Die",
-        description: "Self-releases only",
-        type: TraitType.SOCIAL,
-        modifier: {},
-      },
-    ],
-    technicalRequirements: [],
-    hometown: "Minneapolis, MN",
-    formedYear: 2019,
-  },
-  {
-    id: "b9",
-    name: "Throne of Thorns",
-    isRealArtist: false,
-    genre: Genre.METAL,
-    subgenres: ["progressive metal", "djent"],
-    popularity: 50,
-    authenticity: 65,
-    energy: 65,
-    technicalSkill: 100,
-    traits: [
-      {
-        id: "t17",
-        name: "Polyrhythmic Masters",
-        description: "Complex time signatures",
-        type: TraitType.TECHNICAL,
-        modifier: {},
-      },
-      {
-        id: "t18",
-        name: "Studio Perfectionists",
-        description: "Incredible production quality",
-        type: TraitType.PERFORMANCE,
-        modifier: {},
-      },
-    ],
-    technicalRequirements: [],
-    hometown: "Austin, TX",
-    formedYear: 2017,
-  },
-  {
-    id: "b10",
-    name: "The Rejects",
-    isRealArtist: false,
-    genre: Genre.PUNK,
-    subgenres: ["street punk", "oi!"],
-    popularity: 45,
-    authenticity: 85,
-    energy: 95,
-    technicalSkill: 60,
-    traits: [
-      {
-        id: "t19",
-        name: "Working Class Heroes",
-        description: "Blue collar anthems",
-        type: TraitType.PERSONALITY,
-        modifier: { authenticity: 10 },
-      },
-      {
-        id: "t20",
-        name: "Pub Rock Masters",
-        description: "Perfect for dive bars",
-        type: TraitType.PERFORMANCE,
-        modifier: {},
-      },
-    ],
-    technicalRequirements: [],
-    hometown: "Philadelphia, PA",
-    formedYear: 2020,
-  },
-];
 
 /**
  * Reconcile persisted cities/districts against the current CITIES data file and
@@ -814,6 +359,7 @@ const getInitialState = () => ({
   discoveredSynergies: [],
   runObjectives: objectiveManager.emptyState(),
   pendingSynergyOffer: null as Synergy | null,
+  pendingSynergyOffers: [] as Synergy[],
   pendingEventCard: null as EventCard | null,
   completedFestivals: [],
   festivalHistory: [],
@@ -950,6 +496,7 @@ export const useGameStore = create<GameStore>()(
             // (sanitizeGameState keeps all non-function data fields). They
             // re-derive at the next milestone / event turn.
             pendingSynergyOffer: null,
+            pendingSynergyOffers: [],
             pendingEventCard: null,
           }));
 
@@ -1271,7 +818,10 @@ export const useGameStore = create<GameStore>()(
             : [...state.discoveredSynergies, synergyId],
         })),
 
-      setPendingSynergyOffer: (offer) => set({ pendingSynergyOffer: offer }),
+      // Clearing the headline offer also clears the draft candidates — resolving
+      // the milestone (accept or skip) dismisses the whole choice.
+      setPendingSynergyOffer: (offer) =>
+        set(offer === null ? { pendingSynergyOffer: null, pendingSynergyOffers: [] } : { pendingSynergyOffer: offer }),
 
       setPendingEventCard: (card) => set({ pendingEventCard: card }),
 
@@ -1299,8 +849,13 @@ export const useGameStore = create<GameStore>()(
         const bandKeys = ['popularity', 'authenticity', 'energy', 'technicalSkill'] as const;
         result.modifiedCards.forEach(({ target, modifications }) => {
           if (target === 'all_bands' || target === 'random_band') {
-            const pool = target === 'random_band' && s.allBands.length
-              ? [s.allBands[Math.floor(Math.random() * s.allBands.length)]]
+            // random_band draws from UNLOCKED bands only — a boost landing on a
+            // meta-locked band is invisible to the player (the card's payoff
+            // silently evaporates).
+            const unlocked = s.allBands.filter((b) => isBandUnlocked(b.id));
+            const pickFrom = unlocked.length ? unlocked : s.allBands;
+            const pool = target === 'random_band'
+              ? (pickFrom.length ? [pickFrom[Math.floor(Math.random() * pickFrom.length)]] : [])
               : s.allBands;
             pool.forEach((b) => {
               const updates: Partial<Band> = {};
@@ -1344,9 +899,11 @@ export const useGameStore = create<GameStore>()(
           });
         }
 
-        // The marquee sell-out vs stay-true fork moves the Living City axis.
-        if (choiceId === 'sell_out') s.makePathChoice('event_sellout', -30);
-        else if (choiceId === 'stay_true') s.makePathChoice('event_staytrue', 20);
+        // The sell-out vs stay-true fork moves the Living City axis. Each choice
+        // authors its own magnitude (EventChoice.diyDelta) and the modal previews
+        // it as a pill on the button, so the commit always equals the preview.
+        const choice = choiceId ? card.choices?.find((c) => c.id === choiceId) : undefined;
+        if (choice?.diyDelta) s.makePathChoice(`event_${card.id}_${choice.id}`, choice.diyDelta);
 
         set({ pendingEventCard: null });
       },
@@ -1418,25 +975,6 @@ export const useGameStore = create<GameStore>()(
                     ? "CORPORATE_LEANING"
                     : "FULL_SELLOUT";
           return { pathAlignment: newAlignment };
-        }),
-
-      // Lazy loading implementations
-      loadAllBands: () =>
-        set((state) => {
-          // Only load if not already loaded
-          if (state.allBands.length < initialBands.length) {
-            return { allBands: initialBands };
-          }
-          return state;
-        }),
-
-      loadAllVenues: () =>
-        set((state) => {
-          // Only load if not already loaded
-          if (state.venues.length < initialVenues.length) {
-            return { venues: initialVenues };
-          }
-          return state;
         }),
     }),
     {

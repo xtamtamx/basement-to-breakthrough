@@ -1,4 +1,5 @@
 import { useGameStore } from '@stores/gameStore';
+import { runManager } from './RunManager';
 
 // Difficulty scaling factors based on round progression
 export interface DifficultyFactors {
@@ -29,6 +30,10 @@ export class DifficultySystem {
   // affected turn's shows resolve; the booking UI reads them to disable picks.
   private raidedVenueIds = new Set<string>();
   private unavailableBandIds = new Set<string>();
+  // Fractional reputation-decay accumulator: decay per turn is < 1 for most of
+  // the run, so we carry the remainder and shed a whole point whenever it
+  // accrues — a late-run trickle instead of "never" (floor(0.x) was always 0).
+  private repDecayCarry = 0;
 
   isVenueRaided(venueId: string): boolean {
     return this.raidedVenueIds.has(venueId);
@@ -49,32 +54,39 @@ export class DifficultySystem {
   resetBlocks(): void {
     this.raidedVenueIds.clear();
     this.unavailableBandIds.clear();
+    this.repDecayCarry = 0;
   }
 
   // --- durable resume: the one-turn blocks must survive a refresh/load ---
-  serializeBlocks(): { raided: string[]; unavailable: string[] } {
+  serializeBlocks(): { raided: string[]; unavailable: string[]; decayCarry?: number } {
     return {
       raided: Array.from(this.raidedVenueIds),
       unavailable: Array.from(this.unavailableBandIds),
+      decayCarry: this.repDecayCarry,
     };
   }
 
-  restoreBlocks(data?: { raided?: string[]; unavailable?: string[] }): void {
+  restoreBlocks(data?: { raided?: string[]; unavailable?: string[]; decayCarry?: number }): void {
     this.raidedVenueIds = new Set(data?.raided ?? []);
     this.unavailableBandIds = new Set(data?.unavailable ?? []);
+    this.repDecayCarry = data?.decayCarry ?? 0;
   }
 
   // Get current difficulty factors based on game progression
   getCurrentDifficulty(): DifficultyFactors {
     const state = useGameStore.getState();
     const { currentRound, reputation, fans } = state;
-    
-    // Base difficulty increases with rounds
-    const roundFactor = Math.min(currentRound / 50, 2); // Cap at 2x after 50 rounds
-    
+
+    // Base difficulty ramps over the ACTIVE run's turn budget (mode + stake
+    // dependent), so every mode completes its full pressure arc — a hardcoded
+    // /50 left Speed's 20 turns at 40% of the ramp and made the "intense" mode
+    // per-turn the gentlest. Falls back to 50 with no formal run.
+    const maxTurns = runManager.getCurrentRun()?.config.maxTurns ?? 50;
+    const roundFactor = Math.min(currentRound / maxTurns, 1);
+
     // Success makes things harder (tall poppy syndrome)
     const successFactor = Math.min((reputation + fans) / 1000, 1.5);
-    
+
     return {
       // Economic pressure increases over time (balance pass: the original
       // ramps outran revenue and bankrupted competent players by mid-run)
@@ -83,8 +95,10 @@ export class DifficultySystem {
       ticketPriceResistance: 1 + (roundFactor * 0.4),
 
       // Scene becomes more demanding
-      fanExpectations: 1 + (roundFactor * 0.6) + (successFactor * 0.4),
-      reputationDecay: Math.min(roundFactor * 1, 3), // Max 3 rep lost per turn
+      fanExpectations: 1 + (roundFactor * 0.45) + (successFactor * 0.4),
+      // Fractional per-turn decay (applyPassiveDifficulty carries the remainder),
+      // reaching ~1.5 rep/turn at the run's final stretch.
+      reputationDecay: Math.min(roundFactor * 1.5, 3),
       competitionLevel: Math.floor(1 + (roundFactor * 3)), // More competing shows
       
       // Risks increase with visibility
@@ -106,8 +120,12 @@ export class DifficultySystem {
     const state = useGameStore.getState();
     const difficulty = this.getCurrentDifficulty();
     
-    // Reputation naturally decays
-    const repLoss = Math.floor(difficulty.reputationDecay);
+    // Reputation naturally decays — accumulate the fractional per-turn decay
+    // and shed whole points as they accrue, so the tall-poppy pressure trickles
+    // in through the back half of the run instead of never firing.
+    this.repDecayCarry += difficulty.reputationDecay;
+    const repLoss = Math.floor(this.repDecayCarry);
+    this.repDecayCarry -= repLoss;
     if (repLoss > 0) {
       state.addReputation(-repLoss);
     }

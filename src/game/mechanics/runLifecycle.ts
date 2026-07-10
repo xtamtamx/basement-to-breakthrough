@@ -15,6 +15,7 @@ import { factionSystem } from './FactionSystem';
 import { bandRelationships } from './BandRelationships';
 import { dayJobSystem } from './DayJobSystem';
 import { synergyManager, STARTER_SYNERGIES } from './SynergyManager';
+import { persistDiscoveredCombos } from './SynergyEngine';
 import { objectiveManager } from './ObjectiveManager';
 import { progressionPathSystem } from './ProgressionPathSystem';
 import { stakesManager } from './StakesManager';
@@ -40,6 +41,11 @@ export async function startNewRun(
 ): Promise<RunStartInfo> {
   lastConfigId = configId;
   stakesManager.select(stakeTier);
+
+  // Bank the outgoing run's combo discoveries into the cross-run codex BEFORE
+  // the wipe below (SynergyView renders the union; the store copy stays
+  // run-scoped because it feeds in-run balance gates).
+  persistDiscoveredCombos(useGameStore.getState().discoveredSynergies);
 
   // Wipe any previous run so a finished (GAME_OVER) run can't bleed through
   useGameStore.getState().resetGame();
@@ -118,10 +124,18 @@ export async function startNewRun(
     });
   }
 
-  // Grant a starter equipped synergy ("instinct") so the synergy loop is live from
-  // turn 1. synergyManager was just cleared by turnResolutionEngine.reset(); a
-  // deterministic gentle COMMON (DIY Hustle, +$10/turn) keeps onboarding stable.
-  synergyManager.acquireSynergy(STARTER_SYNERGIES[0], 1);
+  // Grant a starter equipped synergy ("instinct") so the synergy loop is live
+  // from turn 1 (synergyManager was just cleared by turnResolutionEngine.reset()).
+  // A brand-new player (no completed runs — the tutorial-run proxy; the
+  // TutorialManager doesn't expose its "done" bit) gets the deterministic gentle
+  // COMMON (DIY Hustle, +$10/turn) so onboarding stays stable; after that the
+  // slot-1 seed is a random COMMON so every run's build opens differently.
+  const starterPool = STARTER_SYNERGIES.filter((s) => s.rarity === 'COMMON');
+  const starter =
+    metaProgressionManager.getProgression().totalRuns === 0
+      ? STARTER_SYNERGIES[0]
+      : starterPool[Math.floor(Math.random() * starterPool.length)];
+  synergyManager.acquireSynergy(starter, 1);
   // Snapshot NOW so a refresh before the first turn keeps the starter (snapshots
   // are otherwise only captured at end-of-turn / on booking).
   useGameStore.setState({ runtimeSnapshot: captureRuntimeSnapshot() });

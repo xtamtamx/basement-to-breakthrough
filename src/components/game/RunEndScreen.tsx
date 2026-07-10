@@ -3,12 +3,22 @@
  * Inline-styled (house style) and compact enough for landscape phones.
  */
 
-import React, { useEffect } from 'react';
-import { RunEndState, RunEndReason } from '@game/constants/runConstants';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  RunEndState,
+  RunEndReason,
+  BREAKTHROUGH_REPUTATION_THRESHOLD,
+  BREAKTHROUGH_FANS_THRESHOLD,
+} from '@game/constants/runConstants';
 import { RunCeremony } from '@game/mechanics/TurnResolutionEngine';
+import { runManager, WinCondition } from '@game/mechanics/RunManager';
+import { stakesManager, STAKE_TIERS } from '@game/mechanics/StakesManager';
+import { initialBands } from '@/data/initialBands';
 import { audio } from '@utils/simpleAudio';
+import { safeStorage } from '@utils/safeStorage';
 import { haptics } from '@utils/mobile';
 import { PixelIcon } from '@components/ui/PixelIcon';
+import { BandLogo } from '@components/ui/BandLogo';
 
 interface RunEndScreenProps {
   result: RunEndState;
@@ -55,6 +65,29 @@ const RESULT_CONFIGS: Record<
   },
 };
 
+// Ceremony pacing: unlock chips land one at a time, the grade slams in LAST.
+const CHIP_BASE_MS = 350;
+const CHIP_STEP_MS = 240;
+
+const BAND_BY_NAME = new Map(initialBands.map((b) => [b.name, b]));
+const titleCase = (s: string) => s.charAt(0) + s.slice(1).toLowerCase();
+/** First sentence of a bio — the reveal tease (full bio waits in the roster). */
+const bioTease = (bio?: string): string | null =>
+  bio ? bio.match(/^[^.!?]*[.!?]/)?.[0] ?? bio : null;
+
+/** 'bills' progress isn't in RunEndState (the engine nulls the run before this
+ *  screen mounts) — read it off the just-saved run-history entry instead. */
+const lastRunBills = (): number | null => {
+  try {
+    const raw = safeStorage.getItem('btb-run-history');
+    const hist = raw ? (JSON.parse(raw) as { stats?: { billsCreated?: number } }[]) : [];
+    const bills = hist[hist.length - 1]?.stats?.billsCreated;
+    return typeof bills === 'number' ? bills : null;
+  } catch {
+    return null;
+  }
+};
+
 export const RunEndScreen: React.FC<RunEndScreenProps> = ({
   result,
   ceremony,
@@ -64,18 +97,74 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
 }) => {
   const config = RESULT_CONFIGS[result.reason];
   const isWin = result.reason === 'BREAKTHROUGH_WIN';
-  // A win that opened the next stake → offer a one-tap climb (same mode, +1 stake).
-  const canClimb = isWin && !!ceremony?.unlockedStakeName && !!onClimb;
 
-  // The run's climax used to land in silence — ring it in (and harder on a win).
+  // The mode's REAL win conditions (per-mode targets — never hardcode Classic's).
+  const modeConfig = useMemo(
+    () => (ceremony ? runManager.getRunConfigs().find((c) => c.id === ceremony.configId) ?? null : null),
+    [ceremony],
+  );
+  const targetOf = (type: WinCondition['type']): number | null =>
+    modeConfig?.winConditions.find((w) => w.type === type)?.target ?? null;
+  const repTarget = targetOf('reputation') ?? BREAKTHROUGH_REPUTATION_THRESHOLD;
+  const fansTarget = targetOf('fans') ?? BREAKTHROUGH_FANS_THRESHOLD;
+
+  // Per-condition progress so a loss teaches: WHICH bar was missed, and by how much.
+  const winProgress = useMemo(() => {
+    if (!modeConfig) return [];
+    const currentOf = (type: WinCondition['type']): number | null => {
+      switch (type) {
+        case 'reputation': return result.finalStats.reputation;
+        case 'fans': return result.finalStats.fans;
+        case 'money': return result.finalStats.money;
+        case 'shows': return result.finalStats.showsPlayed;
+        case 'bills': return lastRunBills();
+        default: return null;
+      }
+    };
+    return modeConfig.winConditions
+      .map((w) => ({ description: w.description, target: w.target, current: currentOf(w.type) }))
+      .filter((p): p is { description: string; target: number; current: number } => p.current !== null);
+  }, [modeConfig, result]);
+
+  // Fresh band unlocks get a REAL reveal (logo + bio tease) — the logos are the reward.
+  const unlockedBands = useMemo(
+    () => (ceremony?.unlockedBandNames ?? []).map((name) => ({ name, band: BAND_BY_NAME.get(name) ?? null })),
+    [ceremony],
+  );
+
+  // Climb is offered on EVERY win where a higher stake sits open (grinding a
+  // cleared stake is normal) — not just the first clear that unlocked it.
+  const nextTier = (ceremony?.stakeTier ?? 0) + 1;
+  const nextStakeName =
+    isWin && ceremony && nextTier < ceremony.stakeCount && stakesManager.isUnlocked(ceremony.configId, nextTier)
+      ? STAKE_TIERS[nextTier].name
+      : null;
+  const canClimb = !!nextStakeName && !!onClimb;
+
+  // Stagger the unlock chips in DOM order; the grade lands after the last one.
+  const chipCount =
+    (isWin && (ceremony?.stakesCleared ?? 0) > 0 ? 1 : 0) +
+    (ceremony?.unlockedStakeName ? 1 : 0) +
+    (ceremony?.unlockedModeName ? 1 : 0) +
+    unlockedBands.length;
+  const gradeDelayMs = CHIP_BASE_MS + chipCount * CHIP_STEP_MS + 260;
+  let chipIdx = 0;
+  const chipDelay = (): React.CSSProperties => ({ animationDelay: `${CHIP_BASE_MS + chipIdx++ * CHIP_STEP_MS}ms` });
+
+  // The run's climax used to land in silence — ring it in (and harder on a win):
+  // arpeggio on mount, sparkle as the chips land, fanfare on the grade slam.
   useEffect(() => {
+    const timers: number[] = [];
     if (isWin) {
       audio.achievement();
       haptics.success();
+      if (chipCount > 0) timers.push(window.setTimeout(() => audio.synergy(), CHIP_BASE_MS));
+      timers.push(window.setTimeout(() => { audio.soldOut(); haptics.medium(); }, gradeDelayMs));
     } else {
       audio.error();
       haptics.heavy();
     }
+    return () => timers.forEach((t) => window.clearTimeout(t));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -148,7 +237,10 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
             </p>
           </div>
           {/* Grade reveal — graded by the stake you beat (Open Mic→C … No Future→S),
-              bumped a letter by a new high score. The run's emotional payoff. */}
+              bumped a letter by a new high score. The run's emotional payoff, so it
+              slams in LAST, after every unlock chip has landed. (Glow lives on an
+              inner span: btb-pop and btb-glow both set `animation`, so stacking
+              them on one element would cancel the pop.) */}
           {(() => {
             const GRADES = ['C', 'B', 'A', 'S'];
             const GRADE_COLOR: Record<string, string> = { S: 'var(--snes-gold)', A: 'var(--snes-purple)', B: 'var(--snes-cyan)', C: 'var(--snes-green)', F: 'var(--snes-red)' };
@@ -157,7 +249,7 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
             const color = GRADE_COLOR[grade];
             return (
               <div
-                className={`btb-pop${grade === 'S' ? ' btb-glow' : ''}`}
+                className="btb-pop"
                 style={{
                   flexShrink: 0,
                   width: '58px',
@@ -172,10 +264,11 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
                   lineHeight: 1,
                   background: 'var(--snes-bg-2)',
                   boxShadow: `0 0 12px 0 ${color}66`,
+                  animationDelay: `${gradeDelayMs}ms`,
                 }}
                 aria-label={`Grade ${grade}`}
               >
-                {grade}
+                <span className={grade === 'S' ? 'btb-glow' : undefined}>{grade}</span>
               </div>
             );
           })()}
@@ -208,13 +301,13 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
               label="Reputation"
               value={result.finalStats.reputation}
               icon="fame"
-              highlight={result.finalStats.reputation >= 80}
+              highlight={result.finalStats.reputation >= repTarget}
             />
             <StatBox
               label="Fans"
               value={result.finalStats.fans}
               icon="fans"
-              highlight={result.finalStats.fans >= 500}
+              highlight={result.finalStats.fans >= fansTarget}
             />
             <StatBox
               label="Money"
@@ -253,7 +346,7 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
                   Final Score
                 </div>
                 <div style={{ fontSize: '24px', fontWeight: 900, color: 'var(--snes-ink)' }}>
-                  {ceremony.score.toLocaleString()}
+                  <CountUp value={ceremony.score} />
                   {ceremony.newHighScore && (
                     <span
                       style={{
@@ -282,7 +375,7 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
                   Scene Points Earned
                 </div>
                 <div style={{ fontSize: '24px', fontWeight: 900, color: 'var(--snes-magenta)' }}>
-                  +{ceremony.fameEarned}
+                  <CountUp value={ceremony.fameEarned} prefix="+" />
                 </div>
                 {ceremony.stakeFameMult > 1 && (
                   <div style={{ fontSize: '10px', fontWeight: 800, color: 'var(--snes-gold)' }}>
@@ -296,6 +389,7 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
               <div
                 className="btb-pop"
                 style={{
+                  ...chipDelay(),
                   marginTop: '10px', padding: '10px 12px',
                   border: '2px solid var(--snes-cyan)', background: 'rgba(76,201,240,0.12)',
                   display: 'flex', alignItems: 'center', gap: '8px',
@@ -338,6 +432,7 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
               <div
                 className="btb-pop"
                 style={{
+                  ...chipDelay(),
                   marginTop: '10px',
                   padding: '10px 12px',
                   border: '2px solid var(--snes-purple)',
@@ -358,6 +453,7 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
               <div
                 className="btb-pop"
                 style={{
+                  ...chipDelay(),
                   marginTop: '10px',
                   padding: '10px 12px',
                   border: '2px solid var(--snes-gold)',
@@ -374,25 +470,47 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
               </div>
             )}
 
-            {ceremony.unlockedBandNames.length > 0 && (
-              <div
-                className="btb-pop"
-                style={{
-                  marginTop: '10px',
-                  padding: '10px 12px',
-                  border: '2px solid var(--snes-green)',
-                  background: 'rgba(58,209,126,0.12)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                }}
-              >
-                <PixelIcon name="guitar" size={18} color="var(--snes-green)" />
-                <span style={{ fontSize: '12px', color: 'var(--snes-ink)', fontWeight: 700 }}>
-                  {ceremony.unlockedBandNames.length === 1
-                    ? <>New band unlocked: <span style={{ color: 'var(--snes-green)' }}>{ceremony.unlockedBandNames[0]}</span> — sign them next run!</>
-                    : <>{ceremony.unlockedBandNames.length} new bands unlocked: <span style={{ color: 'var(--snes-green)' }}>{ceremony.unlockedBandNames.join(', ')}</span>!</>}
-                </span>
+            {/* Band unlocks are a REVEAL, not a log line: each fresh band gets its
+                logo lockup + genre + a one-sentence bio tease. Sign them next run. */}
+            {unlockedBands.length > 0 && (
+              <div style={{ marginTop: '10px' }}>
+                <div style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--snes-green)', fontWeight: 700, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px', letterSpacing: '0.06em' }}>
+                  <PixelIcon name="guitar" size={14} color="var(--snes-green)" />
+                  {unlockedBands.length === 1 ? 'New band unlocked — sign them next run!' : `${unlockedBands.length} new bands unlocked — sign them next run!`}
+                </div>
+                {unlockedBands.map(({ name, band }) => (
+                  <div
+                    key={name}
+                    className="btb-pop"
+                    style={{
+                      ...chipDelay(),
+                      marginBottom: '6px',
+                      padding: '8px 12px',
+                      border: '2px solid var(--snes-green)',
+                      background: 'rgba(58,209,126,0.12)',
+                    }}
+                  >
+                    {band ? (
+                      <>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                          <BandLogo band={band} variant="card" style={{ color: 'var(--snes-ink)' }} />
+                          <span className="snes-pixel" style={{ flexShrink: 0, fontSize: '9px', color: 'var(--snes-green)', letterSpacing: 0, border: '2px solid var(--snes-green)', padding: '2px 5px' }}>
+                            {titleCase(band.genre)}
+                          </span>
+                        </div>
+                        {bioTease(band.bio) && (
+                          <p style={{ fontSize: '12px', color: 'var(--snes-ink-dim)', margin: '4px 0 0', lineHeight: 1.4 }}>
+                            {bioTease(band.bio)}
+                          </p>
+                        )}
+                      </>
+                    ) : (
+                      <span style={{ fontSize: '12px', color: 'var(--snes-ink)', fontWeight: 700 }}>
+                        New band unlocked: <span style={{ color: 'var(--snes-green)' }}>{name}</span>
+                      </span>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
 
@@ -424,19 +542,48 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
           </div>
         )}
 
-        {/* Win condition reminder */}
+        {/* Loss teaching: the mode's REAL win conditions with live progress, so a
+            FADE_OUT says exactly which bar was missed and how close it was. */}
         {!isWin && (
-          <div
-            style={{
-              backgroundColor: 'var(--snes-bg-2)',
-              padding: '8px 20px',
-              textAlign: 'center',
-              fontSize: '12px',
-              color: 'var(--snes-ink-dim)',
-            }}
-          >
-            Win by hitting this mode's <span style={{ color: 'var(--snes-gold)' }}>reputation and fan targets</span>{' '}
-            before turn <span style={{ color: 'var(--snes-gold)' }}>{result.maxTurns}</span>
+          <div style={{ backgroundColor: 'var(--snes-bg-2)', padding: '10px 20px 12px' }}>
+            <div
+              style={{
+                fontSize: '11px',
+                textTransform: 'uppercase',
+                color: 'var(--snes-ink-dim)',
+                fontWeight: 700,
+                marginBottom: '8px',
+                letterSpacing: '0.06em',
+              }}
+            >
+              The win needed — by turn <span style={{ color: 'var(--snes-gold)' }}>{result.maxTurns}</span>
+            </div>
+            {winProgress.length > 0 ? (
+              winProgress.map((p) => {
+                const met = p.current >= p.target;
+                const pct = Math.max(0, Math.min(100, Math.round((p.current / p.target) * 100)));
+                return (
+                  <div key={p.description} style={{ marginBottom: '7px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px', fontSize: '12px', marginBottom: '3px' }}>
+                      <span style={{ color: 'var(--snes-ink)' }}>{p.description}</span>
+                      <span style={{ color: met ? 'var(--snes-green)' : 'var(--snes-gold)', fontWeight: 700, flexShrink: 0 }}>
+                        {p.current.toLocaleString()}/{p.target.toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="snes-progress">
+                      <div
+                        className="snes-progress__fill"
+                        style={{ width: `${pct}%`, background: met ? 'var(--snes-green)' : 'var(--snes-gold)' }}
+                      />
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div style={{ fontSize: '12px', color: 'var(--snes-ink-dim)' }}>
+                Win by hitting this mode's targets before the final turn.
+              </div>
+            )}
           </div>
         )}
         </div>
@@ -463,7 +610,7 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
                 minHeight: '48px',
               }}
             >
-              <PixelIcon name="play" size={12} /> Climb · {ceremony?.unlockedStakeName}
+              <PixelIcon name="play" size={12} /> Climb · {nextStakeName}
             </button>
           )}
           <div style={{ display: 'flex', gap: '12px' }}>
@@ -491,6 +638,36 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
         </div>
       </div>
     </div>
+  );
+};
+
+/** Rolls a number up from 0 — the score/fame payout should feel COUNTED, not stated. */
+const CountUp: React.FC<{ value: number; duration?: number; prefix?: string }> = ({
+  value,
+  duration = 700,
+  prefix = '',
+}) => {
+  const [display, setDisplay] = useState(0);
+  useEffect(() => {
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+      setDisplay(value);
+      return;
+    }
+    let raf = 0;
+    const t0 = performance.now();
+    const tick = (t: number) => {
+      const k = Math.min(1, (t - t0) / duration);
+      setDisplay(Math.round(value * (1 - Math.pow(1 - k, 3)))); // ease-out cubic
+      if (k < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [value, duration]);
+  return (
+    <>
+      {prefix}
+      {display.toLocaleString()}
+    </>
   );
 };
 

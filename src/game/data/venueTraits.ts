@@ -1,5 +1,10 @@
 import { VenueTrait, VenueTraitType } from '@game/types';
 
+// Venue CHARACTER data. Traits are assigned per-room in initialVenues.ts and
+// surfaced as flavor chips on booking surfaces. NOTE: each trait's `modifier`
+// block is DISPLAY-ONLY lore — the ladder's hand-tuned venue stats already
+// price these quirks in, so no system re-applies the numbers at runtime
+// (wiring them up would double-count and force a balance re-sim).
 export const VENUE_TRAITS: Record<string, VenueTrait> = {
   // Atmosphere Traits
   GRIMY_FLOORS: {
@@ -189,14 +194,30 @@ export const VENUE_TRAITS: Record<string, VenueTrait> = {
   },
 };
 
-// Venue type to default traits mapping
-export const DEFAULT_VENUE_TRAITS: Record<string, string[]> = {
-  BASEMENT: ['GRIMY_FLOORS', 'INTIMATE_SETTING'],
-  GARAGE: ['BLOWN_SPEAKERS', 'INTIMATE_SETTING'],
-  DIVE_BAR: ['GRIMY_FLOORS', 'SCENE_HANGOUT'],
-  WAREHOUSE: ['CUSTOM_ACOUSTICS', 'POLICE_MAGNET'],
-  UNDERGROUND: ['LEGENDARY_GRAFFITI', 'CURSED_STAGE'],
-  DIY_SPACE: ['ARTIST_FRIENDLY', 'BOOKING_COLLECTIVE'],
-  PUNK_CLUB: ['PROFESSIONAL_PA', 'SCENE_HANGOUT'],
-  METAL_VENUE: ['SMOKE_MACHINE', 'PROFESSIONAL_PA'],
+// One-line room flavor for the Strong Island ladder, keyed by venue id
+// (initialVenues.ts). Lives HERE, not in initialVenues.ts, because that module
+// is lazy-loaded for code-splitting and booking UI needs these synchronously.
+// Voice: warm curmudgeon, same register as the band bios — no real proper
+// nouns, nothing grim.
+export const VENUE_BLURBS: Record<string, string> = {
+  'the-basement':
+    'Low ceiling, lower stakes — the only room in town that never asks for a deposit.',
+  'vfw-hall':
+    'The vets unlock the hall at six, count heads from the doorway, and pretend to hate the music.',
+  'the-rec-center':
+    "Nobody's signed a waiver since '09. The folding chairs are load-bearing.",
+  'mr-brewskis':
+    "The floor's been sticky since before your headliner was born. The regulars call it heritage.",
+  'ground-floor':
+    'The stage is in the basement and the green room is a stairwell landing. The name is aspirational.',
+  'metro-bowl-lanes':
+    'The pin machines keep running during the set. Good drummers learn to play around them.',
+  'looney-burro':
+    'Everyone on the wall of photos got famous or broke up, usually both. The burro has seen it all.',
+  'the-elks-lodge':
+    "Cash only, questions never. The antler chandelier has witnessed things the minutes don't record.",
+  'my-fathers-place':
+    'The room that launched a hundred legends now hosts a brunch series. The acoustics forgive everything else.',
+  'jones-beach':
+    'The ocean breeze is complimentary. Everything else has a convenience fee.',
 };
