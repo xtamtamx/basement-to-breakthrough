@@ -175,7 +175,7 @@ export const EventCardModal: React.FC<EventCardModalProps> = ({ event, onClose }
             gap: '12px',
           }}
         >
-          <span style={{ fontSize: '32px', lineHeight: 1, flexShrink: 0 }}>{event.icon}</span>
+          <PixelIcon name={event.icon} size={32} style={{ flexShrink: 0, color: accent }} />
           <div style={{ minWidth: 0 }}>
             <span
               className="snes-pixel"

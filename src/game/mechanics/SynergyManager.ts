@@ -49,7 +49,7 @@ export interface Synergy {
   /** Optional condition for activation */
   condition?: SynergyCondition;
   /** Visual icon/emoji */
-  icon: string;
+  icon: string; // PixelIcon glyph name
 }
 
 export interface SynergyCondition {
@@ -102,7 +102,7 @@ export const STARTER_SYNERGIES: Synergy[] = [
     rarity: 'COMMON',
     trigger: 'TURN_START',
     effects: [{ type: 'MONEY_FLAT', value: 10, description: '+$10 at turn start' }],
-    icon: '🔧',
+    icon: 'gear',
   },
   {
     id: 'word_of_mouth',
@@ -111,7 +111,7 @@ export const STARTER_SYNERGIES: Synergy[] = [
     rarity: 'COMMON',
     trigger: 'SHOW_END',
     effects: [{ type: 'FANS_PERCENT', value: 10, description: '+10% fans from shows' }],
-    icon: '📢',
+    icon: 'megaphone',
   },
   {
     id: 'stress_relief',
@@ -120,7 +120,7 @@ export const STARTER_SYNERGIES: Synergy[] = [
     rarity: 'COMMON',
     trigger: 'TURN_END',
     effects: [{ type: 'STRESS_FLAT', value: -5, description: '-5 stress at turn end' }],
-    icon: '😌',
+    icon: 'calm',
   },
   {
     id: 'scene_cred',
@@ -129,7 +129,7 @@ export const STARTER_SYNERGIES: Synergy[] = [
     rarity: 'COMMON',
     trigger: 'SHOW_END',
     effects: [{ type: 'REPUTATION_PERCENT', value: 10, description: '+10% reputation from shows' }],
-    icon: '🎸',
+    icon: 'guitar',
   },
   {
     id: 'budget_booker',
@@ -138,7 +138,7 @@ export const STARTER_SYNERGIES: Synergy[] = [
     rarity: 'COMMON',
     trigger: 'PASSIVE',
     effects: [{ type: 'COST_REDUCTION_PERCENT', value: 10, description: '-10% show costs' }],
-    icon: '💰',
+    icon: 'money',
   },
   {
     id: 'lucky_break',
@@ -147,7 +147,7 @@ export const STARTER_SYNERGIES: Synergy[] = [
     rarity: 'COMMON',
     trigger: 'PASSIVE',
     effects: [{ type: 'INCIDENT_REDUCTION_PERCENT', value: 15, description: '-15% incident chance' }],
-    icon: '🍀',
+    icon: 'clover',
   },
 
   // UNCOMMON (4)
@@ -159,7 +159,7 @@ export const STARTER_SYNERGIES: Synergy[] = [
     trigger: 'SHOW_END',
     effects: [{ type: 'REPUTATION_PERCENT', value: 25, description: '+25% reputation when stress < 30' }],
     condition: { type: 'MAX_STRESS', value: 30, description: 'Stress must be below 30' },
-    icon: '🏠',
+    icon: 'home',
   },
   {
     id: 'crowd_surfer',
@@ -168,7 +168,7 @@ export const STARTER_SYNERGIES: Synergy[] = [
     rarity: 'UNCOMMON',
     trigger: 'SHOW_START',
     effects: [{ type: 'ATTENDANCE_PERCENT', value: 15, description: '+15% attendance' }],
-    icon: '🏄',
+    icon: 'crowdsurf',
   },
   {
     id: 'merch_master',
@@ -177,7 +177,7 @@ export const STARTER_SYNERGIES: Synergy[] = [
     rarity: 'UNCOMMON',
     trigger: 'SHOW_END',
     effects: [{ type: 'MONEY_PERCENT', value: 20, description: '+20% money from shows' }],
-    icon: '👕',
+    icon: 'tshirt',
   },
   {
     id: 'scene_politics',
@@ -187,7 +187,7 @@ export const STARTER_SYNERGIES: Synergy[] = [
     trigger: 'TURN_END',
     effects: [{ type: 'REPUTATION_FLAT', value: 3, description: '+3 reputation when fans > 100' }],
     condition: { type: 'MIN_FANS', value: 100, description: 'Must have at least 100 fans' },
-    icon: '🎭',
+    icon: 'masks',
   },
 
   // RARE (2)
@@ -201,7 +201,7 @@ export const STARTER_SYNERGIES: Synergy[] = [
       { type: 'MONEY_FLAT', value: 25, description: '+$25 at turn start' },
       { type: 'FANS_FLAT', value: 5, description: '+5 fans at turn start' },
     ],
-    icon: '🕸️',
+    icon: 'web',
   },
   {
     id: 'iron_will',
@@ -213,7 +213,7 @@ export const STARTER_SYNERGIES: Synergy[] = [
       { type: 'STRESS_FLAT', value: -15, description: '-15 stress at turn end' },
       { type: 'REPUTATION_FLAT', value: -2, description: '-2 reputation at turn end' },
     ],
-    icon: '🛡️',
+    icon: 'shield',
   },
 
   // LEGENDARY (3) — top-end rewards (rarely rolled, milestone-only)
@@ -227,7 +227,7 @@ export const STARTER_SYNERGIES: Synergy[] = [
       { type: 'MONEY_PERCENT', value: 25, description: '+25% money from shows' },
       { type: 'FANS_PERCENT', value: 15, description: '+15% fans from shows' },
     ],
-    icon: '🎟️',
+    icon: 'ticket',
   },
   {
     id: 'scene_royalty',
@@ -236,7 +236,7 @@ export const STARTER_SYNERGIES: Synergy[] = [
     rarity: 'LEGENDARY',
     trigger: 'SHOW_END',
     effects: [{ type: 'REPUTATION_PERCENT', value: 25, description: '+25% reputation from shows' }],
-    icon: '👑',
+    icon: 'crown',
   },
   {
     id: 'the_machine',
@@ -248,7 +248,7 @@ export const STARTER_SYNERGIES: Synergy[] = [
       { type: 'MONEY_FLAT', value: 30, description: '+$30 at turn start' },
       { type: 'FANS_FLAT', value: 8, description: '+8 fans at turn start' },
     ],
-    icon: '🚐',
+    icon: 'van',
   },
 
   // ===== Expansion instincts (2026-06-21): more slot-fill decisions + new builds =====
@@ -259,7 +259,7 @@ export const STARTER_SYNERGIES: Synergy[] = [
     rarity: 'COMMON',
     trigger: 'SHOW_END',
     effects: [{ type: 'MONEY_PERCENT', value: 12, description: '+12% money from shows' }],
-    icon: '🧢',
+    icon: 'cap',
   },
   {
     id: 'early_bird',
@@ -269,7 +269,7 @@ export const STARTER_SYNERGIES: Synergy[] = [
     trigger: 'TURN_START',
     effects: [{ type: 'REPUTATION_FLAT', value: 3, description: '+3 rep/turn for the first 10 turns' }],
     condition: { type: 'TURN_RANGE', value: '1-10', description: 'Turns 1–10' },
-    icon: '🌅',
+    icon: 'sunrise',
   },
   {
     id: 'road_warrior',
@@ -278,7 +278,7 @@ export const STARTER_SYNERGIES: Synergy[] = [
     rarity: 'UNCOMMON',
     trigger: 'SHOW_START',
     effects: [{ type: 'ATTENDANCE_PERCENT', value: 15, description: '+15% attendance' }],
-    icon: '🛻',
+    icon: 'van',
   },
   {
     id: 'sober_living',
@@ -295,7 +295,7 @@ export const STARTER_SYNERGIES: Synergy[] = [
       { type: 'STRESS_FLAT', value: -10, description: '-10 stress when calm' },
     ],
     condition: { type: 'MAX_STRESS', value: 40, description: 'Stress below 40' },
-    icon: '🧃',
+    icon: 'juicebox',
   },
   {
     id: 'headliner',
@@ -305,7 +305,7 @@ export const STARTER_SYNERGIES: Synergy[] = [
     trigger: 'SHOW_END',
     effects: [{ type: 'REPUTATION_PERCENT', value: 30, description: '+30% rep with a real following' }],
     condition: { type: 'MIN_FANS', value: 300, description: 'At least 300 fans' },
-    icon: '⭐',
+    icon: 'fame',
   },
   {
     id: 'viral_moment',
@@ -314,7 +314,7 @@ export const STARTER_SYNERGIES: Synergy[] = [
     rarity: 'RARE',
     trigger: 'SHOW_END',
     effects: [{ type: 'FANS_PERCENT', value: 40, description: '+40% fans from shows' }],
-    icon: '📱',
+    icon: 'phone',
   },
   {
     id: 'union_rep',
@@ -326,7 +326,7 @@ export const STARTER_SYNERGIES: Synergy[] = [
       { type: 'COST_REDUCTION_PERCENT', value: 22, description: '-22% show costs' },
       { type: 'INCIDENT_REDUCTION_PERCENT', value: 25, description: '-25% incident chance' },
     ],
-    icon: '✊',
+    icon: 'fist',
   },
   {
     id: 'platinum_record',
@@ -338,7 +338,7 @@ export const STARTER_SYNERGIES: Synergy[] = [
       { type: 'MONEY_FLAT', value: 45, description: '+$45 at turn start' },
       { type: 'FANS_FLAT', value: 15, description: '+15 fans at turn start' },
     ],
-    icon: '💿',
+    icon: 'vinyl',
   },
   {
     id: 'festival_headliner',
@@ -348,7 +348,7 @@ export const STARTER_SYNERGIES: Synergy[] = [
     trigger: 'SHOW_START',
     effects: [{ type: 'ATTENDANCE_PERCENT', value: 45, description: '+45% attendance at the top' }],
     condition: { type: 'MIN_REPUTATION', value: 60, description: 'Reputation 60+' },
-    icon: '🎆',
+    icon: 'fireworks',
   },
 
   // --- 2026-06 content pass: +6 instincts (magnitudes <= existing category leaders;
@@ -360,7 +360,7 @@ export const STARTER_SYNERGIES: Synergy[] = [
     rarity: 'COMMON',
     trigger: 'PASSIVE',
     effects: [{ type: 'COST_REDUCTION_PERCENT', value: 18, description: '-18% show costs' }],
-    icon: '🏚️',
+    icon: 'squat',
   },
   {
     id: 'slow_burn',
@@ -373,7 +373,7 @@ export const STARTER_SYNERGIES: Synergy[] = [
       { type: 'FANS_FLAT', value: 6, description: '+6 fans each turn (turn 15+)' },
     ],
     condition: { type: 'TURN_RANGE', value: '15-35', description: 'Turns 15+' },
-    icon: '🔥',
+    icon: 'fire',
   },
   {
     id: 'all_ages_zealot',
@@ -386,7 +386,7 @@ export const STARTER_SYNERGIES: Synergy[] = [
       { type: 'REPUTATION_PERCENT', value: 12, description: '+12% reputation while stress < 50' },
     ],
     condition: { type: 'MAX_STRESS', value: 50, description: 'Stress below 50' },
-    icon: '🧃',
+    icon: 'juicebox',
   },
   {
     id: 'festival_circuit',
@@ -396,7 +396,7 @@ export const STARTER_SYNERGIES: Synergy[] = [
     trigger: 'SHOW_START',
     effects: [{ type: 'ATTENDANCE_PERCENT', value: 22, description: '+22% attendance at rep 40+' }],
     condition: { type: 'MIN_REPUTATION', value: 40, description: 'Reputation 40+' },
-    icon: '⛺',
+    icon: 'tent',
   },
   {
     id: 'merch_table_empire',
@@ -406,7 +406,7 @@ export const STARTER_SYNERGIES: Synergy[] = [
     trigger: 'SHOW_END',
     effects: [{ type: 'MONEY_PERCENT', value: 25, description: '+25% money from shows (200+ fans)' }],
     condition: { type: 'MIN_FANS', value: 200, description: 'At least 200 fans' },
-    icon: '👕',
+    icon: 'tshirt',
   },
   {
     id: 'scene_elder',
@@ -419,7 +419,7 @@ export const STARTER_SYNERGIES: Synergy[] = [
       { type: 'MONEY_FLAT', value: 15, description: '+$15 each turn (rep 50+)' },
     ],
     condition: { type: 'MIN_REPUTATION', value: 50, description: 'Reputation 50+' },
-    icon: '🧓',
+    icon: 'elder',
   },
 ];
 

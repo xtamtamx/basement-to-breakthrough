@@ -12,6 +12,7 @@ import {
 } from '@game/mechanics/SynergyManager';
 import { useGameStore } from '@stores/gameStore';
 import { SnesModal } from '@components/ui/SnesModal';
+import { PixelIcon } from '@components/ui/PixelIcon';
 
 interface SynergyAcquireModalProps {
   synergy: Synergy;
@@ -117,7 +118,7 @@ export const SynergyAcquireModal: React.FC<SynergyAcquireModalProps> = ({
             gap: '12px',
           }}
         >
-          <span style={{ fontSize: '32px', lineHeight: 1, flexShrink: 0 }}>{synergy.icon}</span>
+          <PixelIcon name={synergy.icon} size={32} style={{ flexShrink: 0, color: 'var(--snes-gold)' }} />
           <div style={{ minWidth: 0 }}>
             <h2
               className="snes-pixel"
@@ -249,7 +250,7 @@ export const SynergyAcquireModal: React.FC<SynergyAcquireModalProps> = ({
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ fontSize: '18px', lineHeight: 1, flexShrink: 0 }}>{eq.synergy.icon}</span>
+                        <PixelIcon name={eq.synergy.icon} size={18} style={{ flexShrink: 0, color: 'var(--snes-ink-dim)' }} />
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ color: 'var(--snes-ink)', fontWeight: 500, fontSize: '13px' }}>
                             {eq.synergy.name}

@@ -20,7 +20,7 @@ export type TravelAlignment = "diy" | "balanced" | "sellout";
 export interface TravelOffer {
   id: string;
   name: string;
-  icon: string; // emoji
+  icon: string; // PixelIcon glyph name
   tagline: string;
   alignment: TravelAlignment;
   effects: TravelEffects;
@@ -33,7 +33,7 @@ export interface TravelState {
 interface TravelModeDef {
   id: string;
   name: string;
-  icon: string;
+  icon: string; // PixelIcon glyph name
   tagline: string;
   alignment: TravelAlignment;
   minReputation?: number;
@@ -48,7 +48,7 @@ const MODES: TravelModeDef[] = [
   {
     id: "van",
     name: "Pile in the Van",
-    icon: "🚐",
+    icon: "van",
     tagline: "Five to a bench seat, gas-station dinners, pure scene.",
     alignment: "diy",
     effects: () => ({ money: -60, stress: 14, fans: 3, diyPoints: 6 }),
@@ -56,7 +56,7 @@ const MODES: TravelModeDef[] = [
   {
     id: "bus",
     name: "The Megabus",
-    icon: "🚌",
+    icon: "bus",
     tagline: "Cheap, slow, and the wifi never works.",
     alignment: "balanced",
     effects: () => ({ money: -40, stress: 8, fans: 0, diyPoints: 1 }),
@@ -64,7 +64,7 @@ const MODES: TravelModeDef[] = [
   {
     id: "train",
     name: "The Overnight Train",
-    icon: "🚆",
+    icon: "train",
     tagline: "Write three songs watching the country go by.",
     alignment: "balanced",
     effects: () => ({ money: -90, stress: 3, fans: 1, diyPoints: 2 }),
@@ -72,7 +72,7 @@ const MODES: TravelModeDef[] = [
   {
     id: "hitchhike",
     name: "Hitchhike",
-    icon: "👍",
+    icon: "thumb",
     tagline: "Free, terrifying, and great for the memoir.",
     alignment: "diy",
     effects: () => ({ money: 0, stress: 18, fans: 1, diyPoints: 8 }),
@@ -80,7 +80,7 @@ const MODES: TravelModeDef[] = [
   {
     id: "flight",
     name: "Red-Eye Flight",
-    icon: "✈️",
+    icon: "plane",
     tagline: "Fast and comfy. The scene notices who flies.",
     alignment: "sellout",
     effects: (s) => ({ money: -180, stress: -4, fans: 0, diyPoints: -(4 + repScale(s.reputation)) }),
@@ -88,7 +88,7 @@ const MODES: TravelModeDef[] = [
   {
     id: "sponsoredBus",
     name: "Sponsored Tour Bus",
-    icon: "🚍",
+    icon: "bus",
     tagline: "An energy-drink logo, a per-diem, and a piece of your soul.",
     alignment: "sellout",
     minReputation: 30,

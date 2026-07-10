@@ -6,6 +6,7 @@ import { rollTravelOffer, TravelOffer, TravelEffects } from "@game/world/travelM
 import { haptics } from "@utils/mobile";
 import { City } from "@game/types";
 import { Lock, MapPin, X, RefreshCw, Check } from "lucide-react";
+import { PixelIcon } from "@components/ui/PixelIcon";
 
 type ViewType = "city" | "bands" | "shows" | "promotion" | "synergies" | "jobs" | "progression" | "tour";
 
@@ -163,7 +164,7 @@ export const TourView: React.FC<TourViewProps> = ({ onNavigate }) => {
                 return (
                   <div key={mode.id} className="snes-panel-inset" style={{ padding: "12px", border: `2px solid ${ac}` }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
-                      <span style={{ fontSize: "20px", lineHeight: 1 }}>{mode.icon}</span>
+                      <PixelIcon name={mode.icon} size={20} style={{ flexShrink: 0, color: ac }} />
                       <h3 className="snes-pixel" style={{ fontSize: "10px", color: "var(--snes-ink)", margin: 0, letterSpacing: 0 }}>{mode.name}</h3>
                     </div>
                     <p style={{ fontSize: "12px", color: "var(--snes-ink-dim)", margin: "0 0 8px", lineHeight: 1.4, fontStyle: "italic" }}>{mode.tagline}</p>
