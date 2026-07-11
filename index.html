@@ -32,19 +32,28 @@
       }
     </style>
     
-    <!-- Prevent text selection on mobile -->
+    <!-- Native-app feel: no long-press text selection or iOS callout/magnifier.
+         This is a game UI, not a document — selectable body copy reads as a bug. -->
     <style>
+      html {
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+      }
       body {
         -webkit-tap-highlight-color: transparent;
         overscroll-behavior: none;
       }
 
-      /* Allow selection for drag handles */
-      [data-rfd-drag-handle-context-id] {
-        -webkit-user-select: auto !important;
-        -moz-user-select: auto !important;
-        -ms-user-select: auto !important;
-        user-select: auto !important;
+      /* Text fields opt back in so typing + editing (save names, etc.) still work. */
+      input, textarea, [contenteditable="true"] {
+        -webkit-user-select: text;
+        -moz-user-select: text;
+        -ms-user-select: text;
+        user-select: text;
+        -webkit-touch-callout: default;
       }
 
       /* Branded boot splash — static HTML so it paints INSTANTLY (before the JS
