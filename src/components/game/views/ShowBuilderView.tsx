@@ -16,6 +16,7 @@ import { projectBaseAttendance } from '@game/mechanics/attendanceProjection';
 import { isVenueUnlocked } from '@game/world/venueProgression';
 import { bookingCapacity, nextBookingSlotAt } from '@game/world/bookingCapacity';
 import { resolveVenueCost } from '@game/mechanics/showCosts';
+import { upgradeRevenueBonus } from '@game/mechanics/venueUpgradeEffects';
 import { VENUE_BLURBS } from '@game/data/venueTraits';
 import { runManager } from '@game/mechanics/RunManager';
 import { metaProgressionManager } from '@game/mechanics/MetaProgressionManager';
@@ -202,9 +203,11 @@ export const ShowBuilderView: React.FC = () => {
       eventCapacityPenalty,
     });
 
-    // Revenue includes bar sales where the venue has a bar (matches the engine),
-    // times the faction money modifier.
-    const grossRevenue = Math.floor((finalAttendance * ticketPrice + (selectedVenue.hasBar ? finalAttendance * 5 : 0)) * factionMoneyMult);
+    // Revenue includes bar sales where the venue has a bar, the venue's summed
+    // upgrade revenue bonus (VIP Area / Install Bar — the same shared helper
+    // the resolver applies), and the faction money modifier.
+    const upgradeRevenueMult = 1 + upgradeRevenueBonus(selectedVenue) / 100;
+    const grossRevenue = Math.floor((finalAttendance * ticketPrice + (selectedVenue.hasBar ? finalAttendance * 5 : 0)) * factionMoneyMult * upgradeRevenueMult);
     // Costs: the real venue rent (SAME formula the resolver charges, via the
     // shared venueCostCtx) PLUS the per-band fee for every act. The preview used
     // to apply only difficulty scaling, so a priced room could resolve at ~1.8×

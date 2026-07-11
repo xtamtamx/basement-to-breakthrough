@@ -684,6 +684,9 @@ export class VenueUpgradeSystem {
     const updatedVenue = { ...venue };
     
     if (upgrade.effects.capacity) {
+      // The ONE place upgrade capacity lands. The resolver, attendance
+      // projection, and every capacity display read venue.capacity directly —
+      // summing effects.capacity again at show time double-counts the room.
       updatedVenue.capacity += upgrade.effects.capacity;
     }
     if (upgrade.effects.acoustics) {

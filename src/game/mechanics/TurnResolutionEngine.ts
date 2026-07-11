@@ -27,6 +27,7 @@ import { recordBandUnlocks, recordRunFeats } from '@game/world/bandUnlocks';
 import { bandBookingFee } from './bandEconomy';
 import { bandResponseMult } from './bandResponse';
 import { resolveVenueCost } from './showCosts';
+import { upgradeRevenueBonus, upgradeIncidentDelta } from './venueUpgradeEffects';
 import { TOURING_ENABLED } from '@/config/featureFlags';
 import { gentrificationSystem } from './GentrificationSystem';
 import { factionSystem } from './FactionSystem';
@@ -880,11 +881,14 @@ export class TurnResolutionEngine {
     // rather than letting a fully-kitted room inflate the room without bound.
     equipmentCapacityBonus = Math.min(1.4, equipmentCapacityBonus);
 
-    // Apply venue upgrades to capacity
-    const upgradeCapacityBonus =
-      venue.upgrades?.reduce((total, upgrade) => {
-        return total + (upgrade.effects.capacity || 0);
-      }, 0) || 0;
+    // Venue upgrades. Capacity is baked into venue.capacity at purchase
+    // (VenueUpgradeSystem.applyUpgrade) — the ONE source, which the booking
+    // preview and attendance projection also read, so it must NOT be summed
+    // again here (that double-counted the room). Revenue (+%) and
+    // incidentChance (signed percentage points) only exist on the upgrade
+    // list and are applied at show time below.
+    const revenueBonusFromUpgrades = upgradeRevenueBonus(venue);
+    const incidentDeltaFromUpgrades = upgradeIncidentDelta(venue);
 
     // A crisis event (e.g. police_crackdown) can impose a transient, single-turn
     // capacity penalty on every venue. It's applied here as an EFFECTIVE reduction
@@ -893,8 +897,7 @@ export class TurnResolutionEngine {
     const effectiveCapacity = Math.max(
       1,
       Math.floor(
-        (venue.capacity + upgradeCapacityBonus) * equipmentCapacityBonus -
-          eventCapacityPenalty,
+        venue.capacity * equipmentCapacityBonus - eventCapacityPenalty,
       ),
     );
 
@@ -959,8 +962,11 @@ export class TurnResolutionEngine {
       synergyResults,
     );
     const revenueMultiplier = 1 + moneyBonus / 100;
+    // Bar/VIP-style venue upgrades lift the whole take by their summed
+    // percent (the same bonus the ShowBuilder preview folds into its gross).
+    const upgradeRevenueMultiplier = 1 + revenueBonusFromUpgrades / 100;
     let finalRevenue = Math.floor(
-      totalRevenue * revenueMultiplier * runMods.moneyMultiplier * (sig?.revenueMult ?? 1) * factionMoneyMult,
+      totalRevenue * revenueMultiplier * upgradeRevenueMultiplier * runMods.moneyMultiplier * (sig?.revenueMult ?? 1) * factionMoneyMult,
     );
 
     // Calculate costs with difficulty scaling; escalation turns raise costs.
@@ -1054,9 +1060,14 @@ export class TurnResolutionEngine {
     if (isEscalation) {
       incidentChance *= ESCALATION_INCIDENT_MULTIPLIER;
     }
+    // Venue upgrades shift the chance in signed percentage points under the
+    // same floor — security negative (fewer incidents), the outdoor
+    // expansion positive (a weather gamble).
     incidentChance = Math.max(
       0,
-      incidentChance - (incidentReduction + equipmentIncidentReduction) / 100,
+      incidentChance +
+        incidentDeltaFromUpgrades / 100 -
+        (incidentReduction + equipmentIncidentReduction) / 100,
     );
 
     const incidents: Incident[] = [];

@@ -197,6 +197,10 @@ describe('TurnResolutionEngine', () => {
     vi.mocked(runManager).getStartingBandQualityModifier = vi
       .fn()
       .mockReturnValue(0);
+    // Without this the auto-mock returns undefined and incidentChance goes
+    // NaN — which never fires, but for the wrong reason. With it, the real
+    // 10% base applies and the 0.99 random mock above keeps tests incident-free.
+    vi.mocked(runManager).getStakeIncidentMult = vi.fn().mockReturnValue(1);
     vi.mocked(metaProgressionManager).calculateFameEarned = vi.fn().mockReturnValue(0);
     vi.mocked(metaProgressionManager).updateStats = vi.fn();
     vi.mocked(metaProgressionManager).addAchievements = vi.fn();
@@ -416,6 +420,86 @@ describe('TurnResolutionEngine', () => {
 
       expect(state.addMoney).toHaveBeenCalledWith(120);
       expect(state.addFans).toHaveBeenCalledWith(8);
+    });
+  });
+
+  describe('venue upgrade effects', () => {
+    const makeUpgrade = (effects: Record<string, number>) => ({
+      id: 'test-upgrade',
+      name: 'Test Upgrade',
+      description: '',
+      cost: 1000,
+      type: 'AMENITIES',
+      tier: 1,
+      effects,
+    });
+
+    // Book the same show at the given venue and return its resolved result.
+    const runShowAt = async (venue: Record<string, unknown>) => {
+      state = makeState({ venues: [venue] });
+      vi.mocked(showPromotionSystem).processScheduledShows = vi.fn().mockReturnValue({
+        showsToExecute: [mockShow],
+        promotionUpdates: [] as string[],
+      });
+      const result = await turnResolutionEngine.executeFullTurn();
+      return result.showResults[0];
+    };
+
+    it('raises show revenue by the summed upgrade revenue percent', async () => {
+      const baseline = await runShowAt(mockVenue);
+      const upgraded = await runShowAt({
+        ...mockVenue,
+        upgrades: [makeUpgrade({ revenue: 20 })],
+      });
+
+      // Same room, same bill, same RNG — the +20% VIP-style bonus is the only
+      // difference, so the take must be exactly 1.2x (floored).
+      expect(upgraded.attendance).toBe(baseline.attendance);
+      expect(upgraded.revenue).toBe(Math.floor(baseline.revenue * 1.2));
+      expect(upgraded.revenue).toBeGreaterThan(baseline.revenue);
+    });
+
+    it('lowers incident chance with a security upgrade', async () => {
+      // 0.05 lands under the 10% base incident chance, so the unsecured show
+      // rolls an incident...
+      vi.spyOn(Math, 'random').mockReturnValue(0.05);
+      const unsecured = await runShowAt(mockVenue);
+      expect(unsecured.incidentOccurred).toBe(true);
+
+      // ...while Hire Security's -20 points floor the chance at 0.
+      const secured = await runShowAt({
+        ...mockVenue,
+        upgrades: [makeUpgrade({ incidentChance: -20, authenticity: -10 })],
+      });
+      expect(secured.incidentOccurred).toBe(false);
+      expect(secured.incidents).toHaveLength(0);
+    });
+
+    it('raises incident chance with the outdoor-expansion gamble', async () => {
+      // 0.12 clears the 10% base but not base+5 points from the upgrade.
+      vi.spyOn(Math, 'random').mockReturnValue(0.12);
+      const indoor = await runShowAt(mockVenue);
+      expect(indoor.incidentOccurred).toBe(false);
+
+      const outdoor = await runShowAt({
+        ...mockVenue,
+        upgrades: [makeUpgrade({ incidentChance: 5 })],
+      });
+      expect(outdoor.incidentOccurred).toBe(true);
+    });
+
+    it('does not double-count upgrade capacity already baked into venue.capacity', async () => {
+      // applyUpgrade bakes +25 into capacity at purchase; the upgrade entry
+      // remains on the venue. Resolution must read the baked 125 only.
+      const bakedOnly = await runShowAt({ ...mockVenue, capacity: 125 });
+      const bakedWithUpgradeEntry = await runShowAt({
+        ...mockVenue,
+        capacity: 125,
+        upgrades: [makeUpgrade({ capacity: 25 })],
+      });
+
+      expect(bakedWithUpgradeEntry.attendance).toBe(bakedOnly.attendance);
+      expect(bakedWithUpgradeEntry.revenue).toBe(bakedOnly.revenue);
     });
   });
 
