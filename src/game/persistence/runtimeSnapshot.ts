@@ -25,7 +25,7 @@ import { difficultySystem } from '../mechanics/DifficultySystem';
 import { synergyManager, SynergyState } from '../mechanics/SynergyManager';
 import { progressionPathSystem } from '../mechanics/ProgressionPathSystem';
 import { bandRelationships, BandRelationship } from '../mechanics/BandRelationships';
-import { eventCardSystem } from '../mechanics/EventCardSystem';
+import { eventCardSystem, EventHistoryEntry } from '../mechanics/EventCardSystem';
 
 export interface RuntimeSnapshot {
   run: RunState | null;
@@ -38,6 +38,8 @@ export interface RuntimeSnapshot {
    *  Faction standings persist separately as a store field; this is the band-pair
    *  drift that feeds bill chemistry. */
   bandRelationships?: [string, BandRelationship][];
+  /** Drawn-event dedup history (run-scoped singleton). Optional for old saves. */
+  eventHistory?: EventHistoryEntry[];
 }
 
 export function captureRuntimeSnapshot(): RuntimeSnapshot {
@@ -48,6 +50,7 @@ export function captureRuntimeSnapshot(): RuntimeSnapshot {
     synergy: synergyManager.serialize(),
     progression: progressionPathSystem.serialize(),
     bandRelationships: bandRelationships.serialize(),
+    eventHistory: eventCardSystem.serialize(),
   };
 }
 
@@ -80,4 +83,8 @@ export function restoreRuntimeSnapshot(snap?: RuntimeSnapshot | null): void {
   if (snap.synergy) synergyManager.deserialize(snap.synergy);
   if (snap.progression) progressionPathSystem.deserialize(snap.progression);
   if (snap.bandRelationships) bandRelationships.restore(snap.bandRelationships);
+  // Re-sync the event dedup history that reset() above cleared, so a same-run
+  // reload keeps "never redraw a resolved card" (old saves lack the field → the
+  // reset stands, preventing prior-run bleed).
+  if (snap.eventHistory) eventCardSystem.restore(snap.eventHistory);
 }

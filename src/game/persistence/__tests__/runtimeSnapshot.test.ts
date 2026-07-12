@@ -10,6 +10,7 @@ import {
 } from '@game/mechanics/ShowPromotionSystem';
 import { difficultySystem } from '@game/mechanics/DifficultySystem';
 import { synergyManager } from '@game/mechanics/SynergyManager';
+import { eventCardSystem } from '@game/mechanics/EventCardSystem';
 import { PromotionType } from '@game/mechanics/ShowPromotionSystem';
 import { useGameStore } from '@stores/gameStore';
 
@@ -21,6 +22,7 @@ describe('runtimeSnapshot round-trip', () => {
     showPromotionSystem.reset();
     difficultySystem.resetBlocks();
     synergyManager.reset();
+    eventCardSystem.reset();
     runManager.abandonRun();
   });
 
@@ -78,6 +80,25 @@ describe('runtimeSnapshot round-trip', () => {
     const restored = runManager.getCurrentRun();
     expect(restored?.config.id).toBe('hardcore');
     expect(restored?.stats.totalShows).toBe(7);
+  });
+
+  it('restores the event-draw dedup history so a same-run reload cannot redraw a resolved card', () => {
+    // A run resolved cards on turns 8 and 15.
+    eventCardSystem.restore([
+      { cardId: 'venue_fire', turn: 8, choice: 'rebuild' },
+      { cardId: 'record_label_scout', turn: 15 },
+    ]);
+    const snap = JSON.parse(JSON.stringify(captureRuntimeSnapshot()));
+
+    // A mid-run reload: the singleton is reset (prior-run bleed guard) then must
+    // be re-synced from the snapshot.
+    eventCardSystem.reset();
+    expect(eventCardSystem.getEventHistory()).toHaveLength(0);
+
+    restoreRuntimeSnapshot(snap);
+    const history = eventCardSystem.getEventHistory();
+    expect(history.map((e) => e.cardId)).toEqual(['venue_fire', 'record_label_scout']);
+    expect(history[0].turn).toBe(8);
   });
 
   it('no-ops safely on an undefined snapshot', () => {
