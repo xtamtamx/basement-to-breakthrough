@@ -43,6 +43,21 @@ describe('StakesManager', () => {
     expect(stakesManager.recordWin(mode, top)).toBeNull();
   });
 
+  it('counts every cleared stake including the terminal top tier', () => {
+    const mode = freshMode();
+    const top = STAKE_TIERS.length - 1;
+    expect(stakesManager.getStakesClearedCount(mode)).toBe(0);
+
+    // Win each tier up to (not including) the top: N clears == unlocked tier N.
+    for (let t = 0; t < top; t++) stakesManager.recordWin(mode, t);
+    expect(stakesManager.getStakesClearedCount(mode)).toBe(top);
+
+    // Winning the terminal top stake unlocks nothing (recordWin → null) but MUST
+    // still be credited as a clear — the whole point of the topWon flag.
+    expect(stakesManager.recordWin(mode, top)).toBeNull();
+    expect(stakesManager.getStakesClearedCount(mode)).toBe(STAKE_TIERS.length);
+  });
+
   it('escalating tiers are monotonically harder', () => {
     for (let i = 1; i < STAKE_TIERS.length; i++) {
       const prev = STAKE_TIERS[i - 1];

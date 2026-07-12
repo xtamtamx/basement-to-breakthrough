@@ -134,8 +134,9 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
     // nothing ever recorded those keys — so the count read 0 between runs.)
     const discovered = new Set([...loadDiscoveredCombos(), ...useGameStore.getState().discoveredSynergies]);
     const combosFound = COMBO_CATALOG.filter((c) => discovered.has(c.id)).length;
-    // getUnlockedTier == stakes cleared for that mode (winning tier N opens N+1).
-    const stakesCleared = ACTIVE_MODES.reduce((n, m) => n + stakesManager.getUnlockedTier(m), 0);
+    // Clears per mode (lower-tier wins open the next; the top-stake win counts
+    // too even though it unlocks nothing — getStakesClearedCount folds both in).
+    const stakesCleared = ACTIVE_MODES.reduce((n, m) => n + stakesManager.getStakesClearedCount(m), 0);
     return {
       bandsFound,
       bandsTotal: roster.length,
