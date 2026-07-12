@@ -370,12 +370,12 @@ class EventCardSystem {
         {
           id: 'full_access',
           text: 'Let them film everything, including the bathroom graffiti',
-          effects: [{
-            type: 'scene_change',
-            target: 'player',
-            value: { exposure: 'high' },
-            description: 'Scene goes viral'
-          }]
+          // Going viral on a wealthy outsider's terms is the sellout move. Use the
+          // canonical, previewable diyDelta path (shown as a SELLOUT pill on the
+          // button) instead of a scene_change effect whose −10 axis move landed
+          // invisibly — this was the deck's ONLY scene_change card.
+          diyDelta: -10,
+          effects: [],
         },
         {
           id: 'controlled',
@@ -1211,6 +1211,16 @@ class EventCardSystem {
   reset() {
     this.activeEvents = [];
     this.eventHistory = [];
+  }
+
+  /** The run's drawn-card history (the draw-dedup source), for durable resume.
+   *  A mid-run reload/load resets this singleton then restores this — otherwise
+   *  the dedup is wiped and an already-resolved card can be drawn again. */
+  serialize(): EventHistoryEntry[] {
+    return this.eventHistory.map((e) => ({ ...e }));
+  }
+  restore(history: EventHistoryEntry[]): void {
+    this.eventHistory = history.map((e) => ({ ...e }));
   }
 
   // Draw a random event card based on current game state

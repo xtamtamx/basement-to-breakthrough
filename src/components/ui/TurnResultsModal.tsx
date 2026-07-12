@@ -149,7 +149,10 @@ export const TurnResultsModal: React.FC<TurnResultsModalProps> = ({
 
   const totalRevenue = showResults.reduce((sum, result) => sum + result.revenue, 0);
   const totalCosts = showResults.reduce((sum, result) => sum + result.financials.costs, 0) + totalUpkeep;
-  const totalProfit = totalRevenue - totalCosts;
+  // Passive income (gear + landmarks) is shown as its own breakdown line and the
+  // engine applies it to the balance, so Net Profit must include it to equal the
+  // real money delta — mirrors totalFans folding in passiveIncome.fans below.
+  const totalProfit = totalRevenue - totalCosts + (passiveIncome?.money ?? 0);
   // Include passive fans (gear/landmarks) so the Fans box matches the real
   // balance change — otherwise passive fan gain is buried in a footnote.
   const totalFans =
