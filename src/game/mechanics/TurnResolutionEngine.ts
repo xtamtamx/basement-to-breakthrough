@@ -28,6 +28,7 @@ import { bandBookingFee } from './bandEconomy';
 import { bandResponseMult } from './bandResponse';
 import { resolveVenueCost } from './showCosts';
 import { upgradeRevenueBonus, upgradeIncidentDelta } from './venueUpgradeEffects';
+import { computeEquipmentEffects } from './venueEquipmentEffects';
 import { TOURING_ENABLED } from '@/config/featureFlags';
 import { gentrificationSystem } from './GentrificationSystem';
 import { factionSystem } from './FactionSystem';
@@ -841,45 +842,14 @@ export class TurnResolutionEngine {
       synergyResults,
     );
 
-    // Calculate equipment effects. Each scales with condition (gear at <20%
-    // condition is treated as broken and contributes nothing).
-    let equipmentCapacityBonus = 1;
-    let equipmentReputationMultiplier = 1;
-    let equipmentQualityBonus = 0; // flat add to venue atmosphere (acoustics + vibe)
-    let equipmentStressReduction = 0; // flat stress points shaved off the show
-    let equipmentIncidentReduction = 0; // flat % off incident chance
-
-    venue.equipment.forEach((equipment) => {
-      if ((equipment.owned || equipment.rentedForShow) && equipment.condition > 20) {
-        // Owned or rented-for-this-show gear both give show effects (rentals just
-        // don't earn passive income — see calculatePassiveIncome's owned check).
-        const effectMultiplier = equipment.condition / 100;
-        const fx = equipment.effects;
-
-        if (fx.capacityBonus) {
-          equipmentCapacityBonus += (fx.capacityBonus / 100) * effectMultiplier;
-        }
-        if (fx.reputationMultiplier) {
-          equipmentReputationMultiplier *=
-            1 + (fx.reputationMultiplier - 1) * effectMultiplier;
-        }
-        // A better PA + a better-lit, better-sounding room draws a bigger crowd.
-        if (fx.acousticsBonus) equipmentQualityBonus += fx.acousticsBonus * effectMultiplier;
-        if (fx.atmosphereBonus) equipmentQualityBonus += fx.atmosphereBonus * effectMultiplier;
-        // Backline / green-room gear means bands haul less and rest more.
-        if (fx.stressReduction) equipmentStressReduction += fx.stressReduction * effectMultiplier;
-        // Pro gear + a door person heads off trouble before it starts.
-        if (fx.incidentReduction) equipmentIncidentReduction += fx.incidentReduction * effectMultiplier;
-      }
-    });
-    // Reputation multipliers stack multiplicatively across gear, so a fully-kitted
-    // venue could otherwise reach ~1.8x and trivialize rep-farming. Cap it at the
-    // same 1.4x ceiling the attendance/quality bonus uses below.
-    equipmentReputationMultiplier = Math.min(1.4, equipmentReputationMultiplier);
-    // Capacity gear stacks the same way (PA + lasers + riser + parking lot…) and
-    // feeds the hard attendance ceiling, so cap it at the same 1.4x as its siblings
-    // rather than letting a fully-kitted room inflate the room without bound.
-    equipmentCapacityBonus = Math.min(1.4, equipmentCapacityBonus);
+    // Equipment effects — summed by the shared helper so the booking/promotion
+    // preview folds in the EXACT same owned/rented-gear bonuses (preview==resolution).
+    const equip = computeEquipmentEffects(venue);
+    const equipmentCapacityBonus = equip.capacityMult;
+    const equipmentReputationMultiplier = equip.reputationMult;
+    const equipmentQualityBonus = equip.qualityBonus;
+    const equipmentStressReduction = equip.stressReduction;
+    const equipmentIncidentReduction = equip.incidentReduction;
 
     // Venue upgrades. Capacity is baked into venue.capacity at purchase
     // (VenueUpgradeSystem.applyUpgrade) — the ONE source, which the booking

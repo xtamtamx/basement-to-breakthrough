@@ -5,6 +5,7 @@ import { cityGenreFit, homeCityFit } from '@game/world/citySynergy';
 import { computeLineupChemistry } from './lineupChemistry';
 import { factionSystem } from './FactionSystem';
 import { difficultySystem } from './DifficultySystem';
+import { computeEquipmentEffects } from './venueEquipmentEffects';
 
 /**
  * The SINGLE source of truth for a bill's PROJECTED (pre-promotion) attendance —
@@ -49,8 +50,17 @@ export function projectBaseAttendance(opts: {
   const lineupChem = computeLineupChemistry(bands);
   const fMods = factionSystem.getShowModifiersFrom(headliner, factionStandings);
   const factionAttMult = Math.max(0.92, Math.min(1.08, 1 + (fMods.fanBonus - 1) * 0.4));
-  const effectiveCapacity = Math.max(1, venue.capacity - (eventCapacityPenalty ?? 0));
-  const base = Math.floor(effectiveCapacity * (avgPopularity / 100) * (venue.atmosphere / 100));
+  // Owned/rented gear lifts the room exactly as executeShow applies it (shared
+  // helper): capacity ×bonus feeds the ceiling, acoustics/atmosphere lift the
+  // draw (venue.atmosphere + qualityBonus, capped 1.4). Omitting this made the
+  // preview under-count the crowd for any venue with gear installed.
+  const equip = computeEquipmentEffects(venue);
+  const effectiveCapacity = Math.max(
+    1,
+    Math.floor(venue.capacity * equip.capacityMult - (eventCapacityPenalty ?? 0)),
+  );
+  const venueBonus = Math.min(1.4, (venue.atmosphere + equip.qualityBonus) / 100);
+  const base = Math.floor(effectiveCapacity * (avgPopularity / 100) * venueBonus);
   // Deterministic difficulty term (same helper the resolver uses): scene
   // expectations always; price resistance only when the caller knows the price
   // (a ticketPrice of 0 applies no price penalty — see getShowDifficultyModifiers).
