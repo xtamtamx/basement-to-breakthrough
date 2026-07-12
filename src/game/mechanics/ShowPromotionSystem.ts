@@ -242,6 +242,7 @@ export class ShowPromotionSystem {
       currentCityId: state.currentCityId,
       factionStandings: state.factionStandings ?? {},
       eventCapacityPenalty: state.eventCapacityPenalty,
+      ticketPrice: show.ticketPrice, // same price penalty the resolver applies, so the Promote screen's crowd matches
     });
 
     // Promotion effectiveness + hype bonus (up to 50% at max hype) on top.

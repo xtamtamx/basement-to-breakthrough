@@ -201,6 +201,7 @@ export const ShowBuilderView: React.FC = () => {
       currentCityId,
       factionStandings,
       eventCapacityPenalty,
+      ticketPrice, // fold in the resolver's price-resistance penalty so the slider preview can't lie
     });
 
     // Revenue includes bar sales where the venue has a bar, the venue's summed
