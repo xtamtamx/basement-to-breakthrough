@@ -25,6 +25,7 @@ import { difficultySystem } from '../mechanics/DifficultySystem';
 import { synergyManager, SynergyState } from '../mechanics/SynergyManager';
 import { progressionPathSystem } from '../mechanics/ProgressionPathSystem';
 import { bandRelationships, BandRelationship } from '../mechanics/BandRelationships';
+import { eventCardSystem } from '../mechanics/EventCardSystem';
 
 export interface RuntimeSnapshot {
   run: RunState | null;
@@ -58,6 +59,7 @@ export function restoreRuntimeSnapshot(snap?: RuntimeSnapshot | null): void {
   // drift. (On page-refresh rehydrate these singletons are already empty → no-op.)
   progressionPathSystem.reset();
   bandRelationships.clearRelationships();
+  eventCardSystem.reset(); // drawn-card history is a singleton; a loaded run must not inherit the prior run's deck
   if (!snap) return;
   runManager.restoreRun(snap.run);
 

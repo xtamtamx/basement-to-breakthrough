@@ -6,8 +6,7 @@ import { getTitleTier } from '@game/world/titleStage';
 import { gameAudio } from '@utils/gameAudio';
 import { initialBands } from '@/data/initialBands';
 import { isBandUnlocked, isBandHidden } from '@game/world/bandUnlocks';
-import { COMBO_CATALOG } from '@game/mechanics/SynergyEngine';
-import { metaProgressionManager } from '@game/mechanics/MetaProgressionManager';
+import { COMBO_CATALOG, loadDiscoveredCombos } from '@game/mechanics/SynergyEngine';
 import { stakesManager } from '@game/mechanics/StakesManager';
 import { ACTIVE_MODES } from '@game/mechanics/modeUnlocks';
 import { useGameStore } from '@stores/gameStore';
@@ -129,10 +128,12 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
     const bandsFound = roster.filter((b) => isBandUnlocked(b.id)).length;
     // Combos: the codex's persisted meta keys, plus the live save's discoveries
     // (covers saves from before the meta persistence landed).
-    const discovered = new Set(useGameStore.getState().discoveredSynergies);
-    const combosFound = COMBO_CATALOG.filter(
-      (c) => discovered.has(c.id) || metaProgressionManager.hasUnlock(`synergy_${c.id}`),
-    ).length;
+    // The persisted cross-run codex (loadDiscoveredCombos) is the real source of
+    // truth; union with the live save's run-scoped discoveries covers saves from
+    // before the codex landed. (The old `hasUnlock('synergy_*')` branch was dead —
+    // nothing ever recorded those keys — so the count read 0 between runs.)
+    const discovered = new Set([...loadDiscoveredCombos(), ...useGameStore.getState().discoveredSynergies]);
+    const combosFound = COMBO_CATALOG.filter((c) => discovered.has(c.id)).length;
     // getUnlockedTier == stakes cleared for that mode (winning tier N opens N+1).
     const stakesCleared = ACTIVE_MODES.reduce((n, m) => n + stakesManager.getUnlockedTier(m), 0);
     return {

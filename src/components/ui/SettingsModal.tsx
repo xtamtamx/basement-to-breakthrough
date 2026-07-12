@@ -58,6 +58,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
       'btb-highscores',
       'btb-tutorial-v2',          // replay onboarding
       'btb-venue-intro-v1',
+      'btb-combo-codex-v1',       // the cross-run synergy discovery codex
     ].forEach((k) => safeStorage.removeItem(k));
     haptics.success();
     window.location.reload();

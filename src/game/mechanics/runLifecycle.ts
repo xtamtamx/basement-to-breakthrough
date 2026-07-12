@@ -16,6 +16,7 @@ import { bandRelationships } from './BandRelationships';
 import { dayJobSystem } from './DayJobSystem';
 import { synergyManager, STARTER_SYNERGIES } from './SynergyManager';
 import { persistDiscoveredCombos } from './SynergyEngine';
+import { eventCardSystem } from './EventCardSystem';
 import { objectiveManager } from './ObjectiveManager';
 import { progressionPathSystem } from './ProgressionPathSystem';
 import { stakesManager } from './StakesManager';
@@ -55,6 +56,9 @@ export async function startNewRun(
   // across runs; the store field auto-resets via resetGame() but these don't.
   factionSystem.reset();
   bandRelationships.clearRelationships();
+  // The event deck's history (draw dedup) + active events are an app-lifetime
+  // singleton; without this a run inherits the prior run's drawn-card set.
+  eventCardSystem.reset();
   // A held day job is a singleton too: without this, a job kept at run 1's end
   // keeps paying out (and draining rep/fans/stress) every turn of run 2.
   dayJobSystem.setJob(null);
