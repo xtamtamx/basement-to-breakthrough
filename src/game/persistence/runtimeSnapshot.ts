@@ -26,6 +26,8 @@ import { synergyManager, SynergyState } from '../mechanics/SynergyManager';
 import { progressionPathSystem } from '../mechanics/ProgressionPathSystem';
 import { bandRelationships, BandRelationship } from '../mechanics/BandRelationships';
 import { eventCardSystem, EventHistoryEntry } from '../mechanics/EventCardSystem';
+import { dayJobSystem, DayJob } from '../mechanics/DayJobSystem';
+import { factionSystem } from '../mechanics/FactionSystem';
 
 export interface RuntimeSnapshot {
   run: RunState | null;
@@ -40,6 +42,9 @@ export interface RuntimeSnapshot {
   bandRelationships?: [string, BandRelationship][];
   /** Drawn-event dedup history (run-scoped singleton). Optional for old saves. */
   eventHistory?: EventHistoryEntry[];
+  /** Held day job + turns worked (run-scoped singleton that pays out each turn).
+   *  Optional for old saves. */
+  dayJob?: { job: DayJob | null; turnsWorked: number };
 }
 
 export function captureRuntimeSnapshot(): RuntimeSnapshot {
@@ -51,6 +56,7 @@ export function captureRuntimeSnapshot(): RuntimeSnapshot {
     progression: progressionPathSystem.serialize(),
     bandRelationships: bandRelationships.serialize(),
     eventHistory: eventCardSystem.serialize(),
+    dayJob: dayJobSystem.serialize(),
   };
 }
 
@@ -63,6 +69,19 @@ export function restoreRuntimeSnapshot(snap?: RuntimeSnapshot | null): void {
   progressionPathSystem.reset();
   bandRelationships.clearRelationships();
   eventCardSystem.reset(); // drawn-card history is a singleton; a loaded run must not inherit the prior run's deck
+  dayJobSystem.setJob(null); // clear any prior-run held job before the snapshot restores this run's (below)
+  // The FactionSystem singleton ACCUMULATES standings across shows
+  // (updateStandingsFromShow) and pushes them back to store.factionStandings each
+  // turn. On load it holds the PRIOR run's standings and nothing re-syncs it, so
+  // the next show would bleed them into the loaded run. Reset it, then re-hydrate
+  // from the store (the persisted source of truth, already set by loadGame /
+  // zustand rehydrate before this runs) so subsequent shows build on the loaded
+  // standings instead of wiping them.
+  factionSystem.reset();
+  const loadedStandings = useGameStore.getState().factionStandings ?? {};
+  Object.entries(loadedStandings).forEach(([id, v]) => {
+    if (typeof v === 'number') factionSystem.setStanding(id, v);
+  });
   if (!snap) return;
   runManager.restoreRun(snap.run);
 
@@ -87,4 +106,5 @@ export function restoreRuntimeSnapshot(snap?: RuntimeSnapshot | null): void {
   // reload keeps "never redraw a resolved card" (old saves lack the field → the
   // reset stands, preventing prior-run bleed).
   if (snap.eventHistory) eventCardSystem.restore(snap.eventHistory);
+  if (snap.dayJob) dayJobSystem.restore(snap.dayJob);
 }

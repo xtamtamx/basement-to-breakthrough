@@ -11,6 +11,8 @@ import {
 import { difficultySystem } from '@game/mechanics/DifficultySystem';
 import { synergyManager } from '@game/mechanics/SynergyManager';
 import { eventCardSystem } from '@game/mechanics/EventCardSystem';
+import { dayJobSystem, DayJob } from '@game/mechanics/DayJobSystem';
+import { factionSystem } from '@game/mechanics/FactionSystem';
 import { PromotionType } from '@game/mechanics/ShowPromotionSystem';
 import { useGameStore } from '@stores/gameStore';
 
@@ -23,6 +25,8 @@ describe('runtimeSnapshot round-trip', () => {
     difficultySystem.resetBlocks();
     synergyManager.reset();
     eventCardSystem.reset();
+    dayJobSystem.setJob(null);
+    factionSystem.reset();
     runManager.abandonRun();
   });
 
@@ -99,6 +103,37 @@ describe('runtimeSnapshot round-trip', () => {
     const history = eventCardSystem.getEventHistory();
     expect(history.map((e) => e.cardId)).toEqual(['venue_fire', 'record_label_scout']);
     expect(history[0].turn).toBe(8);
+  });
+
+  it('restores the held day job (+turns worked) so its per-turn income survives a reload', () => {
+    const job = {
+      id: 'record-store', type: 'record_store', category: 'retail',
+      name: 'Record Store Clerk', description: 'x',
+      moneyPerTurn: 40, reputationChange: 1, fanChange: 0, stressGain: 3,
+    } as unknown as DayJob;
+    dayJobSystem.setJob(job);
+    const snap = JSON.parse(JSON.stringify(captureRuntimeSnapshot()));
+
+    dayJobSystem.setJob(null); // a fresh module / prior-run guard leaves no job
+    expect(dayJobSystem.getCurrentJob()).toBeNull();
+
+    restoreRuntimeSnapshot(snap);
+    expect(dayJobSystem.getCurrentJob()?.id).toBe('record-store');
+  });
+
+  it('re-hydrates faction standings from the store so the next show cannot wipe them', () => {
+    // A loaded save's standings live in the store; the singleton must reflect them
+    // (a bare reset would leave it neutral, and the next show would push neutral
+    // back over the loaded values).
+    useGameStore.setState({ factionStandings: { punk: 40, artschool: -25 } });
+    factionSystem.setStanding('punk', -99); // stale prior-run value in the singleton
+    restoreRuntimeSnapshot({
+      run: null, scheduledShows: [], difficultyBlocks: { raided: [], unavailable: [] },
+      synergy: synergyManager.serialize(),
+    });
+    expect(factionSystem.getStanding('punk')).toBe(40);
+    expect(factionSystem.getStanding('artschool')).toBe(-25);
+    useGameStore.setState({ factionStandings: {} });
   });
 
   it('no-ops safely on an undefined snapshot', () => {

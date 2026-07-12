@@ -499,7 +499,19 @@ export class DayJobSystem {
   getCurrentJob(): DayJob | null {
     return this.currentJob;
   }
-  
+
+  /** Held job + turns worked, for durable resume. The job pays out (and drains
+   *  rep/fans/stress) every turn via processJobIncome, so a mid-run reload/load
+   *  must restore it or the job silently vanishes; setJob can't be reused for
+   *  restore because it zeroes turnsWorked. */
+  serialize(): { job: DayJob | null; turnsWorked: number } {
+    return { job: this.currentJob, turnsWorked: this.turnsWorked };
+  }
+  restore(s: { job: DayJob | null; turnsWorked: number }): void {
+    this.currentJob = s.job;
+    this.turnsWorked = s.turnsWorked ?? 0;
+  }
+
   processJobIncome(): {
     money: number;
     reputationLoss: number;
