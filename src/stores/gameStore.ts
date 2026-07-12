@@ -858,10 +858,15 @@ export const useGameStore = create<GameStore>()(
               ? (pickFrom.length ? [pickFrom[Math.floor(Math.random() * pickFrom.length)]] : [])
               : s.allBands;
             pool.forEach((b) => {
+              // Read the band's CURRENT stat, not the stale `s = get()` snapshot:
+              // base + choice effects can both modify the same band+stat in one
+              // resolution, and reading the snapshot each time made the second
+              // effect clobber the first instead of stacking on it.
+              const cur = get().allBands.find((x) => x.id === b.id) ?? b;
               const updates: Partial<Band> = {};
               bandKeys.forEach((k) => {
                 const delta = modifications[k];
-                if (delta !== undefined) updates[k] = clamp((b[k] ?? 0) + delta, 0, 100);
+                if (delta !== undefined) updates[k] = clamp((cur[k] ?? 0) + delta, 0, 100);
               });
               if (Object.keys(updates).length) s.updateBand(b.id, updates);
             });
