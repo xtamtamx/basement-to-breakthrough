@@ -34,7 +34,7 @@ export interface TutorialStep {
   target?: string;
   placement: TutorialPlacement;
   gate: TutorialGate;
-  /** Sub-text under the body for tap/state steps ("👆 Tap Bands"). */
+  /** Sub-text under the body for tap/state steps ("Tap Bands"). */
   hint?: string;
 }
 
@@ -47,7 +47,7 @@ export interface TutorialStep {
 const STEPS: TutorialStep[] = [
   {
     id: 'welcome',
-    title: 'Welcome to the scene 🎸',
+    title: 'Welcome to the scene',
     body:
       "You run a DIY music empire — from basement shows to sold-out festivals. " +
       "Let's book your very first night. Takes about a minute.",
@@ -58,18 +58,20 @@ const STEPS: TutorialStep[] = [
     id: 'resources',
     title: 'Keep an eye up here',
     body:
-      '$ is cash for rent and bookings. ★ is reputation — it draws bigger crowds. ' +
-      '♦ is your fanbase. Watch these as your scene grows.',
+      'Cash pays rent and bookings. The star is reputation — it draws bigger crowds ' +
+      'and unlocks bigger rooms. The heart is your fanbase. Reputation and fans each show ' +
+      'the bar you need to win — watch them climb.',
     target: '[data-tut="resources"]',
     placement: 'below',
     gate: { kind: 'button', label: 'Got it' },
   },
   {
     id: 'instincts',
-    title: 'These are your instincts 🧠',
+    title: 'These are your instincts',
     body:
       'You start with one scene instinct — it kicks in automatically every show. ' +
-      "Tap up here to view and slot them; you'll earn more at turn milestones (5, 12, 20, 28). " +
+      "Tap up here to view and slot them; you'll be offered more at milestone turns " +
+      "spread through the run — each time you pick ONE to keep. " +
       'Persistent, stackable, build-defining.',
     target: '[data-tut="instincts"]',
     placement: 'below',
@@ -77,7 +79,7 @@ const STEPS: TutorialStep[] = [
   },
   {
     id: 'challenges',
-    title: 'Optional challenges 🎯',
+    title: 'Optional challenges',
     body:
       'Each run rolls a few optional goals up here. Clear them for bonus Scene Points — your ' +
       "permanent currency for upgrades between runs. No pressure: they don't affect this run at all.",
@@ -92,14 +94,14 @@ const STEPS: TutorialStep[] = [
     target: '[data-tut="nav-bands"]',
     placement: 'above',
     gate: { kind: 'tap' },
-    hint: '👆 Tap Bands',
+    hint: 'Tap Bands',
   },
   {
     id: 'sign-band',
     title: 'Sign your first act',
     body:
       "You're starting light — just one band signed. Your roster is who you can put on a bill. " +
-      'Open the "Free" tab, TAP a band to expand it, then hit "Sign to roster".',
+      'Hit the sign button on any card you like — or tap the card first to read them.',
     placement: 'screen-top',
     // New runs seed exactly one signed act (gameStore loadInitialGameData), so
     // signing one more takes the roster to 2 and advances the step.
@@ -113,7 +115,7 @@ const STEPS: TutorialStep[] = [
     target: '[data-tut="nav-shows"]',
     placement: 'above',
     gate: { kind: 'tap' },
-    hint: '👆 Tap Shows',
+    hint: 'Tap Shows',
   },
   {
     id: 'build-show',
@@ -127,7 +129,7 @@ const STEPS: TutorialStep[] = [
   },
   {
     id: 'combos',
-    title: 'Combos fire on the bill 🔥',
+    title: 'Combos fire on the bill',
     // Screen-anchored (no spotlight): this fires right after booking, when the
     // ShowBuilder preview + its 🔥 chips have already unmounted — so explain
     // combos as a concept rather than pointing at an element that's gone.
@@ -145,11 +147,11 @@ const STEPS: TutorialStep[] = [
     target: '[data-tut="next-turn"]',
     placement: 'above',
     gate: { kind: 'tap' },
-    hint: '👆 Tap Next Turn',
+    hint: 'Tap Next Turn',
   },
   {
     id: 'results',
-    title: "That's the loop! 🤘",
+    title: "That's the loop!",
     body:
       'Your damage report: crowd, cash, cred and new fans. ' +
       'Thin crowd? Hit the Promo tab to hype a show BEFORE the night — promotion packs the room. ' +
