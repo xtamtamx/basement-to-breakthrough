@@ -685,15 +685,25 @@ export const CityView: React.FC = () => {
       })()}
 
       {/* Venue Upgrade Modal */}
-      {selectedTileData?.venue && showVenueUpgrade && (
-        <VenueUpgradeModal
-          venue={selectedTileData.venue}
-          isOpen={true}
-          onClose={() => {
-            setShowVenueUpgrade(false);
-          }}
-        />
-      )}
+      {selectedTileData?.venue && showVenueUpgrade && (() => {
+        // Re-read the venue from the store: selectedTileData is a snapshot taken
+        // when the tile was tapped, and the shop computes its available-upgrade
+        // list + CAP/Owned readouts from the venue it is handed. Passing the
+        // stale copy let an already-purchased upgrade stay on the shelf and be
+        // bought (and charged for) again.
+        const liveVenue =
+          gameStore.venues.find((v) => v.id === selectedTileData.venue!.id) ??
+          selectedTileData.venue;
+        return (
+          <VenueUpgradeModal
+            venue={liveVenue}
+            isOpen={true}
+            onClose={() => {
+              setShowVenueUpgrade(false);
+            }}
+          />
+        );
+      })()}
     </div>
   );
 };

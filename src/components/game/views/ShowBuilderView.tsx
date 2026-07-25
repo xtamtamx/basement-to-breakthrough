@@ -17,6 +17,8 @@ import { isVenueUnlocked } from '@game/world/venueProgression';
 import { bookingCapacity, nextBookingSlotAt } from '@game/world/bookingCapacity';
 import { resolveVenueCost } from '@game/mechanics/showCosts';
 import { upgradeRevenueBonus } from '@game/mechanics/venueUpgradeEffects';
+import { venueUpgradeSystem } from '@game/mechanics/VenueUpgradeSystem';
+import { VenueUpgradeModal } from '@components/venue/VenueUpgradeModal';
 import { VENUE_BLURBS } from '@game/data/venueTraits';
 import { runManager } from '@game/mechanics/RunManager';
 import { metaProgressionManager } from '@game/mechanics/MetaProgressionManager';
@@ -90,10 +92,21 @@ export const ShowBuilderView: React.FC = () => {
   const venues = allVenues.filter((v) => isVenueUnlocked(v, peakReputation));
 
   const [selectedBandIds, setSelectedBandIds] = useState<string[]>([]);
-  const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
+  // Held by ID so the venue stays LIVE: buying an upgrade mid-booking changes the
+  // room's capacity/atmosphere in the store, and a frozen copy would keep pricing
+  // and projecting the crowd off the old room (preview != resolution).
+  const [selectedVenueId, setSelectedVenueId] = useState<string | null>(null);
+  const selectedVenue = selectedVenueId ? venues.find((v) => v.id === selectedVenueId) ?? null : null;
   const [ticketPrice, setTicketPrice] = useState(15);
   const [leadTime, setLeadTime] = useState(3); // turns out to book — promo builds over the wait
   const [expandedCombo, setExpandedCombo] = useState<string | null>(null); // tap-to-reveal explainer
+  // Venue whose upgrade/gear shop is open (the money sink, reachable from here).
+  // Held by ID, never as an object: the shop's available-upgrade list and its
+  // CAP/Owned readouts are computed FROM the venue passed in, so a frozen
+  // snapshot would keep offering an upgrade you just bought (it re-purchased and
+  // re-charged, since getAvailableUpgrades filters on venue.upgrades).
+  const [upgradeVenueId, setUpgradeVenueId] = useState<string | null>(null);
+  const upgradeVenue = upgradeVenueId ? allVenues.find((v) => v.id === upgradeVenueId) ?? null : null;
   // Transient "BOOKED" stamp + Upcoming-Shows row flash right after booking —
   // the most-repeated deliberate action used to end on a blank form.
   const [justBooked, setJustBooked] = useState<{ id: string; playsIn: number; combos: number } | null>(null);
@@ -146,12 +159,23 @@ export const ShowBuilderView: React.FC = () => {
     haptics.light();
   };
 
+  // Cheapest upgrade still available at the selected room — the "from $X" teaser,
+  // and the null check that hides the button on a fully-kitted venue.
+  const cheapestUpgrade = (() => {
+    if (!selectedVenue) return null;
+    const costs = venueUpgradeSystem
+      .getAvailableUpgrades(selectedVenue)
+      .map((u) => u.cost)
+      .filter((c) => typeof c === 'number');
+    return costs.length ? Math.min(...costs) : null;
+  })();
+
   const handleVenueSelect = (venue: Venue) => {
     if (difficultySystem.isVenueRaided(venue.id)) {
       haptics.error();
       return;
     }
-    setSelectedVenue(venue);
+    setSelectedVenueId(venue.id);
     haptics.light();
   };
 
@@ -332,7 +356,7 @@ export const ShowBuilderView: React.FC = () => {
 
     // Reset selections
     setSelectedBandIds([]);
-    setSelectedVenue(null);
+    setSelectedVenueId(null);
     setTicketPrice(15);
   };
 
@@ -667,6 +691,30 @@ export const ShowBuilderView: React.FC = () => {
               );
             })}
           </div>
+          {/* THE MONEY SINK, AT THE POINT OF DECISION. Every venue upgrade and
+              piece of gear (15 upgrades, $150-$5,000, per venue) already existed
+              — but only reachable by tapping a building on the City map, so a
+              late-run promoter sitting on five figures had no idea there was
+              anything to buy. Surfaced here, where you are already comparing
+              rooms by capacity and rent. Rendered OUTSIDE the venue cards
+              because each card is itself a <button>. */}
+          {selectedVenue && cheapestUpgrade !== null && (
+            <button
+              onClick={() => { haptics.light(); setUpgradeVenueId(selectedVenue.id); }}
+              className="snes-btn"
+              style={{
+                width: '100%', marginTop: '10px', minHeight: '44px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                cursor: 'pointer', fontSize: '12px',
+              }}
+            >
+              <PixelIcon name="gear" size={13} />
+              Improve {selectedVenue.name}
+              <span className="snes-pixel" style={{ fontSize: '10px', color: 'var(--snes-green)' }}>
+                from ${cheapestUpgrade}
+              </span>
+            </button>
+          )}
         </section>
 
         {/* Step 3: Set Ticket Price */}
@@ -1135,6 +1183,16 @@ export const ShowBuilderView: React.FC = () => {
         </button>
         </div>{/* end RIGHT pane */}
       </div>
+
+      {/* The gear/upgrade shop, opened from the venue step above. Same modal the
+          City map uses — one implementation, two doors. */}
+      {upgradeVenue && (
+        <VenueUpgradeModal
+          venue={upgradeVenue}
+          isOpen={true}
+          onClose={() => setUpgradeVenueId(null)}
+        />
+      )}
     </div>
   );
 };
