@@ -274,6 +274,51 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
           })()}
         </div>
 
+        {/* Loss teaching: the mode's REAL win conditions with live progress, so a
+            FADE_OUT says exactly which bar was missed and how close it was. */}
+        {!isWin && (
+          <div style={{ backgroundColor: 'var(--snes-bg-2)', padding: '10px 20px 12px' }}>
+            <div
+              style={{
+                fontSize: '11px',
+                textTransform: 'uppercase',
+                color: 'var(--snes-ink-dim)',
+                fontWeight: 700,
+                marginBottom: '8px',
+                letterSpacing: '0.06em',
+              }}
+            >
+              The win needed — by turn <span style={{ color: 'var(--snes-gold)' }}>{result.maxTurns}</span>
+            </div>
+            {winProgress.length > 0 ? (
+              winProgress.map((p) => {
+                const met = p.current >= p.target;
+                const pct = Math.max(0, Math.min(100, Math.round((p.current / p.target) * 100)));
+                return (
+                  <div key={p.description} style={{ marginBottom: '7px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px', fontSize: '12px', marginBottom: '3px' }}>
+                      <span style={{ color: 'var(--snes-ink)' }}>{p.description}</span>
+                      <span style={{ color: met ? 'var(--snes-green)' : 'var(--snes-gold)', fontWeight: 700, flexShrink: 0 }}>
+                        {p.current.toLocaleString()}/{p.target.toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="snes-progress">
+                      <div
+                        className="snes-progress__fill"
+                        style={{ width: `${pct}%`, background: met ? 'var(--snes-green)' : 'var(--snes-gold)' }}
+                      />
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div style={{ fontSize: '12px', color: 'var(--snes-ink-dim)' }}>
+                Win by hitting this mode's targets before the final turn.
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Stats */}
         <div style={{ backgroundColor: 'var(--snes-bg-2)', padding: '12px 20px' }}>
           <div
@@ -542,50 +587,6 @@ export const RunEndScreen: React.FC<RunEndScreenProps> = ({
           </div>
         )}
 
-        {/* Loss teaching: the mode's REAL win conditions with live progress, so a
-            FADE_OUT says exactly which bar was missed and how close it was. */}
-        {!isWin && (
-          <div style={{ backgroundColor: 'var(--snes-bg-2)', padding: '10px 20px 12px' }}>
-            <div
-              style={{
-                fontSize: '11px',
-                textTransform: 'uppercase',
-                color: 'var(--snes-ink-dim)',
-                fontWeight: 700,
-                marginBottom: '8px',
-                letterSpacing: '0.06em',
-              }}
-            >
-              The win needed — by turn <span style={{ color: 'var(--snes-gold)' }}>{result.maxTurns}</span>
-            </div>
-            {winProgress.length > 0 ? (
-              winProgress.map((p) => {
-                const met = p.current >= p.target;
-                const pct = Math.max(0, Math.min(100, Math.round((p.current / p.target) * 100)));
-                return (
-                  <div key={p.description} style={{ marginBottom: '7px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px', fontSize: '12px', marginBottom: '3px' }}>
-                      <span style={{ color: 'var(--snes-ink)' }}>{p.description}</span>
-                      <span style={{ color: met ? 'var(--snes-green)' : 'var(--snes-gold)', fontWeight: 700, flexShrink: 0 }}>
-                        {p.current.toLocaleString()}/{p.target.toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="snes-progress">
-                      <div
-                        className="snes-progress__fill"
-                        style={{ width: `${pct}%`, background: met ? 'var(--snes-green)' : 'var(--snes-gold)' }}
-                      />
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
-              <div style={{ fontSize: '12px', color: 'var(--snes-ink-dim)' }}>
-                Win by hitting this mode's targets before the final turn.
-              </div>
-            )}
-          </div>
-        )}
         </div>
         {/* End scrollable body */}
 
