@@ -218,6 +218,15 @@ export const ShowBuilderView: React.FC = () => {
     const bandCost = selectedBands.reduce((sum, b) => sum + bandFee(b), 0);
     const netRevenue = grossRevenue - venueCost - bandCost;
 
+    // Fans + reputation are the stats the RUN is won with, and both come straight
+    // off the crowd (resolver: fans = ⌊att/5⌋, rep = ⌊att/11⌋ before its instinct /
+    // combo / faction multipliers and the rep soft-cap). Showing only money made a
+    // pricier, emptier room look strictly better — it pays more cash while starving
+    // the win bar. Shown in the same forward-looking register as EXPECTED CROWD
+    // (pre-promo, pre-hype), so bonuses can only move it up at resolution.
+    const expectedFans = Math.floor(finalAttendance / 5);
+    const expectedRep = Math.floor(finalAttendance / 11);
+
     return {
       synergies,
       totalMultiplier,
@@ -231,6 +240,8 @@ export const ShowBuilderView: React.FC = () => {
       venueCost,
       bandCost,
       netRevenue,
+      expectedFans,
+      expectedRep,
       capacity: effectiveCapacity
     };
   };
@@ -904,6 +915,28 @@ export const ShowBuilderView: React.FC = () => {
                 </div>
               </div>
 
+              {/* What the night BUILDS — the win-bar currencies. Money is only the
+                  means; fans + reputation are what Classic/Speed are won with, and
+                  both scale off the crowd. Without this the biggest number on the
+                  screen (net profit) pointed the player away from winning. */}
+              <div className="snes-panel-inset" style={{ padding: '10px 12px', marginTop: '12px' }}>
+                <div className="snes-pixel" style={{ fontSize: '11px', color: 'var(--snes-ink-dim)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: 0 }}>
+                  What The Night Builds
+                </div>
+                <div style={{ display: 'flex', gap: '18px', alignItems: 'center' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: 'var(--snes-ink-dim)' }}>
+                    <PixelIcon name="fans" size={12} style={{ color: 'var(--snes-purple)' }} />
+                    <span className="snes-pixel" style={{ fontSize: '11px', color: 'var(--snes-purple)' }}>+{preview.expectedFans}</span>
+                    fans
+                  </span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: 'var(--snes-ink-dim)' }}>
+                    <PixelIcon name="fame" size={12} style={{ color: 'var(--snes-gold)' }} />
+                    <span className="snes-pixel" style={{ fontSize: '11px', color: 'var(--snes-gold)' }}>+{preview.expectedRep}</span>
+                    rep
+                  </span>
+                </div>
+              </div>
+
               {/* Financial Breakdown */}
               <div style={{
                 marginTop: '16px',
@@ -993,6 +1026,20 @@ export const ShowBuilderView: React.FC = () => {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--snes-ink-dim)', marginBottom: '6px' }}>
                 <span>Crowd</span><span className="snes-pixel" style={{ fontSize: '10px', color: 'var(--snes-ink)' }}>{preview.expectedAttendance}/{preview.capacity}</span>
+              </div>
+              {/* Sits directly under Crowd (which it derives from) and ABOVE the money
+                  rows, so the win-bar half of the trade is visible without scrolling
+                  the rail on a short landscape screen. */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--snes-ink-dim)', marginBottom: '6px' }}>
+                <span>Builds</span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                  <span className="snes-pixel" style={{ fontSize: '10px', color: 'var(--snes-purple)', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                    <PixelIcon name="fans" size={11} />+{preview.expectedFans}
+                  </span>
+                  <span className="snes-pixel" style={{ fontSize: '10px', color: 'var(--snes-gold)', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                    <PixelIcon name="fame" size={11} />+{preview.expectedRep}
+                  </span>
+                </span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--snes-ink-dim)', marginBottom: '6px' }}>
                 <span>Door + bar</span><span className="snes-pixel" style={{ fontSize: '10px', color: 'var(--snes-green)' }}>${preview.grossRevenue}</span>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { motion } from "framer-motion";
 import { CityView } from "./views/CityView";
 import { BandsView } from "./views/BandsView";
@@ -59,7 +59,17 @@ const EMPTY_TURN_RESULT: TurnResult = {
  *  value changes — so a turn's payoff registers on the HUD it returns to, not
  *  just in the results modal. Reduced-motion users get the color tint without
  *  the pop (btb-pop is gated off in snes.css). */
-const FlashChip: React.FC<{ icon: React.ReactNode; color: string; value: number }> = ({ icon, color, value }) => {
+const FlashChip: React.FC<{
+  icon: React.ReactNode;
+  color: string;
+  value: number;
+  /** When this stat is a WIN CONDITION, its target — rendered as `value/target`
+   *  so the run's goal is legible during play, not just in the pre-run picker and
+   *  the end-of-run ceremony. (Same reasoning as the stress gauge below: a bar you
+   *  are racing toward must be visible, not a surprise.) */
+  target?: number;
+  label?: string;
+}> = ({ icon, color, value, target, label }) => {
   const prev = useRef(value);
   const [flash, setFlash] = useState<'up' | 'down' | null>(null);
   useEffect(() => {
@@ -70,12 +80,20 @@ const FlashChip: React.FC<{ icon: React.ReactNode; color: string; value: number 
     return () => clearTimeout(t);
   }, [value]);
   const fc = flash === 'up' ? '#3ad17e' : '#ff5c57';
+  const met = target !== undefined && value >= target;
   return (
     <span
       className={`snes-chip${flash ? ' btb-pop' : ''}`}
-      style={flash ? { borderColor: fc, boxShadow: `0 0 8px ${fc}66` } : undefined}
+      style={flash ? { borderColor: fc, boxShadow: `0 0 8px ${fc}66` } : met ? { borderColor: 'var(--snes-green)' } : undefined}
+      title={target !== undefined ? `${label ?? ''} ${value} of ${target} needed to win${met ? ' — cleared' : ''}`.trim() : label}
     >
-      <span style={{ color }}>{icon}</span><span>{value}</span>
+      <span style={{ color }}>{icon}</span>
+      <span>{value}</span>
+      {target !== undefined && (
+        <span style={{ color: met ? 'var(--snes-green)' : 'var(--snes-ink-mute)' }}>
+          /{target >= 1000 ? `${target / 1000}k` : target}
+        </span>
+      )}
     </span>
   );
 };
@@ -180,6 +198,17 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [synergyVersion, currentRound],
   );
+
+  // The run's win bar, for the HUD chips. Reputation and fans are the two stats
+  // Classic/Speed are won WITH, but they used to render as bare numbers — the
+  // player could not see the goal they were racing (it appeared only in the
+  // pre-run picker and the end-of-run ceremony). Re-derived per turn.
+  const winTargets = useMemo(() => {
+    const wc = runManager.getCurrentRun()?.config.winConditions ?? [];
+    const of = (type: string) => wc.find((c) => c.type === type)?.target;
+    return { reputation: of('reputation'), fans: of('fans') };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentRound]);
 
   // The bed intensifies as the scene grows: chill basements → driving punk →
   // a bright festival singalong near breakthrough. Recomputed as rep climbs.
@@ -358,8 +387,8 @@ export const MainGameView: React.FC<MainGameViewProps> = ({ onExitToMenu }) => {
           {/* Resources */}
           <div data-tut="resources" style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
             <FlashChip icon={<PixelIcon name="money" size={12} />} color="var(--snes-green)" value={money} />
-            <FlashChip icon={<PixelIcon name="fame" size={12} />} color="var(--snes-gold)" value={reputation} />
-            <FlashChip icon={<PixelIcon name="fans" size={12} />} color="var(--snes-purple)" value={fans} />
+            <FlashChip icon={<PixelIcon name="fame" size={12} />} color="var(--snes-gold)" value={reputation} target={winTargets.reputation} label="Reputation" />
+            <FlashChip icon={<PixelIcon name="fans" size={12} />} color="var(--snes-purple)" value={fans} target={winTargets.fans} label="Fans" />
             {/* Always-on stress gauge — burnout is a loss condition, so the trend
                 must be visible, not a surprise that pops in only at 50. */}
             <span
