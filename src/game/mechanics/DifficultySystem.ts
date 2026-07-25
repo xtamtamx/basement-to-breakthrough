@@ -223,3 +223,31 @@ export class DifficultySystem {
 }
 
 export const difficultySystem = new DifficultySystem();
+
+/** Door price the scene considers fair — at or under this, gouging costs nothing. */
+export const FAIR_DOOR_PRICE = 15;
+
+/**
+ * Reputation multiplier for the door price — GOUGING COSTS CRED.
+ *
+ * The attendance price-penalty in getShowDifficultyModifiers FLOORS at 0.5
+ * (reached around $20-30), so past that point a higher price shrank the crowd no
+ * further while revenue kept scaling — the most-used dial in the game had a dead
+ * zone where more was always free money. This is the scene's answer: charge over
+ * FAIR_DOOR_PRICE and word gets around, so the night builds less reputation the
+ * harder you gouge. Deliberately NO floor of its own, so it keeps biting all the
+ * way up — that's what removes the dead zone. (It also reads true: a $50 basement
+ * door is a sellout move, and rep is the currency the scene pays in.)
+ *
+ * Pure and price-only (no run state), so the booking preview can show exactly what
+ * resolution will apply — see ShowBuilderView's "what the night builds".
+ */
+export const gougeReputationMultiplier = (ticketPrice: number): number => {
+  // A missing/garbage price must never poison the multiplier: an undefined price
+  // (old save, partial fixture) would make `price - FAIR` NaN and silently zero out
+  // the whole show's reputation. Unknown price ⇒ assume fair, charge nothing.
+  if (!Number.isFinite(ticketPrice)) return 1;
+  const over = ticketPrice - FAIR_DOOR_PRICE;
+  if (over <= 0) return 1;
+  return Math.max(0.25, 1 - over * 0.025);
+};

@@ -15,7 +15,7 @@ import { synergyManager, Synergy, SynergyTriggerResult } from './SynergyManager'
 import { synergyEngine } from './SynergyEngine';
 import { eventCardSystem } from './EventCardSystem';
 import { dayJobSystem } from './DayJobSystem';
-import { difficultySystem } from './DifficultySystem';
+import { difficultySystem, gougeReputationMultiplier } from './DifficultySystem';
 import { showPromotionSystem } from './ShowPromotionSystem';
 import { venueUpgradeSystem } from './VenueUpgradeSystem';
 import { runManager } from './RunManager';
@@ -989,8 +989,13 @@ export class TurnResolutionEngine {
       synergyResults,
     );
     fanGain = Math.floor(fanGain * (1 + fansBonus / 100) * runMods.fansMultiplier * (sig?.fanMult ?? 1));
+    // Gouging the door costs cred: over the fair price the night builds less
+    // reputation, and it keeps biting all the way up (the attendance penalty
+    // floors, this doesn't) — so there's no price band where more is free money.
+    // Pure function of ticketPrice, so the booking preview shows the same number.
+    const gougeRepMult = gougeReputationMultiplier(show.ticketPrice);
     reputationGain = Math.floor(
-      reputationGain * (1 + repBonus / 100) * runMods.reputationMultiplier * (sig?.repMult ?? 1) * factionRepMult,
+      reputationGain * (1 + repBonus / 100) * runMods.reputationMultiplier * (sig?.repMult ?? 1) * factionRepMult * gougeRepMult,
     );
     // Flat reputation from band+venue combos (e.g. True DIY +10).
     reputationGain += comboRep;

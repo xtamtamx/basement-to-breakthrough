@@ -16,7 +16,7 @@ vi.mock('../GentrificationSystem');
 
 // Import after mocking
 import { showPromotionSystem, ScheduledShow, PromotionType } from '../ShowPromotionSystem';
-import { difficultySystem } from '../DifficultySystem';
+import { difficultySystem, gougeReputationMultiplier } from '../DifficultySystem';
 import { dayJobSystem } from '../DayJobSystem';
 import { synergyManager } from '../SynergyManager';
 import { venueUpgradeSystem } from '../VenueUpgradeSystem';
@@ -147,6 +147,9 @@ describe('TurnResolutionEngine', () => {
       message: '',
     });
     vi.mocked(difficultySystem).getDifficultyMilestone = vi.fn().mockReturnValue(null);
+    // Auto-mocked module export: without a stub it returns undefined and the
+    // resolver's rep math becomes NaN. Real runs get the real (finite) function.
+    vi.mocked(gougeReputationMultiplier).mockReturnValue(1);
     vi.mocked(difficultySystem).getShowDifficultyModifiers = vi.fn().mockReturnValue({
       attendanceMultiplier: 1,
       revenueMultiplier: 1,

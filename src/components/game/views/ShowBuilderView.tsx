@@ -7,7 +7,7 @@ import { synergyEngine } from '@game/mechanics/SynergyEngine';
 import { computeLineupChemistry } from '@game/mechanics/lineupChemistry';
 import { bandFactionBadge } from '@game/world/factionDisplay';
 import { factionSystem } from '@game/mechanics/FactionSystem';
-import { difficultySystem } from '@game/mechanics/DifficultySystem';
+import { difficultySystem, gougeReputationMultiplier, FAIR_DOOR_PRICE } from '@game/mechanics/DifficultySystem';
 import { bandBookingFee, bandDeposit } from '@game/mechanics/bandEconomy';
 import { bandResponse, bandResponseMult } from '@game/mechanics/bandResponse';
 import { isBandUnlocked } from '@game/world/bandUnlocks';
@@ -225,7 +225,11 @@ export const ShowBuilderView: React.FC = () => {
     // the win bar. Shown in the same forward-looking register as EXPECTED CROWD
     // (pre-promo, pre-hype), so bonuses can only move it up at resolution.
     const expectedFans = Math.floor(finalAttendance / 5);
-    const expectedRep = Math.floor(finalAttendance / 11);
+    // Gouging the door costs cred — the SAME pure price function the resolver
+    // applies, so the number here is the number that lands.
+    const gougeRepMult = gougeReputationMultiplier(ticketPrice);
+    const expectedRep = Math.floor(Math.floor(finalAttendance / 11) * gougeRepMult);
+    const isGouging = gougeRepMult < 1;
 
     return {
       synergies,
@@ -242,6 +246,7 @@ export const ShowBuilderView: React.FC = () => {
       netRevenue,
       expectedFans,
       expectedRep,
+      isGouging,
       capacity: effectiveCapacity
     };
   };
@@ -930,11 +935,17 @@ export const ShowBuilderView: React.FC = () => {
                     fans
                   </span>
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: 'var(--snes-ink-dim)' }}>
-                    <PixelIcon name="fame" size={12} style={{ color: 'var(--snes-gold)' }} />
-                    <span className="snes-pixel" style={{ fontSize: '11px', color: 'var(--snes-gold)' }}>+{preview.expectedRep}</span>
+                    <PixelIcon name="fame" size={12} style={{ color: preview.isGouging ? 'var(--snes-red)' : 'var(--snes-gold)' }} />
+                    <span className="snes-pixel" style={{ fontSize: '11px', color: preview.isGouging ? 'var(--snes-red)' : 'var(--snes-gold)' }}>+{preview.expectedRep}</span>
                     rep
                   </span>
                 </div>
+                {/* Say WHY the cred is down, or the drop reads as a bug. */}
+                {preview.isGouging && (
+                  <div style={{ marginTop: '7px', fontSize: '11px', fontStyle: 'italic', lineHeight: 1.35, color: 'var(--snes-red)' }}>
+                    Word gets around at ${ticketPrice} a head — over ${FAIR_DOOR_PRICE} the scene docks your cred.
+                  </div>
+                )}
               </div>
 
               {/* Financial Breakdown */}
@@ -1036,7 +1047,11 @@ export const ShowBuilderView: React.FC = () => {
                   <span className="snes-pixel" style={{ fontSize: '10px', color: 'var(--snes-purple)', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
                     <PixelIcon name="fans" size={11} />+{preview.expectedFans}
                   </span>
-                  <span className="snes-pixel" style={{ fontSize: '10px', color: 'var(--snes-gold)', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                  <span
+                    className="snes-pixel"
+                    style={{ fontSize: '10px', color: preview.isGouging ? 'var(--snes-red)' : 'var(--snes-gold)', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
+                    title={preview.isGouging ? `Over $${FAIR_DOOR_PRICE} at the door — the scene docks your cred` : undefined}
+                  >
                     <PixelIcon name="fame" size={11} />+{preview.expectedRep}
                   </span>
                 </span>
