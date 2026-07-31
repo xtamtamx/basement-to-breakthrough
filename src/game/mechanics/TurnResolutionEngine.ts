@@ -25,6 +25,7 @@ import { stakesManager, STAKE_TIERS } from './StakesManager';
 import { isModeBeaten, nextModeAfter } from './modeUnlocks';
 import { recordBandUnlocks, recordRunFeats } from '@game/world/bandUnlocks';
 import { bandBookingFee } from './bandEconomy';
+import { computeTraitEffects, traitFeeMult } from './bandTraitEffects';
 import { bandResponseMult } from './bandResponse';
 import { resolveVenueCost } from './showCosts';
 import { upgradeRevenueBonus, upgradeIncidentDelta } from './venueUpgradeEffects';
@@ -823,6 +824,11 @@ export class TurnResolutionEngine {
     );
     const comboRep = synergyEngine.getTotalReputationBonus(combos);
 
+    // Band traits, as BOOKING-CONDITIONED effects: only the ones whose condition
+    // this room + bill satisfies fire. Shared helper, so the ShowBuilder preview
+    // lists exactly what lands here (preview==resolution).
+    const traitFx = computeTraitEffects(allShowBands, venue, allShowBands.length);
+
     // Trigger SHOW_START synergies
     const synergyContext = {
       currentTurn: store.currentRound,
@@ -911,7 +917,8 @@ export class TurnResolutionEngine {
           comboMult *
           (sig?.attendanceMult ?? 1) *
           factionAttendanceMult *
-          lineupChem.mult,
+          lineupChem.mult *
+          traitFx.attendanceMult,
       ),
       effectiveCapacity,
     );
@@ -936,7 +943,7 @@ export class TurnResolutionEngine {
     // percent (the same bonus the ShowBuilder preview folds into its gross).
     const upgradeRevenueMultiplier = 1 + revenueBonusFromUpgrades / 100;
     let finalRevenue = Math.floor(
-      totalRevenue * revenueMultiplier * upgradeRevenueMultiplier * runMods.moneyMultiplier * (sig?.revenueMult ?? 1) * factionMoneyMult,
+      totalRevenue * revenueMultiplier * upgradeRevenueMultiplier * runMods.moneyMultiplier * (sig?.revenueMult ?? 1) * factionMoneyMult * traitFx.moneyMult,
     );
 
     // Calculate costs with difficulty scaling; escalation turns raise costs.
@@ -948,7 +955,8 @@ export class TurnResolutionEngine {
         sum +
         difficultySystem.getScaledBandCost(
           bandBookingFee(b.popularity, store.rosterBandIds.includes(b.id)) *
-            bandResponseMult(b, store.diyPoints, store.reputation),
+            bandResponseMult(b, store.diyPoints, store.reputation) *
+            traitFeeMult(b),
         ),
       0,
     );
@@ -988,14 +996,14 @@ export class TurnResolutionEngine {
       'REPUTATION_PERCENT',
       synergyResults,
     );
-    fanGain = Math.floor(fanGain * (1 + fansBonus / 100) * runMods.fansMultiplier * (sig?.fanMult ?? 1));
+    fanGain = Math.floor(fanGain * (1 + fansBonus / 100) * runMods.fansMultiplier * (sig?.fanMult ?? 1) * traitFx.fanMult);
     // Gouging the door costs cred: over the fair price the night builds less
     // reputation, and it keeps biting all the way up (the attendance penalty
     // floors, this doesn't) — so there's no price band where more is free money.
     // Pure function of ticketPrice, so the booking preview shows the same number.
     const gougeRepMult = gougeReputationMultiplier(show.ticketPrice);
     reputationGain = Math.floor(
-      reputationGain * (1 + repBonus / 100) * runMods.reputationMultiplier * (sig?.repMult ?? 1) * factionRepMult * gougeRepMult,
+      reputationGain * (1 + repBonus / 100) * runMods.reputationMultiplier * (sig?.repMult ?? 1) * factionRepMult * gougeRepMult * traitFx.repMult,
     );
     // Flat reputation from band+venue combos (e.g. True DIY +10).
     reputationGain += comboRep;
@@ -1014,6 +1022,9 @@ export class TurnResolutionEngine {
     // breathe" a real choice.
     // Backline / green-room gear shaves a slice off show stress (treated as a
     // percentage, capped at 60% so it can never fully negate burnout).
+    // Who is ON the bill moves this too: the volatile act costs a night's sleep,
+    // the road dogs shave one off. Flat, applied after the scaling so gear and
+    // run modifiers can't multiply a trait's cost away.
     let stressGain = Math.max(
       0,
       Math.round(
@@ -1022,7 +1033,7 @@ export class TurnResolutionEngine {
           runMods.stressMultiplier *
           metaBonuses.stressReductionMultiplier *
           (1 - Math.min(0.6, equipmentStressReduction / 100)),
-      ),
+      ) + traitFx.stressDelta,
     );
 
     // Check for incidents with escalation and synergy modifiers

@@ -10,6 +10,8 @@ import { factionSystem } from '@game/mechanics/FactionSystem';
 import { difficultySystem, gougeReputationMultiplier, FAIR_DOOR_PRICE } from '@game/mechanics/DifficultySystem';
 import { bandBookingFee, bandDeposit } from '@game/mechanics/bandEconomy';
 import { bandResponse, bandResponseMult } from '@game/mechanics/bandResponse';
+import { computeTraitEffects, traitFeeMult, traitFires } from '@game/mechanics/bandTraitEffects';
+import { BAND_TRAIT_CATALOG, CONDITION_LABEL, type CatalogEntry } from '@game/data/bandTraits';
 import { isBandUnlocked } from '@game/world/bandUnlocks';
 import { cityGenreFit, homeCityFit } from '@game/world/citySynergy';
 import { projectBaseAttendance } from '@game/mechanics/attendanceProjection';
@@ -68,6 +70,10 @@ const StepHeader: React.FC<{
   </h3>
 );
 
+/** The catalogued (effect-carrying) traits of a band — flavor-only ids are skipped. */
+const traitEntries = (band: Band): CatalogEntry[] =>
+  (band.traits ?? []).map((t) => BAND_TRAIT_CATALOG[t.id]).filter(Boolean);
+
 export const ShowBuilderView: React.FC = () => {
   const {
     allBands,
@@ -124,11 +130,14 @@ export const ShowBuilderView: React.FC = () => {
     .sort((a, b) => (isSigned(b.id) ? 1 : 0) - (isSigned(a.id) ? 1 : 0) || a.popularity - b.popularity);
   const selectedBands = allBands.filter(b => selectedBandIds.includes(b.id));
   // Per-act fee the player actually pays: popularity guarantee × difficulty, cut for
-  // signed, then bent by how the band responds to your alignment + reputation. Same
-  // formula the resolver charges.
+  // signed, then bent by how the band responds to your alignment + reputation and by
+  // any unconditional fee trait (Works For Gas Money). Same formula the resolver
+  // charges, factor for factor — the discount has to be visible where you book.
   const bandFee = (b: Band) =>
     difficultySystem.getScaledBandCost(
-      bandBookingFee(b.popularity, isSigned(b.id)) * bandResponseMult(b, diyPoints, reputation),
+      bandBookingFee(b.popularity, isSigned(b.id)) *
+        bandResponseMult(b, diyPoints, reputation) *
+        traitFeeMult(b),
     );
 
   // Environmental rent context — the SAME multipliers the resolver charges
@@ -228,11 +237,18 @@ export const ShowBuilderView: React.FC = () => {
       ticketPrice, // fold in the resolver's price-resistance penalty so the slider preview can't lie
     });
 
+    // Band traits that FIRE for THIS room + THIS bill (the shared helper the
+    // resolver uses). The crowd already carries traitFx.attendanceMult — it comes
+    // baked into projectBaseAttendance — so nothing below re-applies it; the
+    // money/fan/rep multipliers are separate resolver terms and are folded in
+    // where the resolver folds them in, or the preview would under-quote.
+    const traitFx = computeTraitEffects(selectedBands, selectedVenue, selectedBands.length);
+
     // Revenue includes bar sales where the venue has a bar, the venue's summed
     // upgrade revenue bonus (VIP Area / Install Bar — the same shared helper
-    // the resolver applies), and the faction money modifier.
+    // the resolver applies), the faction money modifier and trait money traits.
     const upgradeRevenueMult = 1 + upgradeRevenueBonus(selectedVenue) / 100;
-    const grossRevenue = Math.floor((finalAttendance * ticketPrice + (selectedVenue.hasBar ? finalAttendance * 5 : 0)) * factionMoneyMult * upgradeRevenueMult);
+    const grossRevenue = Math.floor((finalAttendance * ticketPrice + (selectedVenue.hasBar ? finalAttendance * 5 : 0)) * factionMoneyMult * upgradeRevenueMult * traitFx.moneyMult);
     // Costs: the real venue rent (SAME formula the resolver charges, via the
     // shared venueCostCtx) PLUS the per-band fee for every act. The preview used
     // to apply only difficulty scaling, so a priced room could resolve at ~1.8×
@@ -248,11 +264,11 @@ export const ShowBuilderView: React.FC = () => {
     // pricier, emptier room look strictly better — it pays more cash while starving
     // the win bar. Shown in the same forward-looking register as EXPECTED CROWD
     // (pre-promo, pre-hype), so bonuses can only move it up at resolution.
-    const expectedFans = Math.floor(finalAttendance / 5);
+    const expectedFans = Math.floor(Math.floor(finalAttendance / 5) * traitFx.fanMult);
     // Gouging the door costs cred — the SAME pure price function the resolver
     // applies, so the number here is the number that lands.
     const gougeRepMult = gougeReputationMultiplier(ticketPrice);
-    const expectedRep = Math.floor(Math.floor(finalAttendance / 11) * gougeRepMult);
+    const expectedRep = Math.floor(Math.floor(finalAttendance / 11) * gougeRepMult * traitFx.repMult);
     const isGouging = gougeRepMult < 1;
 
     return {
@@ -271,6 +287,8 @@ export const ShowBuilderView: React.FC = () => {
       expectedFans,
       expectedRep,
       isGouging,
+      traitsFiring: traitFx.firing,
+      traitStress: traitFx.stressDelta,
       capacity: effectiveCapacity
     };
   };
@@ -455,6 +473,12 @@ export const ShowBuilderView: React.FC = () => {
                 const isBlocked = isUnavailable || (!isSelected && selectedBandIds.length >= 3);
                 // How this act reads YOU (alignment + rep) — shown as the result.
                 const resp = bandResponse(band, diyPoints, reputation);
+                // What this act BRINGS, and whether the bill you're building would
+                // actually trigger it. An unpicked act is judged against the bill it
+                // would make (size + 1), so the chip answers "if I add them" — the
+                // same room + bill the resolver will see.
+                const entries = traitEntries(band);
+                const prospectiveBill = isSelected ? selectedBandIds.length : selectedBandIds.length + 1;
                 return (
                   <button
                     key={band.id}
@@ -514,6 +538,37 @@ export const ShowBuilderView: React.FC = () => {
                             {bandDeposit(band.popularity, isSigned(band.id)) > 0 && (
                               <span style={{ color: 'var(--snes-purple)' }}>· ${bandDeposit(band.popularity, isSigned(band.id))} deposit up front</span>
                             )}
+                          </div>
+                        )}
+                        {/* What the act brings, and when. Lights green the moment the
+                            selected room + bill would actually fire it. */}
+                        {!isUnavailable && entries.length > 0 && (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '5px' }}>
+                            {entries.map((e) => {
+                              const fires = !!selectedVenue && traitFires(e.effect.when, selectedVenue, prospectiveBill);
+                              return (
+                                <span
+                                  key={e.trait.id}
+                                  title={`${CONDITION_LABEL[e.effect.when]} — ${e.blurb}`}
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '5px',
+                                    padding: '2px 5px',
+                                    backgroundColor: 'var(--snes-bg)',
+                                    border: `1px solid ${fires ? 'var(--snes-green)' : 'var(--snes-line)'}`,
+                                    minWidth: 0
+                                  }}
+                                >
+                                  <span className="snes-pixel" style={{ fontSize: '11px', letterSpacing: 0, color: fires ? 'var(--snes-green)' : 'var(--snes-cyan)' }}>
+                                    {e.trait.name}
+                                  </span>
+                                  <span style={{ fontSize: '11px', color: fires ? 'var(--snes-green)' : 'var(--snes-ink-mute)' }}>
+                                    {CONDITION_LABEL[e.effect.when]}
+                                  </span>
+                                </span>
+                              );
+                            })}
                           </div>
                         )}
                         {!isUnavailable && resp.note && (
@@ -919,6 +974,40 @@ export const ShowBuilderView: React.FC = () => {
                 </div>
               )}
 
+              {/* Band traits this room + bill actually fire. Same summation the
+                  resolver runs, so the list is the list. Silent when none fire —
+                  swapping the venue or adding an opener is what lights them up. */}
+              {preview.traitsFiring.length > 0 && (
+                <div style={{ marginBottom: '16px' }}>
+                  <h4 className="snes-pixel" style={{
+                    fontSize: '11px',
+                    color: 'var(--snes-cyan)',
+                    margin: '0 0 8px',
+                    textTransform: 'uppercase',
+                    letterSpacing: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px'
+                  }}>Traits Firing <PixelIcon name="sparkle" size={12} /></h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    {preview.traitsFiring.map((f, i) => (
+                      <div
+                        key={`${f.bandName}-${f.traitName}-${i}`}
+                        title={f.blurb}
+                        style={{ fontSize: '11px', color: 'var(--snes-ink-dim)', lineHeight: 1.5 }}
+                      >
+                        {f.bandName} — <span className="snes-pixel" style={{ fontSize: '11px', letterSpacing: 0, color: 'var(--snes-cyan)' }}>{f.traitName}</span>
+                      </div>
+                    ))}
+                  </div>
+                  {preview.traitStress !== 0 && (
+                    <div className="snes-pixel" style={{ fontSize: '11px', letterSpacing: 0, marginTop: '6px', color: preview.traitStress > 0 ? 'var(--snes-red)' : 'var(--snes-green)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      {preview.traitStress > 0 ? '+' : ''}{preview.traitStress} stress on the bill
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Stats Grid */}
               <div style={{
                 display: 'grid',
@@ -1116,6 +1205,13 @@ export const ShowBuilderView: React.FC = () => {
               </div>
               {preview.synergies.length > 0 && (
                 <div className="snes-pixel" style={{ fontSize: '11px', color: 'var(--snes-gold)', letterSpacing: 0, marginTop: '10px', display: 'flex', alignItems: 'center', gap: '5px' }}><PixelIcon name="fire" size={12} /> {preview.synergies.length} combo{preview.synergies.length > 1 ? 's' : ''} firing</div>
+              )}
+              {/* Traits are a room-and-bill decision, so the count rides the pinned
+                  rail; the band—trait list itself is in the left panel. */}
+              {preview.traitsFiring.length > 0 && (
+                <div className="snes-pixel" style={{ fontSize: '11px', color: 'var(--snes-cyan)', letterSpacing: 0, marginTop: '6px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <PixelIcon name="sparkle" size={12} /> {preview.traitsFiring.length} trait{preview.traitsFiring.length > 1 ? 's' : ''} firing
+                </div>
               )}
               {/* Cash-flow timing: what leaves your balance NOW (rent + big-act
                   deposits) vs. the rest, paid from the door on show day. */}

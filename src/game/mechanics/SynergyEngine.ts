@@ -19,6 +19,20 @@ export interface ComboSynergy {
   reputationBonus: number;
 }
 
+/** Subgenre tags (roster spelling varies: "Youth Crew" / "youth-crew") whose crowd
+ *  skews young and sober — they fill the room but not the register. */
+const DRY_CROWD_SUBGENRES = new Set(['youth-crew', 'straight-edge', 'straightedge', 'sxe']);
+
+/** The band's crowd does NOT work the bar: a dry subgenre tag, or the All-Ages
+ *  Lifer trait (BAND_TRAIT_CATALOG id) — an under-21 room by design. */
+const drawsDryCrowd = (band: Band): boolean => {
+  const tag = (s: string) => s.trim().toLowerCase().replace(/\s+/g, '-');
+  return (
+    (band.subgenres ?? []).some(s => DRY_CROWD_SUBGENRES.has(tag(String(s)))) ||
+    (band.traits ?? []).some(t => t?.id === 'all-ages-lifer')
+  );
+};
+
 /**
  * Core engine for detecting and calculating synergies between bands and venues
  * Manages the complex interactions that create emergent gameplay
@@ -120,13 +134,24 @@ export class SynergyEngine {
       const band = bands[0];
       const localLegend = band.traits.some(t => t.id === 'hometown-heroes');
       const homeField = !!band.hometown && band.hometown.includes(venue.location.name);
-      if (localLegend || homeField) {
+      // Gated to SMALL rooms: "everyone here went to school with someone on
+      // stage" is a basement/VFW feeling, not a 1,200-cap beach one. Before this
+      // it fired on every bill at any size, which (once traits went live and the
+      // trait landed on acts you actually headline) accelerated the whole run.
+      const localRoom = venue.capacity <= 90;
+      if ((localLegend || homeField) && localRoom) {
         return {
           id: 'hometown-heroes',
           name: 'Hometown Heroes',
           description: 'Local support boosts attendance',
-          multiplier: 1.2,
-          reputationBonus: 3,
+          // Retuned when band traits became live (2026-07-30). This combo was
+          // priced while the Hometown Heroes trait was inert flavour scattered
+          // over 11 bands; now the trait is a real booking consideration and sits
+          // on acts you actually headline, so it fired on most bills and pulled
+          // the Classic median win from turn 23 down to 17. Sim-verified at these
+          // numbers — re-run the balance sim if you touch them.
+          multiplier: 1.15,
+          reputationBonus: 2,
         };
       }
       return null;
@@ -169,10 +194,13 @@ export class SynergyEngine {
       return null;
     });
 
-    // Bar Revenue Boost - Older crowds in bar venues
+    // Bar Revenue Boost - Older crowds in bar venues. The dry-crowd exclusion now
+    // keys off signals that EXIST: a youth-crew/straight-edge subgenre tag or the
+    // All-Ages Lifer trait id. (It used to test for a trait NAMED 'Youth Crew' —
+    // no such trait exists, so the exclusion never fired and every draw qualified.)
     this.registerSynergy('bar-boost', (bands, venue) => {
       const band = bands[0];
-      const matureAudience = band.popularity > 40 && !band.traits.some(t => t.name === 'Youth Crew');
+      const matureAudience = band.popularity > 40 && !drawsDryCrowd(band);
 
       if (venue.hasBar && matureAudience) {
         return {
@@ -420,9 +448,9 @@ export const COMBO_CATALOG: {
   { id: 'genre-match', name: 'Perfect Fit', description: "A band that matches the venue's specialty thrives.", tier: 'rare', multiplier: 1.3, reputationBonus: 5, recipe: 'A band on its home turf — punk→club/DIY, metal→warehouse, hardcore→basement.' },
   { id: 'underground-network', name: 'Scene Unity', description: 'A bill of underground bands supporting each other.', tier: 'rare', multiplier: 1.25, reputationBonus: 6, recipe: '2+ bands, all underground (authenticity 70+, popularity under 30).' },
   { id: 'basement-magic', name: 'Basement Magic', description: 'Nothing says real like a low ceiling and one working outlet.', tier: 'rare', multiplier: 1.25, reputationBonus: 6, recipe: 'Your headliner at 80+ authenticity in a Basement or House show.' },
-  { id: 'hometown-heroes', name: 'Hometown Heroes', description: 'Local support packs the room.', tier: 'common', multiplier: 1.2, reputationBonus: 3, recipe: 'A headliner with the Hometown Heroes trait — bigger at home than anywhere else.' },
+  { id: 'hometown-heroes', name: 'Hometown Heroes', description: 'Local support packs the room.', tier: 'common', multiplier: 1.2, reputationBonus: 3, recipe: 'A headliner with the Hometown Heroes trait, in a small room (90 cap or under).' },
   { id: 'real-artist', name: 'Authentic Experience', description: 'The real thing, up close — no barrier, no age gate.', tier: 'common', multiplier: 1.15, reputationBonus: 7, recipe: 'An all-ages room with a headliner at 85+ authenticity.' },
-  { id: 'bar-boost', name: 'Thirsty Crowd', description: 'An older crowd at a bar venue drinks the place dry.', tier: 'common', multiplier: 1.15, reputationBonus: 0, recipe: 'A draw (popularity 40+, not youth-crew) at a venue with a bar — pays in cash.' },
+  { id: 'bar-boost', name: 'Thirsty Crowd', description: 'An older crowd at a bar venue drinks the place dry.', tier: 'common', multiplier: 1.15, reputationBonus: 0, recipe: 'A draw (popularity 40+, no straight-edge/all-ages act on top) at a venue with a bar — pays in cash.' },
   { id: 'basement-democracy', name: 'Basement Democracy', description: 'A deep bill of true believers crammed into one tiny basement.', tier: 'rare', multiplier: 1.2, reputationBonus: 8, recipe: '3+ bands, all 75+ authenticity, in a Basement/House under 75 capacity.' },
   { id: 'vinyl-revival', name: 'Skipped Record Store', description: 'A live recording rig in a dive where physical media still moves.', tier: 'common', multiplier: 1.15, reputationBonus: 4, recipe: 'Owned recording gear at a Dive Bar or Punk Club, headliner 60+ authenticity.' },
   { id: 'underground-rescue', name: 'Scene Savior', description: 'A high-energy band rebuilding a forgotten corner of the city.', tier: 'rare', multiplier: 1.25, reputationBonus: 12, recipe: 'A high-energy headliner (80+) in an Underground room, Warehouse, or fading neighborhood.' },

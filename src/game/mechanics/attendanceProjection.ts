@@ -6,6 +6,7 @@ import { computeLineupChemistry } from './lineupChemistry';
 import { factionSystem } from './FactionSystem';
 import { difficultySystem } from './DifficultySystem';
 import { computeEquipmentEffects } from './venueEquipmentEffects';
+import { computeTraitEffects } from './bandTraitEffects';
 
 /**
  * The SINGLE source of truth for a bill's PROJECTED (pre-promotion) attendance —
@@ -55,6 +56,10 @@ export function projectBaseAttendance(opts: {
   // draw (venue.atmosphere + qualityBonus, capped 1.4). Omitting this made the
   // preview under-count the crowd for any venue with gear installed.
   const equip = computeEquipmentEffects(venue);
+  // Band traits that FIRE for this room + bill (shared helper, same one the
+  // resolver applies) — the whole point of a conditioned trait is that you can
+  // see it land while you are still choosing the room.
+  const traitFx = computeTraitEffects(bands, venue, bands.length);
   const effectiveCapacity = Math.max(
     1,
     Math.floor(venue.capacity * equip.capacityMult - (eventCapacityPenalty ?? 0)),
@@ -69,7 +74,7 @@ export function projectBaseAttendance(opts: {
     ticketPrice ?? 0,
   ).attendanceMultiplier;
   const projected = Math.floor(
-    base * billMultiplier * totalMultiplier * sceneFit.multiplier * homeFit.multiplier * lineupChem.mult * factionAttMult * difficultyMult,
+    base * billMultiplier * totalMultiplier * sceneFit.multiplier * homeFit.multiplier * lineupChem.mult * factionAttMult * difficultyMult * traitFx.attendanceMult,
   );
   return Math.min(projected, effectiveCapacity);
 }

@@ -105,7 +105,11 @@ export interface BandTrait {
   name: string;
   description: string;
   type: TraitType;
-  modifier: TraitModifier;
+  /** LEGACY, and optional because nothing reads it: these stat bumps were never
+   *  applied anywhere. What a trait actually DOES now lives in the booking-
+   *  conditioned effect in `@game/data/bandTraits` (BAND_TRAIT_CATALOG), keyed by
+   *  this trait's id. Procedurally generated bands still author it for flavor. */
+  modifier?: TraitModifier;
 }
 
 /** Legacy alias for a band trait. */

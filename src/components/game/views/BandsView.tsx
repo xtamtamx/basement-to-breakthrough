@@ -9,6 +9,7 @@ import { bandRelationships } from '@game/mechanics/BandRelationships';
 import { nextBookingManagerCost } from '@game/constants/runConstants';
 import { UserPlus, Check, Briefcase } from 'lucide-react';
 import { bandFactionBadge } from '@game/world/factionDisplay';
+import { BAND_TRAIT_CATALOG, CONDITION_LABEL, type CatalogEntry } from '@game/data/bandTraits';
 import { metaSnapshot, bandLockInfo, isBandHidden, type BandLockInfo } from '@game/world/bandUnlocks';
 import { SnesModal } from '@components/ui/SnesModal';
 import { PixelIcon } from '@components/ui/PixelIcon';
@@ -45,6 +46,10 @@ const SORTS: { id: Sort; label: string }[] = [
   { id: 'name', label: 'A–Z' },
   { id: 'genre', label: 'Genre' },
 ];
+
+/** The catalogued (effect-carrying) traits of a band — flavor-only ids are skipped. */
+const traitEntries = (b: Band): CatalogEntry[] =>
+  (b.traits ?? []).map((t) => BAND_TRAIT_CATALOG[t.id]).filter(Boolean);
 
 const STAT_ROWS = (b: Band) => ([
   ['Popularity', b.popularity, C.magenta],
@@ -282,6 +287,19 @@ export const BandsView: React.FC = () => {
                       <span title="Energy" style={{ fontSize: '12px', fontWeight: 700, color: C.gold, display: 'inline-flex', alignItems: 'center', gap: '3px' }}><PixelIcon name="energy" size={11} />{band.energy}</span>
                       <span title="Authenticity" style={{ fontSize: '12px', fontWeight: 700, color: C.green, display: 'inline-flex', alignItems: 'center', gap: '3px' }}><PixelIcon name="sparkle" size={11} />{band.authenticity}</span>
                     </div>
+                    {/* What this act is FOR — the one thing that separates it from the
+                        other 37. Blurb truncates on a narrow card; the tooltip and the
+                        detail modal carry the full line + when it fires. */}
+                    {traitEntries(band).map((e) => (
+                      <div
+                        key={e.trait.id}
+                        title={`${e.trait.name} (${CONDITION_LABEL[e.effect.when]}) — ${e.blurb}`}
+                        style={{ display: 'flex', alignItems: 'baseline', gap: '5px', marginTop: '5px', minWidth: 0 }}
+                      >
+                        <span className="snes-pixel" style={{ fontSize: '11px', letterSpacing: 0, color: C.cyan, flexShrink: 0 }}>{e.trait.name}</span>
+                        <span style={{ fontFamily: SANS, fontSize: '11px', color: C.mute, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.blurb}</span>
+                      </div>
+                    ))}
                   </div>
 
                   <button
@@ -399,6 +417,18 @@ export const BandsView: React.FC = () => {
             )}
 
             {detailBand.bio && <p style={{ fontFamily: SANS, fontSize: '13.5px', color: C.dim, margin: '0 0 14px', lineHeight: 1.55 }}>{detailBand.bio}</p>}
+
+            {/* The trait in full — name, WHEN it pays off, and the line in the
+                band's own voice. The card truncates the blurb; this doesn't. */}
+            {traitEntries(detailBand).map((e) => (
+              <div key={e.trait.id} className="snes-panel-inset" style={{ padding: '8px 10px', marginBottom: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', flexWrap: 'wrap' }}>
+                  <span className="snes-pixel" style={{ fontSize: '11px', letterSpacing: 0, color: C.cyan }}>{e.trait.name}</span>
+                  <span className="snes-pixel" style={{ fontSize: '11px', letterSpacing: 0, color: C.mute }}>{CONDITION_LABEL[e.effect.when]}</span>
+                </div>
+                <p style={{ fontFamily: SANS, fontSize: '12.5px', color: C.dim, margin: '5px 0 0', lineHeight: 1.5 }}>{e.blurb}</p>
+              </div>
+            ))}
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px', marginBottom: liveRels.length ? '14px' : '4px' }}>
               {STAT_ROWS(detailBand).map(([label, val, color]) => (
