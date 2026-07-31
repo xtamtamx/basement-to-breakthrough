@@ -121,7 +121,8 @@ const STEPS: TutorialStep[] = [
     id: 'build-show',
     title: 'Put the show together',
     body:
-      'Pick your lineup, choose a venue, and set the door price. ' +
+      'Pick your lineup, choose a venue, and settle the terms — what you charge at the door, and ' +
+      'whether the bill takes a flat guarantee or a cut of it. ' +
       'The preview shows your expected crowd and profit. When it looks good, tap "Book This Show".',
     placement: 'screen-top',
     gate: { kind: 'state', when: (s) => s.scheduledShows.length > 0 },

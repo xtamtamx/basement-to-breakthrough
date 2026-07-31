@@ -243,6 +243,7 @@ export class ShowPromotionSystem {
       factionStandings: state.factionStandings ?? {},
       eventCapacityPenalty: state.eventCapacityPenalty,
       ticketPrice: show.ticketPrice, // same price penalty the resolver applies, so the Promote screen's crowd matches
+      deal: show.deal, // a bill on a door deal promotes itself — the crowd here has to know that
     });
 
     // Promotion effectiveness + hype bonus (up to 50% at max hype) on top.

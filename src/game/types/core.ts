@@ -490,6 +490,11 @@ export interface Resources {
   fans: number; // Total fan count
 }
 
+/** How a bill gets paid: a flat GUARANTEE (fees fixed at booking, the whole gate
+ *  is the promoter's) or the DOOR (no fees, the bill takes a share of the gate).
+ *  Terms and consequences live in game/mechanics/bandEconomy. */
+export type ShowDeal = 'guarantee' | 'door';
+
 export interface Show {
   id: string;
   bandId: string;
@@ -506,6 +511,11 @@ export interface Show {
   round?: number;
   fansGained?: number;
   bookingDeposit?: number; // Rent held at booking, refunded when the show resolves
+  /** How the bill gets paid, agreed at booking and locked. 'guarantee' (flat fees,
+   *  the whole gate is yours) or 'door' (no fees, the bill takes a share of the
+   *  gate). Optional so saves written before the deal existed read as 'guarantee',
+   *  which is exactly what they were. See bandEconomy. */
+  deal?: ShowDeal;
   /** Absolute turn the show plays on (booking round + lead time). Lets the UI show
    *  a reactive countdown — "in (scheduledTurn - currentRound) turns" — off the
    *  store without reaching into the promotion-system singleton. */

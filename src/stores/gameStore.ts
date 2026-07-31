@@ -12,6 +12,7 @@ import {
   Band,
   Show,
   ShowResult,
+  ShowDeal,
   RunObjectives,
 } from "@game/types";
 import { objectiveManager } from "@game/mechanics/ObjectiveManager";
@@ -21,7 +22,11 @@ import type { Synergy } from "@game/mechanics/SynergyManager";
 import { eventCardSystem, type EventCard } from "@game/mechanics/EventCardSystem";
 import { factionSystem } from "@game/mechanics/FactionSystem";
 import { showPromotionSystem } from "@game/mechanics/ShowPromotionSystem";
-import { bandDeposit } from "@game/mechanics/bandEconomy";
+import {
+  bandDeposit,
+  doorDealRefusal,
+  doorDealRoomRefusal,
+} from "@game/mechanics/bandEconomy";
 import { gameAudio } from "@utils/gameAudio";
 import { clamp, CONSTRAINTS } from "@utils/validation";
 import { performanceMetrics } from "@utils/performanceMetrics";
@@ -664,10 +669,38 @@ export const useGameStore = create<GameStore>()(
         const venue = get().venues.find((v) => v.id === show.venueId);
         const rentDeposit = venue ? Math.max(0, venue.rent) : 0;
         const bookingState = get();
-        const bandDepositSum = (show.lineup ?? [show.bandId]).reduce((sum, id) => {
-          const b = bookingState.allBands.find((x) => x.id === id);
-          return b ? sum + bandDeposit(b.popularity, bookingState.rosterBandIds.includes(b.id)) : sum;
-        }, 0);
+        // A door deal has terms, and THIS is where they're checked — not in the
+        // form. Booking is the one canonical entry point (the balance sim and any
+        // future caller come through here too), so a bill that nobody agreed to
+        // play for a percentage quietly settles back to a guarantee rather than
+        // becoming a way around the deposit.
+        const billBands = (show.lineup ?? [show.bandId])
+          .map((id) => bookingState.allBands.find((x) => x.id === id))
+          .filter((b): b is Band => !!b);
+        const dealHolds =
+          show.deal === 'door' &&
+          !!venue &&
+          !doorDealRoomRefusal(venue) &&
+          billBands.every(
+            (b) =>
+              !doorDealRefusal(b, {
+                isSigned: bookingState.rosterBandIds.includes(b.id),
+                reputation: bookingState.reputation,
+              }),
+          );
+        const deal: ShowDeal = dealHolds ? 'door' : 'guarantee';
+
+        // Nobody holds a deposit against a percentage — on a door deal there is no
+        // fee to take half of, so only the room's rent is held. That is what lets a
+        // broke promoter book above their weight: the oldest move in the scene.
+        const bandDepositSum =
+          deal === 'door'
+            ? 0
+            : billBands.reduce(
+                (sum, b) =>
+                  sum + bandDeposit(b.popularity, bookingState.rosterBandIds.includes(b.id)),
+                0,
+              );
         const deposit = rentDeposit + bandDepositSum;
         // Store the amount ACTUALLY debited (after the MIN_MONEY clamp) as the
         // deposit, so the resolve-time refund can't over-credit a near-broke
@@ -677,7 +710,7 @@ export const useGameStore = create<GameStore>()(
           currentMoney - clamp(currentMoney - deposit, CONSTRAINTS.MIN_MONEY, CONSTRAINTS.MAX_MONEY);
         // Absolute turn this plays on, so the UI can show a reactive countdown
         // (scheduledTurn - currentRound) without polling the promotion singleton.
-        const bookedShow = { ...show, bookingDeposit: actualDeposit, scheduledTurn: get().currentRound + turns };
+        const bookedShow = { ...show, deal, bookingDeposit: actualDeposit, scheduledTurn: get().currentRound + turns };
 
         showPromotionSystem.scheduleShow(bookedShow, turns);
 

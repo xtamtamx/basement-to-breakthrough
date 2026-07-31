@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useGameStore } from '@stores/gameStore';
-import { Venue, Show, Band } from '@game/types';
+import { Venue, Show, Band, ShowDeal } from '@game/types';
 import { haptics } from '@utils/mobile';
 import { audio } from '@utils/simpleAudio';
 import { synergyEngine } from '@game/mechanics/SynergyEngine';
@@ -8,7 +8,15 @@ import { computeLineupChemistry } from '@game/mechanics/lineupChemistry';
 import { bandFactionBadge } from '@game/world/factionDisplay';
 import { factionSystem } from '@game/mechanics/FactionSystem';
 import { difficultySystem, gougeReputationMultiplier, FAIR_DOOR_PRICE } from '@game/mechanics/DifficultySystem';
-import { bandBookingFee, bandDeposit } from '@game/mechanics/bandEconomy';
+import {
+  bandBookingFee,
+  bandDeposit,
+  doorDealRefusal,
+  doorDealRoomRefusal,
+  doorSplitCost,
+  DOOR_SPLIT_BAND_SHARE,
+  DOOR_DEAL_DIY_POINTS,
+} from '@game/mechanics/bandEconomy';
 import { bandResponse, bandResponseMult } from '@game/mechanics/bandResponse';
 import { computeTraitEffects, traitFeeMult, traitFires } from '@game/mechanics/bandTraitEffects';
 import { BAND_TRAIT_CATALOG, CONDITION_LABEL, type CatalogEntry } from '@game/data/bandTraits';
@@ -104,6 +112,9 @@ export const ShowBuilderView: React.FC = () => {
   const [selectedVenueId, setSelectedVenueId] = useState<string | null>(null);
   const selectedVenue = selectedVenueId ? venues.find((v) => v.id === selectedVenueId) ?? null : null;
   const [ticketPrice, setTicketPrice] = useState(15);
+  // How the bill gets paid. A guarantee is a flat fee and the whole gate is
+  // yours; the door is no fee at all and the bill takes a share of what walks in.
+  const [deal, setDeal] = useState<ShowDeal>('guarantee');
   const [leadTime, setLeadTime] = useState(3); // turns out to book — promo builds over the wait
   const [expandedCombo, setExpandedCombo] = useState<string | null>(null); // tap-to-reveal explainer
   // Venue whose upgrade/gear shop is open (the money sink, reachable from here).
@@ -129,6 +140,18 @@ export const ShowBuilderView: React.FC = () => {
     .filter((b) => isBandUnlocked(b.id))
     .sort((a, b) => (isSigned(b.id) ? 1 : 0) - (isSigned(a.id) ? 1 : 0) || a.popularity - b.popularity);
   const selectedBands = allBands.filter(b => selectedBandIds.includes(b.id));
+  // Who on this bill will play for a percentage. An act big enough to want a
+  // deposit wants the number in writing instead — unless it's signed to you, it's
+  // a purist who'd play for gas money, or your name is good enough to bet on.
+  // Rooms above the handshake ceiling book on contracts, and that is the rule
+  // holding the whole deal up — a big room's gate dwarfs its guarantee, so 60%
+  // of it is a trap, and the waived deposit would otherwise be a way to book
+  // far above your weight for nothing.
+  const doorRefusals = [
+    ...(selectedVenue ? [doorDealRoomRefusal(selectedVenue)] : []),
+    ...selectedBands.map((b) => doorDealRefusal(b, { isSigned: isSigned(b.id), reputation })),
+  ].filter((r): r is string => !!r);
+  const canOfferDoor = doorRefusals.length === 0;
   // Per-act fee the player actually pays: popularity guarantee × difficulty, cut for
   // signed, then bent by how the band responds to your alignment + reputation and by
   // any unconditional fee trait (Works For Gas Money). Same formula the resolver
@@ -235,6 +258,7 @@ export const ShowBuilderView: React.FC = () => {
       factionStandings,
       eventCapacityPenalty,
       ticketPrice, // fold in the resolver's price-resistance penalty so the slider preview can't lie
+      deal, // a band playing for the door works its own night — same bump the resolver applies
     });
 
     // Band traits that FIRE for THIS room + THIS bill (the shared helper the
@@ -255,7 +279,12 @@ export const ShowBuilderView: React.FC = () => {
     // and a "break-even" bill quietly lost money — the most misleading number in
     // the game.
     const venueCost = resolveVenueCost(selectedVenue, venueCostCtx);
-    const bandCost = selectedBands.reduce((sum, b) => sum + bandFee(b), 0);
+    // On a door deal there are no fees to add up — what the bill costs you is a
+    // share of the gate, which is why this number moves when the crowd does.
+    const bandCost =
+      deal === 'door'
+        ? doorSplitCost(finalAttendance, ticketPrice)
+        : selectedBands.reduce((sum, b) => sum + bandFee(b), 0);
     const netRevenue = grossRevenue - venueCost - bandCost;
 
     // Fans + reputation are the stats the RUN is won with, and both come straight
@@ -288,10 +317,17 @@ export const ShowBuilderView: React.FC = () => {
       expectedRep,
       isGouging,
       traitsFiring: traitFx.firing,
+      dealIsDoor: deal === 'door',
       traitStress: traitFx.stressDelta,
       capacity: effectiveCapacity
     };
   };
+
+  // Adding an act who won't take a percentage withdraws the offer rather than
+  // quietly booking a deal they never agreed to.
+  useEffect(() => {
+    if (deal === 'door' && !canOfferDoor) setDeal('guarantee');
+  }, [deal, canOfferDoor]);
 
   const preview = calculateShowPreview();
 
@@ -325,10 +361,12 @@ export const ShowBuilderView: React.FC = () => {
   // least half-afford. The right-rail Net still shows the true payoff so a losing
   // bill is a visible, informed risk (the economy is allowed to bite).
   const venueRentDeposit = selectedVenue ? Math.max(0, selectedVenue.rent) : 0;
-  const bandDepositTotal = selectedBands.reduce(
-    (sum, b) => sum + bandDeposit(b.popularity, isSigned(b.id)),
-    0,
-  );
+  // A percentage has nothing to hold half of, so a door deal is rent-only up
+  // front — the whole reason a broke promoter offers one.
+  const bandDepositTotal =
+    deal === 'door'
+      ? 0
+      : selectedBands.reduce((sum, b) => sum + bandDeposit(b.popularity, isSigned(b.id)), 0);
   const upFrontDue = venueRentDeposit + bandDepositTotal;
 
   // Gate on the up-front deposit + booking capacity (can't over-book past slots).
@@ -351,6 +389,10 @@ export const ShowBuilderView: React.FC = () => {
       bandId: selectedBands[0].id,
       lineup: selectedBands.map(b => b.id),
       ticketPrice,
+      // Authoritative at the moment of booking rather than trusting the effect
+      // that withdraws the offer: an act who refuses a percentage can never end
+      // up on a percentage, whatever order the state settled in.
+      deal: canOfferDoor ? deal : 'guarantee',
       date: new Date(),
       status: "SCHEDULED",
       revenue: 0,
@@ -376,6 +418,7 @@ export const ShowBuilderView: React.FC = () => {
     setSelectedBandIds([]);
     setSelectedVenueId(null);
     setTicketPrice(15);
+    setDeal('guarantee');
   };
 
   return (
@@ -430,8 +473,16 @@ export const ShowBuilderView: React.FC = () => {
                   <span style={{ fontSize: '11px', color: isFresh ? 'var(--snes-gold)' : 'var(--snes-ink-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
                     {headliner ? <BandLogo band={headliner} variant="inline" /> : '???'} · {venue?.name ?? '???'}
                   </span>
-                  <span className="snes-pixel" style={{ flexShrink: 0, fontSize: '9px', letterSpacing: 0, color: inTurns <= 1 ? 'var(--snes-red)' : 'var(--snes-green)' }}>
-                    {inTurns <= 0 ? 'tonight' : inTurns === 1 ? 'next turn' : `in ${inTurns} turns`}
+                  <span className="snes-pixel" style={{ flexShrink: 0, fontSize: '9px', letterSpacing: 0, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                    {/* The terms you agreed to, still readable on show week — a
+                        door deal changes what the night is worth, so it can't
+                        vanish the moment the form resets. */}
+                    {s.deal === 'door' && (
+                      <span style={{ color: 'var(--snes-cyan)' }}>{Math.round(DOOR_SPLIT_BAND_SHARE * 100)}% door</span>
+                    )}
+                    <span style={{ color: inTurns <= 1 ? 'var(--snes-red)' : 'var(--snes-green)' }}>
+                      {inTurns <= 0 ? 'tonight' : inTurns === 1 ? 'next turn' : `in ${inTurns} turns`}
+                    </span>
                   </span>
                 </div>
               );
@@ -528,14 +579,26 @@ export const ShowBuilderView: React.FC = () => {
                         </div>
                         {!isUnavailable && (
                           <div className="snes-pixel" style={{ fontSize: '11px', marginTop: '5px', letterSpacing: 0, display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap', color: isSigned(band.id) ? 'var(--snes-green)' : 'var(--snes-gold)' }}>
-                            {isSigned(band.id) ? (
+                            {deal === 'door' ? (
+                              /* On a door deal nobody quotes a fee — the only thing
+                                 worth saying about an act is whether it will take
+                                 the deal at all. */
+                              (() => {
+                                const refusal = doorDealRefusal(band, { isSigned: isSigned(band.id), reputation });
+                                return refusal ? (
+                                  <span style={{ color: 'var(--snes-red)' }}>WANTS A GUARANTEE</span>
+                                ) : (
+                                  <span>PLAYS FOR THE DOOR</span>
+                                );
+                              })()
+                            ) : isSigned(band.id) ? (
                               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                                 <PixelIcon name="fame" size={12} /> SIGNED · ${bandFee(band)} (your cut)
                               </span>
                             ) : (
                               <span>GUEST · ${bandFee(band)} guarantee</span>
                             )}
-                            {bandDeposit(band.popularity, isSigned(band.id)) > 0 && (
+                            {deal !== 'door' && bandDeposit(band.popularity, isSigned(band.id)) > 0 && (
                               <span style={{ color: 'var(--snes-purple)' }}>· ${bandDeposit(band.popularity, isSigned(band.id))} deposit up front</span>
                             )}
                           </div>
@@ -772,9 +835,9 @@ export const ShowBuilderView: React.FC = () => {
           )}
         </section>
 
-        {/* Step 3: Set Ticket Price */}
+        {/* Step 3: the money — what you charge at the door, and how the bill gets paid */}
         <section style={{ marginBottom: '16px' }}>
-          <StepHeader step={3} title="Set Ticket Price" active={!!selectedVenue} />
+          <StepHeader step={3} title="Settle The Terms" active={!!selectedVenue} />
 
           <div className="snes-panel" style={{
             padding: '16px'
@@ -828,6 +891,54 @@ export const ShowBuilderView: React.FC = () => {
             }}>
               <span>$5</span>
               <span>$50</span>
+            </div>
+
+            {/* The oldest argument in booking: a flat fee, or a cut of the door.
+                Sits under the price because the two numbers are one decision —
+                what the bill takes on a door deal moves every time you drag the
+                slider. */}
+            <div style={{ marginTop: '14px', paddingTop: '12px', borderTop: '2px solid var(--snes-line)' }}>
+              <div className="snes-pixel" style={{ fontSize: '11px', color: 'var(--snes-ink-dim)', textTransform: 'uppercase', letterSpacing: 0, marginBottom: '8px' }}>
+                How The Bill Gets Paid
+              </div>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                {([
+                  { id: 'guarantee' as const, label: 'Guarantee', sub: preview ? `-$${selectedBands.reduce((s, b) => s + bandFee(b), 0)}` : 'flat fee' },
+                  { id: 'door' as const, label: 'Door Split', sub: `${Math.round(DOOR_SPLIT_BAND_SHARE * 100)}%` },
+                ]).map((opt) => {
+                  const active = deal === opt.id;
+                  const locked = opt.id === 'door' && !canOfferDoor;
+                  return (
+                    <button
+                      key={opt.id}
+                      onClick={() => { if (locked) { haptics.error(); return; } setDeal(opt.id); haptics.light(); }}
+                      disabled={locked}
+                      aria-pressed={active}
+                      className="snes-pixel btb-press"
+                      style={{
+                        flex: 1, minHeight: '44px', fontSize: '11px', letterSpacing: 0,
+                        cursor: locked ? 'not-allowed' : 'pointer',
+                        opacity: locked ? 0.45 : 1,
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '3px',
+                        background: active ? 'var(--snes-magenta)' : 'var(--snes-bg-3)',
+                        color: active ? '#f7efe0' : 'var(--snes-ink-dim)',
+                        border: active ? '2px solid var(--snes-void)' : '2px solid var(--snes-line)',
+                        boxShadow: 'inset 1px 1px 0 0 var(--snes-edge-lt)', borderRadius: 0,
+                      }}
+                    >
+                      <span>{opt.label}</span>
+                      <span style={{ fontSize: '9px', opacity: 0.85 }}>{opt.sub}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <p style={{ fontSize: '10px', color: canOfferDoor ? 'var(--snes-ink-mute)' : 'var(--snes-red)', margin: '8px 0 0', lineHeight: 1.4 }}>
+                {!canOfferDoor
+                  ? `${doorRefusals[0]} — no percentage, no show.`
+                  : deal === 'door'
+                    ? 'No fee, no deposit — the bill takes 60% of the door, you keep the bar, and the scene notices who carried the risk. Cheap in a basement where the guarantee eats the whole gate; expensive in a big room, where it buys cred instead of cash.'
+                    : 'Flat fees, paid show day. Every dollar at the door is yours — and you owe the fees whether four people come or four hundred.'}
+              </p>
             </div>
           </div>
         </section>
@@ -1101,8 +1212,12 @@ export const ShowBuilderView: React.FC = () => {
                     <span className="snes-pixel" style={{ color: 'var(--snes-red)', fontSize: '11px' }}>-${preview.venueCost}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px' }}>
-                    <span style={{ color: 'var(--snes-ink-dim)' }}>Band Fees{selectedBands.length > 1 ? ` (×${selectedBands.length})` : ''}</span>
-                    <span className="snes-pixel" style={{ color: 'var(--snes-red)', fontSize: '11px' }}>-${preview.bandCost}</span>
+                    <span style={{ color: 'var(--snes-ink-dim)' }}>
+                      {preview.dealIsDoor
+                        ? `Door split (${Math.round(DOOR_SPLIT_BAND_SHARE * 100)}% of the gate)`
+                        : `Band Fees${selectedBands.length > 1 ? ` (×${selectedBands.length})` : ''}`}
+                    </span>
+                    <span className="snes-pixel" style={{ color: 'var(--snes-red)', fontSize: '11px' }}>{preview.dealIsDoor ? '~' : ''}-${preview.bandCost}</span>
                   </div>
                   <div style={{
                     display: 'flex',
@@ -1116,6 +1231,16 @@ export const ShowBuilderView: React.FC = () => {
                       {preview.netRevenue >= 0 ? '+' : '-'}${Math.abs(preview.netRevenue)}
                     </span>
                   </div>
+                  {/* The split is a RATE, so its dollar figure rides the crowd —
+                      promo and hype push the door up and the bill's cut with it.
+                      The 60% is exact and the Net still only moves upward, which
+                      is the honest way to say "this number is a floor". */}
+                  {preview.dealIsDoor && (
+                    <p style={{ fontSize: '10px', color: 'var(--snes-ink-mute)', margin: '8px 0 0', lineHeight: 1.4 }}>
+                      The {Math.round(DOOR_SPLIT_BAND_SHARE * 100)}% is fixed; the dollars aren't. A bigger night
+                      pays more at the door and more to the bill — you keep the bar either way.
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -1191,6 +1316,17 @@ export const ShowBuilderView: React.FC = () => {
                   >
                     <PixelIcon name="fame" size={11} />+{preview.expectedRep}
                   </span>
+                  {/* The other half of a door deal. You're paying money for this,
+                      so it has to be visible in the same row as what money buys. */}
+                  {preview.dealIsDoor && (
+                    <span
+                      className="snes-pixel"
+                      style={{ fontSize: '10px', color: 'var(--snes-cyan)' }}
+                      title="You carried the risk instead of the band. The scene keeps score."
+                    >
+                      +{DOOR_DEAL_DIY_POINTS} cred
+                    </span>
+                  )}
                 </span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--snes-ink-dim)', marginBottom: '6px' }}>

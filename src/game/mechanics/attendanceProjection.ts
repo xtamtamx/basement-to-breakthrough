@@ -1,4 +1,4 @@
-import { Band, Venue, Genre } from '@game/types';
+import { Band, Venue, Genre, ShowDeal } from '@game/types';
 import { synergyEngine } from './SynergyEngine';
 import { COMBO_MULT_CAP } from '@game/constants/runConstants';
 import { cityGenreFit, homeCityFit } from '@game/world/citySynergy';
@@ -7,6 +7,7 @@ import { factionSystem } from './FactionSystem';
 import { difficultySystem } from './DifficultySystem';
 import { computeEquipmentEffects } from './venueEquipmentEffects';
 import { computeTraitEffects } from './bandTraitEffects';
+import { dealDrawMult } from './bandEconomy';
 
 /**
  * The SINGLE source of truth for a bill's PROJECTED (pre-promotion) attendance —
@@ -36,8 +37,11 @@ export function projectBaseAttendance(opts: {
    *  projected too — the price is fully known at booking, so omitting it made
    *  the ticket slider's preview monotonically (and falsely) rise with price. */
   ticketPrice?: number;
+  /** The deal the bill is on. A band playing for the door promotes its own night,
+   *  so it draws better — known at booking, therefore projected here. */
+  deal?: ShowDeal;
 }): number {
-  const { bands, venue, cityPrimaryGenre, currentCityId, factionStandings, eventCapacityPenalty, ticketPrice } = opts;
+  const { bands, venue, cityPrimaryGenre, currentCityId, factionStandings, eventCapacityPenalty, ticketPrice, deal } = opts;
   if (!bands.length) return 0;
   const headliner = bands[0];
   const totalMultiplier = Math.min(
@@ -74,7 +78,7 @@ export function projectBaseAttendance(opts: {
     ticketPrice ?? 0,
   ).attendanceMultiplier;
   const projected = Math.floor(
-    base * billMultiplier * totalMultiplier * sceneFit.multiplier * homeFit.multiplier * lineupChem.mult * factionAttMult * difficultyMult * traitFx.attendanceMult,
+    base * billMultiplier * totalMultiplier * sceneFit.multiplier * homeFit.multiplier * lineupChem.mult * factionAttMult * difficultyMult * traitFx.attendanceMult * dealDrawMult(deal),
   );
   return Math.min(projected, effectiveCapacity);
 }

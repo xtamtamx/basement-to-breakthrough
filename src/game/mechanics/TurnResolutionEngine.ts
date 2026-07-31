@@ -24,7 +24,7 @@ import { objectiveManager } from './ObjectiveManager';
 import { stakesManager, STAKE_TIERS } from './StakesManager';
 import { isModeBeaten, nextModeAfter } from './modeUnlocks';
 import { recordBandUnlocks, recordRunFeats } from '@game/world/bandUnlocks';
-import { bandBookingFee } from './bandEconomy';
+import { bandBookingFee, dealDrawMult, doorSplitCost, DOOR_DEAL_DIY_POINTS } from './bandEconomy';
 import { computeTraitEffects, traitFeeMult } from './bandTraitEffects';
 import { bandResponseMult } from './bandResponse';
 import { resolveVenueCost } from './showCosts';
@@ -72,6 +72,7 @@ import {
   IncidentType,
   ConsequenceType,
   GamePhase,
+  ShowDeal,
 } from '@game/types';
 
 export interface DayJobTurnResult {
@@ -279,6 +280,15 @@ export class TurnResolutionEngine {
       // Challenge fodder for the systems the ladder actually turns on: who you
       // let in, how deep the bill ran, how small the room stayed, and whether you
       // kept the door fair (FAIR_DOOR_PRICE — same threshold the cred rule uses).
+      // Taking the door instead of writing a guarantee puts the night's risk on
+      // you rather than the band, and the scene keeps score. Small on purpose —
+      // a run of door deals is an identity you build, not a switch you flip.
+      // Only for a night that actually happened: a show whose venue or band no
+      // longer resolves falls through here with an attendance of 0, and nobody
+      // earns cred for a room that never opened.
+      if (scheduledShow.deal === 'door' && result.attendance > 0) {
+        store.makePathChoice('door_deal', DOOR_DEAL_DIY_POINTS);
+      }
       objDelta.maxBillSize = Math.max(objDelta.maxBillSize, actCount);
       if (actCount >= 2) objDelta.multiBandShows += 1;
       if ((scheduledShow.ticketPrice ?? 0) > FAIR_DOOR_PRICE) objDelta.gouged = true;
@@ -809,6 +819,12 @@ export class TurnResolutionEngine {
       if (band) allShowBands.push(band);
     });
 
+    // The terms agreed at booking and locked there: a flat GUARANTEE (fees are
+    // fixed, the whole gate is yours) or the DOOR (no fees, the bill takes a
+    // share of what walks in). Shows written before the deal existed were all
+    // guarantees, so that is what an absent field means.
+    const deal: ShowDeal = show.deal ?? 'guarantee';
+
     // --- Scene politics: faction standing + bill chemistry -------------------
     // Hydrate the stateless faction calculator from the persisted store standings,
     // then read this bill's faction show-modifiers. Every term below is EXACTLY
@@ -931,7 +947,8 @@ export class TurnResolutionEngine {
           (sig?.attendanceMult ?? 1) *
           factionAttendanceMult *
           lineupChem.mult *
-          traitFx.attendanceMult,
+          traitFx.attendanceMult *
+          dealDrawMult(deal),
       ),
       effectiveCapacity,
     );
@@ -963,16 +980,22 @@ export class TurnResolutionEngine {
     // Per-band guarantee (popularity-scaled, difficulty-scaled); signed acts cost
     // only your cut-share, then bent by how the band responds to your alignment +
     // reputation. Same formula the ShowBuilder preview shows.
-    const bandCosts = allShowBands.reduce(
-      (sum, b) =>
-        sum +
-        difficultySystem.getScaledBandCost(
-          bandBookingFee(b.popularity, store.rosterBandIds.includes(b.id)) *
-            bandResponseMult(b, store.diyPoints, store.reputation) *
-            traitFeeMult(b),
-        ),
-      0,
-    );
+    // On a door deal nobody is owed a fee at all — the bill is paid out of the
+    // gate below, after every cost transform, because a share of the door is the
+    // one number in this game that difficulty can't inflate.
+    const bandCosts =
+      deal === 'door'
+        ? 0
+        : allShowBands.reduce(
+            (sum, b) =>
+              sum +
+              difficultySystem.getScaledBandCost(
+                bandBookingFee(b.popularity, store.rosterBandIds.includes(b.id)) *
+                  bandResponseMult(b, store.diyPoints, store.reputation) *
+                  traitFeeMult(b),
+              ),
+            0,
+          );
     const venueCost = resolveVenueCost(venue, {
       districts: store.districts,
       currentCityId: store.currentCityId,
@@ -991,6 +1014,13 @@ export class TurnResolutionEngine {
     if (costReduction > 0) {
       totalCosts = Math.floor(totalCosts * (1 - costReduction / 100));
     }
+    // The door split is a straight share of the gate: no difficulty scaling, no
+    // escalation surcharge, no instinct trimming it down. Fixed as a FRACTION
+    // rather than a dollar amount is the whole point of the deal — an empty room
+    // costs you nothing, and a rough turn can't make the bill more expensive.
+    const doorSplitPaid =
+      deal === 'door' ? doorSplitCost(finalAttendance, show.ticketPrice) : 0;
+    totalCosts += doorSplitPaid;
 
     // Calculate reputation and fan gains with equipment bonus. (Pacing pass:
     // attendance/5 + /2 hit the win bars by turn ~10 of 50 — the whole back half
