@@ -152,16 +152,27 @@ export const ShowBuilderView: React.FC = () => {
     ...selectedBands.map((b) => doorDealRefusal(b, { isSigned: isSigned(b.id), reputation })),
   ].filter((r): r is string => !!r);
   const canOfferDoor = doorRefusals.length === 0;
-  // Per-act fee the player actually pays: popularity guarantee × difficulty, cut for
-  // signed, then bent by how the band responds to your alignment + reputation and by
-  // any unconditional fee trait (Works For Gas Money). Same formula the resolver
-  // charges, factor for factor — the discount has to be visible where you book.
+  // A guarantee is quoted FOR THE ROOM — an act's number is what its draw is worth
+  // in the space you're offering — so the whole band list re-prices the moment you
+  // pick a venue. Before you've picked one there's nothing to quote against, so the
+  // list reads off the smallest room you can book and says "from".
+  const cheapestRoom = [...venues].sort((a, b) => a.capacity - b.capacity)[0] ?? null;
+  const feeRoom = selectedVenue ?? cheapestRoom;
+  const feesAreIndicative = !selectedVenue;
+
+  // Per-act fee the player actually pays: the room-quoted guarantee × difficulty,
+  // cut for signed, then bent by how the band responds to your alignment +
+  // reputation and by any unconditional fee trait (Works For Gas Money). Same
+  // formula the resolver charges, factor for factor — the discount has to be
+  // visible where you book.
   const bandFee = (b: Band) =>
-    difficultySystem.getScaledBandCost(
-      bandBookingFee(b.popularity, isSigned(b.id)) *
-        bandResponseMult(b, diyPoints, reputation) *
-        traitFeeMult(b),
-    );
+    feeRoom
+      ? difficultySystem.getScaledBandCost(
+          bandBookingFee(b.popularity, isSigned(b.id), feeRoom) *
+            bandResponseMult(b, diyPoints, reputation) *
+            traitFeeMult(b),
+        )
+      : 0;
 
   // Environmental rent context — the SAME multipliers the resolver charges
   // (difficulty × district × gentrification × run × meta × city signature),
@@ -366,7 +377,10 @@ export const ShowBuilderView: React.FC = () => {
   const bandDepositTotal =
     deal === 'door'
       ? 0
-      : selectedBands.reduce((sum, b) => sum + bandDeposit(b.popularity, isSigned(b.id)), 0);
+      : selectedBands.reduce(
+          (sum, b) => sum + (selectedVenue ? bandDeposit(b.popularity, isSigned(b.id), selectedVenue) : 0),
+          0,
+        );
   const upFrontDue = venueRentDeposit + bandDepositTotal;
 
   // Gate on the up-front deposit + booking capacity (can't over-book past slots).
@@ -593,13 +607,13 @@ export const ShowBuilderView: React.FC = () => {
                               })()
                             ) : isSigned(band.id) ? (
                               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                                <PixelIcon name="fame" size={12} /> SIGNED · ${bandFee(band)} (your cut)
+                                <PixelIcon name="fame" size={12} /> SIGNED · {feesAreIndicative ? 'from ' : ''}${bandFee(band)} (your cut)
                               </span>
                             ) : (
-                              <span>GUEST · ${bandFee(band)} guarantee</span>
+                              <span>GUEST · {feesAreIndicative ? 'from ' : ''}${bandFee(band)} guarantee</span>
                             )}
-                            {deal !== 'door' && bandDeposit(band.popularity, isSigned(band.id)) > 0 && (
-                              <span style={{ color: 'var(--snes-purple)' }}>· ${bandDeposit(band.popularity, isSigned(band.id))} deposit up front</span>
+                            {deal !== 'door' && selectedVenue && bandDeposit(band.popularity, isSigned(band.id), selectedVenue) > 0 && (
+                              <span style={{ color: 'var(--snes-purple)' }}>· ${bandDeposit(band.popularity, isSigned(band.id), selectedVenue)} deposit up front</span>
                             )}
                           </div>
                         )}
@@ -936,8 +950,8 @@ export const ShowBuilderView: React.FC = () => {
                 {!canOfferDoor
                   ? `${doorRefusals[0]} — no percentage, no show.`
                   : deal === 'door'
-                    ? 'No fee, no deposit — the bill takes 60% of the door, you keep the bar, and the scene notices who carried the risk. Cheap in a basement where the guarantee eats the whole gate; expensive in a big room, where it buys cred instead of cash.'
-                    : 'Flat fees, paid show day. Every dollar at the door is yours — and you owe the fees whether four people come or four hundred.'}
+                    ? 'No fee, no deposit — the bill takes 60% of the door, you keep the bar, and the scene notices who carried the risk. The cheaper your door, the better this deal gets.'
+                    : 'Flat fees, quoted for this room and paid show day. Every dollar at the door is yours — and you owe the fees whether four people come or four hundred.'}
               </p>
             </div>
           </div>

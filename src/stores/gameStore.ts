@@ -693,12 +693,13 @@ export const useGameStore = create<GameStore>()(
         // Nobody holds a deposit against a percentage — on a door deal there is no
         // fee to take half of, so only the room's rent is held. That is what lets a
         // broke promoter book above their weight: the oldest move in the scene.
+        // A fee is quoted for the room, so no room means no fee to hold against.
         const bandDepositSum =
-          deal === 'door'
+          deal === 'door' || !venue
             ? 0
             : billBands.reduce(
                 (sum, b) =>
-                  sum + bandDeposit(b.popularity, bookingState.rosterBandIds.includes(b.id)),
+                  sum + bandDeposit(b.popularity, bookingState.rosterBandIds.includes(b.id), venue),
                 0,
               );
         const deposit = rentDeposit + bandDepositSum;

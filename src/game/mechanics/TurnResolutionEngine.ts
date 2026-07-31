@@ -990,7 +990,7 @@ export class TurnResolutionEngine {
             (sum, b) =>
               sum +
               difficultySystem.getScaledBandCost(
-                bandBookingFee(b.popularity, store.rosterBandIds.includes(b.id)) *
+                bandBookingFee(b.popularity, store.rosterBandIds.includes(b.id), venue) *
                   bandResponseMult(b, store.diyPoints, store.reputation) *
                   traitFeeMult(b),
               ),

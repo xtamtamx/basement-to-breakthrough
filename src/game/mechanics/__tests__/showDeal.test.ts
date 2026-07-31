@@ -30,8 +30,13 @@ vi.mock('../GentrificationSystem');
 import {
   bandBookingFee,
   dealDrawMult,
+  bandDeposit,
+  bandGuarantee,
+  expectedDraw,
   doorDealRefusal,
   doorDealRoomRefusal,
+  GUARANTEE_FLOOR,
+  PROMOTER_CUT,
   doorSplitCost,
   DEPOSIT_POPULARITY_THRESHOLD,
   DOOR_DEAL_DIY_POINTS,
@@ -351,7 +356,7 @@ describe('the deal at resolution', () => {
             (sum, b) =>
               sum +
               difficultySystem.getScaledBandCost(
-                bandBookingFee(b.popularity, state.rosterBandIds.includes(b.id)) *
+                bandBookingFee(b.popularity, state.rosterBandIds.includes(b.id), mockVenue) *
                   bandResponseMult(b, state.diyPoints, state.reputation) *
                   traitFeeMult(b),
               ),
@@ -657,5 +662,61 @@ describe('the handshake ceiling', () => {
     // 3-7% at 300 cap. The ceiling has to sit under that inversion or the deal
     // reads as a punishment for taking it.
     expect(DOOR_DEAL_ROOM_CAP).toBeLessThan(160);
+  });
+});
+
+/**
+ * The guarantee is quoted FOR THE ROOM.
+ *
+ * It used to be a function of popularity alone, so the same $225 bought a 20-head
+ * basement or a 222-head lodge: a guarantee ran 42-75% of the gate downstairs and
+ * 3-7% upstairs, which meant that past the first few rooms *which band you booked
+ * cost you almost nothing*. Pricing off the expected draw holds the fee at a
+ * roughly steady share of the gate all the way up, which is what makes a
+ * percentage deal a live alternative instead of a tax.
+ */
+describe('a guarantee is quoted for the room', () => {
+  const room = (capacity: number, atmosphere = 80) => ({ capacity, atmosphere });
+
+  it('charges more for the same act in a bigger room', () => {
+    const act = 55;
+    expect(bandGuarantee(act, room(300))).toBeGreaterThan(bandGuarantee(act, room(30)));
+  });
+
+  it('charges more for a bigger act in the same room', () => {
+    expect(bandGuarantee(85, room(120))).toBeGreaterThan(bandGuarantee(25, room(120)));
+  });
+
+  it('holds a roughly steady share of the gate up the whole ladder', () => {
+    // The actual defect being guarded. At a $15 door, across the demo's venue
+    // ladder, the fee's share of the gate must stay inside one band — not swing
+    // 25x from basement to lodge the way the popularity-only curve did.
+    const P = 15;
+    const shares = [30, 70, 90, 120, 200, 300, 500].map((cap) => {
+      const v = room(cap);
+      const heads = expectedDraw(55, v);
+      return bandGuarantee(55, v) / (heads * P);
+    });
+    const spread = Math.max(...shares) / Math.min(...shares);
+    expect(spread).toBeLessThan(2); // was ~25 before the retune
+  });
+
+  it('never quotes below the floor, however small the room or the act', () => {
+    expect(bandGuarantee(0, room(0, 0))).toBe(GUARANTEE_FLOOR);
+    expect(bandGuarantee(-5, room(-10, -10))).toBe(GUARANTEE_FLOOR);
+  });
+
+  it('still discounts a signed act to the promoter cut', () => {
+    const v = room(120);
+    expect(bandBookingFee(55, true, v)).toBeCloseTo(bandGuarantee(55, v) * (1 - PROMOTER_CUT), 5);
+    expect(bandBookingFee(55, false, v)).toBe(bandGuarantee(55, v));
+  });
+
+  it('sizes the deposit to the room too, so a big room is a real commitment', () => {
+    const small = bandDeposit(55, false, room(30));
+    const big = bandDeposit(55, false, room(300));
+    expect(big).toBeGreaterThan(small);
+    // Under the threshold nobody asks for anything, whatever the room.
+    expect(bandDeposit(DEPOSIT_POPULARITY_THRESHOLD - 1, false, room(300))).toBe(0);
   });
 });
