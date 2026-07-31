@@ -18,6 +18,12 @@ import { runManager } from '../RunManager';
 import { dayJobSystem } from '../DayJobSystem';
 import { synergyManager } from '../SynergyManager';
 import { rollTravelOffer } from '@game/world/travelModes';
+import {
+  showPromotionSystem,
+  PROMOTION_ACTIVITIES,
+  PromotionType,
+  promotionCost,
+} from '../ShowPromotionSystem';
 import { bandBookingFee } from '../bandEconomy';
 import { TOURING_ENABLED } from '@/config/featureFlags';
 
@@ -194,6 +200,32 @@ function maybeTravel(turn: number): boolean {
   return true;
 }
 
+// A competent promoter PROMOTES. The harness never did, which means every pacing
+// number it ever produced described a player ignoring the cheapest lever in the
+// game. Spend on every show still in the pipeline, best multiplier-per-dollar
+// first, keeping a cash buffer for rent and living costs.
+function promotePipeline(): void {
+  const s = useGameStore.getState();
+  const pipeline = s.scheduledShows.filter(
+    (sh) => sh.status === 'SCHEDULED' && (sh.scheduledTurn ?? s.currentRound) > s.currentRound,
+  );
+  for (const show of pipeline) {
+    const venue = s.venues.find((v) => v.id === show.venueId);
+    const byValue = Object.values(PROMOTION_ACTIVITIES).sort(
+      (a, b) =>
+        (b.effectiveness - 1) / (promotionCost(b, venue) + 1) -
+        (a.effectiveness - 1) / (promotionCost(a, venue) + 1),
+    );
+    for (const activity of byValue) {
+      const live = useGameStore.getState();
+      // Keep a floor so promotion never causes the eviction it is meant to avoid.
+      if (live.money - promotionCost(activity, venue) < 150) continue;
+      if (live.stress >= 80) continue;
+      showPromotionSystem.promoteShow(show.id, activity.type as PromotionType);
+    }
+  }
+}
+
 async function playOneRun(mode: string, stakeTier = 0): Promise<RunOutcome> {
   await startNewRun(mode, stakeTier);
   dayJobSystem.setJob(null); // clean slate each run
@@ -209,6 +241,7 @@ async function playOneRun(mode: string, stakeTier = 0): Promise<RunOutcome> {
     signRoster();
     manageDayJob();
     bookBestShow();
+    promotePipeline();
     const result = await turnResolutionEngine.executeFullTurn();
     acceptSynergyOffer(i);
     // Resolve any drawn event card like a player would (take the first choice).

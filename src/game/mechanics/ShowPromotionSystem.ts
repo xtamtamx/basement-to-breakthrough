@@ -42,6 +42,10 @@ export interface PromotionActivity {
 
 export interface ScheduledShow extends Show {
   turnsUntilShow: number;
+  /** How many promotions this show can take, fixed at booking = the lead time.
+   *  A night you booked tomorrow cannot be flyered for a month. Optional so a
+   *  show restored from a save written before this falls back to its lead. */
+  promoBudget?: number;
   promotionInvestment: Map<PromotionType, number>;
   totalPromotionEffectiveness: number;
   expectedAttendance: number;
@@ -54,6 +58,79 @@ export type SerializedScheduledShow = Omit<
   ScheduledShow,
   'promotionInvestment'
 > & { promotionInvestment: [PromotionType, number][] };
+
+/**
+ * Room a promo's list price is quoted at. Above it you are papering a bigger
+ * neighbourhood and buying a bigger radio spot; below it, a handful of flyers.
+ */
+export const PROMO_REFERENCE_CAPACITY = 100;
+
+/**
+ * Ceiling on what promotion alone can do to a crowd.
+ *
+ * There was none, and the six activities stack multiplicatively (1.15 × 1.2 ×
+ * 1.25 × 1.3 × 1.25 × 1.35 = 3.15x) with no per-turn limit and two of them free.
+ * The balance sim had never promoted at all, and the moment it did, a Classic run
+ * fell from 22 turns to EIGHT at a 100% win rate, filling the 1200-cap room by
+ * turn 8. Word only travels so far for one show.
+ */
+export const MAX_PROMO_EFFECTIVENESS = 1.1;
+
+/**
+ * Promotion is bounded by TIME, not just money — one push per turn the show is
+ * still on the calendar. This is what `timeInvestment` was always reaching for
+ * (authored on every activity, read by nothing), and it makes the lead-time
+ * selector mean something: book a night five turns out and you can work it for
+ * five turns; book it for tomorrow and you get one shot. Without a bound, six
+ * activities stacked on every show in the pipeline every turn.
+ */
+export function promoBudgetFor(show: { promoBudget?: number; turnsUntilShow: number }): number {
+  return Math.max(1, show.promoBudget ?? show.turnsUntilShow);
+}
+
+/** Promotions already spent on this show. */
+export function promosUsed(show: { promotionInvestment: Map<PromotionType, number> }): number {
+  let used = 0;
+  show.promotionInvestment.forEach((n) => (used += n));
+  return used;
+}
+
+/**
+ * Hype a single promotion buys. Separate from the per-turn hype a show accrues
+ * just by being on the calendar, which is the lead-time selector's payoff and is
+ * deliberately left alone — this is the part you can BUY. It was 10, so six
+ * activities on one show moved the crowd multiplier more than every promotion
+ * effectiveness value combined, which is why capping effectiveness alone barely
+ * moved the sim (22 turns -> 13 instead of 8).
+ */
+export const HYPE_PER_PROMO = 2;
+
+/**
+ * The list price of a promotion in the room it's promoting.
+ *
+ * Flat costs were the last unscaled price in the game: $30 of street team bought
+ * ~5 extra heads in a basement and ~78 at the lodge, the same defect the
+ * room-quoted guarantee retune fixed on the band side.
+ */
+export function promotionCost(
+  activity: Pick<PromotionActivity, 'cost'>,
+  venue?: { capacity: number },
+): number {
+  if (!activity.cost) return 0; // legwork is free of charge; it costs you instead
+  const capacity = Math.max(1, venue?.capacity ?? PROMO_REFERENCE_CAPACITY);
+  return Math.round(activity.cost * (capacity / PROMO_REFERENCE_CAPACITY));
+}
+
+/**
+ * What doing it yourself costs you. The two free activities are free of MONEY,
+ * not of effort — `timeInvestment` was authored on every activity and read by
+ * nothing, which is exactly why "spam every free promo on every show" was
+ * costless. Now the legwork lands on the promoter: you either pay for it or you
+ * do it yourself.
+ */
+export function promotionStress(activity: Pick<PromotionActivity, 'cost' | 'timeInvestment'>): number {
+  return activity.cost ? 0 : activity.timeInvestment;
+}
 
 // Promotion activities with different costs and effectiveness
 export const PROMOTION_ACTIVITIES: Record<PromotionType, PromotionActivity> = {
@@ -145,6 +222,7 @@ export class ShowPromotionSystem {
     const scheduledShow: ScheduledShow = {
       ...show,
       turnsUntilShow: turnsInAdvance,
+      promoBudget: turnsInAdvance,
       promotionInvestment: new Map(),
       totalPromotionEffectiveness: 1.0,
       expectedAttendance: 0,
@@ -167,6 +245,11 @@ export class ShowPromotionSystem {
       return false;
     }
     
+    // One push per turn the show has been on the calendar.
+    if (promosUsed(show) >= promoBudgetFor(show)) {
+      return false;
+    }
+
     const activity = PROMOTION_ACTIVITIES[promotionType];
     const state = useGameStore.getState();
     
@@ -183,13 +266,18 @@ export class ShowPromotionSystem {
       }
     }
     
-    // Check cost
-    if (state.money < activity.cost) {
+    // Priced for the room it is promoting, not as a flat fee.
+    const venue = state.venues.find((v) => v.id === show.venueId);
+    const cost = promotionCost(activity, venue);
+    if (state.money < cost) {
       return false;
     }
-    
-    // Apply promotion
-    state.addMoney(-activity.cost);
+
+    // Apply promotion. Paid activities cost money; the free ones cost the
+    // promoter's own week.
+    if (cost > 0) state.addMoney(-cost);
+    const stress = promotionStress(activity);
+    if (stress > 0) state.addStress(stress);
     
     // Track investment
     const currentInvestment = show.promotionInvestment.get(promotionType) || 0;
@@ -200,11 +288,15 @@ export class ShowPromotionSystem {
     const diminishingFactor = Math.pow(0.8, timesUsed - 1); // Each additional use is 80% as effective
     const activityEffectiveness = 1 + ((activity.effectiveness - 1) * diminishingFactor);
     
-    // Update total effectiveness (multiplicative)
-    show.totalPromotionEffectiveness *= activityEffectiveness;
+    // Update total effectiveness (multiplicative), clamped — word only travels so
+    // far for one show, however much you spend on it.
+    show.totalPromotionEffectiveness = Math.min(
+      MAX_PROMO_EFFECTIVENESS,
+      show.totalPromotionEffectiveness * activityEffectiveness,
+    );
     
     // Increase hype
-    show.hype = Math.min(100, show.hype + (10 * diminishingFactor));
+    show.hype = Math.min(100, show.hype + HYPE_PER_PROMO * diminishingFactor);
     
     // Apply reputation bonus if any
     if (activity.reputationBonus) {

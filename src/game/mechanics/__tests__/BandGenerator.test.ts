@@ -99,12 +99,17 @@ describe('BandGenerator', () => {
     });
 
     it('should generate bands with specified difficulty', () => {
-      const easyBands = bandGenerator.generateBands(5, 1);
-      const hardBands = bandGenerator.generateBands(5, 5);
-      
-      const avgEasyPop = easyBands.reduce((sum, b) => sum + b.popularity, 0) / 5;
-      const avgHardPop = hardBands.reduce((sum, b) => sum + b.popularity, 0) / 5;
-      
+      // Popularity is randomInRange(20, 60) plus a random slice of the difficulty
+      // bonus, so a 5-band sample's means overlap often enough that this failed
+      // roughly one run in four. The claim is about the DISTRIBUTION, so sample
+      // enough of it to actually test that rather than the RNG's mood.
+      const N = 60;
+      const easyBands = bandGenerator.generateBands(N, 1);
+      const hardBands = bandGenerator.generateBands(N, 5);
+
+      const avgEasyPop = easyBands.reduce((sum, b) => sum + b.popularity, 0) / N;
+      const avgHardPop = hardBands.reduce((sum, b) => sum + b.popularity, 0) / N;
+
       expect(avgHardPop).toBeGreaterThan(avgEasyPop);
     });
 

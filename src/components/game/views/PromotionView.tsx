@@ -1,6 +1,14 @@
 import React, { useState } from 'react';
 import { useGameStore } from '@stores/gameStore';
-import { showPromotionSystem, PromotionType, PROMOTION_ACTIVITIES } from '@game/mechanics/ShowPromotionSystem';
+import {
+  showPromotionSystem,
+  PromotionType,
+  PROMOTION_ACTIVITIES,
+  promotionCost,
+  promotionStress,
+  promoBudgetFor,
+  promosUsed,
+} from '@game/mechanics/ShowPromotionSystem';
 import { captureRuntimeSnapshot } from '@game/persistence/runtimeSnapshot';
 import { haptics } from '@utils/mobile';
 import { Megaphone, Radio, Globe, Users, TrendingUp, Clock, Star, Handshake } from 'lucide-react';
@@ -24,8 +32,10 @@ export const PromotionView: React.FC<PromotionViewProps> = ({ onNavigate }) => {
     const activity = PROMOTION_ACTIVITIES[promotionType];
     if (!activity) return;
 
-    // Check if player can afford it
-    if (money < activity.cost) {
+    // Priced for the room, same helper the system charges — never the list price.
+    const show = scheduledShows.find((s) => s.id === showId);
+    const venue = show ? venues.find((v) => v.id === show.venueId) : undefined;
+    if (money < promotionCost(activity, venue)) {
       haptics.error();
       return;
     }
@@ -42,6 +52,11 @@ export const PromotionView: React.FC<PromotionViewProps> = ({ onNavigate }) => {
   };
 
   const selectedShow = scheduledShows.find(s => s.id === selectedShowId);
+  // A promo is priced for the room it's promoting, and a show can only take one
+  // push per turn it's been on the calendar — both have to be visible here or the
+  // card lies about what the button does.
+  const selectedVenue = selectedShow ? venues.find((v) => v.id === selectedShow.venueId) : undefined;
+  const promoLeft = selectedShow ? promoBudgetFor(selectedShow) - promosUsed(selectedShow) : 0;
   const promotionReport = selectedShowId ? showPromotionSystem.getPromotionReport(selectedShowId) : null;
 
   const getPromotionIcon = (type: PromotionType) => {
@@ -312,6 +327,17 @@ export const PromotionView: React.FC<PromotionViewProps> = ({ onNavigate }) => {
                   margin: '0 0 8px 2px'
                 }}>Promotion Activities</h3>
 
+                {/* You can only work a show for as long as it's on the calendar —
+                    the number the Book screen's lead-time selector was buying. */}
+                <div className="snes-panel-inset" style={{ padding: '8px 10px', marginBottom: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+                  <span className="snes-pixel" style={{ fontSize: '11px', color: promoLeft > 0 ? 'var(--snes-cyan)' : 'var(--snes-red)', letterSpacing: 0 }}>
+                    Pushes left {promoLeft}/{promoBudgetFor(selectedShow)}
+                  </span>
+                  <span style={{ fontSize: '10px', color: 'var(--snes-ink-mute)' }}>
+                    {promoLeft > 0 ? 'priced for this room' : 'nothing more to do but wait'}
+                  </span>
+                </div>
+
                 {/* Active Promotions */}
                 {promotionReport.activePromotions.length > 0 && (
                   <div className="snes-panel-inset" style={{
@@ -354,7 +380,9 @@ export const PromotionView: React.FC<PromotionViewProps> = ({ onNavigate }) => {
                   {Object.entries(PROMOTION_ACTIVITIES).map(([type, activity]) => {
                     const promotionType = type as PromotionType;
                     const isActive = promotionReport.activePromotions.includes(promotionType);
-                    const canAfford = money >= activity.cost;
+                    const cost = promotionCost(activity, selectedVenue);
+                    const stress = promotionStress(activity);
+                    const canAfford = money >= cost && promoLeft > 0;
                     const meetsRequirements =
                       (!activity.requiresConnections || connections > 0) &&
                       (!activity.requiresReputation || reputation >= activity.requiresReputation);
@@ -427,7 +455,7 @@ export const PromotionView: React.FC<PromotionViewProps> = ({ onNavigate }) => {
                                 gap: '4px'
                               }}>
                                 <PixelIcon name="money" size={11} />
-                                {activity.cost}
+                                {cost}
                               </span>
                               {activity.requiresConnections && (
                                 <span className="snes-pixel" style={{
@@ -477,6 +505,11 @@ export const PromotionView: React.FC<PromotionViewProps> = ({ onNavigate }) => {
                               )}
                               {(activity.fansGained ?? 0) > 0 && (
                                 <span>+{activity.fansGained} fans</span>
+                              )}
+                              {/* The free ones aren't free — you're doing the
+                                  legwork, and it comes out of you. */}
+                              {stress > 0 && (
+                                <span style={{ color: 'var(--snes-red)' }}>+{stress} stress</span>
                               )}
                             </div>
                           </div>
