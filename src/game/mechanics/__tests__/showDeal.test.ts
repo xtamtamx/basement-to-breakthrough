@@ -36,6 +36,8 @@ import {
   doorDealRefusal,
   doorDealRoomRefusal,
   GUARANTEE_FLOOR,
+  BILL_POSITION_SHARE,
+  billPositionShare,
   PROMOTER_CUT,
   doorSplitCost,
   DEPOSIT_POPULARITY_THRESHOLD,
@@ -718,5 +720,56 @@ describe('a guarantee is quoted for the room', () => {
     expect(big).toBeGreaterThan(small);
     // Under the threshold nobody asks for anything, whatever the room.
     expect(bandDeposit(DEPOSIT_POPULARITY_THRESHOLD - 1, false, room(300))).toBe(0);
+  });
+});
+
+/**
+ * Building a bill has to pay for itself.
+ *
+ * Room-quoted guarantees nearly broke this. An extra act lifts the crowd by only
+ * +20%, so quoting every act its own full room price meant each addition needed
+ * pricePenalty × (ticket + bar) to clear GUARANTEE_PER_HEAD / 0.2 a head just to
+ * break even — measured, the third act lost $80-$181 in every bar room. Festival
+ * is won by running 18 multi-band bills, and two of the run challenges ask for
+ * bill depth, so "adding an act is a mistake" is not a balance nudge, it is the
+ * game arguing with itself. Openers are paid like openers instead.
+ */
+describe('building a bill pays for itself', () => {
+  const room = { capacity: 200, atmosphere: 80 };
+
+  it('pays an opener a fraction of a headliner, for the same act', () => {
+    const head = bandBookingFee(60, false, room, 0);
+    expect(bandBookingFee(60, false, room, 1)).toBeLessThan(head);
+    expect(bandBookingFee(60, false, room, 2)).toBeLessThan(bandBookingFee(60, false, room, 1));
+  });
+
+  it('treats slot 0 as the headliner and clamps anything past the bill', () => {
+    expect(billPositionShare(0)).toBe(1);
+    expect(billPositionShare(-3)).toBe(1); // garbage index can't pay MORE than the headliner
+    expect(billPositionShare(9)).toBe(BILL_POSITION_SHARE[BILL_POSITION_SHARE.length - 1]);
+  });
+
+  it('keeps every extra act cheaper than the crowd it brings', () => {
+    // The actual regression guard, in the resolver's own terms: an act at slot n
+    // costs its share of the quote, and brings +20% of the bill's crowd. If a
+    // marginal act ever costs more than it grosses at a fair door, deep bills
+    // become a trap again.
+    const BILL_ATTENDANCE_STEP = 0.2;
+    for (const cap of [30, 90, 200, 500]) {
+      for (const price of [10, 15, 25]) {
+        const v = { capacity: cap, atmosphere: 80 };
+        const soloHeads = expectedDraw(60, v);
+        for (const slot of [1, 2]) {
+          const marginalFee = bandBookingFee(60, false, v, slot);
+          // Deliberately pessimistic: no bar, and the crowd step is taken off the
+          // SOLO draw rather than the fuller bill's.
+          const marginalGross = BILL_ATTENDANCE_STEP * soloHeads * price;
+          expect(
+            marginalGross,
+            `slot ${slot} in a ${cap}-cap room at $${price} costs more than it brings`,
+          ).toBeGreaterThan(marginalFee);
+        }
+      }
+    }
   });
 });

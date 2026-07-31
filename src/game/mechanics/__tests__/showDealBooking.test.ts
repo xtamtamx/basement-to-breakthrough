@@ -74,3 +74,54 @@ describe('scheduleShow settles the terms', () => {
     expect(booked.bookingDeposit).toBe(spent);
   });
 });
+
+/**
+ * A booked show remembers the room it was quoted against.
+ *
+ * Guarantees are priced off the venue's capacity and atmosphere, and the venue
+ * upgrade shop sits on the booking screen itself — so without a frozen quote,
+ * buying "+20 capacity" after booking would silently re-price a show the player
+ * already agreed terms on (measured: a $64 basement fee becoming $99).
+ */
+describe('the quoted room is frozen at booking', () => {
+  beforeEach(async () => {
+    useGameStore.getState().resetGame();
+    turnResolutionEngine.reset();
+    await useGameStore.getState().loadInitialGameData();
+    useGameStore.setState({ money: 100000, reputation: 0 });
+  });
+
+  afterEach(() => {
+    turnResolutionEngine.reset();
+  });
+
+  it('records the room as it stood, and does not follow a later upgrade', () => {
+    const s = useGameStore.getState();
+    const venue = s.venues[0];
+    const band = s.allBands.find((b) => s.rosterBandIds.includes(b.id))!;
+    s.scheduleShow(
+      {
+        id: 'quoted-room-test',
+        venueId: venue.id,
+        bandId: band.id,
+        lineup: [band.id],
+        ticketPrice: 15,
+        date: new Date(),
+        status: 'SCHEDULED',
+        revenue: 0,
+      },
+      2,
+    );
+    const booked = useGameStore.getState().scheduledShows.at(-1)!;
+    expect(booked.quotedRoom).toEqual({ capacity: venue.capacity, atmosphere: venue.atmosphere });
+
+    // Grow the room the way a venue upgrade does.
+    useGameStore.setState({
+      venues: useGameStore
+        .getState()
+        .venues.map((v) => (v.id === venue.id ? { ...v, capacity: v.capacity + 40 } : v)),
+    });
+    const after = useGameStore.getState().scheduledShows.at(-1)!;
+    expect(after.quotedRoom!.capacity).toBe(venue.capacity); // the deal is the deal
+  });
+});

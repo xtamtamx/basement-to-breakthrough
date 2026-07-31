@@ -824,6 +824,10 @@ export class TurnResolutionEngine {
     // share of what walks in). Shows written before the deal existed were all
     // guarantees, so that is what an absent field means.
     const deal: ShowDeal = show.deal ?? 'guarantee';
+    // Fees were quoted against the room as it stood at booking. Buying an upgrade
+    // afterwards grows the live venue, and re-reading it here would quietly charge
+    // more than the player agreed to. Older shows have no quote and use the room.
+    const quotedRoom = show.quotedRoom ?? venue;
 
     // --- Scene politics: faction standing + bill chemistry -------------------
     // Hydrate the stateless faction calculator from the persisted store standings,
@@ -987,10 +991,12 @@ export class TurnResolutionEngine {
       deal === 'door'
         ? 0
         : allShowBands.reduce(
-            (sum, b) =>
+            // allShowBands is headliner-first, so the index IS the slot on the
+            // bill — and openers are paid like openers.
+            (sum, b, billPosition) =>
               sum +
               difficultySystem.getScaledBandCost(
-                bandBookingFee(b.popularity, store.rosterBandIds.includes(b.id), venue) *
+                bandBookingFee(b.popularity, store.rosterBandIds.includes(b.id), quotedRoom, billPosition) *
                   bandResponseMult(b, store.diyPoints, store.reputation) *
                   traitFeeMult(b),
               ),

@@ -698,8 +698,9 @@ export const useGameStore = create<GameStore>()(
           deal === 'door' || !venue
             ? 0
             : billBands.reduce(
-                (sum, b) =>
-                  sum + bandDeposit(b.popularity, bookingState.rosterBandIds.includes(b.id), venue),
+                (sum, b, billPosition) =>
+                  sum +
+                  bandDeposit(b.popularity, bookingState.rosterBandIds.includes(b.id), venue, billPosition),
                 0,
               );
         const deposit = rentDeposit + bandDepositSum;
@@ -711,7 +712,14 @@ export const useGameStore = create<GameStore>()(
           currentMoney - clamp(currentMoney - deposit, CONSTRAINTS.MIN_MONEY, CONSTRAINTS.MAX_MONEY);
         // Absolute turn this plays on, so the UI can show a reactive countdown
         // (scheduledTurn - currentRound) without polling the promotion singleton.
-        const bookedShow = { ...show, deal, bookingDeposit: actualDeposit, scheduledTurn: get().currentRound + turns };
+        const bookedShow = {
+          ...show,
+          deal,
+          // Freeze the room the fee was quoted against — the deal is the deal.
+          quotedRoom: venue ? { capacity: venue.capacity, atmosphere: venue.atmosphere } : undefined,
+          bookingDeposit: actualDeposit,
+          scheduledTurn: get().currentRound + turns,
+        };
 
         showPromotionSystem.scheduleShow(bookedShow, turns);
 

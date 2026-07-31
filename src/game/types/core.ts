@@ -516,6 +516,12 @@ export interface Show {
    *  gate). Optional so saves written before the deal existed read as 'guarantee',
    *  which is exactly what they were. See bandEconomy. */
   deal?: ShowDeal;
+  /** The room as it was when the fee was quoted. Guarantees are priced off the
+   *  venue's capacity/atmosphere, so upgrading the room after booking would
+   *  otherwise silently re-price a show the player already agreed terms on.
+   *  Absent on shows booked before this existed — those fall back to the live
+   *  venue, exactly as they always resolved. */
+  quotedRoom?: { capacity: number; atmosphere: number };
   /** Absolute turn the show plays on (booking round + lead time). Lets the UI show
    *  a reactive countdown — "in (scheduledTurn - currentRound) turns" — off the
    *  store without reaching into the promotion-system singleton. */

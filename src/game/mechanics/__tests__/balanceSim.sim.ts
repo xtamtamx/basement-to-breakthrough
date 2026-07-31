@@ -18,6 +18,7 @@ import { runManager } from '../RunManager';
 import { dayJobSystem } from '../DayJobSystem';
 import { synergyManager } from '../SynergyManager';
 import { rollTravelOffer } from '@game/world/travelModes';
+import { bandBookingFee } from '../bandEconomy';
 import { TOURING_ENABLED } from '@/config/featureFlags';
 
 // Greedy "keep the best instinct" rank for milestone replacement.
@@ -115,11 +116,22 @@ function bookBestShow(): void {
       v.rent <= rentCeiling,
   );
   if (venues.length === 0) return;
-  // Pick the best profit margin (capacity is the draw proxy, rent the cost) —
-  // a competent player banks money, not just chases the biggest room.
-  const venue = [...venues].sort(
-    (a, b) => b.capacity * 4 - b.rent - (a.capacity * 4 - a.rent),
-  )[0];
+  // Pick the best profit margin. Capacity is the draw proxy AND — since
+  // guarantees became room-quoted — a fee multiplier, so scoring a room on
+  // `capacity * 4 - rent` systematically over-rates the big ones and models a
+  // player the economy would bankrupt. Score the actual bill instead: what this
+  // lineup grosses in this room, less its rent and its real quoted fees.
+  const scoreVenue = (v: (typeof venues)[number]): number => {
+    const heads = v.capacity * (bands.reduce((t, b) => t + b.popularity, 0) / bands.length / 100)
+      * Math.min(1.4, v.atmosphere / 100);
+    const gross = heads * (12 + (v.hasBar ? 5 : 0));
+    const fees = bands.reduce(
+      (t, b, i) => t + bandBookingFee(b.popularity, s.rosterBandIds.includes(b.id), v, i),
+      0,
+    );
+    return gross - v.rent - fees;
+  };
+  const venue = [...venues].sort((a, b) => scoreVenue(b) - scoreVenue(a))[0];
 
   const show: Show = {
     id: `sim-${showSeq++}`,

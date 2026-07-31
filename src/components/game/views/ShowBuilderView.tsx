@@ -14,6 +14,7 @@ import {
   doorDealRefusal,
   doorDealRoomRefusal,
   doorSplitCost,
+  BILL_POSITION_SHARE,
   DOOR_SPLIT_BAND_SHARE,
   DOOR_DEAL_DIY_POINTS,
 } from '@game/mechanics/bandEconomy';
@@ -143,10 +144,10 @@ export const ShowBuilderView: React.FC = () => {
   // Who on this bill will play for a percentage. An act big enough to want a
   // deposit wants the number in writing instead — unless it's signed to you, it's
   // a purist who'd play for gas money, or your name is good enough to bet on.
-  // Rooms above the handshake ceiling book on contracts, and that is the rule
-  // holding the whole deal up — a big room's gate dwarfs its guarantee, so 60%
-  // of it is a trap, and the waived deposit would otherwise be a way to book
-  // far above your weight for nothing.
+  // Rooms above the handshake ceiling book on contracts. That ceiling is what
+  // holds the whole deal up: a door deal waives the booking deposit, so without
+  // it the split is a way to book far above your weight for nothing up front.
+  // See DOOR_DEAL_ROOM_CAP for the sim numbers behind the limit.
   const doorRefusals = [
     ...(selectedVenue ? [doorDealRoomRefusal(selectedVenue)] : []),
     ...selectedBands.map((b) => doorDealRefusal(b, { isSigned: isSigned(b.id), reputation })),
@@ -165,10 +166,17 @@ export const ShowBuilderView: React.FC = () => {
   // reputation and by any unconditional fee trait (Works For Gas Money). Same
   // formula the resolver charges, factor for factor — the discount has to be
   // visible where you book.
+  // Where this act sits on the bill, which is what it gets paid for. An act
+  // already on the bill is priced at its slot; one you haven't picked yet is
+  // priced at the slot it WOULD take, so the list shows what adding it costs.
+  const billPositionOf = (b: Band) => {
+    const i = selectedBands.findIndex((x) => x.id === b.id);
+    return i >= 0 ? i : Math.min(selectedBands.length, BILL_POSITION_SHARE.length - 1);
+  };
   const bandFee = (b: Band) =>
     feeRoom
       ? difficultySystem.getScaledBandCost(
-          bandBookingFee(b.popularity, isSigned(b.id), feeRoom) *
+          bandBookingFee(b.popularity, isSigned(b.id), feeRoom, billPositionOf(b)) *
             bandResponseMult(b, diyPoints, reputation) *
             traitFeeMult(b),
         )
@@ -378,7 +386,8 @@ export const ShowBuilderView: React.FC = () => {
     deal === 'door'
       ? 0
       : selectedBands.reduce(
-          (sum, b) => sum + (selectedVenue ? bandDeposit(b.popularity, isSigned(b.id), selectedVenue) : 0),
+          (sum, b, billPosition) =>
+            sum + (selectedVenue ? bandDeposit(b.popularity, isSigned(b.id), selectedVenue, billPosition) : 0),
           0,
         );
   const upFrontDue = venueRentDeposit + bandDepositTotal;
@@ -612,8 +621,8 @@ export const ShowBuilderView: React.FC = () => {
                             ) : (
                               <span>GUEST · {feesAreIndicative ? 'from ' : ''}${bandFee(band)} guarantee</span>
                             )}
-                            {deal !== 'door' && selectedVenue && bandDeposit(band.popularity, isSigned(band.id), selectedVenue) > 0 && (
-                              <span style={{ color: 'var(--snes-purple)' }}>· ${bandDeposit(band.popularity, isSigned(band.id), selectedVenue)} deposit up front</span>
+                            {deal !== 'door' && selectedVenue && bandDeposit(band.popularity, isSigned(band.id), selectedVenue, billPositionOf(band)) > 0 && (
+                              <span style={{ color: 'var(--snes-purple)' }}>· ${bandDeposit(band.popularity, isSigned(band.id), selectedVenue, billPositionOf(band))} held at booking</span>
                             )}
                           </div>
                         )}

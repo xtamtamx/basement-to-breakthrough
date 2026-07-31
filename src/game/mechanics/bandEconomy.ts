@@ -38,7 +38,7 @@ export function expectedDraw(
 /** Nobody plays for nothing — gas money and a couple of drink tickets. */
 export const GUARANTEE_FLOOR = 10;
 /** What an act is worth per head it can pull into the room you're offering. */
-export const GUARANTEE_PER_HEAD = 3;
+export const GUARANTEE_PER_HEAD = 4;
 
 /**
  * Base appearance fee, QUOTED FOR THE ROOM.
@@ -61,14 +61,40 @@ export function bandGuarantee(
   return Math.round(GUARANTEE_FLOOR + GUARANTEE_PER_HEAD * expectedDraw(popularity, venue));
 }
 
-/** What the promoter actually pays this act, before difficulty scaling: the full
- *  guarantee for a guest, only the (1 - cut) share for a signed act. */
+/**
+ * What each slot on the bill is worth, headliner first.
+ *
+ * Nobody pays an opener headliner money — they play first, to a half-empty room,
+ * for a fraction and a place on the flyer. Quoting every act its own full room
+ * price also broke the arithmetic of building a bill: an extra act only lifts the
+ * crowd by BILL_ATTENDANCE_STEP (+20%), so at a full quote each addition needed
+ * pricePenalty × (ticket + bar) to clear GUARANTEE_PER_HEAD / 0.2 = $15 a head
+ * just to break even — measured, the third act lost $80-$181 in every bar room.
+ * That is Festival's entire win condition ("run 18 multi-band bills") and the
+ * bill-depth challenges, priced as a mistake.
+ */
+export const BILL_POSITION_SHARE = [1, 0.4, 0.25];
+
+/** The share of its quote an act takes at this slot on the bill (0 = headliner). */
+export function billPositionShare(billPosition: number): number {
+  const i = Math.max(0, Math.floor(billPosition));
+  return BILL_POSITION_SHARE[Math.min(i, BILL_POSITION_SHARE.length - 1)];
+}
+
+/** What the promoter actually pays this act, before difficulty scaling: the room
+ *  quote, cut to its slot on the bill, and cut again to the (1 - cut) share if the
+ *  act is signed to your roster. */
 export function bandBookingFee(
   popularity: number,
   isSigned: boolean,
   venue: { capacity: number; atmosphere: number },
+  billPosition = 0,
 ): number {
-  return bandGuarantee(popularity, venue) * (isSigned ? 1 - PROMOTER_CUT : 1);
+  return (
+    bandGuarantee(popularity, venue) *
+    billPositionShare(billPosition) *
+    (isSigned ? 1 - PROMOTER_CUT : 1)
+  );
 }
 
 /** Popularity at/above which an act is a "big draw" that won't play on a handshake:
@@ -86,9 +112,10 @@ export function bandDeposit(
   popularity: number,
   isSigned: boolean,
   venue: { capacity: number; atmosphere: number },
+  billPosition = 0,
 ): number {
   if (popularity < DEPOSIT_POPULARITY_THRESHOLD) return 0;
-  return Math.round(bandBookingFee(popularity, isSigned, venue) * DEPOSIT_FRACTION);
+  return Math.round(bandBookingFee(popularity, isSigned, venue, billPosition) * DEPOSIT_FRACTION);
 }
 
 /* ────────────────────────── guarantee vs. the door ──────────────────────────
