@@ -940,6 +940,16 @@ export interface ObjectiveRunStats {
   maxVenueCapacity: number;
   usedDayJob: boolean;
   reachedTurn: number;
+  /** Shows played in a room that admits minors — the all-ages half of the ladder. */
+  allAgesShows: number;
+  /** Shows with 2+ acts on the bill. */
+  multiBandShows: number;
+  /** Shows in a room of 90 cap or under (basement / hall / rec centre). */
+  smallRoomShows: number;
+  /** Biggest bill fielded in the run, by act count. */
+  maxBillSize: number;
+  /** Sticky: the run ever charged over the fair door price. */
+  gouged: boolean;
 }
 
 export interface RunObjectives {

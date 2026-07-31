@@ -16,6 +16,16 @@ export interface ObjectiveTurnDelta {
   maxVenueCapacity: number;
   usedDayJob: boolean;
   turn: number;
+  /** Shows played in a room that admits minors. */
+  allAgesShows: number;
+  /** Shows with 2+ acts on the bill. */
+  multiBandShows: number;
+  /** Shows in a room of 90 cap or under. */
+  smallRoomShows: number;
+  /** Biggest bill fielded this turn (act count). */
+  maxBillSize: number;
+  /** True if ANY show this turn charged over the fair door price. */
+  gouged: boolean;
 }
 
 const emptyStats = (): ObjectiveRunStats => ({
@@ -27,6 +37,11 @@ const emptyStats = (): ObjectiveRunStats => ({
   maxVenueCapacity: 0,
   usedDayJob: false,
   reachedTurn: 0,
+  allAgesShows: 0,
+  multiBandShows: 0,
+  smallRoomShows: 0,
+  maxBillSize: 0,
+  gouged: false,
 });
 
 /**
@@ -67,6 +82,11 @@ class ObjectiveManager {
       maxVenueCapacity: Math.max(base.stats.maxVenueCapacity, d.maxVenueCapacity),
       usedDayJob: base.stats.usedDayJob || d.usedDayJob,
       reachedTurn: Math.max(base.stats.reachedTurn, d.turn),
+      allAgesShows: base.stats.allAgesShows + d.allAgesShows,
+      multiBandShows: base.stats.multiBandShows + d.multiBandShows,
+      smallRoomShows: base.stats.smallRoomShows + d.smallRoomShows,
+      maxBillSize: Math.max(base.stats.maxBillSize, d.maxBillSize),
+      gouged: base.stats.gouged || d.gouged,
     };
     return this.evaluate({ ...base, stats }, false);
   }
@@ -111,7 +131,23 @@ class ObjectiveManager {
       case 'never_worked':
         return s.usedDayJob ? 0 : 1;
       case 'zero_disasters':
+      case 'no_incidents_five':
         return s.totalShows;
+      case 'sellout_one':
+        return s.selloutShows;
+      case 'combos_three':
+        return s.combosFired;
+      case 'small_room_four':
+        return s.smallRoomShows;
+      case 'all_ages_three':
+      case 'all_ages_eight':
+        return s.allAgesShows;
+      case 'bills_six':
+        return s.multiBandShows;
+      case 'full_bill':
+        return s.maxBillSize;
+      case 'never_gouged':
+        return s.gouged ? 0 : 1;
       default:
         return 0;
     }
@@ -124,6 +160,31 @@ class ObjectiveManager {
         return !s.usedDayJob;
       case 'zero_disasters':
         return s.totalShows >= 10 && s.showsWithIncident === 0;
+      case 'no_incidents_five':
+        return s.totalShows >= 5 && s.showsWithIncident === 0;
+      case 'never_gouged':
+        // Sticky flag: one $20 door anywhere in the run loses it.
+        return !s.gouged;
+      default:
+        return false;
+    }
+  }
+
+  /**
+   * True when an avoidance objective is already lost. finalizeOnly goals can't
+   * complete mid-run, so without this the UI shows them sitting at a full bar as
+   * if they were won — or at an unchanged bar long after they were blown.
+   */
+  isBlown(id: string, stats: ObjectiveRunStats | undefined): boolean {
+    if (!stats) return false;
+    switch (id) {
+      case 'never_worked':
+        return stats.usedDayJob;
+      case 'never_gouged':
+        return stats.gouged;
+      case 'zero_disasters':
+      case 'no_incidents_five':
+        return stats.showsWithIncident > 0;
       default:
         return false;
     }

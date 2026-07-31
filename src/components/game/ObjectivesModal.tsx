@@ -16,6 +16,7 @@ interface ObjectivesModalProps {
 export const ObjectivesModal: React.FC<ObjectivesModalProps> = ({ onClose }) => {
   const runObjectives = useGameStore((s) => s.runObjectives);
   const progress = runObjectives?.progress ?? [];
+  const stats = runObjectives?.stats;
 
   return (
     <SnesModal
@@ -44,8 +45,14 @@ export const ObjectivesModal: React.FC<ObjectivesModalProps> = ({ onClose }) => 
             {progress.map((p) => {
               const def = objectiveManager.getDefinition(p.id);
               if (!def) return null;
-              const pct = Math.min(100, Math.round((p.current / p.target) * 100));
-              const accent = p.completed ? 'var(--snes-green)' : 'var(--snes-purple)';
+              const blown = !p.completed && objectiveManager.isBlown(p.id, stats);
+              // A blown avoidance goal must not sit at a hopeful full bar.
+              const pct = blown ? 100 : Math.min(100, Math.round((p.current / p.target) * 100));
+              const accent = p.completed
+                ? 'var(--snes-green)'
+                : blown
+                  ? 'var(--snes-red)'
+                  : 'var(--snes-purple)';
               return (
                 <div key={p.id} className="snes-panel-inset" style={{ padding: '12px', opacity: p.completed ? 1 : 0.96 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', gap: '10px', marginBottom: '6px' }}>
@@ -60,9 +67,12 @@ export const ObjectivesModal: React.FC<ObjectivesModalProps> = ({ onClose }) => 
                   <div className="snes-progress" style={{ height: '8px' }}>
                     <div className="snes-progress__fill" style={{ width: `${pct}%`, background: accent }} />
                   </div>
-                  {!def.finalizeOnly && !p.completed && (
-                    <div style={{ fontSize: '11px', color: 'var(--snes-ink-mute)', marginTop: '4px', textAlign: 'right' }}>
-                      {p.current}/{p.target}
+                  {!p.completed && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px', fontSize: '11px', color: blown ? 'var(--snes-red)' : 'var(--snes-ink-mute)', marginTop: '4px' }}>
+                      <span>
+                        {def.finalizeOnly && (blown ? 'Blown — no coming back from it' : 'Still clean — settles at run’s end')}
+                      </span>
+                      <span style={{ flexShrink: 0 }}>{def.finalizeOnly && p.target <= 1 ? '' : `${Math.min(p.current, p.target)}/${p.target}`}</span>
                     </div>
                   )}
                 </div>

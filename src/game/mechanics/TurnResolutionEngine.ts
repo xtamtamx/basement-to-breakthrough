@@ -15,7 +15,7 @@ import { synergyManager, Synergy, SynergyTriggerResult } from './SynergyManager'
 import { synergyEngine } from './SynergyEngine';
 import { eventCardSystem } from './EventCardSystem';
 import { dayJobSystem } from './DayJobSystem';
-import { difficultySystem, gougeReputationMultiplier } from './DifficultySystem';
+import { difficultySystem, gougeReputationMultiplier, FAIR_DOOR_PRICE } from './DifficultySystem';
 import { showPromotionSystem } from './ShowPromotionSystem';
 import { venueUpgradeSystem } from './VenueUpgradeSystem';
 import { runManager } from './RunManager';
@@ -204,6 +204,11 @@ export class TurnResolutionEngine {
       shows: 0,
       incidents: 0,
       maxVenueCapacity: 0,
+      allAgesShows: 0,
+      multiBandShows: 0,
+      smallRoomShows: 0,
+      maxBillSize: 0,
+      gouged: false,
     };
     // Resolved, non-cancelled shows with 2+ acts — feeds RunStats.billsCreated
     // (Festival's 'bills' win condition and the run score's bill count).
@@ -271,7 +276,15 @@ export class TurnResolutionEngine {
       objDelta.turnIncome += result.revenue;
       objDelta.combosFired += result.venueSynergies?.length ?? 0;
       if (result.incidentOccurred) objDelta.incidents += 1;
+      // Challenge fodder for the systems the ladder actually turns on: who you
+      // let in, how deep the bill ran, how small the room stayed, and whether you
+      // kept the door fair (FAIR_DOOR_PRICE — same threshold the cred rule uses).
+      objDelta.maxBillSize = Math.max(objDelta.maxBillSize, actCount);
+      if (actCount >= 2) objDelta.multiBandShows += 1;
+      if ((scheduledShow.ticketPrice ?? 0) > FAIR_DOOR_PRICE) objDelta.gouged = true;
       if (venue) {
+        if (venue.allowsAllAges) objDelta.allAgesShows += 1;
+        if (venue.capacity <= 90) objDelta.smallRoomShows += 1;
         objDelta.maxVenueCapacity = Math.max(objDelta.maxVenueCapacity, venue.capacity);
         if (result.attendance >= venue.capacity * 0.9) objDelta.selloutShows += 1;
       }
