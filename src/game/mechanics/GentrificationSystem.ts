@@ -22,7 +22,8 @@ const SCENE_GROWTH = 2.2; // scene strength a DIY show builds in its district
 const REFERENCE_RATE = 0.05; // difficulty rate that maps to "normal" creep
 const MAX_RENT_CREEP = 0.6; // up to +60% rent at full gentrification
 const MAX_ATTENDANCE_PENALTY = 0.25; // up to -25% turnout at full gentrification
-const ATTENDANCE_FREE_BELOW = 40; // no turnout penalty below this level
+/** No turnout penalty below this level — the point the creep starts to bite. */
+export const ATTENDANCE_FREE_BELOW = 40;
 
 export interface GentrificationUpdate {
   notices: string[]; // threshold-crossing flavor for the turn summary

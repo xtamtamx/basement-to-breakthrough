@@ -10,6 +10,7 @@ import {
   promosUsed,
 } from '@game/mechanics/ShowPromotionSystem';
 import { captureRuntimeSnapshot } from '@game/persistence/runtimeSnapshot';
+import { dayJobSystem } from '@game/mechanics/DayJobSystem';
 import { haptics } from '@utils/mobile';
 import { Megaphone, Radio, Globe, Users, TrendingUp, Clock, Star, Handshake } from 'lucide-react';
 import { PixelIcon } from '@components/ui/PixelIcon';
@@ -56,7 +57,9 @@ export const PromotionView: React.FC<PromotionViewProps> = ({ onNavigate }) => {
   // push per turn it's been on the calendar — both have to be visible here or the
   // card lies about what the button does.
   const selectedVenue = selectedShow ? venues.find((v) => v.id === selectedShow.venueId) : undefined;
-  const promoLeft = selectedShow ? promoBudgetFor(selectedShow) - promosUsed(selectedShow) : 0;
+  const workingDayJob = !!dayJobSystem.getCurrentJob();
+  const promoBudget = selectedShow ? promoBudgetFor(selectedShow, { workingDayJob }) : 0;
+  const promoLeft = selectedShow ? promoBudget - promosUsed(selectedShow) : 0;
   const promotionReport = selectedShowId ? showPromotionSystem.getPromotionReport(selectedShowId) : null;
 
   const getPromotionIcon = (type: PromotionType) => {
@@ -331,10 +334,14 @@ export const PromotionView: React.FC<PromotionViewProps> = ({ onNavigate }) => {
                     the number the Book screen's lead-time selector was buying. */}
                 <div className="snes-panel-inset" style={{ padding: '8px 10px', marginBottom: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
                   <span className="snes-pixel" style={{ fontSize: '11px', color: promoLeft > 0 ? 'var(--snes-cyan)' : 'var(--snes-red)', letterSpacing: 0 }}>
-                    Pushes left {promoLeft}/{promoBudgetFor(selectedShow)}
+                    Pushes left {promoLeft}/{promoBudget}
                   </span>
                   <span style={{ fontSize: '10px', color: 'var(--snes-ink-mute)' }}>
-                    {promoLeft > 0 ? 'priced for this room' : 'nothing more to do but wait'}
+                    {workingDayJob
+                      ? 'the day job is taking a night off you'
+                      : promoLeft > 0
+                        ? 'priced for this room'
+                        : 'nothing more to do but wait'}
                   </span>
                 </div>
 

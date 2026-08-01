@@ -3,6 +3,7 @@ import { useGameStore } from '@stores/gameStore';
 import { PixelCityMap } from '@/components/map/PixelCityMap';
 import { haptics } from '@utils/mobile';
 import { DistrictViewBasic } from '../DistrictViewBasic';
+import { ATTENDANCE_FREE_BELOW } from '@game/mechanics/GentrificationSystem';
 import { DistrictInfo } from '@/game/generation/CityGenerator';
 import { VenueUpgradeModal } from '@/components/venue/VenueUpgradeModal';
 import { SnesModal } from '@/components/ui/SnesModal';
@@ -57,6 +58,7 @@ export const CityView: React.FC = () => {
   // rentMultiplier track per-turn gentrification drift, rather than the frozen
   // snapshot captured into selectedDistrictInfo when the district was selected.
   const liveDistrict = gameStore.districts.find((d) => d.id === selectedDistrictId);
+  const gentLevel = Math.round(liveDistrict?.gentrificationLevel ?? 0);
 
   const handleZoomOut = () => {
     setViewMode('overview');
@@ -114,6 +116,21 @@ export const CityView: React.FC = () => {
                 <span className="snes-pixel" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                   <PixelIcon name="money" size={12} /> Rent {liveDistrict?.rentMultiplier ?? selectedDistrictInfo?.rentMultiplier}x
                 </span>
+                {/* The stat that has been quietly driving the Rent number beside
+                    it. Turns red past the point where it also starts thinning
+                    the crowd, so a district going bad is visible before the
+                    turnout does it for you. */}
+                <span
+                  className="snes-pixel"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    color: gentLevel >= ATTENDANCE_FREE_BELOW ? 'var(--snes-red)' : 'var(--snes-ink-dim)',
+                  }}
+                >
+                  <PixelIcon name="building" size={12} /> Condos {gentLevel}%
+                </span>
               </button>
             </div>
             <button
@@ -132,7 +149,7 @@ export const CityView: React.FC = () => {
           </div>
           {showDistrictStatHelp && (
             <p style={{ fontSize: '11px', color: 'var(--snes-ink-dim)', margin: '4px 0 0', lineHeight: 1.5 }}>
-              Scene = how established the underground is here — grows as you throw DIY shows, bringing bigger built-in crowds and new unlocks. Rent = how pricey venues are vs. the city baseline.
+              Scene = how established the underground is here — grows as you throw DIY shows, bringing bigger built-in crowds and new unlocks. Rent = how pricey venues are vs. the city baseline. Condos = how far gentrification has got: it pushes Rent up the whole way, and past {ATTENDANCE_FREE_BELOW}% it starts thinning the crowds too.
             </p>
           )}
         </div>

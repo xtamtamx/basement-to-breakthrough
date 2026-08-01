@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { gentrificationSystem } from '../GentrificationSystem';
+import { gentrificationSystem, ATTENDANCE_FREE_BELOW } from '../GentrificationSystem';
 import { useGameStore } from '@stores/gameStore';
 import { difficultySystem } from '../DifficultySystem';
 
@@ -172,5 +172,34 @@ describe('GentrificationSystem', () => {
       // decay would take 56 → 54.5, but the floor holds it at 55.
       expect(districts.find((d) => d.id === 'downtown')!.sceneStrength).toBe(55);
     });
+  });
+});
+
+/**
+ * The district panel shows "Condos N%" and turns it red at ATTENDANCE_FREE_BELOW.
+ * That number has to be the one the mechanic actually uses, or the UI is drawing
+ * a line the game does not have.
+ */
+describe('the level the panel warns about is the level that bites', () => {
+  const atLevel = (level: number) => {
+    vi.mocked(useGameStore).getState = vi
+      .fn()
+      .mockReturnValue({ districts: [{ id: 'gent-test', gentrificationLevel: level }] });
+  };
+
+  it('costs no turnout right up to the threshold, and some past it', () => {
+    atLevel(ATTENDANCE_FREE_BELOW - 1);
+    expect(gentrificationSystem.getAttendanceMultiplier('gent-test')).toBe(1);
+    atLevel(ATTENDANCE_FREE_BELOW);
+    expect(gentrificationSystem.getAttendanceMultiplier('gent-test')).toBe(1);
+    atLevel(ATTENDANCE_FREE_BELOW + 20);
+    expect(gentrificationSystem.getAttendanceMultiplier('gent-test')).toBeLessThan(1);
+  });
+
+  it('pushes rent up from the very first condo, which is why the panel shows it', () => {
+    atLevel(0);
+    const clean = gentrificationSystem.getRentMultiplier('gent-test');
+    atLevel(30); // below the turnout threshold — rent still climbs
+    expect(gentrificationSystem.getRentMultiplier('gent-test')).toBeGreaterThan(clean);
   });
 });

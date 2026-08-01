@@ -14,6 +14,7 @@ import {
   promosUsed,
   MAX_PROMO_EFFECTIVENESS,
   PROMO_REFERENCE_CAPACITY,
+  DAY_JOB_PROMO_COST,
 } from '../ShowPromotionSystem';
 
 /**
@@ -62,5 +63,26 @@ describe('promotion is priced, capped and bounded', () => {
     expect(promosUsed({ promotionInvestment: investment })).toBe(3);
     // A show from a save written before budgets falls back to its remaining turns.
     expect(promoBudgetFor({ turnsUntilShow: 4 })).toBe(4);
+  });
+});
+
+/**
+ * A day job used to cost only money and reputation, which made "take a shift" a
+ * purely economic decision with no bearing on the thing you're actually doing.
+ * The hours come out of promotion now — you can work a shift and still book a
+ * show, you just can't work the show as well.
+ */
+describe('a day job costs you the week', () => {
+  it('takes a push out of every show while you are employed', () => {
+    const show = { promoBudget: 3, turnsUntilShow: 3 };
+    expect(promoBudgetFor(show)).toBe(3);
+    expect(promoBudgetFor(show, { workingDayJob: true })).toBe(3 - DAY_JOB_PROMO_COST);
+  });
+
+  it('never goes negative on a show booked for tomorrow', () => {
+    // Lead time 1 minus the job leaves nothing — that IS the lesson (book
+    // further out if you're working), but it must not go below zero and start
+    // handing pushes back.
+    expect(promoBudgetFor({ promoBudget: 1, turnsUntilShow: 1 }, { workingDayJob: true })).toBe(0);
   });
 });

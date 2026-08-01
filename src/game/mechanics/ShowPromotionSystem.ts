@@ -2,6 +2,7 @@ import { useGameStore } from '@stores/gameStore';
 import { Show, Band } from '@game/types';
 import { prodLog } from '@utils/devLogger';
 import { projectBaseAttendance } from './attendanceProjection';
+import { dayJobSystem } from './DayJobSystem';
 
 export enum PromotionType {
   FLYERS = 'FLYERS',
@@ -84,8 +85,19 @@ export const MAX_PROMO_EFFECTIVENESS = 1.1;
  * five turns; book it for tomorrow and you get one shot. Without a bound, six
  * activities stacked on every show in the pipeline every turn.
  */
-export function promoBudgetFor(show: { promoBudget?: number; turnsUntilShow: number }): number {
-  return Math.max(1, show.promoBudget ?? show.turnsUntilShow);
+export const DAY_JOB_PROMO_COST = 1;
+
+export function promoBudgetFor(
+  show: { promoBudget?: number; turnsUntilShow: number },
+  opts: { workingDayJob?: boolean } = {},
+): number {
+  const lead = Math.max(1, show.promoBudget ?? show.turnsUntilShow);
+  // A day job eats the week you would have spent flyering. It used to cost only
+  // money and reputation, which made "take a job" a pure economic decision with
+  // no bearing on the thing you are actually doing — so the hours come out of
+  // promotion now. Floored at 0: you can work a shift and still book a show, you
+  // just can't work the show as well. Book further out if you're employed.
+  return Math.max(0, lead - (opts.workingDayJob ? DAY_JOB_PROMO_COST : 0));
 }
 
 /** Promotions already spent on this show. */
@@ -245,8 +257,9 @@ export class ShowPromotionSystem {
       return false;
     }
     
-    // One push per turn the show has been on the calendar.
-    if (promosUsed(show) >= promoBudgetFor(show)) {
+    // One push per turn the show has been on the calendar, less whatever your
+    // day job is taking out of the week.
+    if (promosUsed(show) >= promoBudgetFor(show, { workingDayJob: !!dayJobSystem.getCurrentJob() })) {
       return false;
     }
 
