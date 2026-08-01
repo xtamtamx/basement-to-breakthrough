@@ -1,10 +1,27 @@
-import { Faction, Band, Venue, VenueType, FactionEvent, FactionEventType, FactionModifiers, Resources } from '@game/types';
+import { Faction, Band, Venue, VenueType, FactionModifiers } from '@game/types';
 import { SATIRICAL_FACTION_DESCRIPTIONS } from '@game/data/satiricalText';
+
+/**
+ * Alignment bands, calibrated against the real roster instead of the 0-100 scale
+ * the score never reaches.
+ *
+ * calculateBandAlignment sums three weighted terms (0.3 + 0.2 + 0.2), so it tops
+ * out at 70, and across all 190 band x faction pairs it runs 16-68 centred on 54
+ * (p25 49, p75 59). The old thresholds — like above 60, dislike below 30 — were
+ * written as if the range were 0-100: "dislike" fired on ONE pair out of 190 and
+ * "like" on 17%, two thirds of which were a single faction. Standings therefore
+ * never moved, which is the whole reason the faction layer read as dead.
+ *
+ * Set at roughly the upper and lower quartiles so both branches are live and a
+ * promoter who keeps booking one kind of band drifts up with one tribe and down
+ * with another — which is the point of having tribes.
+ */
+export const FACTION_ALIGNMENT_LIKE = 56;
+export const FACTION_ALIGNMENT_DISLIKE = 52;
 
 class FactionSystem {
   private factions: Map<string, Faction> = new Map();
   private playerStandings: Map<string, number> = new Map();
-  private factionEvents: FactionEvent[] = [];
 
   constructor() {
     this.initializeFactions();
@@ -36,7 +53,7 @@ class FactionSystem {
         },
         relationships: {},
         memberBands: [],
-        controlledVenues: [],
+        controlledVenues: ['the-basement', 'the-rec-center'],
         iconColor: '#8B4513',
         traits: ['authentic', 'anti-commercial', 'community-focused']
       },
@@ -60,7 +77,7 @@ class FactionSystem {
         },
         relationships: {},
         memberBands: [],
-        controlledVenues: [],
+        controlledVenues: ['looney-burro'],
         iconColor: '#000000',
         traits: ['technical', 'elitist', 'competitive']
       },
@@ -84,7 +101,7 @@ class FactionSystem {
         },
         relationships: {},
         memberBands: [],
-        controlledVenues: [],
+        controlledVenues: ['ground-floor'],
         iconColor: '#FF69B4',
         traits: ['artistic', 'experimental', 'trendy']
       },
@@ -108,7 +125,7 @@ class FactionSystem {
         },
         relationships: {},
         memberBands: [],
-        controlledVenues: [],
+        controlledVenues: ['vfw-hall', 'the-elks-lodge'],
         iconColor: '#4B0082',
         traits: ['traditional', 'gatekeeping', 'respected']
       },
@@ -133,7 +150,7 @@ class FactionSystem {
         },
         relationships: {},
         memberBands: [],
-        controlledVenues: [],
+        controlledVenues: ['metro-bowl-lanes'],
         iconColor: '#00CED1',
         traits: ['innovative', 'crossover', 'polarizing']
       }
@@ -238,10 +255,10 @@ class FactionSystem {
       const alignment = this.calculateBandAlignment(band, factionId);
       let standingChange = 0;
 
-      if (alignment > 60) {
+      if (alignment >= FACTION_ALIGNMENT_LIKE) {
         // Faction likes this band
         standingChange = showSuccess ? 5 : -2;
-      } else if (alignment < 30) {
+      } else if (alignment <= FACTION_ALIGNMENT_DISLIKE) {
         // Faction dislikes this band
         standingChange = showSuccess ? -3 : 1;
       }
@@ -253,120 +270,8 @@ class FactionSystem {
 
       this.adjustStanding(factionId, standingChange);
     });
-
-    // Check for faction events
-    this.checkForFactionEvents();
   }
 
-
-  // Generate faction events based on current state
-  private checkForFactionEvents() {
-    const events: FactionEvent[] = [];
-
-    // Check for conflicts
-    this.factions.forEach((faction1, faction1Id) => {
-      this.factions.forEach((faction2, faction2Id) => {
-        if (faction1Id < faction2Id) { // Avoid duplicates
-          const standing1 = this.playerStandings.get(faction1Id) || 0;
-          const standing2 = this.playerStandings.get(faction2Id) || 0;
-          const relationship = faction1.relationships[faction2Id] || 0;
-
-          // Conflict event if supporting opposing factions. Dedup: this runs every
-          // show, so without a guard the same pending conflict piles up unbounded.
-          // Skip if an untriggered conflict for this exact pair already exists.
-          if (relationship < -50 && standing1 > 30 && standing2 > 30) {
-            const pending = this.factionEvents.some(
-              (e) => !e.triggered && e.id.startsWith(`conflict-${faction1Id}-${faction2Id}-`),
-            );
-            if (!pending) events.push(this.createConflictEvent(faction1, faction2));
-          }
-        }
-      });
-    });
-
-    this.factionEvents.push(...events);
-  }
-
-  private createConflictEvent(faction1: Faction, faction2: Faction): FactionEvent {
-    const factionChanges1: Record<string, number> = {
-      [faction1.id]: 20,
-      [faction2.id]: -30
-    };
-    
-    const factionChanges2: Record<string, number> = {
-      [faction1.id]: -30,
-      [faction2.id]: 20
-    };
-    
-    const factionChangesNeutral: Record<string, number> = {
-      [faction1.id]: -10,
-      [faction2.id]: -10
-    };
-
-    return {
-      id: `conflict-${faction1.id}-${faction2.id}-${Date.now()}`,
-      type: FactionEventType.CONFLICT,
-      factionId: faction1.id,
-      title: `${faction1.name} vs ${faction2.name}`,
-      description: `Tensions are rising between ${faction1.name} and ${faction2.name}. You must choose a side or try to stay neutral.`,
-      choices: [
-        {
-          id: 'side-with-1',
-          text: `Support ${faction1.name}`,
-          effects: {
-            factionChanges: factionChanges1,
-            resourceChanges: { reputation: 5 } as Partial<Resources>
-          }
-        },
-        {
-          id: 'side-with-2', 
-          text: `Support ${faction2.name}`,
-          effects: {
-            factionChanges: factionChanges2,
-            resourceChanges: { reputation: 5 } as Partial<Resources>
-          }
-        },
-        {
-          id: 'stay-neutral',
-          text: 'Try to stay neutral',
-          effects: {
-            factionChanges: factionChangesNeutral,
-            resourceChanges: { reputation: -5, stress: 10 } as Partial<Resources>
-          }
-        }
-      ],
-      triggered: false
-    };
-  }
-
-  // Get current faction events
-  getPendingEvents(): FactionEvent[] {
-    return this.factionEvents.filter(event => !event.triggered);
-  }
-
-  // Get current event (for UI/testing)
-  getCurrentEvent(): FactionEvent | null {
-    return this.factionEvents.length > 0 ? this.factionEvents[0] : null;
-  }
-
-  // Apply player choice to faction event
-  applyEventChoice(eventId: string, choiceId: string) {
-    const event = this.factionEvents.find(e => e.id === eventId);
-    if (!event) return;
-
-    const choice = event.choices.find(c => c.id === choiceId);
-    if (!choice) return;
-
-    // Apply faction changes
-    Object.entries(choice.effects.factionChanges).forEach(([factionId, change]) => {
-      this.adjustStanding(factionId, change);
-    });
-
-    // Mark event as triggered
-    event.triggered = true;
-
-    return choice.effects;
-  }
 
   // Get all faction data for UI
   getAllFactionData(): Array<Faction & { playerStanding: number }> {
@@ -409,93 +314,6 @@ class FactionSystem {
         }
       });
     }
-  }
-
-  // Generate faction events (public for testing)
-  generateFactionEvents(): FactionEvent[] {
-    const events: FactionEvent[] = [];
-    
-    // Check each faction's standing
-    this.factions.forEach((faction, factionId) => {
-      const standing = this.playerStandings.get(factionId) || 0;
-      
-      // Generate events based on standing thresholds
-      if (standing > 70) {
-        // High standing - generate positive events occasionally
-        events.push(this.createPositiveEvent(faction, standing));
-      } else if (standing < -50) {
-        // Low standing - generate negative events
-        events.push(this.createNegativeEvent(faction, standing));
-      }
-    });
-    
-    // Check for faction conflicts
-    this.checkForFactionEvents();
-    
-    // Add generated events to the faction events array
-    this.factionEvents.push(...events);
-    
-    return events;
-  }
-
-  private createPositiveEvent(faction: Faction, _standing: number): FactionEvent {
-    const factionChanges: Record<string, number> = {
-      [faction.id]: 5
-    };
-    
-    return {
-      id: `${faction.id}-positive-${Date.now()}`,
-      type: FactionEventType.ALLIANCE,
-      title: `${faction.name} Support`,
-      // Authored faction names carry their own article ("The Trve Kvlt
-      // Brotherhood") — never prefix another "The".
-      description: `${faction.name} appreciate your dedication to their values.`,
-      factionId: faction.id,
-      choices: [
-        {
-          id: 'accept',
-          text: 'Accept their support',
-          effects: {
-            reputation: 10,
-            factionChanges
-          }
-        }
-      ],
-      triggered: false
-    };
-  }
-
-  private createNegativeEvent(faction: Faction, _standing: number): FactionEvent {
-    const factionChanges: Record<string, number> = {
-      [faction.id]: -10
-    };
-    
-    return {
-      id: `${faction.id}-negative-${Date.now()}`,
-      type: FactionEventType.DRAMA,
-      title: `${faction.name} Displeasure`,
-      description: `${faction.name} are unhappy with your recent actions.`,
-      factionId: faction.id,
-      choices: [
-        {
-          id: 'apologize',
-          text: 'Try to make amends',
-          effects: {
-            reputation: -5,
-            factionChanges: { [faction.id]: 10 }
-          }
-        },
-        {
-          id: 'ignore',
-          text: 'Ignore their complaints',
-          effects: {
-            reputation: 5,
-            factionChanges
-          }
-        }
-      ],
-      triggered: false
-    };
   }
 
   // Get all factions
@@ -615,17 +433,12 @@ class FactionSystem {
   }
 
 
-  restoreEvents(events: FactionEvent[]): void {
-    this.factionEvents = [...events];
-  }
-
   // Wipe all run-scoped state so a new run starts neutral. This singleton bleeds
   // across runs — memberBands accrue via assignBandToFaction (BandGenerator) and
   // standings via updateStandingsFromShow — so startNewRun MUST call this.
   reset(): void {
     this.factions.clear();
     this.playerStandings.clear();
-    this.factionEvents = [];
     this.initializeFactions();
   }
 

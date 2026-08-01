@@ -737,38 +737,6 @@ export interface FactionModifiers {
   dramaChance: number; // Chance of drama events
 }
 
-export interface FactionEvent {
-  id: string;
-  type: FactionEventType;
-  factionId: string;
-  title: string;
-  description: string;
-  choices: FactionChoice[];
-  triggered: boolean;
-}
-
-export enum FactionEventType {
-  CONFLICT = "CONFLICT",
-  ALLIANCE = "ALLIANCE",
-  TERRITORY = "TERRITORY",
-  IDEOLOGY = "IDEOLOGY",
-  DRAMA = "DRAMA",
-}
-
-export interface FactionChoice {
-  id: string;
-  text: string;
-  effects: FactionChoiceEffects;
-}
-
-export interface FactionChoiceEffects {
-  factionChanges: Record<string, number>; // faction id -> reputation change
-  resourceChanges?: Partial<Resources>;
-  reputation?: number;
-  unlocks?: string[];
-  consequences?: string[]; // event ids to trigger later
-}
-
 // ============= Artist Agreement Types =============
 export interface ArtistAgreement {
   artistId: string;

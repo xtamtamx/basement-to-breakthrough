@@ -24,6 +24,7 @@ import { objectiveManager } from './ObjectiveManager';
 import { stakesManager, STAKE_TIERS } from './StakesManager';
 import { isModeBeaten, nextModeAfter } from './modeUnlocks';
 import { recordBandUnlocks, recordRunFeats } from '@game/world/bandUnlocks';
+import { reckoningFor } from '@game/data/factionEvents';
 import { bandBookingFee, dealDrawMult, doorSplitCost, DOOR_DEAL_DIY_POINTS } from './bandEconomy';
 import { computeTraitEffects, traitFeeMult } from './bandTraitEffects';
 import { bandResponseMult } from './bandResponse';
@@ -524,6 +525,22 @@ export class TurnResolutionEngine {
         totalCards: postTurnStore.discoveredSynergies?.length ?? 0,
       });
       if (card) useGameStore.setState({ pendingEventCard: card });
+    }
+
+    // Faction reckoning: unlike the deck above, this is not on a timer. A faction
+    // whose standing has crossed into devotion or a grudge turns up to collect,
+    // so the scene reacts to what you have actually been booking. Fires at most
+    // once per faction per run, and never over a card already drawn this turn —
+    // that one just waits its turn.
+    if (!runEnd && !useGameStore.getState().pendingEventCard) {
+      const s = useGameStore.getState();
+      const reckoning = reckoningFor(s.factionStandings ?? {}, s.firedFactionReckonings ?? []);
+      if (reckoning) {
+        useGameStore.setState({
+          pendingEventCard: reckoning.card,
+          firedFactionReckonings: [...(s.firedFactionReckonings ?? []), reckoning.card.id],
+        });
+      }
     }
 
     // Persist the run's singleton state so a refresh/load resumes intact.

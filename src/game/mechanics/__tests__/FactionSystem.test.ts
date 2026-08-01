@@ -1,6 +1,12 @@
 import { describe, it, expect } from 'vitest';
+import {
+  FACTION_RECKONINGS,
+  FACTION_DEVOTION_THRESHOLD,
+  FACTION_GRUDGE_THRESHOLD,
+  reckoningFor,
+} from '@game/data/factionEvents';
 import { factionSystem } from '../FactionSystem';
-import { Band, Venue, Genre, VenueType, TraitType, FactionEventType } from '@game/types';
+import { Band, Venue, Genre, VenueType, TraitType } from '@game/types';
 
 describe('FactionSystem', () => {
 
@@ -207,43 +213,66 @@ describe('FactionSystem', () => {
     });
   });
 
-  describe('faction events', () => {
-    it('should generate faction events based on standings', () => {
-      // Set high standing to generate positive events
-      factionSystem.setStanding('diy-purists', 80);
-
-      const events = factionSystem.generateFactionEvents();
-      
-      // Should generate at least one event for high standing
-      expect(events.length).toBeGreaterThan(0);
-      
-      const event = events[0];
-      expect(event).toBeDefined();
-      expect(event.type).toBe(FactionEventType.ALLIANCE);
+  describe('faction reckonings', () => {
+    // FactionSystem used to carry its own event cluster — generateFactionEvents,
+    // createConflictEvent, getPendingEvents, applyEventChoice — and NOTHING ever
+    // called any of it, which is what made an audit read the faction layer as
+    // "fully built, fully dead". It was deleted rather than wired up: it shadowed
+    // the live EventCard pipeline, which already has faction_change effects, a
+    // choice modal and persistence. What ships is data + a trigger.
+    it('asks nothing of a promoter the scene has no opinion about', () => {
+      expect(reckoningFor({}, [])).toBeNull();
+      expect(reckoningFor({ 'diy-purists': 10, 'metal-elite': -10 }, [])).toBeNull();
     });
 
-    it('should apply faction choice effects', () => {
-      // Generate a positive event
-      factionSystem.setStanding('diy-purists', 80);
-      const events = factionSystem.generateFactionEvents();
-      
-      expect(events.length).toBeGreaterThan(0);
-      
-      // Add event to faction system for getCurrentEvent to work
-      const event = events[0];
-      
-      if (event) {
-        const initialStanding = factionSystem.getStanding('diy-purists');
+    it('sends a faction that adores you to collect on it', () => {
+      const r = reckoningFor({ 'diy-purists': FACTION_DEVOTION_THRESHOLD }, []);
+      expect(r?.factionId).toBe('diy-purists');
+      expect(r?.mood).toBe('devotion');
+    });
 
-        // Apply the first choice
-        const effects = factionSystem.applyEventChoice(event.id, event.choices[0].id);
-        expect(effects).toBeDefined();
+    it('sends a faction you have burned to have a word', () => {
+      const r = reckoningFor({ 'metal-elite': FACTION_GRUDGE_THRESHOLD }, []);
+      expect(r?.factionId).toBe('metal-elite');
+      expect(r?.mood).toBe('grudge');
+    });
 
-        // Standing should change based on the choice effect
-        const newStanding = factionSystem.getStanding('diy-purists');
-        
-        // The positive event adds 5 to standing
-        expect(newStanding).toBe(Math.min(100, initialStanding + 5));
+    it('never asks the same thing twice in a run', () => {
+      const standings = { 'diy-purists': 90 };
+      const first = reckoningFor(standings, [])!;
+      expect(first).not.toBeNull();
+      expect(reckoningFor(standings, [first.card.id])).toBeNull();
+    });
+
+    it('makes every reckoning a real fork with a cost on both sides', () => {
+      // A one-button "Accept their support" is what the deleted cluster offered.
+      // Every reckoning must ask something, and must move standings BOTH ways —
+      // nobody in a scene gets to be everyone's friend.
+      for (const { card } of FACTION_RECKONINGS) {
+        expect(card.choices?.length, `${card.id} needs a choice`).toBeGreaterThan(1);
+        for (const choice of card.choices ?? []) {
+          const factionFx = choice.effects.filter((e) => e.type === 'faction_change');
+          expect(factionFx.length, `${card.id}/${choice.id} moves no standings`).toBeGreaterThan(0);
+        }
+        // At least one choice has to cost the player something real. Note stress
+        // is a cost expressed as a POSITIVE number — everything else is a cost
+        // when it goes down.
+        const anyCost = (card.choices ?? []).some((c) =>
+          c.effects.some((e) => {
+            if (e.type !== 'resource_change') return false;
+            return Object.entries(e.value as Record<string, number>).some(([stat, v]) =>
+              stat === 'stress' ? v > 0 : v < 0,
+            );
+          }),
+        );
+        expect(anyCost, `${card.id} is free money`).toBe(true);
+      }
+    });
+
+    it('covers every faction the scene has', () => {
+      const covered = new Set(FACTION_RECKONINGS.map((r) => r.factionId));
+      for (const faction of factionSystem.getAllFactions()) {
+        expect(covered.has(faction.id), `${faction.id} never turns up`).toBe(true);
       }
     });
   });

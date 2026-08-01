@@ -4,7 +4,6 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import {
   GamePhase,
   Difficulty,
-  FactionEvent,
   City,
   District,
   Venue,
@@ -20,7 +19,6 @@ import { safeZustandStorage } from "@utils/safeZustandStorage";
 import type { RuntimeSnapshot } from "@game/persistence/runtimeSnapshot";
 import type { Synergy } from "@game/mechanics/SynergyManager";
 import { eventCardSystem, type EventCard } from "@game/mechanics/EventCardSystem";
-import { factionSystem } from "@game/mechanics/FactionSystem";
 import { showPromotionSystem } from "@game/mechanics/ShowPromotionSystem";
 import {
   bandDeposit,
@@ -137,7 +135,6 @@ interface GameStore {
   runtimeSnapshot: RuntimeSnapshot | null;
 
   // Faction state
-  currentFactionEvent: FactionEvent | null;
   /** Player standing (-100..100) per faction id; empty = all neutral. Persisted;
    *  the FactionSystem singleton is a stateless calculator hydrated from this. */
   factionStandings: Record<string, number>;
@@ -150,6 +147,8 @@ interface GameStore {
 
   // Discovery state
   discoveredSynergies: string[]; // List of discovered synergy IDs
+  /** Faction reckonings already spent this run — the scene doesn't ask twice. */
+  firedFactionReckonings: string[];
   runObjectives: RunObjectives; // Optional run challenges (meta-fame rewards)
 
   // Transient: a milestone-offered equipped synergy ("instinct") awaiting the
@@ -212,9 +211,7 @@ interface GameStore {
   completeShow: (showId: string, result: ShowResult) => void;
 
   // Faction actions
-  setFactionEvent: (event: FactionEvent | null) => void;
   setFactionStandings: (standings: Record<string, number>) => void;
-  applyFactionChoice: (eventId: string, choiceId: string) => void;
 
   // Discovery actions
   discoverSynergy: (synergyId: string) => void;
@@ -343,7 +340,6 @@ const getInitialState = () => ({
   connections: 0,
   phase: GamePhase.MENU,
   difficulty: Difficulty.NORMAL,
-  currentFactionEvent: null,
   factionStandings: {},
   eventCapacityPenalty: 0,
   districts: initialDistricts,
@@ -362,6 +358,7 @@ const getInitialState = () => ({
   consecutiveBrokeTurns: 0,
   runtimeSnapshot: null,
   discoveredSynergies: [],
+  firedFactionReckonings: [],
   runObjectives: objectiveManager.emptyState(),
   pendingSynergyOffer: null as Synergy | null,
   pendingSynergyOffers: [] as Synergy[],
@@ -826,31 +823,8 @@ export const useGameStore = create<GameStore>()(
         }),
 
       // Faction actions
-      setFactionEvent: (event) => set({ currentFactionEvent: event }),
       setFactionStandings: (standings) => set({ factionStandings: standings }),
 
-      applyFactionChoice: (eventId, choiceId) => {
-        const effects = factionSystem.applyEventChoice(eventId, choiceId);
-        if (effects) {
-          // Apply resource changes
-          if (effects.resourceChanges) {
-            const state = get();
-            if (effects.resourceChanges.money) {
-              state.addMoney(effects.resourceChanges.money);
-            }
-            if (effects.resourceChanges.reputation) {
-              state.addReputation(effects.resourceChanges.reputation);
-            }
-            if (effects.resourceChanges.stress) {
-              state.addStress(effects.resourceChanges.stress);
-            }
-            if (effects.resourceChanges.connections) {
-              state.addConnections(effects.resourceChanges.connections);
-            }
-          }
-        }
-        set({ currentFactionEvent: null });
-      },
 
       // Discovery actions
       discoverSynergy: (synergyId) =>
@@ -1059,10 +1033,12 @@ export const useGameStore = create<GameStore>()(
         pathChoices: state.pathChoices,
         pathAlignment: state.pathAlignment,
         factionStandings: state.factionStandings,
+        // A reckoning already answered must not be re-asked after a reload.
+        firedFactionReckonings: state.firedFactionReckonings,
         // Persisted so a mid-turn save/load (after a crisis event fires, before its
         // turn resolves) keeps the pending one-turn venue penalty.
         eventCapacityPenalty: state.eventCapacityPenalty,
-        // Don't persist: walkers, lastTurnResults, currentFactionEvent (transient state)
+        // Don't persist: walkers, lastTurnResults (transient state)
       }),
       // On page refresh, rebuild the run's in-memory singletons from the
       // persisted snapshot so a resumed run keeps its win conditions, banked
