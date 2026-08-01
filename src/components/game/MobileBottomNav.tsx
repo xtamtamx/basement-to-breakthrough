@@ -5,6 +5,7 @@ import { useGameStore } from '@stores/gameStore';
 import { showPromotionSystem } from '@game/mechanics/ShowPromotionSystem';
 import { progressionPathSystem } from '@game/mechanics/ProgressionPathSystem';
 import { runManager } from '@game/mechanics/RunManager';
+import { STAKE_TIERS } from '@game/mechanics/StakesManager';
 import { haptics } from '@utils/mobile';
 import { TOURING_ENABLED } from '@/config/featureFlags';
 import { SceneIdentityMeter } from './SceneIdentityMeter';
@@ -32,6 +33,9 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   } = useGameStore();
   // Run length context — constant per run, so reading the singleton at render is fine.
   const maxTurns = runManager.getCurrentRun()?.config.maxTurns;
+  // Which rung of the ladder this run is being played on (null between runs).
+  const stakeTier = runManager.getCurrentRun()?.stakeTier;
+  const stake = stakeTier != null ? STAKE_TIERS[stakeTier] : null;
 
   const progressionUnlocked = progressionPathSystem.isUnlocked({
     fans,
@@ -443,6 +447,18 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         }}>
           <span style={{ color: 'var(--snes-ink-dim)' }}>TURN </span>
           {currentRound}{maxTurns ? `/${maxTurns}` : ''}
+          {/* The stake you're playing at, or nothing at Open Mic. You could pick
+              Pay to Play (or Climb into it), and once in the run NOTHING said so —
+              the rent bump just read as "rooms feel pricier". A stake is a bet;
+              the player has to be able to see what they put on the table. */}
+          {stake && stake.tier > 0 && (
+            <span
+              title={stake.blurb}
+              style={{ color: stake.tier >= 3 ? 'var(--snes-red)' : stake.tier === 2 ? 'var(--snes-magenta)' : 'var(--snes-gold)' }}
+            >
+              {' · '}{stake.name}
+            </span>
+          )}
         </span>
       </div>
     </>
