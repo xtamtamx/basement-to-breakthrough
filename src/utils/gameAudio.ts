@@ -5,6 +5,8 @@ import { env } from "../config/env";
 import { devLog } from "./devLogger";
 
 /** A drum hit on a given step, fired to visual listeners in time with the audio. */
+import { COMPOSED_TRACKS, MusicTrackType } from "./musicManifest";
+
 export interface MusicBeat {
   kick: boolean;
   snare: boolean;
@@ -63,7 +65,17 @@ class GameAudioManager {
   private nextStepTime = 0;
   private stepIndex = 0;
   private isPlayingMusic = false;
-  private currentTrackType: "chill" | "intense" | "festival" | null = null;
+  private currentTrackType: MusicTrackType | null = null;
+  // Composed-score playback (the authored .m4a tracks). The procedural synth
+  // below stays as the instant-start voice and the fallback: composed audio
+  // begins only after its buffer decodes, and any failure leaves the synth
+  // playing exactly as the game always sounded.
+  private composedBuffers = new Map<MusicTrackType, AudioBuffer>();
+  private composedSource: AudioBufferSourceNode | null = null;
+  private composedBeatTimer: NodeJS.Timeout | null = null;
+  // Guards every async continuation: bumped on start/stop/switch, so a decode
+  // finishing after the player changed tracks cannot start a stale loop.
+  private musicGeneration = 0;
   private musicVolume = env.defaultMusicVolume;
   private enabled = env.enableAudio;
   // Visual beat sync (e.g. the title-screen drummer): each scheduled drum step
@@ -232,12 +244,103 @@ class GameAudioManager {
   // Background music: a small looping chiptune (bass + octave-up arp + kick/hat
   // over a 4-bar chord progression), synthesized live and scheduled on the
   // audio clock with a look-ahead so loops stay tight and seamless.
-  startBackgroundMusic(type: "chill" | "intense" | "festival" = "chill") {
+  startBackgroundMusic(type: MusicTrackType = "chill") {
     if (!this.context || !this.enabled || this.isPlayingMusic) return;
 
-    const track = MUSIC_TRACKS[type];
     this.isPlayingMusic = true;
     this.currentTrackType = type;
+    const generation = ++this.musicGeneration;
+
+    // The composed score, if we already have it decoded: start it immediately
+    // and skip the synth entirely.
+    const cached = this.composedBuffers.get(type);
+    if (cached) {
+      this.playComposedBuffer(type, cached);
+      return;
+    }
+
+    // Otherwise the synth carries the room while the track decodes — and keeps
+    // carrying it if the decode fails (offline-first: the file is bundled, so
+    // failure here means decode, not network).
+    this.startProceduralMusic(type);
+    this.loadComposedBuffer(type)
+      .then((buffer) => {
+        if (!buffer || generation !== this.musicGeneration || !this.isPlayingMusic) return;
+        this.stopProceduralVoices();
+        this.playComposedBuffer(type, buffer);
+      })
+      .catch(() => {
+        /* synth already playing — the fallback IS the old behaviour */
+      });
+  }
+
+  /** Fetch + decode a composed track once; cached for the rest of the session. */
+  private async loadComposedBuffer(type: MusicTrackType): Promise<AudioBuffer | null> {
+    if (!this.context) return null;
+    const meta = COMPOSED_TRACKS[type];
+    if (!meta) return null;
+    const res = await fetch(meta.src);
+    if (!res.ok) return null;
+    const bytes = await res.arrayBuffer();
+    const buffer = await this.context.decodeAudioData(bytes);
+    this.composedBuffers.set(type, buffer);
+    return buffer;
+  }
+
+  /** Loop an authored track sample-tight, and clock synthetic beats for visuals. */
+  private playComposedBuffer(type: MusicTrackType, buffer: AudioBuffer) {
+    if (!this.context || !this.musicGainNode) return;
+    const meta = COMPOSED_TRACKS[type];
+    const src = this.context.createBufferSource();
+    src.buffer = buffer;
+    src.loop = true;
+    src.loopStart = 0;
+    // Loop the MUSICAL length, not the decoded length — AAC may pad the tail.
+    src.loopEnd = Math.min(meta.loopEnd, buffer.duration);
+    const trim = this.context.createGain();
+    trim.gain.value = meta.gain;
+    src.connect(trim);
+    trim.connect(this.musicGainNode);
+    src.start();
+    this.composedSource = src;
+    this.startComposedBeatClock(meta.bpm);
+  }
+
+  /** The title drummer & co. sync to MusicBeat events the synth used to emit per
+   *  scheduled step. A file can't emit those, so clock them: kick on the
+   *  quarters, snare on 2 & 4, hats on the eighths. */
+  private startComposedBeatClock(bpm: number) {
+    if (this.composedBeatTimer) clearInterval(this.composedBeatTimer);
+    if (!this.beatListeners.size) {
+      // Nobody watching — poll cheaply until someone is, keeping the old
+      // "zero cost when unobserved" contract.
+      this.composedBeatTimer = setInterval(() => {
+        if (this.beatListeners.size && this.isPlayingMusic) {
+          this.startComposedBeatClock(bpm);
+        }
+      }, 500);
+      return;
+    }
+    const eighth = 60000 / bpm / 2;
+    let step = 0;
+    this.composedBeatTimer = setInterval(() => {
+      const beat = step / 2; // in quarter notes
+      this.beatListeners.forEach((cb) =>
+        cb({
+          kick: beat % 1 === 0,
+          snare: beat % 4 === 1 || beat % 4 === 3,
+          hat: step % 1 === 0,
+        }),
+      );
+      step = (step + 1) % 8;
+    }, eighth);
+  }
+
+  /** The old live-synthesized bed — now the instant-start voice + fallback. */
+  private startProceduralMusic(type: MusicTrackType) {
+    if (!this.context) return;
+    // The synth has no authored title table; its chill bed is the closest room.
+    const track = MUSIC_TRACKS[type === "title" ? "chill" : type];
     this.stepIndex = 0;
     this.nextStepTime = this.context.currentTime + 0.12;
     const secPerStep = 60 / track.bpm / 4; // 16th notes
@@ -383,7 +486,7 @@ class GameAudioManager {
   /** Switch the looping bed to a different track as the run heats up (chill →
    *  intense → festival). No-op if already on that track; otherwise restarts the
    *  scheduler on the new chord loop (a brief seam, fine for an infrequent swap). */
-  setMusicTrack(type: "chill" | "intense" | "festival") {
+  setMusicTrack(type: MusicTrackType) {
     if (!this.enabled) return;
     if (this.isPlayingMusic && this.currentTrackType === type) return;
     const wasPlaying = this.isPlayingMusic;
@@ -393,6 +496,24 @@ class GameAudioManager {
 
   stopBackgroundMusic() {
     this.isPlayingMusic = false;
+    this.musicGeneration++;
+    this.stopProceduralVoices();
+    if (this.composedSource) {
+      try {
+        this.composedSource.stop();
+      } catch {
+        // already stopped
+      }
+      this.composedSource = null;
+    }
+    if (this.composedBeatTimer) {
+      clearInterval(this.composedBeatTimer);
+      this.composedBeatTimer = null;
+    }
+  }
+
+  /** Silence the synth path only (scheduler + ringing voices). */
+  private stopProceduralVoices() {
     if (this.musicScheduler) {
       clearTimeout(this.musicScheduler);
       this.musicScheduler = null;

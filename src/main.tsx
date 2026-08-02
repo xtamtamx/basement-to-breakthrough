@@ -13,10 +13,13 @@ import { useGameStore } from '@stores/gameStore'
 // Initialize mobile features
 initializeMobile();
 
-// Dev-only store handle for testing/debugging from the browser console
+// Dev-only store + audio handles for testing/debugging from the browser console
 if (import.meta.env.DEV) {
   (window as Window & { __gameStore?: typeof useGameStore }).__gameStore =
     useGameStore;
+  import("./utils/gameAudio").then(({ gameAudio }) => {
+    (window as Window & { __gameAudio?: unknown }).__gameAudio = gameAudio;
+  });
 }
 
 // NOTE: Save-game persistence (IndexedDB) is owned by SaveGameManager

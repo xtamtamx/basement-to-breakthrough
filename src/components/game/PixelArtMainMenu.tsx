@@ -11,12 +11,13 @@ import { stakesManager } from '@game/mechanics/StakesManager';
 import { ACTIVE_MODES } from '@game/mechanics/modeUnlocks';
 import { useGameStore } from '@stores/gameStore';
 
-// The title theme bed per career tier, and its BPM (mirrors gameAudio's MUSIC_TRACKS)
-// for the drummer's self-clock when audio is suspended (iOS pre-gesture).
-const TITLE_TRACK: Record<string, 'chill' | 'intense' | 'festival'> = {
-  basement: 'chill', dive: 'intense', theater: 'festival', festival: 'festival',
+// The title screen has its own authored theme now — "Basement Light", composed
+// for the diorama (scripts/composeMusic.py) — at every career tier. The BPM
+// feeds the drummer's self-clock when audio is suspended (iOS pre-gesture).
+const TITLE_TRACK: Record<string, 'title'> = {
+  basement: 'title', dive: 'title', theater: 'title', festival: 'title',
 };
-const TRACK_BPM: Record<string, number> = { chill: 96, intense: 142, festival: 124 };
+const TRACK_BPM: Record<string, number> = { title: 92, chill: 100, intense: 152, festival: 126 };
 
 interface PixelArtMainMenuProps {
   onStartGame: () => void;
@@ -117,7 +118,7 @@ export const PixelArtMainMenu: React.FC<PixelArtMainMenuProps> = ({
   // unlocks iOS audio, so the theme music kicks in exactly when the show reveals.
   const [started, setStarted] = useState(false);
   const tier = getTitleTier();
-  const titleTrack = TITLE_TRACK[tier.id] ?? 'chill';
+  const titleTrack = TITLE_TRACK[tier.id] ?? 'title';
 
   // Quiet collection ledger — the between-runs scoreboard (bands / combos /
   // stakes), so the drip you're building is visible right where the next-run
